@@ -12,6 +12,7 @@ enum class ListingItemType {
     EMPTY = 0,
     HEX_DUMP,
     CODE,
+    BRANCH,
     SEGMENT,
     FUNCTION,
     TYPE,
@@ -77,7 +78,8 @@ public:
     void hex_dump(usize startindex, usize endindex);
     usize type(usize index, std::string_view tname);
     usize array(usize index, std::string_view tname, usize n);
-    usize code(usize index);
+    void code(usize index);
+    void branch(usize index);
     void function(usize index);
     void segment(usize index);
 

@@ -431,9 +431,19 @@ bool set_import(RDAddress address, const std::string& name) {
     return false;
 }
 
-bool set_function(RDAddress address, const std::string& name) {
-    spdlog::trace("set_function({:x}, '{}')", address, name);
-    return false;
+bool set_function_as(RDAddress address, const std::string& name) {
+    spdlog::trace("set_function_as({:x}, '{}')", address, name);
+
+    if(auto idx = state::context->address_to_index(address); idx) {
+        state::context->memory->at(*idx).set(BF_FUNCTION);
+        state::context->set_name(*idx, name);
+    }
+
+    return true;
+}
+
+bool set_function(RDAddress address) {
+    return internal::set_function_as(address, {});
 }
 
 bool is_address(RDAddress address) {

@@ -92,13 +92,7 @@ bool Context::set_type(usize idx, std::string_view tname,
     detail.type_name = tname;
     this->memory->set_data(idx, t->size * std::max<usize>(n, 1));
     this->memory->at(idx).set(isarray ? BF_ARRAY : BF_TYPE);
-
-    if(!dbname.empty()) {
-        this->set_name(idx, dbname,
-                       isarray > 0 ? AddressDetail::ARRAY
-                                   : AddressDetail::TYPE);
-    }
-
+    this->set_name(idx, dbname);
     return true;
 }
 
@@ -243,9 +237,19 @@ std::string Context::get_name(usize idx) const {
     return name;
 }
 
-void Context::set_name(usize idx, const std::string& name, usize ns) {
-    this->memory->at(idx).set(BF_NAME);
-    this->database.set_name(idx, name, ns);
+void Context::set_name(usize idx, const std::string& name) {
+    assume(idx < this->memory->size());
+    Byte& b = this->memory->at(idx);
+    b.set_flag(BF_NAME, !name.empty());
+
+    if(b.has(BF_ARRAY))
+        this->database.set_name(idx, name, AddressDetail::ARRAY);
+    else if(b.has(BF_TYPE))
+        this->database.set_name(idx, name, AddressDetail::TYPE);
+    else if(b.has(BF_FUNCTION))
+        this->database.set_name(idx, name, AddressDetail::FUNCTION);
+    else
+        this->database.set_name(idx, name, AddressDetail::LABEL);
 }
 
 std::string Context::to_hex(usize v, usize n) const {
@@ -352,6 +356,12 @@ void Context::process_listing_code(usize& idx) {
         this->listing.pop_indent(2);
         this->listing.function(idx);
         this->listing.push_indent(2);
+    }
+
+    if(this->memory->at(idx).has(BF_BRANCH)) {
+        this->listing.pop_indent();
+        this->listing.branch(idx);
+        this->listing.push_indent();
     }
 
     this->listing.code(idx++);

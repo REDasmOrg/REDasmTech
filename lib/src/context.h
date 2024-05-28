@@ -42,8 +42,7 @@ public:
     bool map_type(usize idx, std::string_view tname,
                   const std::string& dbname = {});
 
-    void set_name(usize idx, const std::string& name,
-                  usize ns = AddressDetail::LABEL);
+    void set_name(usize idx, const std::string& name);
 
     std::string get_name(usize idx) const;
 

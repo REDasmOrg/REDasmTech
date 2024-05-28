@@ -45,8 +45,9 @@ void Surface::render(usize s, usize n) {
             case ListingItemType::HEX_DUMP: this->render_hexdump(*it); break;
             case ListingItemType::SEGMENT: this->render_segment(*it); break;
             case ListingItemType::FUNCTION: this->render_function(*it); break;
-            case ListingItemType::TYPE: this->render_type(*it); break;
+            case ListingItemType::BRANCH: this->render_branch(*it); break;
             case ListingItemType::CODE: this->render_code(*it); break;
+            case ListingItemType::TYPE: this->render_type(*it); break;
             case ListingItemType::ARRAY: this->render_array(*it); break;
             default: break;
         }
@@ -249,6 +250,11 @@ void Surface::render_hexdump(const ListingItem& item) {
 
     if(c < HEX_WIDTH)
         m_renderer->chunk(std::string(HEX_WIDTH - c, ' '));
+}
+
+void Surface::render_branch(const ListingItem& item) {
+    std::string name = state::context->get_name(item.index);
+    m_renderer->new_row(item).chunk(name + ":", THEME_ADDRESS);
 }
 
 void Surface::render_segment(const ListingItem& item) {

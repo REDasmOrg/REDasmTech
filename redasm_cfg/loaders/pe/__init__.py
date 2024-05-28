@@ -200,7 +200,9 @@ def init():
     read_imports(pe)
     select_processor(pe)
 
-    redasm.enqueue(imagebase + pe.optionalheader.AddressOfEntryPoint)
+    ep = imagebase + pe.optionalheader.AddressOfEntryPoint
+    redasm.set_function_as(ep, "__entry_point__")
+    redasm.enqueue(ep)
     return True
 
 

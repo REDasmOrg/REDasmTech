@@ -18,8 +18,7 @@ struct AddressDetail {
         EXPORT,
         SEGMENT,
 
-        ANY, // Internal use
-        COUNT = ANY
+        COUNT,
     };
 
     enum REF : usize {

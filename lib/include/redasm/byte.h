@@ -12,9 +12,10 @@ enum RDByteFlags {
     BF_TYPE = 1U << 11,
     BF_ARRAY = 1U << 12,
     BF_FUNCTION = 1U << 13,
-    BF_SEGMENT = 1U << 14,
-    BF_IMPORT = 1U << 15,
-    BF_EXPORT = 1U << 16,
+    BF_BRANCH = 1U << 14,
+    BF_SEGMENT = 1U << 15,
+    BF_IMPORT = 1U << 16,
+    BF_EXPORT = 1U << 17,
 
     BF_UNKNOWN = 0U << 30,
     BF_DATA = 1U << 30,

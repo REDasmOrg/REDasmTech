@@ -166,12 +166,21 @@ PyObject* set_import(PyObject* /*self*/, PyObject* args) {
 
 PyObject* set_function(PyObject* /*self*/, PyObject* args) {
     RDAddress address{};
+
+    if(!PyArg_ParseTuple(args, "K", &address))
+        return nullptr;
+
+    return internal::set_function(address) ? Py_True : Py_False;
+}
+
+PyObject* set_function_as(PyObject* /*self*/, PyObject* args) {
+    RDAddress address{};
     const char* name = nullptr;
 
     if(!PyArg_ParseTuple(args, "Kz", &address, &name))
         return nullptr;
 
-    return internal::set_function(address, name) ? Py_True : Py_False;
+    return internal::set_function_as(address, name) ? Py_True : Py_False;
 }
 
 PyObject* get_bool(PyObject* /*self*/, PyObject* args) {

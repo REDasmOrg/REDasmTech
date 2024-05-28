@@ -100,8 +100,12 @@ usize Listing::array(usize index, std::string_view tname, usize n) {
     return idx;
 }
 
-usize Listing::code(usize index) {
-    return this->push_item(ListingItemType::CODE, index);
+void Listing::code(usize index) {
+    this->push_item(ListingItemType::CODE, index);
+}
+
+void Listing::branch(usize index) {
+    this->push_item(ListingItemType::BRANCH, index);
 }
 
 void Listing::function(usize index) {

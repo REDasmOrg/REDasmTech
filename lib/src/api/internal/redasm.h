@@ -60,7 +60,8 @@ tl::optional<typing::Value> set_type_as(RDAddress address,
 bool set_name(RDAddress address, const std::string& name);
 bool set_export(RDAddress address, const std::string& name);
 bool set_import(RDAddress address, const std::string& name);
-bool set_function(RDAddress address, const std::string& name);
+bool set_function_as(RDAddress address, const std::string& name);
+bool set_function(RDAddress address);
 
 bool is_address(RDAddress address);
 std::string_view address_to_segment(RDAddress address);

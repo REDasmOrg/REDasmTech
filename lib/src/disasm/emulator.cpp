@@ -81,6 +81,8 @@ tl::optional<RDAddress> Emulator::decode(EmulateResult&& r) {
 }
 
 void Emulator::process_result(const EmulateResult& r) {
+    Memory* memory = state::context->memory.get();
+
     for(const auto& [forktype, res] : r.results) {
         auto idx = state::context->address_to_index(res.address);
         if(!idx)
@@ -97,6 +99,7 @@ void Emulator::process_result(const EmulateResult& r) {
             case EmulateResult::BRANCH:
             case EmulateResult::BRANCH_TRUE:
                 link_refs(*idx, r.address);
+                memory->at(*idx).set(BF_BRANCH);
                 this->schedule(res.address);
                 break;
 

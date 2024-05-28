@@ -30,7 +30,15 @@ struct Byte {
         return static_cast<u8>(flags & 0xFF);
     }
 
-    inline void set(u32 f) { flags |= f; }
+    inline void set(u32 f) { this->set_flag(f, true); }
+    inline void unset(u32 f) { this->set_flag(f, false); }
+
+    inline void set_flag(u32 f, bool b) {
+        if(b)
+            flags |= f;
+        else
+            flags &= ~f;
+    }
 
     inline void set_byte(u8 byte) {
         flags &= ~BF_BYTEMASK;
