@@ -1,0 +1,40 @@
+{
+    version: "1.0.0",
+
+    configurations: [
+        {
+            name: "Run",
+            type: "cppdbg",
+            request: "launch",
+            program: "${ws.build_dir}/redasm",
+            //args: ["load", "/home/davide/Dev/Cavia.exe"]
+            cwd: "${ws.build_dir}",
+            depends: ["Build"],
+
+            setupCommands: [
+                {
+                    text: "-enable-pretty-printing",
+                    description: "Enable pretty printing",
+                    ignoreFailures: false
+                }
+            ]
+        },
+        {
+            name: "Run Tests",
+            type: "cppdbg",
+            request: "launch",
+            program: "${ws.build_dir}/tests/tests",
+            cwd: "${ws.build_dir}",
+            depends: ["Build"],
+            default: true,
+
+            setupCommands: [
+                {
+                    text: "-enable-pretty-printing",
+                    description: "Enable pretty printing",
+                    ignoreFailures: false
+                }
+            ]
+        }
+    ]
+}

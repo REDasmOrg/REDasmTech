@@ -1,0 +1,24 @@
+{
+    version: "1.0.0",
+
+    configurations: [
+        {
+            name: "Run Gui",
+            type: "cppdbg",
+            request: "launch",
+            program: "${ws.build_dir}/redasm_gui",
+            //args: ["load", "/home/davide/Dev/Cavia.exe"]
+            cwd: "${ws.build_dir}",
+            depends: ["Build"],
+            default: true,
+
+            setupCommands: [
+                {
+                    text: "-enable-pretty-printing",
+                    description: "Enable pretty printing",
+                    ignoreFailures: false
+                }
+            ]
+        },
+    ]
+}
