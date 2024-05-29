@@ -9,7 +9,7 @@ tl::optional<typing::Value>
 AbstractBuffer::get_type_impl(usize& pos, const typing::Type* t) const {
     typing::Value v{t->name};
 
-    switch(t->type()) {
+    switch(t->id()) {
         case typing::types::BOOL: {
             if(auto b = this->get_bool(pos); b) {
                 v.b_v = *b;
@@ -223,14 +223,14 @@ AbstractBuffer::get_string_impl(usize& idx, usize n,
 
 tl::optional<typing::Value>
 AbstractBuffer::get_type_impl(usize& idx, std::string_view tname) const {
-    auto [t, n] = typing::parse(tname);
-    const typing::Type* type = state::context->types.get_type(t);
+    auto pt = state::context->types.parse(tname);
+    assume(pt);
 
-    if(n > 0) {
-        typing::Value v{type->name, n};
+    if(pt->n > 0) {
+        typing::Value v{pt->type->name, pt->n};
 
-        for(usize i = 0; i < n; i++) {
-            auto item = this->get_type_impl(idx, type);
+        for(usize i = 0; i < pt->n; i++) {
+            auto item = this->get_type_impl(idx, pt->type);
             if(item)
                 v.list.push_back(*item);
             else
@@ -240,7 +240,7 @@ AbstractBuffer::get_type_impl(usize& idx, std::string_view tname) const {
         return v;
     }
 
-    return this->get_type_impl(idx, type);
+    return this->get_type_impl(idx, pt->type);
 }
 
 tl::optional<typing::Value>

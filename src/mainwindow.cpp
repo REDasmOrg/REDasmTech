@@ -269,6 +269,7 @@ void MainWindow::show_segments() {
             });
 
     dlg->set_model(new SegmentsModel(dlg));
+    dlg->resize_column(0, QHeaderView::Stretch);
     dlg->show();
 }
 

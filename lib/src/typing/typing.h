@@ -6,6 +6,7 @@
 #include <redasm/types.h>
 #include <string>
 #include <string_view>
+#include <tl/optional.hpp>
 #include <unordered_map>
 #include <vector>
 
@@ -66,23 +67,23 @@ struct Type {
 
     explicit Type(u8 t): tag{t} {}
     explicit Type(u8 t, usize s): tag{t}, size{s} {}
-    inline u8 type() const { return tag & types::TYPE_MASK; }
+    inline u8 id() const { return tag & types::TYPE_MASK; }
     inline bool is_var() const { return tag & types::VAR; }
 
     inline bool is_char() const {
-        return this->type() == types::CHAR || this->type() == types::WCHAR;
+        return this->id() == types::CHAR || this->id() == types::WCHAR;
     }
 
     inline bool is_str() const {
-        return this->type() == types::STR || this->type() == types::WSTR;
+        return this->id() == types::STR || this->id() == types::WSTR;
     }
 
     inline bool is_wide() const {
-        return this->type() == types::WCHAR || this->type() == types::WSTR;
+        return this->id() == types::WCHAR || this->id() == types::WSTR;
     }
 
     inline bool is_big() const {
-        return (this->type() >= types::U8 && this->type() <= types::I64) &&
+        return (this->id() >= types::U8 && this->id() <= types::I64) &&
                (tag & types::BIG);
     }
 };
@@ -115,8 +116,17 @@ struct Value {
 };
 // clang-format on
 
-using ParseResult = std::pair<std::string_view, size_t>;
-ParseResult parse(std::string_view tname);
+enum ParsedTypeModifier {
+    TYPEMODIFIER_NORMAL = 0,
+    TYPEMODIFIER_POINTER,
+    TYPEMODIFIER_RELPOINTER
+};
+
+struct ParsedType {
+    const Type* type;
+    usize n;
+    usize modifier;
+};
 
 struct Types {
     using StructFields = std::pair<std::string, std::string>;
@@ -124,14 +134,15 @@ struct Types {
     Types();
     void declare(const std::string& name, const Type& type);
     [[nodiscard]] const Type* get_type(std::string_view type) const;
-    [[nodiscard]] const Type* get_parsed_type(std::string_view tname) const;
+    [[nodiscard]] tl::optional<ParsedType> parse(std::string_view tname) const;
     [[nodiscard]] std::string_view type_name(types::Tag tag) const;
+    [[nodiscard]] std::string to_string(const ParsedType& pt);
 
     [[nodiscard]] Type
     create_struct(const std::vector<StructFields>& arg) const;
 
     [[nodiscard]] usize size_of(std::string_view tname,
-                                const typing::Type** res = nullptr) const;
+                                ParsedType* res = nullptr) const;
 
     [[nodiscard]] inline std::string as_array(std::string_view tname,
                                               usize n) const {

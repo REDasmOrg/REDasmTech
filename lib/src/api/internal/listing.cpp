@@ -48,34 +48,29 @@ bool listing_getsymbol(usize idx, RDSymbol* symbol) {
 
             case ListingItemType::TYPE: {
                 tl::optional<std::string> s;
+                assume(item.parsed_type);
 
-                if(const auto* t = ctx->types.get_type(item.type_name); t) {
-                    switch(t->type()) {
-                        case typing::types::STR:
-                            s = state::context->memory->get_string(item.index);
-                            break;
+                switch(item.parsed_type->type->id()) {
+                    case typing::types::STR:
+                        s = state::context->memory->get_string(item.index);
+                        break;
 
-                        case typing::types::WSTR:
-                            s = state::context->memory->get_wstring(item.index);
-                            break;
+                    case typing::types::WSTR:
+                        s = state::context->memory->get_wstring(item.index);
+                        break;
 
-                        case typing::types::CHAR:
-                            spdlog::critical("UNHANDLED CHAR");
-                            break;
+                    case typing::types::CHAR:
+                        spdlog::critical("UNHANDLED CHAR");
+                        break;
 
-                        case typing::types::WCHAR:
-                            spdlog::critical("UNHANDLED WCHAR");
-                            break;
+                    case typing::types::WCHAR:
+                        spdlog::critical("UNHANDLED WCHAR");
+                        break;
 
-                        default: break;
-                    }
+                    default: break;
                 }
 
                 if(!s) {
-                    const typing::Type* type =
-                        state::context->types.get_type(item.type_name);
-                    assume(type);
-
                     value = ctx->get_name(item.index);
 
                     symbol->type = SYMBOL_TYPE;
@@ -94,10 +89,6 @@ bool listing_getsymbol(usize idx, RDSymbol* symbol) {
             }
 
             case ListingItemType::ARRAY: {
-                const typing::Type* type =
-                    state::context->types.get_type(item.type_name);
-                assume(type);
-
                 value = ctx->get_name(item.index);
 
                 symbol->type = SYMBOL_ARRAY;

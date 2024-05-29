@@ -2,6 +2,7 @@
 
 #include "../ui/tabledialog.h"
 #include <QDialog>
+#include <QHeaderView>
 
 class TableDialog: public QDialog {
     Q_OBJECT
@@ -11,6 +12,7 @@ public:
     explicit TableDialog(const QString& title, QWidget* parent = nullptr);
     [[nodiscard]] QAbstractItemModel* model() const;
     void hide_column(int idx) const;
+    void resize_column(int idx, QHeaderView::ResizeMode r) const;
     void set_model(QAbstractItemModel* m);
     void set_button_box_visible(bool b);
     void set_search_box_visible(bool b);

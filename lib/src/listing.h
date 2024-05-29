@@ -29,10 +29,10 @@ struct ListingItem {
 
     usize end_index;
     usize indent;
-    usize array_size;
 
-    std::string type_context;
-    std::string type_name;
+    tl::optional<typing::ParsedType> parsed_type_context;
+    tl::optional<typing::ParsedType> parsed_type;
+
     tl::optional<usize> array_index;
     tl::optional<usize> field_index;
 };
@@ -76,8 +76,8 @@ public:
     ConstIterator lower_bound(usize idx) const;
     ConstIterator upper_bound(usize idx, ConstIterator begin) const;
     void hex_dump(usize startindex, usize endindex);
-    usize type(usize index, std::string_view tname);
-    usize array(usize index, std::string_view tname, usize n);
+    usize type(usize index, const typing::ParsedType& pt);
+    usize array(usize index, const typing::ParsedType& pt);
     void code(usize index);
     void branch(usize index);
     void function(usize index);
@@ -85,13 +85,13 @@ public:
 
 public: // State management functions
     tl::optional<usize> field_index() const;
-    const typing::Type* current_type() const;
+    tl::optional<typing::ParsedType> current_type() const;
     void clear();
     void push_indent(int c = 1);
     void pop_indent(int c = 1);
     void push_fieldindex(usize arg);
     void pop_fieldindex();
-    void push_type(const typing::Type* type);
+    void push_type(const typing::ParsedType& pt);
     void pop_type();
 
 private:
@@ -99,7 +99,7 @@ private:
 
 private:
     std::deque<usize> m_fieldindex;
-    std::deque<const typing::Type*> m_currtype;
+    std::deque<typing::ParsedType> m_currtype;
     IndexList m_symbols;
     usize m_indent{0};
     Type m_items;

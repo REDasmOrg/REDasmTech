@@ -51,11 +51,11 @@ PyMODINIT_FUNC PyInit_redasm() { // NOLINT
     assume(PyModule_AddType(m, &python::filestream_type) == 0);
     assume(PyModule_AddType(m, &python::memorystream_type) == 0);
 
-    assume(PyModule_AddIntConstant(m, "SEGMENT_UNKNOWN", RDSEGMENT_UNKNOWN) ==
+    assume(PyModule_AddIntConstant(m, "SEGMENT_UNKNOWN", SEGMENTTYPE_UNKNOWN) ==
            0);
-    assume(PyModule_AddIntConstant(m, "SEGMENT_HASDATA", RDSEGMENT_HASDATA) ==
+    assume(PyModule_AddIntConstant(m, "SEGMENT_HASDATA", SEGMENTTYPE_HASDATA) ==
            0);
-    assume(PyModule_AddIntConstant(m, "SEGMENT_HASCODE", RDSEGMENT_HASCODE) ==
+    assume(PyModule_AddIntConstant(m, "SEGMENT_HASCODE", SEGMENTTYPE_HASCODE) ==
            0);
     return m;
 }

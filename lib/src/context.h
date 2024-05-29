@@ -62,8 +62,8 @@ private:
     void process_listing_unknown(usize& idx);
     void process_listing_data(usize& idx);
     void process_listing_code(usize& idx);
-    void process_listing_array(usize& idx, const typing::Type* type, usize n);
-    usize process_listing_type(usize& idx, const typing::Type* type);
+    void process_listing_array(usize& idx, const typing::ParsedType& pt);
+    usize process_listing_type(usize& idx, const typing::ParsedType& pt);
 
 public:
     usize bits{}, minstring{DEFAULT_MIN_STRING};

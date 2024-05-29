@@ -48,9 +48,9 @@ struct RDMemoryInfo {
 };
 
 enum RDSegmentType {
-    RDSEGMENT_UNKNOWN = 0,
-    RDSEGMENT_HASDATA = 1 << 0,
-    RDSEGMENT_HASCODE = 1 << 1,
+    SEGMENTTYPE_UNKNOWN = 0,
+    SEGMENTTYPE_HASDATA = 1 << 0,
+    SEGMENTTYPE_HASCODE = 1 << 1,
 };
 
 typedef struct RDSegment {

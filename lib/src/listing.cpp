@@ -51,9 +51,9 @@ tl::optional<usize> Listing::field_index() const {
     return m_fieldindex.back();
 }
 
-const typing::Type* Listing::current_type() const {
+tl::optional<typing::ParsedType> Listing::current_type() const {
     if(m_currtype.empty())
-        return nullptr;
+        return tl::nullopt;
     return m_currtype.back();
 }
 
@@ -64,8 +64,8 @@ void Listing::pop_fieldindex() {
     m_fieldindex.pop_back();
 }
 
-void Listing::push_type(const typing::Type* type) {
-    m_currtype.push_back(type);
+void Listing::push_type(const typing::ParsedType& pt) {
+    m_currtype.push_back(pt);
 }
 
 void Listing::pop_type() {
@@ -73,12 +73,12 @@ void Listing::pop_type() {
     m_currtype.pop_back();
 }
 
-usize Listing::type(usize index, std::string_view tname) {
+usize Listing::type(usize index, const typing::ParsedType& pt) {
     usize idx = this->push_item(ListingItemType::TYPE, index);
-    m_items[idx].type_name.assign(tname.begin(), tname.end());
+    m_items[idx].parsed_type = pt;
 
-    if(m_items[idx].type_context.empty())
-        m_items[idx].type_context = m_items[idx].type_name;
+    if(!m_items[idx].parsed_type_context)
+        m_items[idx].parsed_type_context = m_items[idx].parsed_type;
 
     if(!this->field_index() && !this->current_type())
         m_symbols.push_back(idx);
@@ -86,13 +86,12 @@ usize Listing::type(usize index, std::string_view tname) {
     return idx;
 }
 
-usize Listing::array(usize index, std::string_view tname, usize n) {
+usize Listing::array(usize index, const typing::ParsedType& pt) {
     usize idx = this->push_item(ListingItemType::ARRAY, index);
-    m_items[idx].type_name.assign(tname.begin(), tname.end());
-    m_items[idx].array_size = n;
+    m_items[idx].parsed_type = pt;
 
-    if(m_items[idx].type_context.empty())
-        m_items[idx].type_context = m_items[idx].type_name;
+    if(!m_items[idx].parsed_type_context)
+        m_items[idx].parsed_type_context = m_items[idx].parsed_type;
 
     if(!this->field_index() && !this->current_type())
         m_symbols.push_back(idx);
@@ -129,11 +128,7 @@ usize Listing::push_item(ListingItemType type, usize index) {
     li.index = index;
     li.indent = m_indent;
     li.field_index = this->field_index();
-
-    const typing::Type* t = this->current_type();
-
-    if(t)
-        li.type_context = t->name;
+    li.parsed_type_context = this->current_type();
 
     m_items.push_back(li);
     return idx;

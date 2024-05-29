@@ -1,26 +1,45 @@
 #include "typing.h"
 #include "../error.h"
 #include "../utils/utils.h"
+#include <fmt/core.h>
 #include <spdlog/spdlog.h>
 
 namespace redasm::typing {
 
-ParseResult parse(std::string_view tname) {
+namespace {
+
+void parse(std::string_view tname, std::string_view& name, usize& n,
+           usize& modifier) {
     if(tname.empty())
         except("typing::parse('{}'): type is empty", tname);
 
-    std::string_view type, n;
+    modifier = TYPEMODIFIER_NORMAL;
+
     usize idx = 0;
+    std::string_view strn;
+
+    // Ignore leading whitespaces
+    while(idx < tname.size() && std::isspace(tname[idx]))
+        idx++;
 
     if(std::isalpha(tname.front()) || tname.front() == '_') {
         while(idx < tname.size() &&
               (std::isalnum(tname[idx]) || tname[idx] == '_'))
             idx++;
-        type = tname.substr(0, idx);
+        name = tname.substr(0, idx);
     }
 
-    if(type.empty())
+    if(name.empty())
         except("typing::parse('{}'): type is empty", tname);
+
+    if(idx < tname.size() && tname[idx] == '*') {
+        modifier = TYPEMODIFIER_POINTER;
+        idx++;
+    }
+    else if(idx < tname.size() && tname[idx] == '^') {
+        modifier = TYPEMODIFIER_RELPOINTER;
+        idx++;
+    }
 
     if(idx < tname.size() && tname[idx] == '[') {
         usize startidx = idx + 1;
@@ -30,30 +49,38 @@ ParseResult parse(std::string_view tname) {
         if(idx >= tname.size())
             except("typing::parse('{}'): index out of bounds", tname);
 
-        n = tname.substr(startidx, idx - startidx);
+        strn = tname.substr(startidx, idx - startidx);
+        idx++; // Skip ']'
     }
 
-    if(!n.empty()) {
-        auto nval = utils::to_integer(n);
+    if(!strn.empty()) {
+        auto nval = utils::to_integer(strn);
         if(!nval || !nval.value())
             except("typing::parse('{}'): invalid size", tname);
-        return {type, *nval};
+
+        n = *nval;
     }
 
-    return {type, 0};
+    // Ignore trailing whitespaces and check for junk
+    while(idx < tname.size()) {
+        if(std::isspace(idx++))
+            continue;
+        except("typing::parse('{}'): invalid type", tname);
+    }
 }
 
-usize Types::size_of(std::string_view tname, const typing::Type** res) const {
-    auto [type, n] = typing::parse(tname);
-    const Type* t = this->get_type(type);
+} // namespace
 
-    if(!t)
-        except("Cannot get size of type '{}'", type);
+usize Types::size_of(std::string_view tname, ParsedType* res) const {
+    auto pt = this->parse(tname);
+
+    if(!pt)
+        except("Cannot get size of type '{}'", pt->type->name);
 
     if(res)
-        *res = t;
+        *res = *pt;
 
-    return n ? t->size * n : t->size;
+    return pt->n ? pt->type->size * pt->n : pt->type->size;
 }
 
 const Type* Types::get_type(std::string_view type) const {
@@ -63,9 +90,22 @@ const Type* Types::get_type(std::string_view type) const {
     return it->second.get();
 }
 
-const Type* Types::get_parsed_type(std::string_view tname) const {
-    auto [type, _] = typing::parse(tname);
-    return this->get_type(type);
+tl::optional<ParsedType> Types::parse(std::string_view tname) const {
+    std::string_view name;
+    usize n{}, modifier{};
+    typing::parse(tname, name, n, modifier);
+
+    const Type* t = this->get_type(name);
+
+    if(t) {
+        return ParsedType{
+            t,
+            n,
+            modifier,
+        };
+    }
+
+    return tl::nullopt;
 }
 
 void Types::declare(const std::string& name, const Type& type) {
@@ -104,14 +144,32 @@ Types::Types() {
         t->name = tname;
 }
 
+std::string Types::to_string(const ParsedType& pt) {
+    assume(pt.type);
+
+    std::string_view mod;
+
+    switch(pt.modifier) {
+        case TYPEMODIFIER_RELPOINTER: mod = "^"; break;
+        case TYPEMODIFIER_POINTER: mod = "*"; break;
+        case TYPEMODIFIER_NORMAL: break;
+        default: unreachable;
+    }
+
+    if(pt.n > 0)
+        return fmt::format("{}{}[{}]", pt.type->name, mod, pt.n);
+
+    return fmt::format("{}{}", pt.type->name, mod);
+}
+
 Type Types::create_struct(const std::vector<StructFields>& arg) const {
     Type type{types::STRUCT};
 
     for(const auto& [tname, name] : arg) {
-        const Type* t = nullptr;
-        type.size += this->size_of(tname, &t);
+        ParsedType pt;
+        type.size += this->size_of(tname, &pt);
 
-        if(t->is_var()) {
+        if(pt.type->is_var()) {
             except("Type '{}' size is variable and is not supported in structs",
                    tname);
         }
@@ -124,7 +182,7 @@ Type Types::create_struct(const std::vector<StructFields>& arg) const {
 
 std::string_view Types::type_name(typing::types::Tag tag) const {
     for(const auto& [tname, t] : this->registered) {
-        if(t->type() == tag)
+        if(t->id() == tag)
             return tname;
     }
 

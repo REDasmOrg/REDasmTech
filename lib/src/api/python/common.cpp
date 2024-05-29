@@ -41,7 +41,7 @@ PyObject* to_object(const typing::Value& v) {
     }
     else {
 
-        switch(t->type()) {
+        switch(t->id()) {
             case typing::types::BOOL: res = v.b_v ? Py_True : Py_False; break;
 
             case typing::types::WCHAR:

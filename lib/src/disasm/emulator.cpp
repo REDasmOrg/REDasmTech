@@ -48,7 +48,7 @@ tl::optional<RDAddress> Emulator::decode(EmulateResult&& r) {
     assume(idx.has_value());
 
     if(const Segment* s = this->get_segment(*idx);
-       !s || !(s->type & RDSEGMENT_HASCODE))
+       !s || !(s->type & SEGMENTTYPE_HASCODE))
         return tl::nullopt;
 
     Memory* m = state::context->memory.get();

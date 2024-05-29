@@ -109,7 +109,7 @@ IMAGE_NT_HEADERS = (
 )
 
 IMAGE_DATA_DIRECTORY = (
-    ("u32", "VirtualAddress"),
+    ("u32^", "VirtualAddress"),
     ("u32", "Size"),
 )
 
@@ -120,7 +120,7 @@ IMAGE_OPTIONAL_HEADER32 = (
     ("u32",                      "SizeOfCode"),
     ("u32",                      "SizeOfInitializedData"),
     ("u32",                      "SizeOfUninitializedData"),
-    ("u32",                      "AddressOfEntryPoint"),
+    ("u32^",                     "AddressOfEntryPoint"),
     ("u32",                      "BaseOfCode"),
     ("u32",                      "BaseOfData"),
     ("u32",                      "ImageBase"),
@@ -198,19 +198,19 @@ IMAGE_EXPORT_DIRECTORY = (
     ("u32", "TimeDateStamp"),
     ("u16", "MajorVersion"),
     ("u16", "MinorVersion"),
-    ("u32", "Name"),
+    ("u32^", "Name"),
     ("u32", "Base"),
     ("u32", "NumberOfFunctions"),
     ("u32", "NumberOfNames"),
-    ("u32", "AddressOfFunctions"),
-    ("u32", "AddressOfNames"),
-    ("u32", "AddressOfNameOrdinals"),
+    ("u32^", "AddressOfFunctions"),
+    ("u32^", "AddressOfNames"),
+    ("u32^", "AddressOfNameOrdinals"),
 )
 
 IMAGE_IMPORT_DESCRIPTOR = (
     ("u32", "OriginalFirstThunk"),
     ("u32", "TimeDateStamp"),
     ("u32", "ForwarderChain"),
-    ("u32", "Name"),
-    ("u32", "FirstThunk"),
+    ("u32^", "Name"),
+    ("u32^", "FirstThunk"),
 )

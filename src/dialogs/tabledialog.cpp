@@ -41,9 +41,16 @@ void TableDialog::set_model(QAbstractItemModel* m) {
 
     sfmodel->setFilterCaseSensitivity(Qt::CaseInsensitive);
     m_ui.tvtable->setModel(sfmodel);
+
+    for(int i = 0; i < sfmodel->columnCount() - 1; i++)
+        this->resize_column(i, QHeaderView::ResizeToContents);
 }
 
 void TableDialog::hide_column(int idx) const { m_ui.tvtable->hideColumn(idx); }
+
+void TableDialog::resize_column(int idx, QHeaderView::ResizeMode r) const {
+    m_ui.tvtable->header()->setSectionResizeMode(idx, r);
+}
 
 void TableDialog::set_button_box_visible(bool b) { // NOLINT
     m_ui.buttonbox->setVisible(b);

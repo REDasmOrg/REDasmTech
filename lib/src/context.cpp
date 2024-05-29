@@ -62,21 +62,20 @@ void Context::set_import(usize idx, const std::string& name) {
 
 bool Context::set_type(usize idx, std::string_view tname,
                        const std::string& dbname) {
-    auto [type, n] = typing::parse(tname);
-    const typing::Type* t = this->types.get_type(type);
+    auto pt = this->types.parse(tname);
 
-    if(!t) {
+    if(!pt) {
         spdlog::warn("Type '{}' not found", tname);
         return false;
     }
 
-    bool isarray = n > 0;
+    bool isarray = pt->n > 0;
     AddressDetail& detail = this->database.get_detail(idx);
 
-    if(t->is_str()) {
+    if(pt->type->is_str()) {
         tl::optional<std::string> s;
 
-        if(t->type() == typing::types::WSTR)
+        if(pt->type->id() == typing::types::WSTR)
             s = this->memory->get_wstring(idx);
         else
             s = this->memory->get_string(idx);
@@ -84,13 +83,14 @@ bool Context::set_type(usize idx, std::string_view tname,
         if(!s)
             return false;
 
-        n = s->size();
-        detail.string_length = n + t->size; // Null terminator included
+        pt->n = s->size();
+        detail.string_length =
+            pt->n + pt->type->size; // Null terminator included
         isarray = false;
     }
 
     detail.type_name = tname;
-    this->memory->set_data(idx, t->size * std::max<usize>(n, 1));
+    this->memory->set_data(idx, pt->type->size * std::max<usize>(pt->n, 1));
     this->memory->at(idx).set(isarray ? BF_ARRAY : BF_TYPE);
     this->set_name(idx, dbname);
     return true;
@@ -221,10 +221,9 @@ std::string Context::get_name(usize idx) const {
             const AddressDetail& detail = this->database.get_detail(idx);
             assume(!detail.type_name.empty());
 
-            const typing::Type* t =
-                this->types.get_parsed_type(detail.type_name);
-            assume(t);
-            prefix = utils::to_lower(t->name);
+            auto pt = this->types.parse(detail.type_name);
+            assume(pt);
+            prefix = utils::to_lower(pt->type->name);
         }
         else if(b.has(BF_FUNCTION))
             prefix = "sub";
@@ -332,20 +331,19 @@ void Context::process_listing_data(usize& idx) {
         const AddressDetail& d = this->database.get_detail(idx);
         assume(!d.type_name.empty());
 
-        auto [tname, n] = typing::parse(d.type_name);
-        assume(n > 0);
-        const typing::Type* t = this->types.get_type(tname);
-        assume(t);
-        this->process_listing_array(idx, t, n);
+        auto pt = this->types.parse(d.type_name);
+        assume(pt);
+        assume(pt->n > 0);
+        this->process_listing_array(idx, *pt);
     }
     else if(this->memory->at(idx).has(BF_TYPE)) {
         const AddressDetail& d = this->database.get_detail(idx);
         assume(!d.type_name.empty());
-        auto [tname, n] = typing::parse(d.type_name);
-        assume(n == 0);
-        const typing::Type* t = this->types.get_type(tname);
-        assume(t);
-        this->process_listing_type(idx, t);
+
+        auto pt = this->types.parse(d.type_name);
+        assume(pt);
+        assume(pt->n == 0);
+        this->process_listing_type(idx, *pt);
     }
     else
         idx++;
@@ -368,37 +366,33 @@ void Context::process_listing_code(usize& idx) {
     idx += this->memory->get_length(idx);
 }
 
-void Context::process_listing_array(usize& idx, const typing::Type* type,
-                                    usize n) {
-    assume(type);
-    assume(n > 0);
+void Context::process_listing_array(usize& idx, const typing::ParsedType& pt) {
+    assume(pt.n > 0);
 
-    this->listing.array(idx, type->name, n);
+    this->listing.array(idx, pt);
     this->listing.push_indent();
 
     // Array of chars are different
-    if(!type->is_char()) {
-        for(usize i = 0; i < std::max<usize>(n, 1); i++) {
-            usize lidx = this->process_listing_type(idx, type);
+    if(!pt.type->is_char()) {
+        for(usize i = 0; i < std::max<usize>(pt.n, 1); i++) {
+            usize lidx = this->process_listing_type(idx, pt);
             this->listing[lidx].array_index = i;
         }
     }
     else
-        idx += type->size * n;
+        idx += pt.type->size * pt.n;
 
     this->listing.pop_indent();
 }
 
-usize Context::process_listing_type(usize& idx, const typing::Type* type) {
-    assume(type);
-
+usize Context::process_listing_type(usize& idx, const typing::ParsedType& pt) {
     usize listingidx = this->listing.size();
-    this->listing.type(idx, type->name);
+    this->listing.type(idx, pt);
 
-    if(type->type() == typing::types::STRUCT) // Struct creates a new context
-        this->listing.push_type(type);
+    if(pt.type->id() == typing::types::STRUCT) // Struct creates a new context
+        this->listing.push_type(pt);
 
-    switch(type->type()) {
+    switch(pt.type->id()) {
         case typing::types::CHAR:
         case typing::types::WCHAR:
         case typing::types::I8:
@@ -408,7 +402,7 @@ usize Context::process_listing_type(usize& idx, const typing::Type* type) {
         case typing::types::I32:
         case typing::types::U32:
         case typing::types::I64:
-        case typing::types::U64: idx += type->size; break;
+        case typing::types::U64: idx += pt.type->size; break;
 
         case typing::types::STR:
         case typing::types::WSTR: {
@@ -421,18 +415,17 @@ usize Context::process_listing_type(usize& idx, const typing::Type* type) {
         case typing::types::STRUCT: {
             this->listing.push_indent();
 
-            for(usize j = 0; j < type->dict.size(); j++) {
-                const auto& item = type->dict[j];
-                auto [ftype, n] = typing::parse(item.first);
-                const typing::Type* t = this->types.get_type(ftype);
-                assume(t);
+            for(usize j = 0; j < pt.type->dict.size(); j++) {
+                const auto& item = pt.type->dict[j];
+                auto fpt = this->types.parse(item.first);
+                assume(fpt);
 
                 this->listing.push_fieldindex(j);
 
-                if(n > 0)
-                    this->process_listing_array(idx, t, n);
+                if(fpt->n > 0)
+                    this->process_listing_array(idx, *fpt);
                 else
-                    this->process_listing_type(idx, t);
+                    this->process_listing_type(idx, *fpt);
 
                 this->listing.pop_fieldindex();
             }
@@ -444,7 +437,7 @@ usize Context::process_listing_type(usize& idx, const typing::Type* type) {
         default: unreachable;
     }
 
-    if(type->type() == typing::types::STRUCT)
+    if(pt.type->id() == typing::types::STRUCT)
         this->listing.pop_type();
 
     return listingidx;

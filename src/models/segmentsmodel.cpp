@@ -1,6 +1,26 @@
 #include "segmentsmodel.h"
 #include "../themeprovider.h"
 
+namespace {
+
+QString get_segment_type(const RDSegment& seg) {
+    QString s;
+
+    if(seg.type & SEGMENTTYPE_HASCODE)
+        s.append("CODE");
+
+    if(seg.type & SEGMENTTYPE_HASDATA) {
+        if(!s.isEmpty())
+            s.append(" | ");
+
+        s.append("DATA");
+    }
+
+    return s;
+}
+
+} // namespace
+
 SegmentsModel::SegmentsModel(QObject* parent): QAbstractListModel{parent} {
     m_nsegments = rd_getsegments(&m_segments);
 }
@@ -24,6 +44,7 @@ QVariant SegmentsModel::data(const QModelIndex& index, int role) const {
             case 4: return rd_tohex(offset);
             case 5: return rd_tohex(endoffset);
             case 6: return rd_tohex(endoffset - offset);
+            case 7: return get_segment_type(m_segments[index.row()]);
             default: break;
         }
     }
@@ -50,19 +71,19 @@ QVariant SegmentsModel::headerData(int section, Qt::Orientation orientation,
         return {};
 
     switch(section) {
-        case 0: return tr("Name");
-        case 1: return tr("Start Address");
-        case 2: return tr("End Address");
-        case 3: return tr("Address Size");
-        case 4: return tr("Offset");
-        case 5: return tr("End Offset");
-        case 6: return tr("Offset Size");
+        case 0: return "Name";
+        case 1: return "Start Address";
+        case 2: return "End Address";
+        case 3: return "Address Size";
+        case 4: return "Offset";
+        case 5: return "End Offset";
+        case 6: return "Offset Size";
+        case 7: return "Type";
         default: break;
     }
 
     return {};
 }
 
-int SegmentsModel::columnCount(const QModelIndex&) const { return 7; }
-
+int SegmentsModel::columnCount(const QModelIndex&) const { return 8; }
 int SegmentsModel::rowCount(const QModelIndex&) const { return m_nsegments; }
