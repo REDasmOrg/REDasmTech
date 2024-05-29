@@ -40,6 +40,13 @@ usize Surface::current_index() const {
     return state::context->listing[idx].index;
 }
 
+tl::optional<usize> Surface::index_under_cursor() const {
+    if(std::string w = m_renderer->word_at(m_row, m_col); !w.empty())
+        return state::context->database.get_index(w);
+
+    return tl::nullopt;
+}
+
 const Segment* Surface::current_segment() const {
     usize idx = this->current_index();
 

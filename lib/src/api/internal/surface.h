@@ -17,6 +17,7 @@ void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc);
 usize surface_getindex(const RDSurface* self);
 std::string_view surface_gettext(const RDSurface* self);
 std::string_view surface_getselectedtext(const RDSurface* self);
+bool surface_getaddressundercursor(const RDSurface* self, RDAddress* address);
 void surface_setcolumns(RDSurface* self, usize columns);
 void surface_setposition(RDSurface* self, usize row, usize col);
 bool surface_selectword(RDSurface* self, usize row, usize col);

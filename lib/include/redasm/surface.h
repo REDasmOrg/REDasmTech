@@ -32,7 +32,7 @@ typedef struct RDSurfaceCell {
     RDThemeKind bg;
 } RDSurfaceCell;
 
-REDASM_EXPORT RDSurface* rdsurface_new();
+REDASM_EXPORT RDSurface* rdsurface_new(void);
 REDASM_EXPORT void rdsurface_render(RDSurface* self, usize start, usize n);
 REDASM_EXPORT bool rdsurface_hasselection(const RDSurface* self);
 REDASM_EXPORT usize rdsurface_getrowcount(const RDSurface* self);
@@ -45,6 +45,8 @@ REDASM_EXPORT void rdsurface_getlocation(const RDSurface* self,
 REDASM_EXPORT usize rdsurface_getindex(const RDSurface* self);
 REDASM_EXPORT const char* rdsurface_gettext(const RDSurface* self);
 REDASM_EXPORT const char* rdsurface_getselectedtext(const RDSurface* self);
+REDASM_EXPORT bool rdsurface_getaddressundercursor(const RDSurface* self,
+                                                   RDAddress* address);
 REDASM_EXPORT void rdsurface_setcolumns(RDSurface* self, usize columns);
 REDASM_EXPORT void rdsurface_setposition(RDSurface* self, usize row, usize col);
 REDASM_EXPORT bool rdsurface_selectword(RDSurface* self, usize row, usize col);

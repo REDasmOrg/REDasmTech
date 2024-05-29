@@ -33,6 +33,7 @@ private:
     [[nodiscard]] RDSurfacePosition get_surface_position() const;
     [[nodiscard]] size_t get_surface_index() const;
     [[nodiscard]] size_t get_listing_length() const;
+    bool follow_under_cursor();
     void create_context_menu();
     void update_scrollbars();
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <charconv>
 #include <redasm/types.h>
 #include <string>
 #include <string_view>
@@ -8,12 +9,33 @@
 
 namespace redasm::utils {
 
+namespace impl {
+
+void detect_base(std::string_view& sv, int* res);
+
+} // namespace impl
+
 template<typename>
 inline constexpr bool AlwaysFalseV = false; // NOLINT
 
 using Data = std::vector<u8>;
 
-[[nodiscard]] tl::optional<usize> to_integer(std::string_view sv, int base = 0);
+template<typename T = usize>
+[[nodiscard]] tl::optional<T> to_integer(std::string_view sv, int base = 0) {
+    if(sv.empty())
+        return tl::nullopt;
+
+    impl::detect_base(sv, !base ? &base : nullptr);
+
+    T val{};
+    auto res = std::from_chars(sv.begin(), sv.end(), val, base);
+
+    if(res.ec != std::errc{} || res.ptr < sv.end())
+        return tl::nullopt;
+
+    return val;
+}
+
 tl::optional<Data> read_file(const std::string& filepath);
 std::string_view trim(std::string_view v);
 std::string to_lower(std::string s);

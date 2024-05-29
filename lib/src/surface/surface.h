@@ -13,6 +13,7 @@ public:
     explicit Surface();
     inline Renderer* renderer() const { return m_renderer.get(); }
     [[nodiscard]] usize current_index() const;
+    [[nodiscard]] tl::optional<usize> index_under_cursor() const;
     [[nodiscard]] const Segment* current_segment() const;
     [[nodiscard]] RDSurfacePosition position() const;
     [[nodiscard]] RDSurfacePosition start_selection() const;

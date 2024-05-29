@@ -14,6 +14,7 @@ using SurfaceRow = std::vector<RDSurfaceCell>;
 using SurfaceRows = std::vector<SurfaceRow>;
 
 struct Renderer {
+    [[nodiscard]] std::string word_at(usize row, usize col) const;
     [[nodiscard]] usize current_address() const;
     void swap(SurfaceRows& r) { m_rows.swap(r); }
     void clear() { m_rows.clear(); }
@@ -82,7 +83,6 @@ public:
 private:
     const Segment* current_segment() const;
     void check_current_segment(const ListingItem& item);
-    std::string word_at(usize row, usize col) const;
 
 private:
     SurfaceRows m_rows;

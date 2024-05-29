@@ -95,9 +95,11 @@ void SurfaceWidget::jump_to(RDAddress address) {
 
 void SurfaceWidget::mouseDoubleClickEvent(QMouseEvent* e) {
     if(e->button() == Qt::LeftButton) {
-        RDSurfacePosition p = this->get_surface_coords(e->position());
-        if(rdsurface_selectword(m_surface, p.row, p.col))
-            this->viewport()->update();
+        if(!this->follow_under_cursor()) {
+            RDSurfacePosition p = this->get_surface_coords(e->position());
+            if(rdsurface_selectword(m_surface, p.row, p.col))
+                this->viewport()->update();
+        }
     }
 
     QAbstractScrollArea::mouseDoubleClickEvent(e);
@@ -299,6 +301,17 @@ size_t SurfaceWidget::get_surface_index() const {
 
 size_t SurfaceWidget::get_listing_length() const {
     return rdlisting_getlength();
+}
+
+bool SurfaceWidget::follow_under_cursor() {
+    RDAddress address;
+
+    if(rdsurface_getaddressundercursor(m_surface, &address)) {
+        this->jump_to(address);
+        return true;
+    }
+
+    return false;
 }
 
 void SurfaceWidget::create_context_menu() {

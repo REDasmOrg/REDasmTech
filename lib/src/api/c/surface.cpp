@@ -3,6 +3,11 @@
 
 RDSurface* rdsurface_new() { return redasm::api::internal::surface_new(); }
 
+bool rdsurface_getaddressundercursor(const RDSurface* self,
+                                     RDAddress* address) {
+    return redasm::api::internal::surface_getaddressundercursor(self, address);
+}
+
 void rdsurface_render(RDSurface* self, usize start, usize n) {
     redasm::api::internal::surface_render(self, start, n);
 }

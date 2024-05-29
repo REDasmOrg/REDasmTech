@@ -46,12 +46,16 @@ struct Database {
     void set_name(usize idx, const std::string& name,
                   usize ns = AddressDetail::LABEL);
 
-    std::string get_name(usize idx, usize ns = AddressDetail::LABEL) const;
+    [[nodiscard]] std::string get_name(usize idx,
+                                       usize ns = AddressDetail::LABEL) const;
+
+    [[nodiscard]] tl::optional<usize> get_index(const std::string& name) const;
     AddressDetail& get_detail(usize idx);
     const AddressDetail& get_detail(usize idx) const;
 
 private:
     std::unordered_map<usize, AddressDetail> m_indexdb;
+    std::unordered_map<std::string, usize> m_names;
 };
 
 } // namespace redasm
