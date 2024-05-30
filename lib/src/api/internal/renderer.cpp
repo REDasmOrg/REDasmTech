@@ -40,8 +40,8 @@ void renderer_reference(RDRenderer* self, RDAddress address) {
             api::from_c(self)->chunk(name, THEME_ADDRESS);
         })
         .or_else([&]() {
-            api::from_c(self)->chunk(state::context->to_hex(address),
-                                     THEME_ADDRESS);
+            api::from_c(self)->chunk(state::context->to_hex(address, -1),
+                                     THEME_CONSTANT);
         });
 }
 

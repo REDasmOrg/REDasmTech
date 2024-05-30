@@ -28,6 +28,6 @@ enum RDByteFlags {
 REDASM_EXPORT bool rdbyte_isunknown(RDByte self);
 REDASM_EXPORT bool rdbyte_iscode(RDByte self);
 REDASM_EXPORT bool rdbyte_isdata(RDByte self);
-REDASM_EXPORT bool rdbyte_has(RDByte self, RDByteFlags f);
+REDASM_EXPORT bool rdbyte_has(RDByte self, usize f);
 REDASM_EXPORT bool rdbyte_hasbyte(RDByte self);
 REDASM_EXPORT bool rdbyte_getbyte(RDByte self, u8* b);

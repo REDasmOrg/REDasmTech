@@ -30,15 +30,8 @@ void link_next(usize idx, RDAddress nextaddress) {
 
 } // namespace
 
-void Emulator::enqueue(RDAddress address) {
-    if(state::context->is_address(address))
-        m_pending.push_front(address);
-}
-
-void Emulator::schedule(RDAddress address) {
-    if(state::context->is_address(address))
-        m_pending.push_back(address);
-}
+void Emulator::enqueue(RDAddress address) { m_pending.push_front(address); }
+void Emulator::schedule(RDAddress address) { m_pending.push_back(address); }
 
 tl::optional<RDAddress> Emulator::decode(EmulateResult&& r) {
     if(!state::context->is_address(r.address))

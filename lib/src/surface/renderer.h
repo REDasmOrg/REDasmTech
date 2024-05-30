@@ -2,6 +2,7 @@
 
 #include "../listing.h"
 #include "../segment.h"
+#include <redasm/renderer.h>
 #include <redasm/surface.h>
 #include <redasm/theme.h>
 #include <string>

@@ -163,9 +163,6 @@ void MainWindow::show_context_view(bool candisassemble) {
     QDir::setCurrent(fi.path());
     this->setWindowTitle(fi.fileName());
 
-    REDasmSettings settings;
-    settings.update_recent_files(m_filepath);
-    this->load_recents();
     this->replace_view(new ContextView());
     this->enable_context_actions(true);
 }
@@ -226,6 +223,10 @@ void MainWindow::open_file(const QString& filepath) {
     RDBuffer* buffer = rd_loadfile(qUtf8Printable(m_filepath));
     if(!buffer)
         return;
+
+    REDasmSettings settings;
+    settings.update_recent_files(m_filepath);
+    this->load_recents();
 
     auto* dlgloader = new LoaderDialog(buffer, this);
 

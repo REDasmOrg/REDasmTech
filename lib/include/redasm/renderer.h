@@ -1,5 +1,6 @@
 #pragma once
 
+#include <redasm/byte.h>
 #include <redasm/theme.h>
 #include <redasm/types.h>
 
@@ -8,6 +9,7 @@ RD_HANDLE(RDRenderer);
 typedef struct RDRendererParams {
     RDRenderer* renderer;
     RDAddress address;
+    RDByte byte;
 
     union {
         usize segment_index;

@@ -55,7 +55,7 @@ public:
         return this->baseaddress + memory->size();
     }
 
-    [[nodiscard]] std::string to_hex(usize v, usize n = 0) const;
+    [[nodiscard]] std::string to_hex(usize v, int n = 0) const;
     void build_listing();
 
 private:
@@ -66,7 +66,7 @@ private:
     usize process_listing_type(usize& idx, const typing::ParsedType& pt);
 
 public:
-    usize bits{}, minstring{DEFAULT_MIN_STRING};
+    int bits{}, minstring{DEFAULT_MIN_STRING};
     std::unordered_set<const RDAnalyzer*> selectedanalyzers;
     std::vector<std::string> availableprocessors;
     std::vector<std::pair<usize, std::string>> collectedtypes;
@@ -82,7 +82,7 @@ public:
     std::shared_ptr<AbstractBuffer> file;
 
 private:
-    mutable usize m_nchars{0};
+    mutable int m_nchars{0};
 };
 
 } // namespace redasm

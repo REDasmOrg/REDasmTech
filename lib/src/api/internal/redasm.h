@@ -58,8 +58,8 @@ tl::optional<typing::Value> set_type_as(RDAddress address,
                                         const std::string& dbname);
 
 bool set_name(RDAddress address, const std::string& name);
-bool set_export(RDAddress address, const std::string& name);
-bool set_import(RDAddress address, const std::string& name);
+bool set_export(RDAddress address);
+bool set_import(RDAddress address);
 bool set_function_as(RDAddress address, const std::string& name);
 bool set_function(RDAddress address);
 

@@ -75,8 +75,8 @@ def read_exports(pe):
         redasm.set_type(nameva, "str")
 
     functions = redasm.set_type(
-        functionsva, f"u32[{exporttable.NumberOfFunctions}]")
-    names = redasm.set_type(namesva, f"u32[{exporttable.NumberOfNames}]")
+        functionsva, f"u32^[{exporttable.NumberOfFunctions}]")
+    names = redasm.set_type(namesva, f"u32^[{exporttable.NumberOfNames}]")
     ordinals = redasm.set_type(ordinalsva, f"u16[{exporttable.NumberOfNames}]")
 
     for i, f in enumerate(functions):
@@ -84,19 +84,23 @@ def read_exports(pe):
             continue
 
         nameaddr = None
+        ordinal = None
 
-        for j, ordinal in enumerate(ordinals):
-            if ordinal == i:
+        for j, ord in enumerate(ordinals):
+            if ord == i:
                 nameaddr = PE.rva_to_va(pe, names[j])
+                ordinal = exporttable.Base + ord
                 break
 
-        # ep = pe.optionalheader.ImageBase + f
-
         if nameaddr:
-            redasm.set_type(nameaddr, "str")
+            name = redasm.set_type(nameaddr, "str")
         else:
-            pass
-            # TODO: Ordinals
+            name = f"Ordinal__{redasm.to_hex(ordinal, 4)}"
+
+        ep = pe.optionalheader.ImageBase + f
+        redasm.set_function_as(ep, name)
+        redasm.set_export(ep)
+        redasm.enqueue(ep)
 
 
 def read_imports(pe):
@@ -111,7 +115,7 @@ def read_imports(pe):
     ORDINAL_FLAG = PEH.IMAGE_ORDINAL_FLAG32 if pe.bits == 32 else PEH.IMAGE_ORDINAL_FLAG64
     entry = redasm.set_type(va, "IMAGE_IMPORT_DESCRIPTOR")
 
-    while entry and (entry.OriginalFirstThunk != 0 or entry.FirstThunk != 0):
+    while entry and (entry.FirstThunk != 0 or entry.OriginalFirstThunk != 0):
         moduleva = PE.rva_to_va(pe, entry.Name)
 
         if moduleva:
@@ -147,6 +151,36 @@ def read_imports(pe):
 
         va = va + redasm.size_of("IMAGE_IMPORT_DESCRIPTOR")
         entry = redasm.set_type(va, "IMAGE_IMPORT_DESCRIPTOR")
+
+
+def read_exceptions(pe):
+    entry = pe.optionalheader.DataDirectory[PEH.IMAGE_DIRECTORY_ENTRY_EXCEPTION]
+    if entry.VirtualAddress == 0:
+        return
+
+    va = PE.rva_to_va(pe, entry.VirtualAddress)
+    if not va:
+        return
+
+    n = int(entry.Size / redasm.size_of("IMAGE_RUNTIME_FUNCTION_ENTRY"))
+    entries = redasm.set_type(va, f"IMAGE_RUNTIME_FUNCTION_ENTRY[{n}]")
+
+    for e in entries:
+        if e.UnwindInfoAddress & 1:
+            continue
+
+        va = pe.optionalheader.ImageBase + e.BeginAddress
+
+        unwindva = PE.rva_to_va(pe, e.UnwindInfoAddress)
+        if not unwindva:
+            continue
+
+        unwindinfo = redasm.set_type(unwindva, "UNWIND_INFO")
+        flags = unwindinfo.VersionAndFlags >> 3
+
+        if unwindinfo and not (flags & PEH.UNW_FLAG_CHAININFO):
+            redasm.set_function(va)
+            redasm.enqueue(va)
 
 
 def select_processor(pe):
@@ -198,6 +232,7 @@ def init():
 
     read_exports(pe)
     read_imports(pe)
+    read_exceptions(pe)
     select_processor(pe)
 
     ep = imagebase + pe.optionalheader.AddressOfEntryPoint

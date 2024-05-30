@@ -29,7 +29,7 @@ constexpr std::array<char, 16> INTHEX_TABLE = {'0', '1', '2', '3', '4', '5',
                                                '6', '7', '8', '9', 'A', 'B',
                                                'C', 'D', 'E', 'F'};
 
-usize calculate_bits(RDAddress address) {
+int calculate_bits(RDAddress address) {
     if(address <= std::numeric_limits<u8>::max())
         return 8;
     if(address <= std::numeric_limits<u16>::max())
@@ -199,7 +199,6 @@ void Context::map_segment(const std::string& name, usize idx, usize endidx,
 }
 
 std::string Context::get_name(usize idx) const {
-
     Byte b = this->memory->at(idx);
     std::string name;
 
@@ -251,11 +250,13 @@ void Context::set_name(usize idx, const std::string& name) {
         this->database.set_name(idx, name, AddressDetail::LABEL);
 }
 
-std::string Context::to_hex(usize v, usize n) const {
+std::string Context::to_hex(usize v, int n) const {
     if(!m_nchars)
         m_nchars = (this->bits / CHAR_BIT) * 2;
 
-    if(!n)
+    if(n == -1)
+        n = 0;
+    else if(!n)
         n = m_nchars;
 
     std::string hexstr;
@@ -269,7 +270,7 @@ std::string Context::to_hex(usize v, usize n) const {
 
     if(hexstr.empty())
         hexstr = "0";
-    while(hexstr.size() < n)
+    while(hexstr.size() < static_cast<usize>(n))
         hexstr.insert(0, 1, '0');
     return hexstr;
 }

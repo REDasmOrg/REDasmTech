@@ -57,5 +57,12 @@ def register_common_types():
     redasm.create_struct("IMAGE_NT_HEADERS", PEH.IMAGE_NT_HEADERS)
     redasm.create_struct("IMAGE_SECTION_HEADER", PEH.IMAGE_SECTION_HEADER)
     redasm.create_struct("IMAGE_EXPORT_DIRECTORY", PEH.IMAGE_EXPORT_DIRECTORY)
+
     redasm.create_struct("IMAGE_IMPORT_DESCRIPTOR",
                          PEH.IMAGE_IMPORT_DESCRIPTOR)
+
+    redasm.create_struct("IMAGE_RUNTIME_FUNCTION_ENTRY",
+                         PEH.IMAGE_RUNTIME_FUNCTION_ENTRY)
+
+    redasm.create_struct("UNWIND_INFO",
+                         PEH.UNWIND_INFO)

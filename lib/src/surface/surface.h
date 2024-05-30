@@ -4,6 +4,7 @@
 #include "../utils/object.h"
 #include "renderer.h"
 #include <memory>
+#include <redasm/renderer.h>
 #include <string>
 
 namespace redasm {
@@ -29,6 +30,7 @@ public:
     void seek(usize index);
 
 private:
+    RDRendererParams create_render_params(const ListingItem& item) const;
     void render_hexdump(const ListingItem& item);
     void render_branch(const ListingItem& item);
     void render_segment(const ListingItem& item);

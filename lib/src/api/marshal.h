@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../memory/byte.h"
 #include <redasm/redasm.h>
 
 namespace redasm {
@@ -12,6 +13,8 @@ class Context;
 class Surface;
 
 namespace api {
+
+inline Byte from_c(RDByte arg) { return Byte{arg}; }
 
 inline const EmulateResult* from_c(const RDEmulateResult* arg) {
     return reinterpret_cast<const EmulateResult*>(arg);
@@ -56,6 +59,8 @@ inline AbstractBuffer* from_c(RDBuffer* arg) {
 inline RDEmulateResult* from_c(EmulateResult* arg) {
     return reinterpret_cast<RDEmulateResult*>(arg);
 }
+
+inline RDByte to_c(Byte arg) { return arg.value; }
 
 inline RDRenderer* to_c(Renderer* arg) {
     return reinterpret_cast<RDRenderer*>(arg);

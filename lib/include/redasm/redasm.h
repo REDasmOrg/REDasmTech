@@ -44,7 +44,7 @@ struct RDMemoryInfo {
     };
 
     usize size;
-    usize bits;
+    int bits;
 };
 
 enum RDSegmentType {

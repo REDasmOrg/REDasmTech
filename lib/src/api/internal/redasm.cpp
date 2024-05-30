@@ -421,13 +421,25 @@ bool set_name(RDAddress address, const std::string& name) {
     return true;
 }
 
-bool set_export(RDAddress address, const std::string& name) {
-    spdlog::trace("set_export({:x}, '{}')", address, name);
+bool set_export(RDAddress address) {
+    spdlog::trace("set_export({:x})", address);
+
+    if(auto idx = state::context->address_to_index(address); idx) {
+        state::context->memory->at(*idx).set(BF_EXPORT);
+        return true;
+    }
+
     return false;
 }
 
-bool set_import(RDAddress address, const std::string& name) {
-    spdlog::trace("set_import({:x}, '{}')", address, name);
+bool set_import(RDAddress address) {
+    spdlog::trace("set_import({:x})", address);
+
+    if(auto idx = state::context->address_to_index(address); idx) {
+        state::context->memory->at(*idx).set(BF_IMPORT);
+        return true;
+    }
+
     return false;
 }
 
@@ -435,11 +447,18 @@ bool set_function_as(RDAddress address, const std::string& name) {
     spdlog::trace("set_function_as({:x}, '{}')", address, name);
 
     if(auto idx = state::context->address_to_index(address); idx) {
-        state::context->memory->at(*idx).set(BF_FUNCTION);
-        state::context->set_name(*idx, name);
+        const Segment* s = state::context->index_to_segment(*idx);
+
+        if(s && s->type & SEGMENTTYPE_HASCODE) {
+            state::context->memory->at(*idx).set(BF_FUNCTION);
+            state::context->set_name(*idx, name);
+            return true;
+        }
+
+        spdlog::warn("Address {} is not in code segment", address);
     }
 
-    return true;
+    return false;
 }
 
 bool set_function(RDAddress address) {

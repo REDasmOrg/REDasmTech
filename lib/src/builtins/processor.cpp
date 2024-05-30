@@ -1,4 +1,5 @@
 #include "processor.h"
+#include "../api/internal/byte.h"
 #include "../api/internal/processor.h"
 #include "../api/internal/redasm.h"
 #include "../api/internal/renderer.h"
@@ -20,7 +21,7 @@ bool render_segment(const RDRendererParams* rp) {
     std::string end = api::internal::to_hex(seg.endaddress);
 
     std::string s =
-        fmt::format("SEGMENT {} (START: {}, END: {})", seg.name, start, end);
+        fmt::format("segment {} (start: {}, end: {})", seg.name, start, end);
 
     api::internal::renderer_themed(rp->renderer, s, THEME_SEGMENT);
     return true;
@@ -31,7 +32,13 @@ bool render_function(const RDRendererParams* rp) {
     if(n.empty())
         n = "???";
 
-    std::string s = fmt::format("FUNCTION {}", n);
+    std::string s;
+
+    if(api::internal::byte_has(rp->byte, BF_EXPORT))
+        s = fmt::format("export function {}()", n);
+    else
+        s = fmt::format("function {}()", n);
+
     api::internal::renderer_themed(rp->renderer, s, THEME_FUNCTION);
     return true;
 }

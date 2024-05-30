@@ -154,7 +154,7 @@ IMAGE_OPTIONAL_HEADER64 = (
     ("u32",                      "SizeOfCode"),
     ("u32",                      "SizeOfInitializedData"),
     ("u32",                      "SizeOfUninitializedData"),
-    ("u32",                      "AddressOfEntryPoint"),
+    ("u32^",                     "AddressOfEntryPoint"),
     ("u32",                      "BaseOfCode"),
     ("u64",                      "ImageBase"),
     ("u32",                      "SectionAlignment"),
@@ -213,4 +213,17 @@ IMAGE_IMPORT_DESCRIPTOR = (
     ("u32", "ForwarderChain"),
     ("u32^", "Name"),
     ("u32^", "FirstThunk"),
+)
+
+IMAGE_RUNTIME_FUNCTION_ENTRY = (
+    ("u32^", "BeginAddress"),
+    ("u32", "EndAddress"),
+    ("u32", "UnwindInfoAddress"),
+)
+
+UNWIND_INFO = (
+    ("u8", "VersionAndFlags"),
+    ("u8", "SizeOfProlog"),
+    ("u8", "CountOfCodes"),
+    ("u8", "FrameRegisterAndOffset"),
 )

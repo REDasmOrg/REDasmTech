@@ -246,6 +246,14 @@ bool Surface::has_selection() const {
     return (m_row != m_selrow) || (m_col != m_selcol);
 }
 
+RDRendererParams Surface::create_render_params(const ListingItem& item) const {
+    RDRendererParams rp{};
+    rp.renderer = api::to_c(m_renderer.get());
+    rp.address = m_renderer->current_address();
+    rp.byte = state::context->memory->at(item.index).value;
+    return rp;
+}
+
 void Surface::render_hexdump(const ListingItem& item) {
     static constexpr usize HEX_WIDTH = 16;
 
@@ -296,9 +304,7 @@ void Surface::render_segment(const ListingItem& item) {
     const Database& db = state::context->database;
     const AddressDetail& d = db.get_detail(item.index);
 
-    RDRendererParams rp{};
-    rp.renderer = api::to_c(m_renderer.get());
-    rp.address = m_renderer->current_address();
+    RDRendererParams rp = this->create_render_params(item);
     rp.segment_index = d.segment_index;
 
     const RDProcessor* p = state::context->processor;
@@ -314,9 +320,7 @@ void Surface::render_function(const ListingItem& item) {
     const RDProcessor* p = state::context->processor;
     assume(p);
 
-    RDRendererParams rp{};
-    rp.renderer = api::to_c(m_renderer.get());
-    rp.address = m_renderer->current_address();
+    RDRendererParams rp = this->create_render_params(item);
 
     if(!p->renderfunction || !p->renderfunction(p, &rp))
         assume(builtins::processor::render_function(&rp));
@@ -447,10 +451,7 @@ void Surface::render_type(const ListingItem& item) {
 void Surface::render_code(const ListingItem& item) {
     m_renderer->new_row(item);
 
-    RDRendererParams rp{};
-    rp.renderer = api::to_c(m_renderer.get());
-    rp.address = m_renderer->current_address();
-
+    RDRendererParams rp = this->create_render_params(item);
     const RDProcessor* p = state::context->processor;
     assume(p);
 
