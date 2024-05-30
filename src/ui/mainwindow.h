@@ -13,12 +13,14 @@ namespace ui {
 struct MainWindow {
     QStatusBar* statusbar;
     QStackedWidget* stackwidget;
-    QAction *actfileopen, *actfileclose, *actfileexit;
-    QAction *actviewmemorymap, *actviewsegments, *actviewstrings;
-    QAction *acttoolsflc, *acttoolssettings;
-    QAction *actedit, *actview, *acttools;
     QMenu *mnufile, *mnuedit, *mnuview, *mnutools, *mnuhelp;
     QMenu* mnurecents;
+    QAction *actfileopen, *actfileclose, *actfileexit;
+    QAction *acttoolsflc, *acttoolssettings;
+    QAction *actedit, *actview, *acttools;
+    QAction *actviewmemorymap, *actviewsegments, *actviewstrings,
+        *actviewimports, *actviewexports;
+    QAction* acttbseparator;
 
     explicit MainWindow(QMainWindow* self) {
         self->setAcceptDrops(true);
@@ -67,13 +69,25 @@ struct MainWindow {
             "S&egments", QKeySequence{Qt::CTRL | Qt::SHIFT | Qt::Key_S});
 
         this->actviewstrings = this->mnuview->addAction(
-            "&Strings", QKeySequence{Qt::CTRL | Qt::Key_S});
+            FA_ICON(0xf031), "&Strings", QKeySequence{Qt::CTRL | Qt::Key_S});
+
+        this->mnuview->addSeparator();
+
+        this->actviewexports = this->mnuview->addAction(
+            FA_ICON(0xf56e), "&Exports", QKeySequence{Qt::CTRL | Qt::Key_E});
+
+        this->actviewimports = this->mnuview->addAction(
+            FA_ICON(0xf56f), "&Imports", QKeySequence{Qt::CTRL | Qt::Key_I});
 
         auto* toolbar = new QToolBar(self);
         toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         toolbar->setFloatable(false);
         toolbar->setMovable(false);
         toolbar->addAction(this->actfileopen);
+        this->acttbseparator = toolbar->addSeparator();
+        toolbar->addAction(this->actviewexports);
+        toolbar->addAction(this->actviewimports);
+        toolbar->addAction(this->actviewstrings);
         self->addToolBar(toolbar);
 
         self->setMenuBar(menubar);

@@ -5,6 +5,8 @@
 #include "dialogs/loaderdialog.h"
 #include "dialogs/memorymapdialog.h"
 #include "dialogs/tabledialog.h"
+#include "models/exportsmodel.h"
+#include "models/importsmodel.h"
 #include "models/segmentsmodel.h"
 #include "models/symbolsfiltermodel.h"
 #include "models/symbolsmodel.h"
@@ -52,6 +54,10 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
             &MainWindow::show_segments);
     connect(m_ui.actviewstrings, &QAction::triggered, this,
             &MainWindow::show_strings);
+    connect(m_ui.actviewexports, &QAction::triggered, this,
+            &MainWindow::show_exports);
+    connect(m_ui.actviewimports, &QAction::triggered, this,
+            &MainWindow::show_imports);
 
     connect(m_ui.actviewmemorymap, &QAction::triggered, this, [&]() {
         auto* dlgmemorymap = new MemoryMapDialog(this);
@@ -212,6 +218,11 @@ void MainWindow::enable_context_actions(bool e) { // NOLINT
     m_ui.actview->setVisible(e);
     m_ui.acttools->setVisible(e);
     m_ui.acttoolsflc->setVisible(e);
+
+    m_ui.acttbseparator->setVisible(e);
+    m_ui.actviewexports->setVisible(e);
+    m_ui.actviewimports->setVisible(e);
+    m_ui.actviewstrings->setVisible(e);
 }
 
 void MainWindow::open_file(const QString& filepath) {
@@ -290,6 +301,42 @@ void MainWindow::show_strings() {
 
     dlg->hide_column(1);
     dlg->set_model(new SymbolsFilterModel(SYMBOL_STRING, dlg));
+    dlg->show();
+}
+
+void MainWindow::show_exports() {
+    auto* dlg = new TableDialog("Exports", this);
+
+    connect(dlg, &TableDialog::double_clicked, this,
+            [&, dlg](const QModelIndex& index) {
+                ContextView* ctxview = this->context_view();
+                if(!ctxview)
+                    return;
+
+                auto* m = static_cast<ExportsModel*>(dlg->model());
+                ctxview->surface_view()->jump_to(m->address(index));
+                dlg->accept();
+            });
+
+    dlg->set_model(new ExportsModel(dlg));
+    dlg->show();
+}
+
+void MainWindow::show_imports() {
+    auto* dlg = new TableDialog("Imports", this);
+
+    connect(dlg, &TableDialog::double_clicked, this,
+            [&, dlg](const QModelIndex& index) {
+                ContextView* ctxview = this->context_view();
+                if(!ctxview)
+                    return;
+
+                auto* m = static_cast<ImportsModel*>(dlg->model());
+                ctxview->surface_view()->jump_to(m->address(index));
+                dlg->accept();
+            });
+
+    dlg->set_model(new ImportsModel(dlg));
     dlg->show();
 }
 

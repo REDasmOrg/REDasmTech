@@ -20,6 +20,22 @@ usize rdlisting_getsymbolslength() {
     return redasm::api::internal::listing_getsymbolslength();
 }
 
+bool rdlisting_getimport(usize idx, RDSymbol* symbol) {
+    return redasm::api::internal::listing_getimport(idx, symbol);
+}
+
+usize rdlisting_getimportslength() {
+    return redasm::api::internal::listing_getimportslength();
+}
+
+bool rdlisting_getexport(usize idx, RDSymbol* symbol) {
+    return redasm::api::internal::listing_getexport(idx, symbol);
+}
+
+usize rdlisting_getexportslength() {
+    return redasm::api::internal::listing_getexportslength();
+}
+
 usize rdlisting_getlength() {
     return redasm::api::internal::listing_getlength();
 }

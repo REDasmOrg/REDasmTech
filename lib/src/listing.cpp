@@ -1,5 +1,7 @@
 #include "listing.h"
+#include "context.h"
 #include "error.h"
+#include "state.h"
 #include <algorithm>
 #include <utility>
 
@@ -25,6 +27,8 @@ Listing::ConstIterator Listing::upper_bound(usize idx,
 
 void Listing::clear() {
     m_symbols.clear();
+    m_imports.clear();
+    m_exports.clear();
     m_items.clear();
     m_fieldindex.clear();
     m_currtype.clear();
@@ -74,45 +78,51 @@ void Listing::pop_type() {
 }
 
 usize Listing::type(usize index, const typing::ParsedType& pt) {
-    usize idx = this->push_item(ListingItemType::TYPE, index);
-    m_items[idx].parsed_type = pt;
+    usize lidx = this->push_item(ListingItemType::TYPE, index);
+    m_items[lidx].parsed_type = pt;
 
-    if(!m_items[idx].parsed_type_context)
-        m_items[idx].parsed_type_context = m_items[idx].parsed_type;
+    if(!m_items[lidx].parsed_type_context)
+        m_items[lidx].parsed_type_context = m_items[lidx].parsed_type;
 
     if(!this->field_index() && !this->current_type())
-        m_symbols.push_back(idx);
+        m_symbols.push_back(lidx);
 
-    return idx;
+    this->check_flags(lidx, index);
+    return lidx;
 }
 
 usize Listing::array(usize index, const typing::ParsedType& pt) {
-    usize idx = this->push_item(ListingItemType::ARRAY, index);
-    m_items[idx].parsed_type = pt;
+    usize lidx = this->push_item(ListingItemType::ARRAY, index);
+    m_items[lidx].parsed_type = pt;
 
-    if(!m_items[idx].parsed_type_context)
-        m_items[idx].parsed_type_context = m_items[idx].parsed_type;
+    if(!m_items[lidx].parsed_type_context)
+        m_items[lidx].parsed_type_context = m_items[lidx].parsed_type;
 
     if(!this->field_index() && !this->current_type())
-        m_symbols.push_back(idx);
+        m_symbols.push_back(lidx);
 
+    return lidx;
+}
+
+usize Listing::code(usize index) {
+    return this->push_item(ListingItemType::CODE, index);
+}
+
+usize Listing::branch(usize index) {
+    return this->push_item(ListingItemType::BRANCH, index);
+}
+
+usize Listing::function(usize index) {
+    usize lidx = this->push_item(ListingItemType::FUNCTION, index);
+    m_symbols.push_back(lidx);
+    this->check_flags(lidx, index);
+    return lidx;
+}
+
+usize Listing::segment(usize index) {
+    usize idx = this->push_item(ListingItemType::SEGMENT, index);
+    m_symbols.push_back(idx);
     return idx;
-}
-
-void Listing::code(usize index) {
-    this->push_item(ListingItemType::CODE, index);
-}
-
-void Listing::branch(usize index) {
-    this->push_item(ListingItemType::BRANCH, index);
-}
-
-void Listing::function(usize index) {
-    m_symbols.push_back(this->push_item(ListingItemType::FUNCTION, index));
-}
-
-void Listing::segment(usize index) {
-    m_symbols.push_back(this->push_item(ListingItemType::SEGMENT, index));
 }
 
 void Listing::hex_dump(usize startindex, usize endindex) {
@@ -132,6 +142,15 @@ usize Listing::push_item(ListingItemType type, usize index) {
 
     m_items.push_back(li);
     return idx;
+}
+
+void Listing::check_flags(usize listingidx, usize index) {
+    Byte b = state::context->memory->at(index);
+
+    if(b.has(BF_IMPORT))
+        m_imports.push_back(listingidx);
+    else if(b.has(BF_EXPORT))
+        m_exports.push_back(listingidx);
 }
 
 } // namespace redasm

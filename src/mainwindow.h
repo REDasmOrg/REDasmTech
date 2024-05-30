@@ -21,6 +21,8 @@ private Q_SLOTS:
     void select_file();
     void show_segments();
     void show_strings();
+    void show_exports();
+    void show_imports();
     void show_welcome_view();
 
 private:

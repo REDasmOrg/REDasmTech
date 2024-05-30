@@ -144,6 +144,7 @@ def read_imports(pe):
                                 importbynameva, "u16", f"{importname}_hint")
 
                     redasm.set_type_as(currva, pe.integertype, importname)
+                    redasm.set_import(currva)
 
                     currva = currva + redasm.size_of(pe.integertype)
                     nthunks = nthunks + 1

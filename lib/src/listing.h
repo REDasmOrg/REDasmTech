@@ -72,16 +72,18 @@ public:
     }
 
     inline const IndexList& symbols() const { return m_symbols; }
+    inline const IndexList& imports() const { return m_imports; }
+    inline const IndexList& exports() const { return m_exports; }
 
     ConstIterator lower_bound(usize idx) const;
     ConstIterator upper_bound(usize idx, ConstIterator begin) const;
     void hex_dump(usize startindex, usize endindex);
     usize type(usize index, const typing::ParsedType& pt);
     usize array(usize index, const typing::ParsedType& pt);
-    void code(usize index);
-    void branch(usize index);
-    void function(usize index);
-    void segment(usize index);
+    usize code(usize index);
+    usize branch(usize index);
+    usize function(usize index);
+    usize segment(usize index);
 
 public: // State management functions
     tl::optional<usize> field_index() const;
@@ -96,11 +98,12 @@ public: // State management functions
 
 private:
     usize push_item(ListingItemType type, usize index);
+    void check_flags(usize listingidx, usize index);
 
 private:
     std::deque<usize> m_fieldindex;
     std::deque<typing::ParsedType> m_currtype;
-    IndexList m_symbols;
+    IndexList m_symbols, m_exports, m_imports;
     usize m_indent{0};
     Type m_items;
 };

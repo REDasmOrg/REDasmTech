@@ -40,6 +40,8 @@ target_sources(${PROJECT_NAME}
         src/models/segmentsmodel.cpp
         src/models/symbolsfiltermodel.cpp
         src/models/symbolsmodel.cpp
+        src/models/exportsmodel.cpp
+        src/models/importsmodel.cpp
 
         src/dialogs/flcdialog.cpp
         src/dialogs/gotodialog.cpp
