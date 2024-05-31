@@ -10,6 +10,8 @@
 #include <QTextCursor>
 #include <QTextDocument>
 
+static constexpr int SCROLL_SPEED = 3;
+
 SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
     m_surface = rdsurface_new();
 
@@ -42,7 +44,7 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
                         size_t idx = this->get_surface_index();
 
                         if(idx < this->get_listing_length()) {
-                            rdsurface_seek(m_surface, idx + 1);
+                            rdsurface_seek(m_surface, idx + SCROLL_SPEED);
                             this->viewport()->update();
                         }
                         break;
@@ -52,7 +54,7 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
                         size_t idx = this->get_surface_index();
 
                         if(idx > 0) {
-                            rdsurface_seek(m_surface, idx - 1);
+                            rdsurface_seek(m_surface, idx - SCROLL_SPEED);
                             this->viewport()->update();
                         }
                         break;

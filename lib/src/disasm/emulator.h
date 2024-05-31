@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../segment.h"
-#include "emulateresult.h"
 #include <deque>
 #include <redasm/types.h>
 #include <tl/optional.hpp>
@@ -13,11 +12,10 @@ public:
     void enqueue(RDAddress address);
     void schedule(RDAddress address);
     void next();
-    bool has_next() const;
+    [[nodiscard]] bool has_next() const;
 
 private:
-    tl::optional<RDAddress> decode(EmulateResult&& r);
-    void process_result(const EmulateResult& r);
+    tl::optional<RDAddress> decode(RDAddress address);
     const Segment* get_segment(usize idx);
 
 private:

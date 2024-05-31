@@ -5,7 +5,6 @@
 
 namespace redasm {
 
-struct EmulateResult;
 class AbstractStream;
 class AbstractBuffer;
 class Renderer;
@@ -15,14 +14,6 @@ class Surface;
 namespace api {
 
 inline Byte from_c(RDByte arg) { return Byte{arg}; }
-
-inline const EmulateResult* from_c(const RDEmulateResult* arg) {
-    return reinterpret_cast<const EmulateResult*>(arg);
-}
-
-inline EmulateResult* from_c(RDEmulateResult* arg) {
-    return reinterpret_cast<EmulateResult*>(arg);
-}
 
 inline Renderer* from_c(RDRenderer* arg) {
     return reinterpret_cast<Renderer*>(arg);
@@ -56,10 +47,6 @@ inline AbstractBuffer* from_c(RDBuffer* arg) {
     return reinterpret_cast<AbstractBuffer*>(arg);
 }
 
-inline RDEmulateResult* from_c(EmulateResult* arg) {
-    return reinterpret_cast<RDEmulateResult*>(arg);
-}
-
 inline RDByte to_c(Byte arg) { return arg.value; }
 
 inline RDRenderer* to_c(Renderer* arg) {
@@ -80,10 +67,6 @@ inline RDContext* to_c(Context* arg) {
 
 inline RDBuffer* to_c(AbstractBuffer* arg) {
     return reinterpret_cast<RDBuffer*>(arg);
-}
-
-inline RDEmulateResult* to_c(EmulateResult* arg) {
-    return reinterpret_cast<RDEmulateResult*>(arg);
 }
 
 } // namespace api

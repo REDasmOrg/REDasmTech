@@ -465,6 +465,42 @@ bool set_function(RDAddress address) {
     return internal::set_function_as(address, {});
 }
 
+bool set_branch(RDAddress address) {
+    spdlog::trace("set_branch({:x})", address);
+    const Context* ctx = state::context;
+
+    auto idx = state::context->address_to_index(address);
+    if(!idx)
+        return false;
+
+    ctx->memory->at(*idx).set(BF_BRANCH);
+    return true;
+}
+
+bool set_branchtrue(RDAddress address) {
+    spdlog::trace("set_branchtrue({:x})", address);
+    const Context* ctx = state::context;
+
+    auto idx = state::context->address_to_index(address);
+    if(!idx)
+        return false;
+
+    ctx->memory->at(*idx).set(BF_BRANCHTRUE);
+    return true;
+}
+
+bool set_branchfalse(RDAddress address) {
+    spdlog::trace("set_branchfalse({:x})", address);
+    const Context* ctx = state::context;
+
+    auto idx = state::context->address_to_index(address);
+    if(!idx)
+        return false;
+
+    ctx->memory->at(*idx).set(BF_BRANCHFALSE);
+    return true;
+}
+
 bool is_address(RDAddress address) {
     spdlog::trace("is_address({:x})", address);
     const Context* ctx = state::context;

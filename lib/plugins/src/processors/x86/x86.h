@@ -11,7 +11,7 @@ class X86Processor {
 public:
     explicit X86Processor(usize bits);
     bool render_instruction(const RDRendererParams* r);
-    void emulate(RDEmulateResult* r);
+    usize emulate(RDEmulateResult* r);
 
 private:
     [[nodiscard]] ZydisRegister get_sp() const;

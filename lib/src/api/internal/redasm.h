@@ -62,6 +62,9 @@ bool set_export(RDAddress address);
 bool set_import(RDAddress address);
 bool set_function_as(RDAddress address, const std::string& name);
 bool set_function(RDAddress address);
+bool set_branch(RDAddress address);
+bool set_branchtrue(RDAddress address);
+bool set_branchfalse(RDAddress address);
 
 bool is_address(RDAddress address);
 std::string_view address_to_segment(RDAddress address);

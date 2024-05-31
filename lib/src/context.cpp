@@ -351,13 +351,15 @@ void Context::process_listing_data(usize& idx) {
 }
 
 void Context::process_listing_code(usize& idx) {
-    if(this->memory->at(idx).has(BF_FUNCTION)) {
+    Byte b = this->memory->at(idx);
+
+    if(b.has(BF_FUNCTION)) {
         this->listing.pop_indent(2);
         this->listing.function(idx);
         this->listing.push_indent(2);
     }
 
-    if(this->memory->at(idx).has(BF_BRANCH)) {
+    if(b.has(BF_BRANCH) || b.has(BF_BRANCHTRUE)) {
         this->listing.pop_indent();
         this->listing.branch(idx);
         this->listing.push_indent();

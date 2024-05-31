@@ -105,74 +105,71 @@ bool X86Processor::render_instruction(const RDRendererParams* r) {
     return true;
 }
 
-void X86Processor::emulate(RDEmulateResult* r) {
-    RDAddress address = rdemulateresult_getaddress(r);
-    if(!this->decode(address))
-        return;
-
-    rdemulateresult_setsize(r, m_instr.length);
+usize X86Processor::emulate(RDEmulateResult* r) {
+    if(!this->decode(r->address))
+        return 0;
 
     switch(m_instr.meta.category) {
         case ZYDIS_CATEGORY_CALL: {
             bool istable = false;
-            auto addr = this->calc_address(address, 0, &istable);
+            auto addr = this->calc_address(r->address, 0, &istable);
 
             if(addr) {
                 if(istable) {
-                    /* rdemulateresult_addcalltable(r, *addr, RD_NVAL); */
                 }
-                else
-                    rdemulateresult_addcall(r, *addr);
+                else {
+                    rd_setfunction(*addr);
+                    rd_schedule(*addr);
+                }
             }
-            else
-                rdemulateresult_addcallunresolved(r);
             break;
         }
 
         case ZYDIS_CATEGORY_UNCOND_BR: {
+            r->canflow = false;
             bool istable = false;
-            auto addr = this->calc_address(address, 0, &istable);
+            auto addr = this->calc_address(r->address, 0, &istable);
 
             if(addr) {
                 if(istable) {
-                    /*rdemulateresult_addbranchtable(r, *addr, RD_NVAL); */
                 }
-                else
-                    rdemulateresult_addbranch(r, *addr);
+                else {
+                    rd_setbranch(*addr);
+                    rd_schedule(*addr);
+                }
             }
-            else
-                rdemulateresult_addbranchunresolved(r);
 
             break;
         }
 
         case ZYDIS_CATEGORY_COND_BR: {
-            auto addr = this->calc_address(address, 0);
+            auto addr = this->calc_address(r->address, 0);
+            if(addr) {
+                rd_setbranchtrue(*addr);
+                rd_schedule(*addr);
+            }
 
-            if(addr)
-                rdemulateresult_addbranchtrue(r, *addr);
-            else
-                rdemulateresult_addbranchunresolved(r);
-
-            rdemulateresult_addbranchfalse(r, address + m_instr.length);
+            rd_setbranchfalse(r->address + m_instr.length);
             break;
         }
 
         case ZYDIS_CATEGORY_SYSTEM: {
             if(m_instr.mnemonic == ZYDIS_MNEMONIC_HLT)
-                rdemulateresult_addreturn(r);
+                r->canflow = false;
             break;
         }
 
         case ZYDIS_CATEGORY_INTERRUPT: {
             if(m_instr.mnemonic == ZYDIS_MNEMONIC_INT3)
-                rdemulateresult_addreturn(r);
+                r->canflow = false;
             break;
         }
 
-        case ZYDIS_CATEGORY_RET: rdemulateresult_addreturn(r); break;
+        case ZYDIS_CATEGORY_RET: r->canflow = false; break;
         default: break;
     }
+
+    return m_instr.length;
 }
 
 std::optional<RDAddress>
@@ -222,8 +219,8 @@ bool render_instruction(const RDProcessor* self, const RDRendererParams* r) {
         ->render_instruction(r);
 }
 
-void emulate(const RDProcessor* self, RDEmulateResult* r) {
-    reinterpret_cast<X86Processor*>(self->userdata)->emulate(r);
+usize emulate(const RDProcessor* self, RDEmulateResult* r) {
+    return reinterpret_cast<X86Processor*>(self->userdata)->emulate(r);
 }
 
 RDProcessor x86_32{};

@@ -42,7 +42,6 @@ target_sources(${PROJECT_NAME_LIB}
         src/typing/typing.cpp
         src/disasm/disassembler.cpp
         src/disasm/emulator.cpp
-        src/disasm/emulateresult.cpp
         src/listing.cpp
         src/context.cpp
         src/segment.cpp
