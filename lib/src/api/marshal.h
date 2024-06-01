@@ -8,12 +8,17 @@ namespace redasm {
 class AbstractStream;
 class AbstractBuffer;
 class Renderer;
+class Emulator;
 class Context;
 class Surface;
 
 namespace api {
 
 inline Byte from_c(RDByte arg) { return Byte{arg}; }
+
+inline Emulator* from_c(RDEmulator* arg) {
+    return reinterpret_cast<Emulator*>(arg);
+}
 
 inline Renderer* from_c(RDRenderer* arg) {
     return reinterpret_cast<Renderer*>(arg);
@@ -48,6 +53,10 @@ inline AbstractBuffer* from_c(RDBuffer* arg) {
 }
 
 inline RDByte to_c(Byte arg) { return arg.value; }
+
+inline RDEmulator* to_c(Emulator* arg) {
+    return reinterpret_cast<RDEmulator*>(arg);
+}
 
 inline RDRenderer* to_c(Renderer* arg) {
     return reinterpret_cast<RDRenderer*>(arg);

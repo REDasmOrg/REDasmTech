@@ -32,7 +32,7 @@ public:
 private:
     RDRendererParams create_render_params(const ListingItem& item) const;
     void render_hexdump(const ListingItem& item);
-    void render_branch(const ListingItem& item);
+    void render_jump(const ListingItem& item);
     void render_segment(const ListingItem& item);
     void render_function(const ListingItem& item);
     void render_array(const ListingItem& item);

@@ -12,7 +12,7 @@ enum class ListingItemType {
     EMPTY = 0,
     HEX_DUMP,
     CODE,
-    BRANCH,
+    JUMP,
     SEGMENT,
     FUNCTION,
     TYPE,
@@ -81,7 +81,7 @@ public:
     usize type(usize index, const typing::ParsedType& pt);
     usize array(usize index, const typing::ParsedType& pt);
     usize code(usize index);
-    usize branch(usize index);
+    usize jump(usize index);
     usize function(usize index);
     usize segment(usize index);
 

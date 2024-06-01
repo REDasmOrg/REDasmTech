@@ -108,8 +108,8 @@ usize Listing::code(usize index) {
     return this->push_item(ListingItemType::CODE, index);
 }
 
-usize Listing::branch(usize index) {
-    return this->push_item(ListingItemType::BRANCH, index);
+usize Listing::jump(usize index) {
+    return this->push_item(ListingItemType::JUMP, index);
 }
 
 usize Listing::function(usize index) {

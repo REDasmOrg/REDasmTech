@@ -21,11 +21,6 @@ struct Byte {
         return (value & BF_UDCMASK) == BF_DATA;
     }
 
-    [[nodiscard]] inline bool is_branch() const {
-        return this->has(BF_BRANCH) || this->has(BF_BRANCHTRUE) ||
-               this->has(BF_BRANCHFALSE);
-    }
-
     [[nodiscard]] inline bool is_cont() const { return this->has(BF_CONT); }
     [[nodiscard]] inline bool has_byte() const { return this->has(BF_HASBYTE); }
     [[nodiscard]] inline bool has(u32 f) const { return value & f; }

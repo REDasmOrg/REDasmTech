@@ -429,12 +429,12 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
         name, emulate, rendersegment, renderfunction, renderinstruction,
     };
 
-    RDProcessor processor;
+    RDProcessor processor{};
     processor.name = userdata->name.c_str();
     processor.userdata = userdata;
 
-    processor.emulate = [](const RDProcessor* self,
-                           RDEmulateResult* r) -> usize {
+    processor.emulate = [](const RDProcessor* self, RDAddress address,
+                           RDEmulator* r) -> usize {
         auto* userdata = reinterpret_cast<ProcessorUserData*>(self->userdata);
         PyObject* ret = PyObject_CallNoArgs(userdata->emulate);
 

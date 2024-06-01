@@ -217,15 +217,21 @@ void discard() {
 void enqueue(RDAddress address) {
     spdlog::trace("enqueue({:x})", address);
 
-    if(state::context)
-        state::context->disassembler.emulator.enqueue(address);
+    if(!state::context)
+        return;
+
+    if(auto idx = state::context->address_to_index(address); idx)
+        state::context->disassembler.emulator.enqueue(*idx);
 }
 
 void schedule(RDAddress address) {
     spdlog::trace("schedule({:x})", address);
 
-    if(state::context)
-        state::context->disassembler.emulator.schedule(address);
+    if(!state::context)
+        return;
+
+    if(auto idx = state::context->address_to_index(address); idx)
+        state::context->disassembler.emulator.schedule(*idx);
 }
 
 void disassemble() {
@@ -425,7 +431,7 @@ bool set_export(RDAddress address) {
     spdlog::trace("set_export({:x})", address);
 
     if(auto idx = state::context->address_to_index(address); idx) {
-        state::context->memory->at(*idx).set(BF_EXPORT);
+        state::context->set_export(*idx);
         return true;
     }
 
@@ -436,7 +442,7 @@ bool set_import(RDAddress address) {
     spdlog::trace("set_import({:x})", address);
 
     if(auto idx = state::context->address_to_index(address); idx) {
-        state::context->memory->at(*idx).set(BF_IMPORT);
+        state::context->set_import(*idx);
         return true;
     }
 
@@ -446,59 +452,14 @@ bool set_import(RDAddress address) {
 bool set_function_as(RDAddress address, const std::string& name) {
     spdlog::trace("set_function_as({:x}, '{}')", address, name);
 
-    if(auto idx = state::context->address_to_index(address); idx) {
-        const Segment* s = state::context->index_to_segment(*idx);
-
-        if(s && s->type & SEGMENTTYPE_HASCODE) {
-            state::context->memory->at(*idx).set(BF_FUNCTION);
-            state::context->set_name(*idx, name);
-            return true;
-        }
-
-        spdlog::warn("Address {} is not in code segment", address);
-    }
+    if(auto idx = state::context->address_to_index(address); idx)
+        return state::context->set_function(*idx, name);
 
     return false;
 }
 
 bool set_function(RDAddress address) {
     return internal::set_function_as(address, {});
-}
-
-bool set_branch(RDAddress address) {
-    spdlog::trace("set_branch({:x})", address);
-    const Context* ctx = state::context;
-
-    auto idx = state::context->address_to_index(address);
-    if(!idx)
-        return false;
-
-    ctx->memory->at(*idx).set(BF_BRANCH);
-    return true;
-}
-
-bool set_branchtrue(RDAddress address) {
-    spdlog::trace("set_branchtrue({:x})", address);
-    const Context* ctx = state::context;
-
-    auto idx = state::context->address_to_index(address);
-    if(!idx)
-        return false;
-
-    ctx->memory->at(*idx).set(BF_BRANCHTRUE);
-    return true;
-}
-
-bool set_branchfalse(RDAddress address) {
-    spdlog::trace("set_branchfalse({:x})", address);
-    const Context* ctx = state::context;
-
-    auto idx = state::context->address_to_index(address);
-    if(!idx)
-        return false;
-
-    ctx->memory->at(*idx).set(BF_BRANCHFALSE);
-    return true;
 }
 
 bool is_address(RDAddress address) {

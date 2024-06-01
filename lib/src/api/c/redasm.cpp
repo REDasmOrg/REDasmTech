@@ -78,18 +78,6 @@ bool rd_setfunctionas(RDAddress address, const char* name) {
     return false;
 }
 
-bool rd_setbranch(RDAddress address) {
-    return redasm::api::internal::set_branch(address);
-}
-
-bool rd_setbranchtrue(RDAddress address) {
-    return redasm::api::internal::set_branchtrue(address);
-}
-
-bool rd_setbranchfalse(RDAddress address) {
-    return redasm::api::internal::set_branchfalse(address);
-}
-
 const char* rd_getname(RDAddress address) {
     static std::string res;
 

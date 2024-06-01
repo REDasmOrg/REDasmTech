@@ -8,74 +8,49 @@ namespace redasm {
 
 namespace {
 
-// void link_refs(usize idx, RDAddress refaddress) {
-//     AddressDetail& d = state::context->database.get_detail(idx);
-//
-//     state::context->address_to_index(refaddress).map([&](usize x) {
-//         auto it = std::lower_bound(d.refs.begin(), d.refs.end(), x);
-//         if(it == d.refs.end() || (*it != x))
-//             d.refs.insert(it, x);
-//     });
-// }
-
-// void link_next(usize idx, RDAddress nextaddress) {
-//     AddressDetail& d = state::context->database.get_detail(idx);
-//
-//     state::context->address_to_index(nextaddress).map([&](usize x) {
-//         auto it = std::lower_bound(d.next.begin(), d.next.end(), x);
-//         if(it == d.next.end() || (*it != x))
-//             d.next.insert(it, x);
-//     });
-// }
+void sorted_unique_insert(std::vector<usize>& v, usize idx) {
+    auto it = std::lower_bound(v.begin(), v.end(), idx);
+    if(it == v.end() || (*it != idx))
+        v.insert(it, idx);
+}
 
 } // namespace
 
-void Emulator::enqueue(RDAddress address) { m_pending.push_front(address); }
-void Emulator::schedule(RDAddress address) { m_pending.push_back(address); }
+void Emulator::enqueue(usize idx) {
+    if(idx < state::context->memory->size())
+        m_pending.push_front(idx);
+}
 
-tl::optional<RDAddress> Emulator::decode(RDAddress address) {
-    if(!state::context->is_address(address))
+void Emulator::schedule(usize idx) {
+    if(idx < state::context->memory->size())
+        m_pending.push_back(idx);
+}
+
+tl::optional<RDAddress> Emulator::decode(usize idx) {
+    const Segment* s = this->get_segment(idx);
+
+    if(!s || !(s->type & SEGMENTTYPE_HASCODE))
         return tl::nullopt;
 
-    auto idx = state::context->address_to_index(address);
-    assume(idx.has_value());
+    Context* ctx = state::context;
+    Memory* m = ctx->memory.get();
 
-    if(const Segment* s = this->get_segment(*idx);
-       !s || !(s->type & SEGMENTTYPE_HASCODE))
+    if(Byte b = m->at(idx); !b.has_byte() || !b.is_unknown())
         return tl::nullopt;
 
-    Memory* m = state::context->memory.get();
-
-    if(Byte b = m->at(*idx); !b.has_byte() || !b.is_unknown())
-        return tl::nullopt;
-
-    const RDProcessor* p = state::context->processor;
+    const RDProcessor* p = ctx->processor;
     assume(p);
 
     if(!p->emulate)
         return tl::nullopt;
 
-    RDEmulateResult r = {
-        address,
-        0,
-        true,
-    };
+    m_currindex = idx;
 
-    usize size = p->emulate(p, &r);
+    auto address = ctx->index_to_address(idx);
+    assume(address.has_value());
 
-    if(size) {
-        m->set_code(*idx, size);
-
-        if(r.delayslot) {
-            // TODO(davide): Handle delay slots
-        }
-
-        if(r.canflow) {
-            RDAddress nextaddress = address + size;
-            // link_next(*idx, nextaddress);
-            return nextaddress;
-        }
-    }
+    if(usize sz = p->emulate(p, *address, api::to_c(this)); sz)
+        m->set_code(idx, sz);
 
     return tl::nullopt;
 }
@@ -88,15 +63,77 @@ const Segment* Emulator::get_segment(usize idx) {
     return m_segment;
 }
 
+void Emulator::check_location(RDAddress address) {
+    auto idx = state::context->address_to_index(address);
+    if(!idx)
+        return;
+
+    Byte b = state::context->memory->at(*idx);
+    if(!b.is_unknown())
+        return;
+
+    const Segment* s = this->get_segment(*idx);
+    if(!s)
+        return;
+
+    if(s->type & SEGMENTTYPE_HASDATA) {
+    }
+}
+
+void Emulator::add_coderef(usize idx, usize cr) {
+    if(idx >= state::context->memory->size())
+        return;
+
+    Context* ctx = state::context;
+
+    const Segment* s = ctx->index_to_segment(idx);
+    if(!s && !(s->type & SEGMENTTYPE_HASCODE))
+        return;
+
+    AddressDetail& d = ctx->database.get_detail(idx);
+
+    switch(cr) {
+        case CR_CALL:
+            ctx->memory->at(m_currindex).set(BF_CALL);
+            ctx->memory->at(idx).set(BF_FUNCTION);
+            this->schedule(idx);
+            sorted_unique_insert(d.calls, idx);
+            break;
+
+        case CR_JUMP:
+            ctx->memory->at(m_currindex).set(BF_JUMP);
+            ctx->memory->at(idx).set(BF_JUMPDST);
+            this->schedule(idx);
+            sorted_unique_insert(d.jumps, idx);
+            break;
+
+        case CR_FLOW: {
+            ctx->memory->at(m_currindex).set(BF_FLOW);
+            this->enqueue(idx);
+            d.flow = idx;
+            return;
+        }
+
+        default: unreachable; return;
+    }
+
+    AddressDetail& refd = ctx->database.get_detail(idx);
+    sorted_unique_insert(refd.refs, m_currindex);
+    ctx->memory->at(idx).set(BF_REFS);
+}
+
+void Emulator::add_dataref(usize idx, usize dr) {
+    if(idx >= state::context->memory->size())
+        return;
+}
+
 void Emulator::next() {
     if(m_pending.empty())
         return;
 
-    RDAddress address = m_pending.front();
+    usize idx = m_pending.front();
     m_pending.pop_front();
-
-    this->decode(address).map(
-        [&](RDAddress nextaddress) { this->enqueue(nextaddress); });
+    this->decode(idx);
 }
 
 bool Emulator::has_next() const {

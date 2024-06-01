@@ -21,12 +21,6 @@ struct AddressDetail {
         COUNT,
     };
 
-    enum REF : usize {
-        REF_DATA,
-        REF_CALL,
-        REF_BRANCH,
-    };
-
     // AddressDetail(const AddressDetail&) = delete;
     // AddressDetail(AddressDetail&&) = delete;
     // AddressDetail& operator=(const AddressDetail&) = delete;
@@ -34,11 +28,12 @@ struct AddressDetail {
 
     std::string type_name;
     std::array<std::string, NS::COUNT> names;
-    std::vector<usize> refs, next;
+    std::vector<usize> refs, jumps, calls;
 
     union {
         usize segment_index;
         usize string_length;
+        usize flow;
     };
 };
 

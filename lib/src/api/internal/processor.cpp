@@ -1,9 +1,27 @@
 #include "processor.h"
 #include "../../context.h"
+#include "../../disasm/emulator.h"
 #include "../../state.h"
+#include "../marshal.h"
 #include <spdlog/spdlog.h>
 
 namespace redasm::api::internal {
+
+void emulator_addcoderef(RDEmulator* self, RDAddress address, usize cr) {
+    spdlog::trace("emulator_addcoderef({}, {:x}, {})", fmt::ptr(self), address,
+                  cr);
+
+    if(auto idx = state::context->address_to_index(address); idx)
+        api::from_c(self)->add_coderef(*idx, cr);
+}
+
+void emulator_adddataref(RDEmulator* self, RDAddress address, usize dr) {
+    spdlog::trace("emulator_adddataref({}, {:x}, {})", fmt::ptr(self), address,
+                  dr);
+
+    if(auto idx = state::context->address_to_index(address); idx)
+        api::from_c(self)->add_dataref(*idx, dr);
+}
 
 usize get_processors(const RDProcessor** processors) {
     spdlog::trace("get_processors('{}')", fmt::ptr(processors));

@@ -3,15 +3,22 @@
 #include "common.h"
 #include "renderer.h"
 
-typedef struct RDEmulateResult {
-    RDAddress address;
-    usize delayslot;
-    bool canflow;
-} RDEmulateResult;
+RD_HANDLE(RDEmulator);
+
+enum RDCodeRef {
+    CR_CALL,
+    CR_JUMP,
+    CR_FLOW,
+};
+
+REDASM_EXPORT void rdemulator_addcoderef(RDEmulator* self, RDAddress address,
+                                         usize cr);
+REDASM_EXPORT void rdemulator_adddataref(RDEmulator* self, RDAddress address,
+                                         usize dr);
 
 struct RDProcessor;
 
-typedef usize (*RDProcessorEmulate)(const RDProcessor*, RDEmulateResult*);
+typedef usize (*RDProcessorEmulate)(const RDProcessor*, RDAddress, RDEmulator*);
 typedef bool (*RDProcessorRenderSegment)(const RDProcessor*,
                                          const RDRendererParams*);
 typedef bool (*RDProcessorRenderFunction)(const RDProcessor*,

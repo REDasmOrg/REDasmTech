@@ -11,11 +11,12 @@ class X86Processor {
 public:
     explicit X86Processor(usize bits);
     bool render_instruction(const RDRendererParams* r);
-    usize emulate(RDEmulateResult* r);
+    usize emulate(RDAddress address, RDEmulator* e);
 
 private:
     [[nodiscard]] ZydisRegister get_sp() const;
     [[nodiscard]] ZydisRegister get_bp() const;
+    void process_refs(RDAddress address) const;
     bool decode(RDAddress address);
     std::optional<RDAddress> calc_address(RDAddress address, usize idx,
                                           bool* istable = nullptr) const;

@@ -23,8 +23,9 @@ public:
     static constexpr usize DEFAULT_MIN_STRING = 4;
 
     Context(const std::shared_ptr<AbstractBuffer>& b, const RDLoader* loader);
-    void set_export(usize idx, const std::string& name);
-    void set_import(usize idx, const std::string& name);
+    void set_export(usize idx);
+    void set_import(usize idx);
+    bool set_function(usize idx, const std::string& name = {});
     void memory_map(RDAddress base, usize size);
     RDAddress memory_copy(usize idx, RDOffset start, RDOffset end) const;
     tl::optional<usize> address_to_index(RDAddress address) const;

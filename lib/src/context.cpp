@@ -4,6 +4,7 @@
 #include "utils/utils.h"
 #include <climits>
 #include <limits>
+#include <redasm/redasm.h>
 
 #if !defined(__has_feature)
 #define __has_feature(x) 0
@@ -50,14 +51,29 @@ Context::Context(const std::shared_ptr<AbstractBuffer>& b, const RDLoader* l)
     this->availableprocessors.emplace_back(this->processor->name);
 }
 
-void Context::set_export(usize idx, const std::string& name) {
-    this->memory->at(idx).set(BF_NAME | BF_EXPORT);
-    this->database.set_name(idx, name);
+void Context::set_export(usize idx) { // NOLINT
+    assume(idx < this->memory->size());
+    this->memory->at(idx).set(BF_EXPORT);
 }
 
-void Context::set_import(usize idx, const std::string& name) {
-    this->memory->at(idx).set(BF_NAME | BF_IMPORT);
-    this->database.set_name(idx, name);
+void Context::set_import(usize idx) { // NOLINT
+    assume(idx < this->memory->size());
+    this->memory->at(idx).set(BF_IMPORT);
+}
+
+bool Context::set_function(usize idx, const std::string& name) {
+    const Segment* s = this->index_to_segment(idx);
+
+    if(s && s->type & SEGMENTTYPE_HASCODE) {
+        this->memory->at(idx).set(BF_FUNCTION);
+        this->set_name(idx, name);
+        return true;
+    }
+
+    auto address = this->index_to_address(idx);
+    assume(address.has_value());
+    spdlog::warn("Address {} is not in code segment", *address);
+    return false;
 }
 
 bool Context::set_type(usize idx, std::string_view tname,
@@ -359,9 +375,9 @@ void Context::process_listing_code(usize& idx) {
         this->listing.push_indent(2);
     }
 
-    if(b.has(BF_BRANCH) || b.has(BF_BRANCHTRUE)) {
+    if(b.has(BF_JUMPDST)) {
         this->listing.pop_indent();
-        this->listing.branch(idx);
+        this->listing.jump(idx);
         this->listing.push_indent();
     }
 
