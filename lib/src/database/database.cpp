@@ -38,6 +38,9 @@ tl::optional<usize> Database::get_index(const std::string& name) const {
             break;
     }
 
+    if(idx >= name.size() || name.at(idx) != '_')
+        return tl::nullopt;
+
     if(++idx < name.size()) {
         std::string_view saddr{name.data() + idx};
         return utils::to_integer<RDAddress>(saddr, 16).and_then(
