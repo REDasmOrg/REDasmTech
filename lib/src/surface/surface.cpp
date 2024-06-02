@@ -8,6 +8,8 @@ namespace redasm {
 
 namespace {
 
+constexpr usize COLUMN_PADDING = 6;
+
 template<typename T>
 std::pair<bool, std::string> surface_checkpointer(const typing::ParsedType& pt,
                                                   T v) {
@@ -83,6 +85,11 @@ void Surface::render(usize s, usize n) {
             case ListingItemType::TYPE: this->render_type(*it); break;
             case ListingItemType::ARRAY: this->render_array(*it); break;
             default: break;
+        }
+
+        if(!m_renderer->rowrefs.empty()) {
+            m_renderer->ws(COLUMN_PADDING);
+            this->render_refs();
         }
     }
 
@@ -364,42 +371,55 @@ void Surface::render_type(const ListingItem& item) {
             else
                 ch = memory->get_char(item.index);
 
-            assume(ch.has_value());
-            m_renderer->word("=").ws().quote(std::string_view{&ch.value(), 1},
-                                             "\'");
+            if(ch.has_value())
+                m_renderer->word("=").quote(std::string_view{&ch.value(), 1},
+                                            "\'");
+            else
+                m_renderer->word("=").unknown();
             break;
         }
 
         case typing::types::I8:
         case typing::types::U8: {
             auto v = memory->get_u8(item.index);
-            assume(v.has_value());
 
-            auto [isptr, val] = surface_checkpointer(*pt, *v);
-            m_renderer->word("=").chunk(val,
-                                        isptr ? THEME_ADDRESS : THEME_CONSTANT);
+            if(v.has_value()) {
+
+                auto [isptr, val] = surface_checkpointer(*pt, *v);
+                m_renderer->word("=").chunk(val, isptr ? THEME_ADDRESS
+                                                       : THEME_CONSTANT);
+            }
+            else
+                m_renderer->word("=").unknown();
             break;
         }
 
         case typing::types::I16:
         case typing::types::U16: {
             auto v = memory->get_u16(item.index, pt->type->is_big());
-            assume(v.has_value());
 
-            auto [isptr, val] = surface_checkpointer(*pt, *v);
-            m_renderer->word("=").chunk(val,
-                                        isptr ? THEME_ADDRESS : THEME_CONSTANT);
+            if(v.has_value()) {
+                auto [isptr, val] = surface_checkpointer(*pt, *v);
+
+                m_renderer->word("=").chunk(val, isptr ? THEME_ADDRESS
+                                                       : THEME_CONSTANT);
+            }
+            else
+                m_renderer->word("=").unknown();
             break;
         }
 
         case typing::types::I32:
         case typing::types::U32: {
             auto v = memory->get_u32(item.index, pt->type->is_big());
-            assume(v.has_value());
 
-            auto [isptr, val] = surface_checkpointer(*pt, *v);
-            m_renderer->word("=").chunk(val,
-                                        isptr ? THEME_ADDRESS : THEME_CONSTANT);
+            if(v.has_value()) {
+                auto [isptr, val] = surface_checkpointer(*pt, *v);
+                m_renderer->word("=").chunk(val, isptr ? THEME_ADDRESS
+                                                       : THEME_CONSTANT);
+            }
+            else
+                m_renderer->word("=").unknown();
             break;
         }
 
@@ -407,7 +427,10 @@ void Surface::render_type(const ListingItem& item) {
         case typing::types::U64: {
             auto v = memory->get_u64(item.index, pt->type->is_big());
             assume(v.has_value());
-            m_renderer->word("=").constant(state::context->to_hex(*v, 16));
+            if(v.has_value())
+                m_renderer->word("=").constant(state::context->to_hex(*v, 16));
+            else
+                m_renderer->word("=").unknown();
             break;
         }
 
@@ -420,13 +443,10 @@ void Surface::render_type(const ListingItem& item) {
             else
                 v = state::context->memory->get_string(item.index);
 
-            assume(v.has_value());
-            m_renderer->ws()
-                .chunk("\"")
-                .string(*v)
-                .chunk("\"")
-                .chunk(",")
-                .constant("0");
+            if(v.has_value())
+                m_renderer->ws().string(*v).chunk(",").constant("0");
+            else
+                m_renderer->ws().unknown();
             break;
         }
 
@@ -455,8 +475,40 @@ void Surface::render_code(const ListingItem& item) {
     const RDProcessor* p = state::context->processor;
     assume(p);
 
-    if(!p->renderinstruction || !p->renderinstruction(p, &rp))
+    if(p->renderinstruction && p->renderinstruction(p, &rp)) {
+        if(Byte b = state::context->memory->at(item.index); !b.has(BF_REFS))
+            return;
+    }
+    else
         m_renderer->chunk("???");
+}
+
+void Surface::render_comments(const ListingItem& item) {}
+
+void Surface::render_refs() {
+    const Context* ctx = state::context;
+    const Memory* mem = ctx->memory.get();
+
+    for(usize index : m_renderer->rowrefs) {
+        if(!mem->at(index).has(BF_TYPE))
+            continue;
+
+        const AddressDetail& d = ctx->database.get_detail(index);
+        auto pt = ctx->types.parse(d.type_name);
+        assume(pt.has_value());
+
+        if(!pt->type->is_str() && !pt->type->is_char())
+            continue;
+
+        if(pt->type->is_wide()) {
+            mem->get_wstring(index).map(
+                [&](const std::string& x) { m_renderer->string(x); });
+        }
+        else {
+            mem->get_string(index).map(
+                [&](const std::string& x) { m_renderer->string(x); });
+        }
+    }
 }
 
 void Surface::render_array(const ListingItem& item) {
@@ -516,7 +568,7 @@ void Surface::render_array(const ListingItem& item) {
         if(item.array_index)
             m_renderer->arr_index(*item.array_index);
 
-        m_renderer->word("=").string(chars);
+        m_renderer->word("=").string(chars, false);
     }
 }
 

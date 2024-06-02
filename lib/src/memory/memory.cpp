@@ -15,7 +15,10 @@ tl::optional<u8> Memory::get_byte(usize idx) const {
 }
 
 void Memory::set_unknown(usize idx, usize len) {
-    this->set(idx, len, BF_UNKNOWN);
+    usize endlen = std::min(idx + len, m_buffer.size());
+
+    for(usize i = idx; i < endlen; i++)
+        m_buffer[i].value &= BF_BYTEVMASK;
 }
 
 void Memory::set_data(usize idx, usize len) { this->set(idx, len, BF_DATA); }

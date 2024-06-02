@@ -38,6 +38,8 @@ private:
     void render_array(const ListingItem& item);
     void render_type(const ListingItem& item);
     void render_code(const ListingItem& item);
+    void render_comments(const ListingItem& item);
+    void render_refs();
     void fit(usize& row, usize& col);
     void clear_selection();
 

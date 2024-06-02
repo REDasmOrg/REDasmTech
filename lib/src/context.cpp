@@ -78,6 +78,11 @@ bool Context::set_function(usize idx, const std::string& name) {
 
 bool Context::set_type(usize idx, std::string_view tname,
                        const std::string& dbname) {
+    assume(idx < this->memory->size());
+
+    if(!this->memory->at(idx).is_unknown())
+        return false;
+
     auto pt = this->types.parse(tname);
 
     if(!pt) {

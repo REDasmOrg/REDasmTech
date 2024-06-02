@@ -113,6 +113,7 @@ void Renderer::set_current_item(const ListingItem& item) {
 }
 
 Renderer& Renderer::new_row(const ListingItem& item) {
+    this->rowrefs.clear();
     m_rows.emplace_back();
 
     if(this->columns)

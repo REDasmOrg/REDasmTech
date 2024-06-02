@@ -1,8 +1,9 @@
 #include "emulator.h"
 #include "../api/marshal.h"
 #include "../context.h"
+#include "../memory/stringfinder.h"
 #include "../state.h"
-// #include <algorithm>
+#include <algorithm>
 
 namespace redasm {
 
@@ -125,6 +126,16 @@ void Emulator::add_coderef(usize idx, usize cr) {
 void Emulator::add_dataref(usize idx, usize dr) {
     if(idx >= state::context->memory->size())
         return;
+
+    Context* ctx = state::context;
+
+    stringfinder::classify(idx).map([idx, ctx](const RDStringResult& x) {
+        ctx->memory->set_unknown(idx, x.totalsize);
+        ctx->set_type(idx, x.type);
+    });
+
+    AddressDetail& refd = ctx->database.get_detail(idx);
+    sorted_unique_insert(refd.refs, m_currindex);
 }
 
 void Emulator::next() {

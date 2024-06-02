@@ -37,6 +37,7 @@ void renderer_reference(RDRenderer* self, RDAddress address) {
     state::context->address_to_index(address)
         .map([self](usize idx) {
             std::string name = state::context->get_name(idx);
+            api::from_c(self)->rowrefs.push_back(idx);
             api::from_c(self)->chunk(name, THEME_ADDRESS);
         })
         .or_else([&]() {

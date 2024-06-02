@@ -29,6 +29,7 @@ struct AddressDetail {
     std::string type_name;
     std::array<std::string, NS::COUNT> names;
     std::vector<usize> refs, jumps, calls;
+    std::vector<std::string> comments;
 
     union {
         usize segment_index;

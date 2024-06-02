@@ -48,12 +48,24 @@ struct Renderer {
         return this->chunk(arg, THEME_NOP);
     }
 
+    inline Renderer& unknown() { return this->nop("?"); }
+
+    inline Renderer& comment(std::string_view arg) {
+        return this->chunk(arg, THEME_COMMENT);
+    }
+
     inline Renderer& constant(std::string_view arg) {
         return this->chunk(arg, THEME_CONSTANT);
     }
 
-    inline Renderer& string(std::string_view arg) {
-        return this->chunk(arg, THEME_STRING);
+    inline Renderer& string(std::string_view arg, bool quoted = true) {
+        if(quoted)
+            this->chunk("\"", THEME_STRING);
+        this->chunk(arg, THEME_STRING);
+        if(quoted)
+            this->chunk("\"", THEME_STRING);
+
+        return *this;
     }
 
     inline Renderer& type(std::string_view arg) {
@@ -79,6 +91,7 @@ struct Renderer {
     static bool is_char_skippable(char ch);
 
 public:
+    std::vector<usize> rowrefs;
     usize columns{0};
 
 private:

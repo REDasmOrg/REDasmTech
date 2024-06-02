@@ -67,6 +67,13 @@ void rd_select(RDContext* context) { redasm::api::internal::select(context); }
 bool rd_destroy(void) { return redasm::api::internal::destroy(); }
 void rd_discard(void) { redasm::api::internal::discard(); }
 
+bool rd_settype(RDAddress address, const char* tname) {
+    if(tname)
+        return redasm::api::internal::set_type(address, tname).has_value();
+
+    return false;
+}
+
 bool rd_setfunction(RDAddress address) {
     return redasm::api::internal::set_function(address);
 }

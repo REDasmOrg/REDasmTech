@@ -90,6 +90,7 @@ REDASM_EXPORT void rd_disassemble();
 REDASM_EXPORT void rd_enqueue(RDAddress address);
 REDASM_EXPORT void rd_schedule(RDAddress address);
 
+REDASM_EXPORT bool rd_settype(RDAddress address, const char* tname);
 REDASM_EXPORT bool rd_setfunction(RDAddress address);
 REDASM_EXPORT bool rd_setfunctionas(RDAddress address, const char* name);
 

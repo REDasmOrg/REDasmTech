@@ -43,9 +43,10 @@ bool check_string(RDAddress address, RDStringResult* mi) {
         return false;
     }
 
-    *mi = stringfinder::classify(*idx);
-
-    return !!mi->type;
+    auto res = stringfinder::classify(*idx);
+    if(res)
+        *mi = *res;
+    return res.has_value();
 }
 
 void memory_info(RDMemoryInfo* mi) {

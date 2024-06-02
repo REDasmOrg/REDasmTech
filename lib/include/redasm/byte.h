@@ -26,8 +26,9 @@ enum RDByteFlags {
     BF_DATA = 1U << 30,
     BF_CODE = 2U << 30,
 
-    BF_BYTEMASK = 0x000000ff, // Internal use
-    BF_UDCMASK = 0xc0000000,  // Internal use
+    BF_BYTEMASK = 0x000000ff,  // Internal use
+    BF_UDCMASK = 0xc0000000,   // Internal use
+    BF_BYTEVMASK = 0x000001ff, // Internal use
 };
 
 REDASM_EXPORT bool rdbyte_isunknown(RDByte self);

@@ -9,7 +9,9 @@ namespace redasm::stringfinder {
 namespace {
 
 constexpr float ALPHA_THRESHOLD = 0.5;
-const RDStringResult INVALID_RESULT{};
+constexpr usize DS_MINLENGTH = 4;
+constexpr usize CS_MINLENGTH = 16;
+
 std::string g_temptype;
 std::string g_tempstr;
 
@@ -84,7 +86,6 @@ template<typename ToAsciiCallback>
 std::pair<bool, RDStringResult> categorize_as(usize idx, std::string_view tname,
                                               const ToAsciiCallback& cb) {
 
-    usize minstring = state::context->minstring;
     const Memory* mem = state::context->memory.get();
     g_tempstr.clear();
     char ch{};
@@ -114,27 +115,34 @@ std::pair<bool, RDStringResult> categorize_as(usize idx, std::string_view tname,
         terminated,
     };
 
-    if(g_tempstr.size() >= minstring)
-        return {stringfinder::validate_string(g_tempstr), r};
+    const Segment* seg = state::context->index_to_segment(idx);
+
+    if(seg) {
+        if(seg->type & SEGMENTTYPE_HASDATA && g_tempstr.size() > DS_MINLENGTH)
+            return {stringfinder::validate_string(g_tempstr), r};
+        if(seg->type & SEGMENTTYPE_HASCODE && g_tempstr.size() > CS_MINLENGTH)
+            return {stringfinder::validate_string(g_tempstr), r};
+    }
+
     return {stringfinder::check_heuristic(g_tempstr, false), r};
 }
 
 } // namespace
 
-RDStringResult classify(usize idx) {
+tl::optional<RDStringResult> classify(usize idx) {
     const Memory* mem = state::context->memory.get();
 
     if(idx >= mem->size())
-        return INVALID_RESULT;
+        return tl::nullopt;
 
     if(usize r = mem->size() - idx; r < sizeof(u16))
-        return INVALID_RESULT;
+        return tl::nullopt;
 
     Byte b1 = mem->at(idx);
     Byte b2 = mem->at(idx + 1);
 
     if(!b1.has_byte() || !b2.has_byte())
-        return INVALID_RESULT;
+        return tl::nullopt;
 
     if(stringfinder::is_ascii(b1.byte()) && !b2.byte()) {
         auto [ok, c] = stringfinder::categorize_as(
@@ -152,7 +160,7 @@ RDStringResult classify(usize idx) {
             }
         }
         else
-            return INVALID_RESULT;
+            return tl::nullopt;
 
         c.type = g_temptype.c_str();
         return c;
@@ -173,7 +181,7 @@ RDStringResult classify(usize idx) {
         }
     }
     else
-        return INVALID_RESULT;
+        return tl::nullopt;
 
     c.type = g_temptype.c_str();
     return c;

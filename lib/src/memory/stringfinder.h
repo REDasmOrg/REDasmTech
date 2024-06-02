@@ -1,9 +1,10 @@
 #pragma once
 
 #include <redasm/redasm.h>
+#include <tl/optional.hpp>
 
 namespace redasm::stringfinder {
 
-RDStringResult classify(usize idx);
+tl::optional<RDStringResult> classify(usize idx);
 
 }

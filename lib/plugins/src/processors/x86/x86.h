@@ -16,10 +16,13 @@ public:
 private:
     [[nodiscard]] ZydisRegister get_sp() const;
     [[nodiscard]] ZydisRegister get_bp() const;
-    void process_refs(RDAddress address) const;
+    void process_refs(RDAddress address, RDEmulator* e) const;
+    void process_imm_op(const ZydisDecodedOperand& op, RDEmulator* e) const;
+    void process_mem_op(const ZydisDecodedOperand& op, RDEmulator* e) const;
+    void set_type(RDAddress address, const ZydisDecodedOperand& op) const;
     bool decode(RDAddress address);
-    std::optional<RDAddress> calc_address(RDAddress address, usize idx,
-                                          bool* istable = nullptr) const;
+    [[nodiscard]] std::optional<RDAddress> calc_address(RDAddress address,
+                                                        usize idx) const;
 
 private:
     ZydisFormatter m_formatter;

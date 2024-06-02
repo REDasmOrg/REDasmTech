@@ -11,6 +11,12 @@ enum RDCodeRef {
     CR_FLOW,
 };
 
+enum RDDataRef {
+    DR_ADDRESS,
+    DR_READ,
+    DR_WRITE,
+};
+
 REDASM_EXPORT void rdemulator_addcoderef(RDEmulator* self, RDAddress address,
                                          usize cr);
 REDASM_EXPORT void rdemulator_adddataref(RDEmulator* self, RDAddress address,
