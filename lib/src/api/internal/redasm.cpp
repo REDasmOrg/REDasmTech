@@ -283,13 +283,8 @@ bool find_segment(RDAddress address, RDSegment* segment) {
         if(s.index < *idx || *idx >= s.endoffset)
             continue;
 
-        if(segment) {
-            segment->name = s.name.c_str();
-            segment->address = *ctx->index_to_address(s.index);
-            segment->endaddress = *ctx->index_to_address(s.endindex);
-            segment->offset = s.offset;
-            segment->endoffset = s.endoffset;
-        }
+        if(segment)
+            *segment = api::to_c(s);
 
         return true;
     }
