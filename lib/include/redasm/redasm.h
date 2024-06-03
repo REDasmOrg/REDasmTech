@@ -82,6 +82,7 @@ REDASM_EXPORT usize rd_memoryread(RDAddress address, char* data, usize n);
 REDASM_EXPORT usize rd_getbits();
 REDASM_EXPORT bool rd_checkstring(RDAddress address, RDStringResult* r);
 REDASM_EXPORT void rd_memoryinfo(RDMemoryInfo* mi);
+REDASM_EXPORT const char* rd_rendertext(RDAddress address);
 
 REDASM_EXPORT void rd_addsearchpath(const char* path);
 REDASM_EXPORT RDBuffer* rd_loadfile(const char* filepath);

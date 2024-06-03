@@ -6,6 +6,7 @@
 #include "../../memory/file.h"
 #include "../../modulemanager.h"
 #include "../../state.h"
+#include "../../surface/surface.h"
 #include "../marshal.h"
 #include "../python/module.h"
 #include "buffer.h"
@@ -385,6 +386,32 @@ std::string get_name(RDAddress address) {
         return state::context->get_name(*idx);
 
     return {};
+}
+
+std::string render_text(RDAddress address) {
+    auto idx = state::context->address_to_index(address);
+    if(!idx)
+        return {};
+
+    auto it = state::context->listing.lower_bound(*idx);
+
+    // Find first code item
+    while(it != state::context->listing.end() && it->index == *idx) {
+        if(it->type == ListingItemType::CODE)
+            break;
+
+        it++;
+    }
+
+    if(it == state::context->listing.end() || it->index != *idx)
+        return {};
+
+    usize lidx = std::distance(state::context->listing.cbegin(), it);
+
+    Surface s{SURFACE_TEXT};
+    s.render(lidx, 1);
+
+    return std::string{s.get_text()};
 }
 
 tl::optional<typing::Value> set_type(RDAddress address,

@@ -11,7 +11,7 @@ namespace redasm {
 
 class Surface: public Object {
 public:
-    explicit Surface();
+    explicit Surface(usize flags = SURFACE_DEFAULT);
     inline Renderer* renderer() const { return m_renderer.get(); }
     [[nodiscard]] usize current_index() const;
     [[nodiscard]] tl::optional<usize> index_under_cursor() const;

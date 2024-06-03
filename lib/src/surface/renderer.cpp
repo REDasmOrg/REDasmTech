@@ -6,6 +6,7 @@
 
 namespace redasm {
 
+Renderer::Renderer(usize f): flags{f} {}
 usize Renderer::current_address() const { return m_curraddress; }
 
 const Segment* Renderer::current_segment() const {
@@ -16,6 +17,9 @@ const Segment* Renderer::current_segment() const {
 }
 
 void Renderer::highlight_row(usize idx) {
+    if(this->has_flag(SURFACE_NOCURSORLINE))
+        return;
+
     if(idx >= m_rows.size())
         return;
 
@@ -26,6 +30,9 @@ void Renderer::highlight_row(usize idx) {
 }
 
 void Renderer::highlight_words(usize row, usize col) {
+    if(this->has_flag(SURFACE_NOHIGHLIGHT))
+        return;
+
     std::string word = this->word_at(row, col);
     if(word.empty())
         return;
@@ -60,6 +67,9 @@ void Renderer::highlight_words(usize row, usize col) {
 
 void Renderer::highlight_selection(RDSurfacePosition startsel,
                                    RDSurfacePosition endsel) {
+    if(this->has_flag(SURFACE_NOSELECTION))
+        return;
+
     for(usize row = startsel.row; row < m_rows.size() && row <= endsel.row;
         row++) {
         usize startcol = 0, endcol = 0;
@@ -82,7 +92,7 @@ void Renderer::highlight_selection(RDSurfacePosition startsel,
 }
 
 void Renderer::highlight_cursor(usize row, usize col) {
-    if(m_rows.empty())
+    if(this->has_flag(SURFACE_NOCURSOR) || m_rows.empty())
         return;
 
     if(row >= m_rows.size())
@@ -118,13 +128,15 @@ Renderer& Renderer::new_row(const ListingItem& item) {
     if(this->columns)
         m_rows.back().reserve(this->columns);
 
-    if(const Segment* s = this->current_segment(); s)
-        this->chunk(s->name).chunk(":");
+    if(!this->has_flag(SURFACE_NOADDRESS)) {
+        if(const Segment* s = this->current_segment(); s)
+            this->chunk(s->name).chunk(":");
 
-    this->chunk(state::context->to_hex(m_curraddress)).ws(2);
+        this->chunk(state::context->to_hex(m_curraddress)).ws(2);
 
-    if(item.indent)
-        this->ws(item.indent);
+        if(item.indent)
+            this->ws(item.indent);
+    }
 
     return *this;
 }

@@ -6,7 +6,7 @@
 
 namespace redasm::api::internal {
 
-RDSurface* surface_new();
+RDSurface* surface_new(usize flags);
 void surface_render(RDSurface* self, usize start, usize n);
 bool surface_hasselection(const RDSurface* self);
 usize surface_getrowcount(const RDSurface* self);

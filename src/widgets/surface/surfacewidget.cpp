@@ -13,7 +13,7 @@
 static constexpr int SCROLL_SPEED = 3;
 
 SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
-    m_surface = rdsurface_new();
+    m_surface = rdsurface_new(SURFACE_DEFAULT);
 
     this->setCursor(Qt::ArrowCursor);
     this->setFocusPolicy(Qt::StrongFocus);

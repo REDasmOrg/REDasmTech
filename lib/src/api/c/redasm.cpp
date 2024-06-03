@@ -34,6 +34,12 @@ void rd_memoryinfo(RDMemoryInfo* mi) {
     return redasm::api::internal::memory_info(mi);
 }
 
+const char* rd_rendertext(RDAddress address) {
+    static std::string s;
+    s = redasm::api::internal::render_text(address);
+    return s.c_str();
+}
+
 void rd_addsearchpath(const char* path) {
     if(path)
         redasm::api::internal::add_search_path(path);

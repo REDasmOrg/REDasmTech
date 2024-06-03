@@ -46,6 +46,7 @@ QVariant ReferencesModel::data(const QModelIndex& index, int role) const {
             case 0: return rd_tohex(m_refs[index.row()].address);
             case 1: return reftype_tostring(m_refs[index.row()]);
             case 2: return ref_getdirection(m_address, m_refs[index.row()]);
+            case 3: return rd_rendertext(m_refs[index.row()].address);
             default: break;
         }
     }

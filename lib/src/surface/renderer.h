@@ -15,6 +15,7 @@ using SurfaceRow = std::vector<RDSurfaceCell>;
 using SurfaceRows = std::vector<SurfaceRow>;
 
 struct Renderer {
+    explicit Renderer(usize f);
     [[nodiscard]] std::string word_at(usize row, usize col) const;
     [[nodiscard]] usize current_address() const;
     void swap(SurfaceRows& r) { m_rows.swap(r); }
@@ -35,6 +36,10 @@ struct Renderer {
 
     Renderer& chunk(std::string_view arg, RDThemeKind fg = THEME_DEFAULT,
                     RDThemeKind bg = THEME_DEFAULT);
+
+    [[nodiscard]] inline bool has_flag(usize f) const {
+        return this->flags & f;
+    }
 
     inline Renderer& arr_index(usize idx) {
         return this->chunk("[").constant(std::to_string(idx)).chunk("]");
@@ -92,6 +97,7 @@ struct Renderer {
 
 public:
     usize columns{0};
+    usize flags;
 
 private:
     const Segment* current_segment() const;

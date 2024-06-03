@@ -49,6 +49,13 @@ void refs() {
     auto* dlg = new TableDialog(
         QString("References for %1").arg(rd_tohex(address)), g_mainwindow);
 
+    QObject::connect(dlg, &TableDialog::double_clicked, g_mainwindow,
+                     [cv, dlg](const QModelIndex& index) {
+                         auto* m = static_cast<ReferencesModel*>(dlg->model());
+                         cv->surface_view()->jump_to(m->address(index));
+                         dlg->accept();
+                     });
+
     dlg->set_model(new ReferencesModel(address, dlg));
     dlg->show();
 }

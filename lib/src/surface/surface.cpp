@@ -34,7 +34,9 @@ std::pair<bool, std::string> surface_checkpointer(const typing::ParsedType& pt,
 
 } // namespace
 
-Surface::Surface() { m_renderer = std::make_unique<Renderer>(); }
+Surface::Surface(usize flags) {
+    m_renderer = std::make_unique<Renderer>(flags);
+}
 
 usize Surface::current_index() const {
     usize idx =
@@ -87,10 +89,8 @@ void Surface::render(usize s, usize n) {
             default: break;
         }
 
-        if(state::context->memory->at(it->index).has(BF_REFSTO)) {
-            m_renderer->ws(COLUMN_PADDING);
+        if(state::context->memory->at(it->index).has(BF_REFSTO))
             this->render_refs(*it);
-        }
     }
 
     m_renderer->fill_columns();
@@ -479,13 +479,20 @@ void Surface::render_code(const ListingItem& item) {
         m_renderer->chunk("???");
 }
 
-void Surface::render_comments(const ListingItem& item) {}
+void Surface::render_comments(const ListingItem& item) {
+    if(m_renderer->has_flag(SURFACE_NOCOMMENTS))
+        return;
+}
 
 void Surface::render_refs(const ListingItem& item) {
+    if(m_renderer->has_flag(SURFACE_NOREFS))
+        return;
+
     const Context* ctx = state::context;
     const Memory* mem = ctx->memory.get();
-
     const AddressDetail& d = state::context->database.get_detail(item.index);
+
+    m_renderer->ws(COLUMN_PADDING);
 
     for(const auto& [index, _] : d.refsto) {
         if(!mem->at(index).has(BF_TYPE))

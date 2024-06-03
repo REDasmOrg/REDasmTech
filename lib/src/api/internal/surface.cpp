@@ -7,7 +7,7 @@
 
 namespace redasm::api::internal {
 
-RDSurface* surface_new() { return api::to_c(new Surface()); }
+RDSurface* surface_new(usize flags) { return api::to_c(new Surface(flags)); }
 
 void surface_render(RDSurface* self, usize start, usize n) {
     spdlog::trace("surface_render({}, {}, {})", fmt::ptr(self), start, n);

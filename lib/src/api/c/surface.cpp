@@ -1,7 +1,9 @@
 #include "../internal/surface.h"
 #include <redasm/surface.h>
 
-RDSurface* rdsurface_new() { return redasm::api::internal::surface_new(); }
+RDSurface* rdsurface_new(usize flags) {
+    return redasm::api::internal::surface_new(flags);
+}
 
 bool rdsurface_getaddressundercursor(const RDSurface* self,
                                      RDAddress* address) {

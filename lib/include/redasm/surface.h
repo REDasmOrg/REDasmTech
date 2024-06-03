@@ -6,6 +6,19 @@
 
 RD_HANDLE(RDSurface);
 
+enum RDSurfaceFlags {
+    SURFACE_DEFAULT = 0u,
+    SURFACE_NOADDRESS = 1u << 0,
+    SURFACE_NOREFS = 1u << 1,
+    SURFACE_NOCOMMENTS = 1u << 2,
+    SURFACE_NOCURSOR = 1u << 3,
+    SURFACE_NOCURSORLINE = 1u << 4,
+    SURFACE_NOSELECTION = 1u << 5,
+    SURFACE_NOHIGHLIGHT = 1u << 6,
+
+    SURFACE_TEXT = ~0u,
+};
+
 typedef struct RDSurfaceLocation {
     struct {
         RDAddress value;
@@ -32,7 +45,7 @@ typedef struct RDSurfaceCell {
     RDThemeKind bg;
 } RDSurfaceCell;
 
-REDASM_EXPORT RDSurface* rdsurface_new(void);
+REDASM_EXPORT RDSurface* rdsurface_new(usize flags);
 REDASM_EXPORT void rdsurface_render(RDSurface* self, usize start, usize n);
 REDASM_EXPORT bool rdsurface_hasselection(const RDSurface* self);
 REDASM_EXPORT usize rdsurface_getrowcount(const RDSurface* self);
