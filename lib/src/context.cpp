@@ -204,7 +204,6 @@ void Context::map_segment(const std::string& name, usize idx, usize endidx,
         this->memory_copy(idx, offset, endoffset);
 
     this->memory->at(idx).set(BF_SEGMENT);
-    this->database.get_detail(idx).segment_index = this->segments.size();
 
     this->segments.emplace_back(Segment{
         name,

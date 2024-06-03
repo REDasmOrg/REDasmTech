@@ -5,16 +5,21 @@
 
 RD_HANDLE(RDEmulator);
 
-enum RDCodeRef {
+enum RDRefType {
+    REF_UNKNWON = 0,
+
+    DR_ADDRESS,
+    DR_READ,
+    DR_WRITE,
+
     CR_CALL,
     CR_JUMP,
     CR_FLOW,
 };
 
-enum RDDataRef {
-    DR_ADDRESS,
-    DR_READ,
-    DR_WRITE,
+struct RDRef {
+    usize index;
+    usize type;
 };
 
 REDASM_EXPORT void rdemulator_addcoderef(RDEmulator* self, RDAddress address,

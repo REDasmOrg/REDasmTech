@@ -11,6 +11,7 @@ class Renderer;
 class Emulator;
 class Context;
 class Surface;
+struct Segment;
 
 namespace api {
 
@@ -77,6 +78,8 @@ inline RDContext* to_c(Context* arg) {
 inline RDBuffer* to_c(AbstractBuffer* arg) {
     return reinterpret_cast<RDBuffer*>(arg);
 }
+
+RDSegment to_c(const Segment& arg);
 
 } // namespace api
 

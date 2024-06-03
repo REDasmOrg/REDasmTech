@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <redasm/processor.h>
 #include <redasm/types.h>
 #include <string>
 #include <tl/optional.hpp>
@@ -28,11 +29,11 @@ struct AddressDetail {
 
     std::string type_name;
     std::array<std::string, NS::COUNT> names;
-    std::vector<usize> refs, jumps, calls;
+    std::vector<usize> jumps, calls;
+    std::vector<RDRef> refsto, refs;
     std::vector<std::string> comments;
 
     union {
-        usize segment_index;
         usize string_length;
         usize flow;
     };

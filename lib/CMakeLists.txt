@@ -53,6 +53,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/builtins/analyzer.cpp
 
     PRIVATE # Internal
+        src/api/marshal.cpp
         src/api/internal/redasm.cpp
         src/api/internal/byte.cpp
         src/api/internal/loader.cpp

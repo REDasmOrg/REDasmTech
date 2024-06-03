@@ -95,14 +95,12 @@ const char* rd_getname(RDAddress address) {
     return res.c_str();
 }
 
-const char* rd_addresstosegment(RDAddress address) {
-    std::string_view s = redasm::api::internal::address_to_segment(address);
-    return s.empty() ? nullptr : s.data();
+bool rd_addresstosegment(RDAddress address, RDSegment* s) {
+    return redasm::api::internal::address_to_segment(address, s);
 }
 
-const char* rd_offsettosegment(RDOffset offset) {
-    std::string_view s = redasm::api::internal::offset_to_segment(offset);
-    return s.empty() ? nullptr : s.data();
+bool rd_offsettosegment(RDOffset offset, RDSegment* s) {
+    return redasm::api::internal::offset_to_segment(offset, s);
 }
 
 bool rd_addresstoffset(RDAddress address, RDOffset* offset) {

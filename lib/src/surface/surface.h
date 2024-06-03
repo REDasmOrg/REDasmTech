@@ -39,7 +39,7 @@ private:
     void render_type(const ListingItem& item);
     void render_code(const ListingItem& item);
     void render_comments(const ListingItem& item);
-    void render_refs();
+    void render_refs(const ListingItem& item);
     void fit(usize& row, usize& col);
     void clear_selection();
 

@@ -64,8 +64,8 @@ bool set_function_as(RDAddress address, const std::string& name);
 bool set_function(RDAddress address);
 
 bool is_address(RDAddress address);
-std::string_view address_to_segment(RDAddress address);
-std::string_view offset_to_segment(RDOffset offset);
+bool address_to_segment(RDAddress address, RDSegment* res);
+bool offset_to_segment(RDOffset offset, RDSegment* res);
 tl::optional<RDOffset> address_to_offset(RDAddress address);
 tl::optional<RDAddress> offset_to_address(RDOffset offset);
 tl::optional<usize> address_to_index(RDAddress address);

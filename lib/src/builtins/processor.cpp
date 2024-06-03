@@ -16,7 +16,9 @@ bool render_segment(const RDRendererParams* rp) {
     usize c = api::internal::get_segments(&segments);
     assume(rp->segment_index < c);
 
-    const RDSegment& seg = segments[rp->segment_index];
+    RDSegment seg;
+    assume(api::internal::address_to_segment(rp->address, &seg));
+
     std::string start = api::internal::to_hex(seg.address);
     std::string end = api::internal::to_hex(seg.endaddress);
 

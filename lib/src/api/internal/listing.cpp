@@ -14,7 +14,6 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
 
     const Context* ctx = state::context;
     const Listing& listing = ctx->listing;
-    const Database& db = ctx->database;
     const ListingItem& item = listing[listingidx];
 
     symbol->address = ctx->baseaddress + item.index;
@@ -22,11 +21,11 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
 
     switch(item.type) {
         case ListingItemType::SEGMENT: {
-            const AddressDetail& d = db.get_detail(item.index);
-            const Segment& s = ctx->segments.at(d.segment_index);
+            const Segment* s = ctx->index_to_segment(item.index);
+            assume(s);
             symbol->type = SYMBOL_SEGMENT;
             symbol->theme = THEME_SEGMENT;
-            symbol->value = s.name.c_str();
+            symbol->value = s->name.c_str();
             break;
         }
 

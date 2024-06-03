@@ -12,7 +12,16 @@ namespace {
 void sorted_unique_insert(std::vector<usize>& v, usize idx) {
     auto it = std::lower_bound(v.begin(), v.end(), idx);
     if(it == v.end() || (*it != idx))
-        v.insert(it, idx);
+        v.emplace(it, idx);
+}
+
+void sorted_unique_insert(std::vector<RDRef>& v, RDRef r) {
+    auto it = std::lower_bound(
+        v.begin(), v.end(), r,
+        [](const auto& a, const auto& b) { return a.index < b.index; });
+
+    if(it == v.end() || (it->index != r.index))
+        v.insert(it, r);
 }
 
 } // namespace
@@ -91,35 +100,35 @@ void Emulator::add_coderef(usize idx, usize cr) {
     if(!s && !(s->type & SEGMENTTYPE_HASCODE))
         return;
 
-    AddressDetail& d = ctx->database.get_detail(idx);
+    AddressDetail& dto = ctx->database.get_detail(m_currindex);
 
     switch(cr) {
         case CR_CALL:
             ctx->memory->at(m_currindex).set(BF_CALL);
             ctx->memory->at(idx).set(BF_FUNCTION);
             this->schedule(idx);
-            sorted_unique_insert(d.calls, idx);
+            sorted_unique_insert(dto.calls, idx);
             break;
 
         case CR_JUMP:
             ctx->memory->at(m_currindex).set(BF_JUMP);
             ctx->memory->at(idx).set(BF_JUMPDST);
             this->schedule(idx);
-            sorted_unique_insert(d.jumps, idx);
+            sorted_unique_insert(dto.jumps, idx);
             break;
 
         case CR_FLOW: {
             ctx->memory->at(m_currindex).set(BF_FLOW);
             this->enqueue(idx);
-            d.flow = idx;
+            dto.flow = idx;
             return;
         }
 
         default: unreachable; return;
     }
 
-    AddressDetail& refd = ctx->database.get_detail(idx);
-    sorted_unique_insert(refd.refs, m_currindex);
+    AddressDetail& dby = ctx->database.get_detail(idx);
+    sorted_unique_insert(dby.refs, {m_currindex, cr});
     ctx->memory->at(idx).set(BF_REFS);
 }
 
@@ -134,8 +143,12 @@ void Emulator::add_dataref(usize idx, usize dr) {
         ctx->set_type(idx, x.type);
     });
 
-    AddressDetail& refd = ctx->database.get_detail(idx);
-    sorted_unique_insert(refd.refs, m_currindex);
+    AddressDetail& dto = ctx->database.get_detail(m_currindex);
+    sorted_unique_insert(dto.refsto, {idx, dr});
+    ctx->memory->at(m_currindex).set(BF_REFSTO);
+
+    AddressDetail& dby = ctx->database.get_detail(idx);
+    sorted_unique_insert(dby.refs, {m_currindex, dr});
 }
 
 void Emulator::next() {

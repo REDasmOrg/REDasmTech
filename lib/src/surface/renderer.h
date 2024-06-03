@@ -91,7 +91,6 @@ struct Renderer {
     static bool is_char_skippable(char ch);
 
 public:
-    std::vector<usize> rowrefs;
     usize columns{0};
 
 private:

@@ -87,9 +87,9 @@ void Surface::render(usize s, usize n) {
             default: break;
         }
 
-        if(!m_renderer->rowrefs.empty()) {
+        if(state::context->memory->at(it->index).has(BF_REFSTO)) {
             m_renderer->ws(COLUMN_PADDING);
-            this->render_refs();
+            this->render_refs(*it);
         }
     }
 
@@ -308,14 +308,10 @@ void Surface::render_jump(const ListingItem& item) {
 void Surface::render_segment(const ListingItem& item) {
     m_renderer->new_row(item);
 
-    const Database& db = state::context->database;
-    const AddressDetail& d = db.get_detail(item.index);
-
-    RDRendererParams rp = this->create_render_params(item);
-    rp.segment_index = d.segment_index;
-
     const RDProcessor* p = state::context->processor;
     assume(p);
+
+    RDRendererParams rp = this->create_render_params(item);
 
     if(!p->rendersegment || !p->rendersegment(p, &rp))
         assume(builtins::processor::render_segment(&rp));
@@ -485,11 +481,13 @@ void Surface::render_code(const ListingItem& item) {
 
 void Surface::render_comments(const ListingItem& item) {}
 
-void Surface::render_refs() {
+void Surface::render_refs(const ListingItem& item) {
     const Context* ctx = state::context;
     const Memory* mem = ctx->memory.get();
 
-    for(usize index : m_renderer->rowrefs) {
+    const AddressDetail& d = state::context->database.get_detail(item.index);
+
+    for(const auto& [index, _] : d.refsto) {
         if(!mem->at(index).has(BF_TYPE))
             continue;
 
@@ -513,6 +511,11 @@ void Surface::render_refs() {
 
 void Surface::render_array(const ListingItem& item) {
     assume(item.parsed_type);
+
+    if(item.index == 0x1c) {
+        int zzz = 0;
+        zzz++;
+    }
 
     auto pt = *item.parsed_type;
     std::string chars;
@@ -553,8 +556,10 @@ void Surface::render_array(const ListingItem& item) {
         m_renderer->type(state::context->types.to_string(pt))
             .ws()
             .chunk(field.second)
-            .word("=")
-            .string(chars);
+            .word("=");
+
+        if(!chars.empty())
+            m_renderer->string(chars);
     }
     else {
         m_renderer->new_row(item);
@@ -568,7 +573,10 @@ void Surface::render_array(const ListingItem& item) {
         if(item.array_index)
             m_renderer->arr_index(*item.array_index);
 
-        m_renderer->word("=").string(chars, false);
+        m_renderer->word("=");
+
+        if(!chars.empty())
+            m_renderer->string(chars, false);
     }
 }
 

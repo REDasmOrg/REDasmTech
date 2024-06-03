@@ -263,15 +263,8 @@ usize get_segments(const RDSegment** segments) {
         const Context* ctx = state::context;
         res.resize(ctx->segments.size());
 
-        for(usize i = 0; i < ctx->segments.size(); i++) {
-            RDSegment& s = res[i];
-            s.name = ctx->segments[i].name.c_str();
-            s.type = ctx->segments[i].type;
-            s.address = *ctx->index_to_address(ctx->segments[i].index);
-            s.endaddress = *ctx->index_to_address(ctx->segments[i].endindex);
-            s.offset = ctx->segments[i].offset;
-            s.endoffset = ctx->segments[i].endoffset;
-        }
+        for(usize i = 0; i < ctx->segments.size(); i++)
+            res[i] = api::to_c(ctx->segments[i]);
 
         *segments = res.data();
     }
@@ -468,31 +461,43 @@ bool is_address(RDAddress address) {
     return ctx && ctx->is_address(address);
 }
 
-std::string_view address_to_segment(RDAddress address) {
-    spdlog::trace("address_to_segment({:x})", address);
+bool address_to_segment(RDAddress address, RDSegment* res) {
+    spdlog::trace("address_to_segment({:x}, {})", address, fmt::ptr(res));
     usize idx = address - state::context->baseaddress;
     if(idx >= state::context->memory->size())
         return {};
 
-    for(const Segment& s : state::context->segments) {
-        if(idx >= s.index && idx < s.endindex)
-            return s.name;
-    }
+    const Context* ctx = state::context;
 
-    return {};
+    return std::any_of(ctx->segments.begin(), ctx->segments.end(),
+                       [&](const Segment& s) {
+                           if(idx >= s.index && idx < s.endindex) {
+                               if(res)
+                                   *res = api::to_c(s);
+                               return true;
+                           }
+
+                           return false;
+                       });
 }
 
-std::string_view offset_to_segment(RDOffset offset) {
-    spdlog::trace("offset_to_segment({:x})", offset);
+bool offset_to_segment(RDOffset offset, RDSegment* res) {
+    spdlog::trace("offset_to_segment({:x}, {})", offset, fmt::ptr(res));
     if(offset >= state::context->file->size())
         return {};
 
-    for(const Segment& s : state::context->segments) {
-        if(offset >= s.offset && offset < s.endoffset)
-            return s.name;
-    }
+    const Context* ctx = state::context;
 
-    return {};
+    return std::any_of(ctx->segments.begin(), ctx->segments.end(),
+                       [&](const Segment& s) {
+                           if(offset >= s.offset && offset < s.endoffset) {
+                               if(res)
+                                   *res = api::to_c(s);
+                               return true;
+                           }
+
+                           return false;
+                       });
 }
 
 tl::optional<RDOffset> address_to_offset(RDAddress address) {
