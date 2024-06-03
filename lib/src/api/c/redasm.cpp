@@ -95,6 +95,16 @@ const char* rd_getname(RDAddress address) {
     return res.c_str();
 }
 
+usize rd_getreferences(RDAddress address, const RDRef** refs) {
+    static std::vector<RDRef> r;
+    r = redasm::api::internal::get_references(address);
+
+    if(refs)
+        *refs = r.data();
+
+    return r.size();
+}
+
 bool rd_addresstosegment(RDAddress address, RDSegment* s) {
     return redasm::api::internal::address_to_segment(address, s);
 }

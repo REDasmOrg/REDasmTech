@@ -18,7 +18,7 @@ enum RDRefType {
 };
 
 struct RDRef {
-    usize index;
+    RDAddress address;
     usize type;
 };
 

@@ -512,11 +512,6 @@ void Surface::render_refs(const ListingItem& item) {
 void Surface::render_array(const ListingItem& item) {
     assume(item.parsed_type);
 
-    if(item.index == 0x1c) {
-        int zzz = 0;
-        zzz++;
-    }
-
     auto pt = *item.parsed_type;
     std::string chars;
 

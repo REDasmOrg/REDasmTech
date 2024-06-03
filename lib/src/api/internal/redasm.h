@@ -41,6 +41,7 @@ std::string to_hex(usize v);
 
 usize get_segments(const RDSegment** segments);
 bool find_segment(RDAddress address, RDSegment* segment);
+std::vector<RDRef> get_references(RDAddress address);
 usize get_bytes(const RDByte** bytes);
 usize get_bits();
 

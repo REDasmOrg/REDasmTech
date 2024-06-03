@@ -22,6 +22,11 @@ struct AddressDetail {
         COUNT,
     };
 
+    struct Ref {
+        usize index;
+        usize type;
+    };
+
     // AddressDetail(const AddressDetail&) = delete;
     // AddressDetail(AddressDetail&&) = delete;
     // AddressDetail& operator=(const AddressDetail&) = delete;
@@ -30,7 +35,7 @@ struct AddressDetail {
     std::string type_name;
     std::array<std::string, NS::COUNT> names;
     std::vector<usize> jumps, calls;
-    std::vector<RDRef> refsto, refs;
+    std::vector<Ref> refsto, refs;
     std::vector<std::string> comments;
 
     union {

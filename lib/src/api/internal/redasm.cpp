@@ -297,6 +297,18 @@ bool find_segment(RDAddress address, RDSegment* segment) {
     return false;
 }
 
+std::vector<RDRef> get_references(RDAddress address) {
+    if(auto idx = state::context->address_to_index(address); idx) {
+        if(!state::context->memory->at(*idx).has(BF_REFS))
+            return {};
+
+        const AddressDetail& d = state::context->database.get_detail(*idx);
+        return api::to_c(d.refs);
+    }
+
+    return {};
+}
+
 usize get_bytes(const RDByte** bytes) {
     spdlog::trace("get_bytes({})", fmt::ptr(bytes));
 

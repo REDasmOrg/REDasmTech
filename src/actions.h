@@ -9,6 +9,7 @@ namespace actions {
 enum Type {
     GOTO,
     COPY,
+    REFS,
 };
 
 void init(MainWindow* mw);

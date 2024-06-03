@@ -1,7 +1,8 @@
 #include "actions.h"
-// #include "fontawesome.h"
 #include "dialogs/gotodialog.h"
+#include "dialogs/tabledialog.h"
 #include "mainwindow.h"
+#include "models/referencesmodel.h"
 #include <QApplication>
 #include <QClipboard>
 #include <QHash>
@@ -36,6 +37,22 @@ void copy() {
         rdsurface_getselectedtext(cv->surface_view()->handle()));
 }
 
+void refs() {
+    ContextView* cv = g_mainwindow->context_view();
+    if(!cv)
+        return;
+
+    RDAddress address;
+    if(!rdsurface_getaddressundercursor(cv->surface_view()->handle(), &address))
+        return;
+
+    auto* dlg = new TableDialog(
+        QString("References for %1").arg(rd_tohex(address)), g_mainwindow);
+
+    dlg->set_model(new ReferencesModel(address, dlg));
+    dlg->show();
+}
+
 } // namespace
 
 void init(MainWindow* mw) {
@@ -47,6 +64,10 @@ void init(MainWindow* mw) {
     g_actions[Type::COPY] =
         mw->addAction("Copy", QKeySequence(Qt::CTRL | Qt::Key_C), mw,
                       []() { actions::copy(); });
+
+    g_actions[Type::REFS] =
+        mw->addAction("Cross References", QKeySequence(Qt::Key_X), mw,
+                      []() { actions::refs(); });
 }
 
 QAction* get(Type t) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../database/database.h"
 #include "../memory/byte.h"
 #include <redasm/redasm.h>
 
@@ -80,6 +81,8 @@ inline RDBuffer* to_c(AbstractBuffer* arg) {
 }
 
 RDSegment to_c(const Segment& arg);
+RDRef to_c(const AddressDetail::Ref& arg);
+std::vector<RDRef> to_c(const std::vector<AddressDetail::Ref>& arg);
 
 } // namespace api
 

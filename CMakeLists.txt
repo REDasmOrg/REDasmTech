@@ -38,6 +38,7 @@ target_sources(${PROJECT_NAME}
         src/models/recentfilesdelegate.cpp
         src/models/recentfilesmodel.cpp
         src/models/segmentsmodel.cpp
+        src/models/referencesmodel.cpp
         src/models/symbolsfiltermodel.cpp
         src/models/symbolsmodel.cpp
         src/models/exportsmodel.cpp

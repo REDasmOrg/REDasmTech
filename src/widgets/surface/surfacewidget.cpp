@@ -320,11 +320,13 @@ void SurfaceWidget::create_context_menu() {
     this->setContextMenuPolicy(Qt::CustomContextMenu);
 
     QAction* actcopy = actions::get(actions::COPY);
+    QAction* actrefs = actions::get(actions::REFS);
 
     m_menu = new QMenu(this);
     m_menu->addAction(actions::get(actions::GOTO));
     m_menu->addSeparator();
     m_menu->addAction(actcopy);
+    m_menu->addAction(actrefs);
 
     connect(m_menu, &QMenu::aboutToShow, this, [&, actcopy]() {
         actcopy->setVisible(rdsurface_hasselection(m_surface));

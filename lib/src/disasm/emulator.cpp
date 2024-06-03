@@ -15,7 +15,8 @@ void sorted_unique_insert(std::vector<usize>& v, usize idx) {
         v.emplace(it, idx);
 }
 
-void sorted_unique_insert(std::vector<RDRef>& v, RDRef r) {
+void sorted_unique_insert(std::vector<AddressDetail::Ref>& v,
+                          AddressDetail::Ref r) {
     auto it = std::lower_bound(
         v.begin(), v.end(), r,
         [](const auto& a, const auto& b) { return a.index < b.index; });
@@ -129,7 +130,7 @@ void Emulator::add_coderef(usize idx, usize cr) {
 
     AddressDetail& dby = ctx->database.get_detail(idx);
     sorted_unique_insert(dby.refs, {m_currindex, cr});
-    ctx->memory->at(idx).set(BF_REFS);
+    ctx->memory->at(idx).set_flag(BF_REFS, !dby.refs.empty());
 }
 
 void Emulator::add_dataref(usize idx, usize dr) {
@@ -149,6 +150,7 @@ void Emulator::add_dataref(usize idx, usize dr) {
 
     AddressDetail& dby = ctx->database.get_detail(idx);
     sorted_unique_insert(dby.refs, {m_currindex, dr});
+    ctx->memory->at(idx).set_flag(BF_REFS, !dby.refs.empty());
 }
 
 void Emulator::next() {
