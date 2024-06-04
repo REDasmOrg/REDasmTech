@@ -303,9 +303,8 @@ void Context::build_listing() {
         for(usize idx = 0; idx < this->memory->size();) {
             Byte membyte = this->memory->at(idx);
 
-            if(membyte.has(BF_SEGMENT)) {
+            if(membyte.has(BF_SEGMENT))
                 this->listing.segment(idx);
-            }
 
             if(membyte.is_unknown()) {
                 this->process_listing_unknown(idx);

@@ -74,23 +74,6 @@ const Segment* Emulator::get_segment(usize idx) {
     return m_segment;
 }
 
-void Emulator::check_location(RDAddress address) {
-    auto idx = state::context->address_to_index(address);
-    if(!idx)
-        return;
-
-    Byte b = state::context->memory->at(*idx);
-    if(!b.is_unknown())
-        return;
-
-    const Segment* s = this->get_segment(*idx);
-    if(!s)
-        return;
-
-    if(s->type & SEGMENTTYPE_HASDATA) {
-    }
-}
-
 void Emulator::add_coderef(usize idx, usize cr) {
     if(idx >= state::context->memory->size())
         return;

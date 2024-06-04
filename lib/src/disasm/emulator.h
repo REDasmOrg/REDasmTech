@@ -11,7 +11,6 @@ class Emulator {
 public:
     void enqueue(usize idx);
     void schedule(usize idx);
-    void check_location(RDAddress address);
     void add_coderef(usize idx, usize cr);
     void add_dataref(usize idx, usize dr);
     void set_type(usize idx, std::string_view tname);
