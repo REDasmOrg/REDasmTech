@@ -15,6 +15,7 @@ usize surface_getrow(const RDSurface* self, usize idx,
 void surface_getposition(const RDSurface* self, RDSurfacePosition* pos);
 void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc);
 usize surface_getindex(const RDSurface* self);
+usize surface_getpath(const RDSurface* self, const RDSurfacePath** path);
 std::string_view surface_gettext(const RDSurface* self);
 std::string_view surface_getselectedtext(const RDSurface* self);
 bool surface_getaddressundercursor(const RDSurface* self, RDAddress* address);

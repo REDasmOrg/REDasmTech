@@ -5,6 +5,7 @@
 #include "renderer.h"
 #include <memory>
 #include <redasm/renderer.h>
+#include <set>
 #include <string>
 
 namespace redasm {
@@ -28,9 +29,14 @@ public:
     bool select_word(usize row, usize col);
     bool select(usize row, usize col);
     void seek(usize index);
+    const std::vector<RDSurfacePath>& get_path() const;
 
 private:
     RDRendererParams create_render_params(const ListingItem& item) const;
+    const ListingItem& get_listing_item(const SurfaceRow& sfrow) const;
+    int last_index_of(usize idx) const;
+    int calculate_to_row(usize fromidx, usize toidx) const;
+    void insert_path(usize fromidx, usize tidx) const;
     void render_hexdump(const ListingItem& item);
     void render_jump(const ListingItem& item);
     void render_segment(const ListingItem& item);
@@ -49,6 +55,8 @@ public:
 
 private:
     std::unique_ptr<Renderer> m_renderer;
+    mutable std::set<std::pair<usize, usize>> m_done;
+    mutable std::vector<RDSurfacePath> m_path;
     mutable std::string m_strcache;
     usize m_row{0}, m_col{0};
     usize m_selrow{0}, m_selcol{0};

@@ -264,6 +264,7 @@ void SurfaceWidget::paintEvent(QPaintEvent* e) {
     painter.fillRect(this->rect(), Qt::white);
     m_document.drawContents(&painter);
 
+    Q_EMIT render_completed();
     statusbar::set_location(m_surface);
 }
 

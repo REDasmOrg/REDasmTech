@@ -22,6 +22,7 @@ struct Byte {
     }
 
     [[nodiscard]] inline bool is_cont() const { return this->has(BF_CONT); }
+    [[nodiscard]] inline bool is_weak() const { return this->has(BF_WEAK); }
     [[nodiscard]] inline bool has_byte() const { return this->has(BF_HASBYTE); }
     [[nodiscard]] inline bool has(u32 f) const { return value & f; }
 

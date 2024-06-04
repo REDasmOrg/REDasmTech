@@ -164,11 +164,6 @@ void X86Processor::process_refs(RDAddress address, RDEmulator* e) const {
         return;
     }
 
-    if(address == 0x0040100e) {
-        int zzz = 0;
-        zzz++;
-    }
-
     for(auto i = 0; i < m_instr.operand_count; i++) {
         const ZydisDecodedOperand& op = m_ops[i];
         if(op.element_count != 1)
@@ -194,7 +189,7 @@ void X86Processor::process_imm_op(const ZydisDecodedOperand& op,
 
     switch(op.encoding) {
         case ZYDIS_OPERAND_ENCODING_SIMM16_32_32: {
-            this->set_type(op.imm.value.s, op);
+            this->set_type(op.imm.value.s, op, e);
             rdemulator_adddataref(e, op.imm.value.s, r);
             break;
         }
@@ -213,7 +208,7 @@ void X86Processor::process_mem_op(const ZydisDecodedOperand& op,
 
     switch(op.encoding) {
         case ZYDIS_OPERAND_ENCODING_DISP16_32_64: {
-            this->set_type(op.mem.disp.value, op);
+            this->set_type(op.mem.disp.value, op, e);
             rdemulator_adddataref(e, op.mem.disp.value, r);
             break;
         }
@@ -223,7 +218,7 @@ void X86Processor::process_mem_op(const ZydisDecodedOperand& op,
                op.mem.disp.has_displacement &&
                rd_isaddress(op.mem.disp.value)) {
 
-                this->set_type(op.mem.disp.value, op);
+                this->set_type(op.mem.disp.value, op, e);
                 rdemulator_adddataref(e, op.mem.disp.value, r);
             }
 
@@ -234,19 +229,19 @@ void X86Processor::process_mem_op(const ZydisDecodedOperand& op,
     }
 }
 
-void X86Processor::set_type(RDAddress address,
-                            const ZydisDecodedOperand& op) const {
+void X86Processor::set_type(RDAddress address, const ZydisDecodedOperand& op,
+                            RDEmulator* e) const {
 
     switch(op.element_type) {
         case ZYDIS_ELEMENT_TYPE_INT: {
             std::string tname = "i" + std::to_string(op.element_size);
-            rd_settype(address, tname.c_str());
+            rdemulator_settype(e, address, tname.c_str());
             break;
         }
 
         case ZYDIS_ELEMENT_TYPE_UINT: {
             std::string tname = "u" + std::to_string(op.element_size);
-            rd_settype(address, tname.c_str());
+            rdemulator_settype(e, address, tname.c_str());
             break;
         }
 

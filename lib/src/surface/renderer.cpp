@@ -25,7 +25,7 @@ void Renderer::highlight_row(usize idx) {
 
     SurfaceRow& row = m_rows[idx];
 
-    for(RDSurfaceCell& cell : row)
+    for(RDSurfaceCell& cell : row.cells)
         cell.bg = THEME_SEEK;
 }
 
@@ -38,15 +38,15 @@ void Renderer::highlight_words(usize row, usize col) {
         return;
 
     for(SurfaceRow& row : m_rows) {
-        for(usize i = 0; i < row.size(); i++) {
+        for(usize i = 0; i < row.cells.size(); i++) {
             usize endidx = i;
             bool found = true;
 
             for(char ch : word) {
-                if(endidx >= row.size())
+                if(endidx >= row.cells.size())
                     break;
 
-                RDSurfaceCell cell = row[endidx++];
+                RDSurfaceCell cell = row.cells[endidx++];
 
                 if(cell.ch == ch)
                     continue;
@@ -57,7 +57,7 @@ void Renderer::highlight_words(usize row, usize col) {
             }
 
             for(usize j = i; found && j < endidx; j++) {
-                RDSurfaceCell& cell = row[j];
+                RDSurfaceCell& cell = row.cells[j];
                 cell.fg = THEME_HIGHLIGHTFG;
                 cell.bg = THEME_HIGHLIGHTBG;
             }
@@ -74,17 +74,17 @@ void Renderer::highlight_selection(RDSurfacePosition startsel,
         row++) {
         usize startcol = 0, endcol = 0;
 
-        if(!m_rows[row].empty())
-            endcol = m_rows[row].size() - 1;
+        if(!m_rows[row].cells.empty())
+            endcol = m_rows[row].cells.size() - 1;
 
         if(row == startsel.row)
             startcol = startsel.col;
         if(row == endsel.row)
             endcol = endsel.col;
 
-        for(usize col = startcol; col < m_rows[row].size() && col <= endcol;
-            col++) {
-            RDSurfaceCell& c = m_rows[row][col];
+        for(usize col = startcol;
+            col < m_rows[row].cells.size() && col <= endcol; col++) {
+            RDSurfaceCell& c = m_rows[row].cells[col];
             c.fg = THEME_SELECTIONFG;
             c.bg = THEME_SELECTIONBG;
         }
@@ -98,35 +98,39 @@ void Renderer::highlight_cursor(usize row, usize col) {
     if(row >= m_rows.size())
         row = m_rows.size() - 1;
 
-    if(m_rows[row].empty())
+    if(m_rows[row].cells.empty())
         return;
 
-    if(col >= m_rows[row].size())
-        col = m_rows[row].size() - 1;
+    if(col >= m_rows[row].cells.size())
+        col = m_rows[row].cells.size() - 1;
 
-    m_rows[row][col].fg = THEME_CURSORFG;
-    m_rows[row][col].bg = THEME_CURSORBG;
+    m_rows[row].cells[col].fg = THEME_CURSORFG;
+    m_rows[row].cells[col].bg = THEME_CURSORBG;
 }
 
 void Renderer::fill_columns() {
     for(SurfaceRow& row : m_rows) {
-        while(row.size() < this->columns)
+        while(row.cells.size() < this->columns)
             this->character(row, ' ');
     }
 }
 
-void Renderer::set_current_item(const ListingItem& item) {
+void Renderer::set_current_item(usize lidx, const ListingItem& item) {
     auto addr = state::context->index_to_address(item.index);
     assume(addr);
     m_curraddress = *addr;
+    m_listingidx = lidx;
     this->check_current_segment(item);
 }
 
 Renderer& Renderer::new_row(const ListingItem& item) {
-    m_rows.emplace_back();
+    m_rows.emplace_back(SurfaceRow{
+        m_listingidx,
+        {},
+    });
 
     if(this->columns)
-        m_rows.back().reserve(this->columns);
+        m_rows.back().cells.reserve(this->columns);
 
     if(!this->has_flag(SURFACE_NOADDRESS)) {
         if(const Segment* s = this->current_segment(); s)
@@ -143,7 +147,7 @@ Renderer& Renderer::new_row(const ListingItem& item) {
 
 Renderer& Renderer::character(SurfaceRow& row, char ch, RDThemeKind fg,
                               RDThemeKind bg) {
-    row.emplace_back(RDSurfaceCell{ch, fg, bg});
+    row.cells.emplace_back(RDSurfaceCell{ch, fg, bg});
     return *this;
 }
 
@@ -152,7 +156,7 @@ Renderer& Renderer::chunk(std::string_view arg, RDThemeKind fg,
     SurfaceRow& row = m_rows.back();
 
     for(char ch : arg) {
-        if(this->columns && row.size() >= this->columns)
+        if(this->columns && row.cells.size() >= this->columns)
             break;
 
         switch(ch) {
@@ -207,26 +211,26 @@ std::string Renderer::word_at(usize row, usize col) const {
     if(row > m_rows.size())
         return {};
 
-    const SurfaceRow& cells = m_rows[row];
+    const SurfaceRow& sfrow = m_rows[row];
 
-    if(col >= cells.size())
-        col = cells.size() - 1;
+    if(col >= sfrow.cells.size())
+        col = sfrow.cells.size() - 1;
 
-    if(is_char_skippable(cells[col].ch))
+    if(is_char_skippable(sfrow.cells[col].ch))
         return {};
 
     std::string word;
 
     for(usize i = col; i-- > 0;) {
-        RDSurfaceCell cell = cells[i];
+        RDSurfaceCell cell = sfrow.cells[i];
         if(is_char_skippable(cell.ch))
             break;
 
         word.insert(0, &cell.ch, 1);
     }
 
-    for(usize i = col; i < cells.size(); i++) {
-        RDSurfaceCell cell = cells[i];
+    for(usize i = col; i < sfrow.cells.size(); i++) {
+        RDSurfaceCell cell = sfrow.cells[i];
         if(is_char_skippable(cell.ch))
             break;
 

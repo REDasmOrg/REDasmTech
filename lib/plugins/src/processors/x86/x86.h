@@ -19,7 +19,8 @@ private:
     void process_refs(RDAddress address, RDEmulator* e) const;
     void process_imm_op(const ZydisDecodedOperand& op, RDEmulator* e) const;
     void process_mem_op(const ZydisDecodedOperand& op, RDEmulator* e) const;
-    void set_type(RDAddress address, const ZydisDecodedOperand& op) const;
+    void set_type(RDAddress address, const ZydisDecodedOperand& op,
+                  RDEmulator* e) const;
     bool decode(RDAddress address);
     [[nodiscard]] std::optional<RDAddress> calc_address(RDAddress address,
                                                         usize idx) const;

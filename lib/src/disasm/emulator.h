@@ -14,6 +14,7 @@ public:
     void check_location(RDAddress address);
     void add_coderef(usize idx, usize cr);
     void add_dataref(usize idx, usize dr);
+    void set_type(usize idx, std::string_view tname);
     void next();
     [[nodiscard]] bool has_next() const;
 

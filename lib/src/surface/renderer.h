@@ -11,7 +11,11 @@
 
 namespace redasm {
 
-using SurfaceRow = std::vector<RDSurfaceCell>;
+struct SurfaceRow {
+    usize listingindex;
+    std::vector<RDSurfaceCell> cells;
+};
+
 using SurfaceRows = std::vector<SurfaceRow>;
 
 struct Renderer {
@@ -26,7 +30,7 @@ struct Renderer {
                              RDSurfacePosition endsel);
     void highlight_cursor(usize row, usize col);
     void fill_columns();
-    void set_current_item(const ListingItem& item);
+    void set_current_item(usize lidx, const ListingItem& item);
 
     Renderer& new_row(const ListingItem& item);
 
@@ -106,7 +110,7 @@ private:
 private:
     SurfaceRows m_rows;
     RDAddress m_curraddress{};
-    usize m_currsegment{0};
+    usize m_listingidx{}, m_currsegment{0};
 };
 
 } // namespace redasm

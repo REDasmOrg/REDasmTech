@@ -37,6 +37,9 @@ private:
     void create_context_menu();
     void update_scrollbars();
 
+Q_SIGNALS:
+    void render_completed();
+
 private:
     RDSurface* m_surface{nullptr};
     QTextDocument m_document;

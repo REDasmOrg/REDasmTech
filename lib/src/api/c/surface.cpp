@@ -22,6 +22,10 @@ usize rdsurface_getrowcount(const RDSurface* self) {
     return redasm::api::internal::surface_getrowcount(self);
 }
 
+usize rdsurface_getpath(const RDSurface* self, const RDSurfacePath** path) {
+    return redasm::api::internal::surface_getpath(self, path);
+}
+
 usize rdsurface_getrow(const RDSurface* self, usize idx,
                        const RDSurfaceCell** row) {
     return redasm::api::internal::surface_getrow(self, idx, row);

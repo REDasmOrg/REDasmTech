@@ -142,6 +142,7 @@ void Emulator::add_dataref(usize idx, usize dr) {
     stringfinder::classify(idx).map([idx, ctx](const RDStringResult& x) {
         ctx->memory->set_unknown(idx, x.totalsize);
         ctx->set_type(idx, x.type);
+        ctx->memory->at(idx).set(BF_WEAK);
     });
 
     AddressDetail& dto = ctx->database.get_detail(m_currindex);
@@ -151,6 +152,16 @@ void Emulator::add_dataref(usize idx, usize dr) {
     AddressDetail& dby = ctx->database.get_detail(idx);
     sorted_unique_insert(dby.refs, {m_currindex, dr});
     ctx->memory->at(idx).set_flag(BF_REFS, !dby.refs.empty());
+}
+
+void Emulator::set_type(usize idx, std::string_view tname) {
+    if(idx >= state::context->memory->size())
+        return;
+
+    Context* ctx = state::context;
+
+    if(ctx->set_type(idx, tname))
+        ctx->memory->at(idx).set(BF_WEAK);
 }
 
 void Emulator::next() {

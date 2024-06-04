@@ -35,9 +35,9 @@ usize surface_getrow(const RDSurface* self, usize idx,
         return 0;
 
     if(row)
-        *row = s->rows[idx].data();
+        *row = s->rows[idx].cells.data();
 
-    return s->rows[idx].size();
+    return s->rows[idx].cells.size();
 }
 
 void surface_getposition(const RDSurface* self, RDSurfacePosition* pos) {
@@ -50,6 +50,16 @@ void surface_getposition(const RDSurface* self, RDSurfacePosition* pos) {
 usize surface_getindex(const RDSurface* self) {
     spdlog::trace("surface_getindex({})", fmt::ptr(self));
     return api::from_c(self)->current_index();
+}
+
+usize surface_getpath(const RDSurface* self, const RDSurfacePath** path) {
+    spdlog::trace("surface_getpath({}, {})", fmt::ptr(self), fmt::ptr(path));
+    const Surface* s = api::from_c(self);
+
+    if(path)
+        *path = s->get_path().data();
+
+    return s->get_path().size();
 }
 
 void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {

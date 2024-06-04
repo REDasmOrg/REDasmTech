@@ -75,7 +75,7 @@ void Surface::render(usize s, usize n) {
     usize l = std::min<usize>(n, listing.size());
 
     for(usize i = 0; it != listing.end() && i < l; it++, i++) {
-        m_renderer->set_current_item(*it);
+        m_renderer->set_current_item(this->start + i, *it);
 
         switch(it->type) {
             case ListingItemType::EMPTY: m_renderer->new_row(*it); break;
@@ -115,6 +115,48 @@ void Surface::seek(usize index) {
     this->clear_selection();
 }
 
+const std::vector<RDSurfacePath>& Surface::get_path() const {
+    const Listing& lst = state::context->listing;
+    const Database& db = state::context->database;
+    const auto& mem = state::context->memory;
+
+    m_path.clear();
+    m_done.clear();
+
+    for(usize i = 0; i < this->rows.size(); i++) {
+        usize lidx = this->start + i;
+        if(lidx >= lst.size())
+            break;
+
+        const ListingItem& item = lst[lidx];
+
+        Byte b = mem->at(item.index);
+        if(b.has(BF_IMPORT))
+            continue;
+
+        if(b.has(BF_JUMPDST)) {
+            const AddressDetail& d = db.get_detail(item.index);
+
+            for(const auto& [fromidx, cr] : d.refs) {
+                if(cr != CR_JUMP || mem->at(fromidx).has(BF_IMPORT))
+                    continue;
+                this->insert_path(fromidx, item.index);
+            }
+        }
+        else if(b.has(BF_JUMP)) {
+            const AddressDetail& d = db.get_detail(item.index);
+
+            for(usize toidx : d.jumps) {
+                if(mem->at(toidx).has(BF_IMPORT))
+                    continue;
+                this->insert_path(item.index, toidx);
+            }
+        }
+    }
+
+    return m_path;
+}
+
 void Surface::set_columns(usize cols) { m_renderer->columns = cols; }
 
 void Surface::set_position(usize row, usize col) {
@@ -131,26 +173,26 @@ bool Surface::select_word(usize row, usize col) {
     if(row >= this->rows.size())
         return false;
 
-    const SurfaceRow& cells = this->rows[row];
+    const SurfaceRow& sfrow = this->rows[row];
 
-    if(col >= cells.size())
-        col = cells.size() - 1;
+    if(col >= sfrow.cells.size())
+        col = sfrow.cells.size() - 1;
 
-    if(Renderer::is_char_skippable(cells[col].ch))
+    if(Renderer::is_char_skippable(sfrow.cells[col].ch))
         return false;
 
     usize startcol = 0, endcol = 0;
 
     for(usize i = col; i-- > 0;) {
-        RDSurfaceCell cell = cells[i];
+        RDSurfaceCell cell = sfrow.cells[i];
         if(Renderer::is_char_skippable(cell.ch)) {
             startcol = i + 1;
             break;
         }
     }
 
-    for(usize i = col; i < cells.size(); i++) {
-        RDSurfaceCell cell = cells[i];
+    for(usize i = col; i < sfrow.cells.size(); i++) {
+        RDSurfaceCell cell = sfrow.cells[i];
         if(Renderer::is_char_skippable(cell.ch)) {
             endcol = i - 1;
             break;
@@ -214,11 +256,11 @@ std::string_view Surface::get_selected_text() const {
         if(!m_strcache.empty())
             m_strcache += "\n";
 
-        const SurfaceRow& row = this->rows[i];
+        const SurfaceRow& sfrow = this->rows[i];
         usize s = 0, e = 0;
 
-        if(!row.empty())
-            e = row.size() - 1;
+        if(!sfrow.cells.empty())
+            e = sfrow.cells.size() - 1;
 
         if(i == startrow)
             s = startcol;
@@ -226,7 +268,7 @@ std::string_view Surface::get_selected_text() const {
             e = endcol;
 
         for(auto j = s; j <= e; j++)
-            m_strcache.append(&row[j].ch, 1);
+            m_strcache.append(&sfrow.cells[j].ch, 1);
     }
 
     return m_strcache;
@@ -242,7 +284,7 @@ std::string_view Surface::get_text() const {
         if(!m_strcache.empty())
             m_strcache += "\n";
 
-        for(RDSurfaceCell col : row)
+        for(RDSurfaceCell col : row.cells)
             m_strcache.append(&col.ch, 1);
     }
 
@@ -259,6 +301,67 @@ RDRendererParams Surface::create_render_params(const ListingItem& item) const {
     rp.address = m_renderer->current_address();
     rp.byte = state::context->memory->at(item.index).value;
     return rp;
+}
+
+const ListingItem& Surface::get_listing_item(const SurfaceRow& sfrow) const {
+    assume(sfrow.listingindex < state::context->listing.size());
+    return state::context->listing[sfrow.listingindex];
+}
+
+int Surface::last_index_of(usize idx) const {
+    for(usize i = this->rows.size(); i-- > 0;) {
+        const ListingItem& item = this->get_listing_item(this->rows[i]);
+
+        if(item.index == idx && item.type == ListingItemType::CODE)
+            return i;
+        if(item.index < idx)
+            break;
+    }
+
+    return -1;
+}
+
+int Surface::calculate_to_row(usize fromidx, usize toidx) const {
+    if(int torow = this->last_index_of(toidx); torow != -1)
+        return torow;
+
+    if(toidx >= fromidx)
+        return this->rows.size() + 1;
+
+    return -1;
+}
+
+void Surface::insert_path(usize fromidx, usize toidx) const {
+    if(fromidx == toidx)
+        return;
+
+    if(auto it = m_done.emplace(fromidx, toidx); !it.second)
+        return;
+
+    int fromrow = this->last_index_of(fromidx);
+    int torow = this->calculate_to_row(fromidx, toidx);
+
+    const Context* ctx = state::context;
+    Byte b = ctx->memory->at(fromidx);
+
+    if(fromidx > toidx) { // Loop
+        if(b.has(BF_FLOW)) {
+            m_path.push_back(
+                RDSurfacePath{fromrow, torow, THEME_GRAPHEDGELOOPCOND});
+        }
+        else {
+            m_path.push_back(
+                RDSurfacePath{fromrow, torow, THEME_GRAPHEDGELOOP});
+        }
+    }
+    else {
+        if(b.has(BF_FLOW)) {
+            m_path.push_back(RDSurfacePath{fromrow, torow, THEME_SUCCESS});
+        }
+        else {
+            m_path.push_back(RDSurfacePath{fromrow, torow, THEME_GRAPHEDGE});
+        }
+    }
 }
 
 void Surface::render_hexdump(const ListingItem& item) {
@@ -591,10 +694,10 @@ void Surface::fit(usize& row, usize& col) {
         if(row >= this->rows.size())
             row = this->rows.size() - 1;
 
-        if(this->rows[row].empty())
+        if(this->rows[row].cells.empty())
             col = 0;
-        else if(col >= this->rows[row].size())
-            col = this->rows[row].size() - 1;
+        else if(col >= this->rows[row].cells.size())
+            col = this->rows[row].cells.size() - 1;
     }
 }
 

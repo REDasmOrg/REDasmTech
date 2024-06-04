@@ -311,10 +311,12 @@ void Context::build_listing() {
                 this->process_listing_unknown(idx);
                 continue;
             }
+
             if(membyte.is_data()) {
                 this->process_listing_data(idx);
                 continue;
             }
+
             if(membyte.is_code()) {
                 this->listing.push_indent(4);
                 this->process_listing_code(idx);

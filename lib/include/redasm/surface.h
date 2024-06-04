@@ -45,10 +45,18 @@ typedef struct RDSurfaceCell {
     RDThemeKind bg;
 } RDSurfaceCell;
 
+typedef struct RDSurfacePath {
+    int fromrow; // = -1 if out of range
+    int torow;   // = rows + 1 if out of range
+    u8 style;
+} RDSurfacePath;
+
 REDASM_EXPORT RDSurface* rdsurface_new(usize flags);
 REDASM_EXPORT void rdsurface_render(RDSurface* self, usize start, usize n);
 REDASM_EXPORT bool rdsurface_hasselection(const RDSurface* self);
 REDASM_EXPORT usize rdsurface_getrowcount(const RDSurface* self);
+REDASM_EXPORT usize rdsurface_getpath(const RDSurface* self,
+                                      const RDSurfacePath** path);
 REDASM_EXPORT usize rdsurface_getrow(const RDSurface* self, usize idx,
                                      const RDSurfaceCell** row);
 REDASM_EXPORT void rdsurface_getposition(const RDSurface* self,

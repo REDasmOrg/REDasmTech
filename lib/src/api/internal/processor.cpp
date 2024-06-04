@@ -23,6 +23,15 @@ void emulator_adddataref(RDEmulator* self, RDAddress address, usize dr) {
         api::from_c(self)->add_dataref(*idx, dr);
 }
 
+void emulator_settype(RDEmulator* self, RDAddress address,
+                      std::string_view tname) {
+    spdlog::trace("emulator_settype({}, {:x}, '{}')", fmt::ptr(self), address,
+                  tname);
+
+    if(auto idx = state::context->address_to_index(address); idx)
+        api::from_c(self)->set_type(*idx, tname);
+}
+
 usize get_processors(const RDProcessor** processors) {
     spdlog::trace("get_processors('{}')", fmt::ptr(processors));
 

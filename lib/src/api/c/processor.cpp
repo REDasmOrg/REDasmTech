@@ -7,6 +7,12 @@ void rdemulator_adddataref(RDEmulator* self, RDAddress address, usize dr) {
     redasm::api::internal::emulator_adddataref(self, address, dr);
 }
 
+void rdemulator_settype(RDEmulator* self, RDAddress address,
+                        const char* tname) {
+    if(tname)
+        redasm::api::internal::emulator_settype(self, address, tname);
+}
+
 usize rd_getprocessors(const RDProcessor** processors) {
     return redasm::api::internal::get_processors(processors);
 }
