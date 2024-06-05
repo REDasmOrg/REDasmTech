@@ -5,12 +5,20 @@
 
 struct RDAnalyzer;
 
+enum RDAnalyzerFlags {
+    ANALYZER_NONE = 0,
+    ANALYZER_SELECTED = (1 << 0),
+    ANALYZER_RUNONCE = (1 << 1),
+    ANALYZER_EXPERIMENTAL = (1 << 2),
+};
+
 typedef bool (*RDAnalyzerIsEnabled)(const RDAnalyzer*);
 typedef void (*RDAnalyzerExecute)(const RDAnalyzer*);
 typedef void (*RDAnalyzerFree)(const RDAnalyzer*);
 
 typedef struct RDAnalyzer {
     const char* name;
+    usize flags;
     usize order;
     void* userdata;
 

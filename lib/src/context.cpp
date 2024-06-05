@@ -49,6 +49,11 @@ Context::Context(const std::shared_ptr<AbstractBuffer>& b, const RDLoader* l)
 
     this->processor = &state::processors.front();
     this->availableprocessors.emplace_back(this->processor->name);
+
+    for(const RDAnalyzer& a : state::analyzers) {
+        if(a.flags & ANALYZER_SELECTED)
+            this->selectedanalyzers.insert(&a);
+    }
 }
 
 void Context::set_export(usize idx) { // NOLINT

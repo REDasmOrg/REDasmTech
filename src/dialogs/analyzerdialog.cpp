@@ -51,6 +51,11 @@ void AnalyzerDialog::get_analyzers() {
         auto* orderitem = new QStandardItem(order);
 
         nameitem->setCheckable(true);
+
+        nameitem->setCheckState(m_analyzers[i].flags & ANALYZER_SELECTED
+                                    ? Qt::Checked
+                                    : Qt::Unchecked);
+
         m_analyzersmodel->appendRow({nameitem, orderitem});
     }
 

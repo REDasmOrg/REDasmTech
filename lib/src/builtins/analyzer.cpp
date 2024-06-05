@@ -80,10 +80,10 @@ void do_autorename(const RDAnalyzer*) {
 void register_analyzers() {
     RDAnalyzer autorename{};
     autorename.name = "Autorename Nullsubs and Thunks";
+    autorename.flags = ANALYZER_SELECTED;
     autorename.order = 0;
     autorename.isenabled = [](const RDAnalyzer*) { return true; };
     autorename.execute = do_autorename; // TODO(davide): Nullsubs
-
     api::internal::register_analyzer(autorename);
 
     RDAnalyzer strings{};
