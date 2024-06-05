@@ -104,8 +104,8 @@ usize Listing::array(usize index, const typing::ParsedType& pt) {
     return lidx;
 }
 
-usize Listing::code(usize index) {
-    return this->push_item(ListingItemType::CODE, index);
+usize Listing::instruction(usize index) {
+    return this->push_item(ListingItemType::INSTRUCTION, index);
 }
 
 usize Listing::jump(usize index) {

@@ -14,7 +14,7 @@ class Surface: public Object {
 public:
     explicit Surface(usize flags = SURFACE_DEFAULT);
     inline Renderer* renderer() const { return m_renderer.get(); }
-    [[nodiscard]] usize current_index() const;
+    [[nodiscard]] tl::optional<usize> current_index() const;
     [[nodiscard]] tl::optional<usize> index_under_cursor() const;
     [[nodiscard]] const Segment* current_segment() const;
     [[nodiscard]] RDSurfacePosition position() const;
@@ -43,7 +43,7 @@ private:
     void render_function(const ListingItem& item);
     void render_array(const ListingItem& item);
     void render_type(const ListingItem& item);
-    void render_code(const ListingItem& item);
+    void render_instr(const ListingItem& item);
     void render_comments(const ListingItem& item);
     void render_refs(const ListingItem& item);
     void fit(usize& row, usize& col);

@@ -38,7 +38,10 @@ Surface::Surface(usize flags) {
     m_renderer = std::make_unique<Renderer>(flags);
 }
 
-usize Surface::current_index() const {
+tl::optional<usize> Surface::current_index() const {
+    if(state::context->listing.empty())
+        return tl::nullopt;
+
     usize idx =
         std::min(this->start + m_row, state::context->listing.size() - 1);
     return state::context->listing[idx].index;
@@ -52,10 +55,12 @@ tl::optional<usize> Surface::index_under_cursor() const {
 }
 
 const Segment* Surface::current_segment() const {
-    usize idx = this->current_index();
+    auto idx = this->current_index();
+    if(!idx)
+        return nullptr;
 
     for(const Segment& s : state::context->segments) {
-        if(idx >= s.index && idx < s.endindex)
+        if(*idx >= s.index && *idx < s.endindex)
             return &s;
     }
 
@@ -83,7 +88,7 @@ void Surface::render(usize s, usize n) {
             case ListingItemType::SEGMENT: this->render_segment(*it); break;
             case ListingItemType::FUNCTION: this->render_function(*it); break;
             case ListingItemType::JUMP: this->render_jump(*it); break;
-            case ListingItemType::CODE: this->render_code(*it); break;
+            case ListingItemType::INSTRUCTION: this->render_instr(*it); break;
             case ListingItemType::TYPE: this->render_type(*it); break;
             case ListingItemType::ARRAY: this->render_array(*it); break;
             default: break;
@@ -312,7 +317,7 @@ int Surface::last_index_of(usize idx) const {
     for(usize i = this->rows.size(); i-- > 0;) {
         const ListingItem& item = this->get_listing_item(this->rows[i]);
 
-        if(item.index == idx && item.type == ListingItemType::CODE)
+        if(item.index == idx && item.type == ListingItemType::INSTRUCTION)
             return i;
         if(item.index < idx)
             break;
@@ -567,7 +572,7 @@ void Surface::render_type(const ListingItem& item) {
     }
 }
 
-void Surface::render_code(const ListingItem& item) {
+void Surface::render_instr(const ListingItem& item) {
     m_renderer->new_row(item);
 
     RDRendererParams rp = this->create_render_params(item);

@@ -11,7 +11,7 @@ namespace redasm {
 enum class ListingItemType {
     EMPTY = 0,
     HEX_DUMP,
-    CODE,
+    INSTRUCTION,
     JUMP,
     SEGMENT,
     FUNCTION,
@@ -80,7 +80,7 @@ public:
     void hex_dump(usize startindex, usize endindex);
     usize type(usize index, const typing::ParsedType& pt);
     usize array(usize index, const typing::ParsedType& pt);
-    usize code(usize index);
+    usize instruction(usize index);
     usize jump(usize index);
     usize function(usize index);
     usize segment(usize index);

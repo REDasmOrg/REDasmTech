@@ -14,20 +14,26 @@ tl::optional<u8> Memory::get_byte(usize idx) const {
     return tl::nullopt;
 }
 
-void Memory::set_unknown(usize idx, usize len) {
-    usize endlen = std::min(idx + len, m_buffer.size());
+void Memory::unset(usize idx) {
+    u32 c = m_buffer[idx].category();
+    if(c == BF_UNKNOWN)
+        return;
 
-    for(usize i = idx; i < endlen; i++)
-        m_buffer[i].value &= BF_BYTEVMASK;
+    for(usize i = idx; i < m_buffer.size(); i++) {
+        Byte& b = m_buffer[i];
+
+        if(b.category() != c || (i > idx && !b.is_cont()))
+            break;
+
+        m_buffer[i].value &= BF_MMASK; // Clear Specific Flags
+    }
 }
-
-void Memory::set_data(usize idx, usize len) { this->set(idx, len, BF_DATA); }
-void Memory::set_code(usize idx, usize len) { this->set(idx, len, BF_CODE); }
 
 void Memory::set(usize idx, usize len, u32 flags) {
     usize endlen = std::min(idx + len, m_buffer.size());
 
     for(usize i = idx; i < endlen; i++) {
+        m_buffer[i].value &= BF_MMASK; // Clear Specific Flags
         m_buffer[i].set(flags);
         flags |= BF_CONT;
     }

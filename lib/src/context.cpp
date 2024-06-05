@@ -331,25 +331,13 @@ void Context::build_listing() {
 }
 
 void Context::process_listing_unknown(usize& idx) {
-    usize l = 0, start = idx;
-
-    for(; idx < this->memory->size() && this->memory->at(idx).is_unknown();
-        l++, idx++) {
-        if(idx != start && this->memory->at(idx).has(BF_SEGMENT))
-            break; // Split inter-segment unknowns
-
-        if(l && !(l % 0x10)) {
-            this->listing.hex_dump(start, idx);
-            start = idx;
-        }
-    }
-
-    if(idx > start)
-        this->listing.hex_dump(start, idx);
+    this->process_hex_dump(idx, [](Byte b) { return b.is_unknown(); });
 }
 
 void Context::process_listing_data(usize& idx) {
-    if(this->memory->at(idx).has(BF_ARRAY)) {
+    Byte b = this->memory->at(idx);
+
+    if(b.has(BF_ARRAY)) {
         const AddressDetail& d = this->database.get_detail(idx);
         assume(!d.type_name.empty());
 
@@ -358,7 +346,7 @@ void Context::process_listing_data(usize& idx) {
         assume(pt->n > 0);
         this->process_listing_array(idx, *pt);
     }
-    else if(this->memory->at(idx).has(BF_TYPE)) {
+    else if(b.has(BF_TYPE)) {
         const AddressDetail& d = this->database.get_detail(idx);
         assume(!d.type_name.empty());
 
@@ -367,8 +355,11 @@ void Context::process_listing_data(usize& idx) {
         assume(pt->n == 0);
         this->process_listing_type(idx, *pt);
     }
-    else
-        idx++;
+    else {
+        this->process_hex_dump(idx, [](Byte b) {
+            return b.is_data() && !b.has(BF_TYPE) && !b.has(BF_ARRAY);
+        });
+    }
 }
 
 void Context::process_listing_code(usize& idx) {
@@ -386,8 +377,14 @@ void Context::process_listing_code(usize& idx) {
         this->listing.push_indent();
     }
 
-    this->listing.code(idx++);
-    idx += this->memory->get_length(idx);
+    if(b.has(BF_INSTR)) {
+        this->listing.instruction(idx++);
+        idx += this->memory->get_length(idx);
+    }
+    else {
+        this->process_hex_dump(
+            idx, [](Byte b) { return b.is_code() && !b.has(BF_INSTR); });
+    }
 }
 
 void Context::process_listing_array(usize& idx, const typing::ParsedType& pt) {

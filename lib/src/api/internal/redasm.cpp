@@ -397,7 +397,7 @@ std::string render_text(RDAddress address) {
 
     // Find first code item
     while(it != state::context->listing.end() && it->index == *idx) {
-        if(it->type == ListingItemType::CODE)
+        if(it->type == ListingItemType::INSTRUCTION)
             break;
 
         it++;

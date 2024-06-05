@@ -66,6 +66,25 @@ private:
     void process_listing_array(usize& idx, const typing::ParsedType& pt);
     usize process_listing_type(usize& idx, const typing::ParsedType& pt);
 
+    template<typename Function>
+    void process_hex_dump(usize& idx, Function f) {
+        usize l = 0, start = idx;
+
+        for(; idx < this->memory->size() && f(this->memory->at(idx));
+            l++, idx++) {
+            if(idx != start && this->memory->at(idx).has(BF_SEGMENT))
+                break; // Split inter-segment unknowns
+
+            if(l && !(l % 0x10)) {
+                this->listing.hex_dump(start, idx);
+                start = idx;
+            }
+        }
+
+        if(idx > start)
+            this->listing.hex_dump(start, idx);
+    }
+
 public:
     int bits{}, minstring{DEFAULT_MIN_STRING};
     std::unordered_set<const RDAnalyzer*> selectedanalyzers;

@@ -41,7 +41,9 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
             [&](int action) {
                 switch(action) {
                     case QScrollBar::SliderSingleStepAdd: {
-                        size_t idx = this->get_surface_index();
+                        usize idx;
+                        if(!this->get_surface_index(&idx))
+                            return;
 
                         if(idx < this->get_listing_length()) {
                             rdsurface_seek(m_surface, idx + SCROLL_SPEED);
@@ -51,7 +53,9 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
                     }
 
                     case QScrollBar::SliderSingleStepSub: {
-                        size_t idx = this->get_surface_index();
+                        usize idx;
+                        if(!this->get_surface_index(&idx))
+                            return;
 
                         if(idx > 0) {
                             rdsurface_seek(m_surface, idx - SCROLL_SPEED);
@@ -298,11 +302,11 @@ RDSurfacePosition SurfaceWidget::get_surface_position() const {
     return pos;
 }
 
-size_t SurfaceWidget::get_surface_index() const {
-    return rdsurface_getindex(m_surface);
+bool SurfaceWidget::get_surface_index(usize* index) const {
+    return rdsurface_getindex(m_surface, index);
 }
 
-size_t SurfaceWidget::get_listing_length() const {
+usize SurfaceWidget::get_listing_length() const {
     return rdlisting_getlength();
 }
 

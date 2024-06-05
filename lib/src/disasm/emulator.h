@@ -18,7 +18,7 @@ public:
     [[nodiscard]] bool has_next() const;
 
 private:
-    tl::optional<RDAddress> decode(RDAddress address);
+    void decode(RDAddress address);
     const Segment* get_segment(usize idx);
 
 private:

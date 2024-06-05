@@ -47,9 +47,12 @@ void surface_getposition(const RDSurface* self, RDSurfacePosition* pos) {
         *pos = api::from_c(self)->position();
 }
 
-usize surface_getindex(const RDSurface* self) {
+bool surface_getindex(const RDSurface* self, usize* index) {
     spdlog::trace("surface_getindex({})", fmt::ptr(self));
-    return api::from_c(self)->current_index();
+    auto idx = api::from_c(self)->current_index();
+    if(*index)
+        *index = *idx;
+    return idx.has_value();
 }
 
 usize surface_getpath(const RDSurface* self, const RDSurfacePath** path) {
@@ -71,19 +74,30 @@ void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
     Context* ctx = state::context;
     const Surface* s = api::from_c(self);
     const Segment* seg = s->current_segment();
+    auto index = s->current_index();
 
-    auto address = ctx->index_to_address(s->current_index());
-    auto offset = ctx->index_to_offset(s->current_index());
+    if(index) {
+        loc->index.value = *index;
+        loc->index.valid = true;
 
-    if(address)
-        loc->address.value = *address;
+        auto address = ctx->index_to_address(*index);
+        auto offset = ctx->index_to_offset(*index);
 
-    if(offset)
-        loc->offset.value = *offset;
+        if(address)
+            loc->address.value = *address;
 
-    loc->address.valid = address.has_value();
-    loc->offset.valid = offset.has_value();
-    loc->index = s->current_index();
+        if(offset)
+            loc->offset.value = *offset;
+
+        loc->address.valid = address.has_value();
+        loc->offset.valid = offset.has_value();
+    }
+    else {
+        loc->index.valid = false;
+        loc->address.valid = false;
+        loc->offset.valid = false;
+    }
+
     loc->segment = seg ? seg->name.c_str() : nullptr;
 }
 

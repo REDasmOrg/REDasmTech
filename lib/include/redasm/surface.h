@@ -30,7 +30,11 @@ typedef struct RDSurfaceLocation {
         bool valid;
     } offset;
 
-    usize index;
+    struct {
+        usize value;
+        bool valid;
+    } index;
+
     const char* segment;
 } RDSurfaceLocation;
 
@@ -63,7 +67,7 @@ REDASM_EXPORT void rdsurface_getposition(const RDSurface* self,
                                          RDSurfacePosition* pos);
 REDASM_EXPORT void rdsurface_getlocation(const RDSurface* self,
                                          RDSurfaceLocation* loc);
-REDASM_EXPORT usize rdsurface_getindex(const RDSurface* self);
+REDASM_EXPORT bool rdsurface_getindex(const RDSurface* self, usize* index);
 REDASM_EXPORT const char* rdsurface_gettext(const RDSurface* self);
 REDASM_EXPORT const char* rdsurface_getselectedtext(const RDSurface* self);
 REDASM_EXPORT bool rdsurface_getaddressundercursor(const RDSurface* self,

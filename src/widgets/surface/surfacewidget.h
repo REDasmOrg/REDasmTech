@@ -31,8 +31,8 @@ private:
     [[nodiscard]] int visible_lines() const;
     [[nodiscard]] RDSurfacePosition get_surface_coords(QPointF pt) const;
     [[nodiscard]] RDSurfacePosition get_surface_position() const;
-    [[nodiscard]] size_t get_surface_index() const;
-    [[nodiscard]] size_t get_listing_length() const;
+    [[nodiscard]] bool get_surface_index(usize* index) const;
+    [[nodiscard]] usize get_listing_length() const;
     bool follow_under_cursor();
     void create_context_menu();
     void update_scrollbars();

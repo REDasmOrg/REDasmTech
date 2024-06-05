@@ -37,33 +37,32 @@ void Emulator::schedule(usize idx) {
         m_pending.push_back(idx);
 }
 
-tl::optional<RDAddress> Emulator::decode(usize idx) {
+void Emulator::decode(usize idx) {
     const Segment* s = this->get_segment(idx);
 
     if(!s || !(s->type & SEGMENTTYPE_HASCODE))
-        return tl::nullopt;
+        return;
 
     Context* ctx = state::context;
     Memory* m = ctx->memory.get();
 
-    if(Byte b = m->at(idx); !b.has_byte() || !b.is_unknown())
-        return tl::nullopt;
+    if(Byte b = m->at(idx); !b.has_byte() || (!b.is_unknown() && !b.is_weak()))
+        return;
 
     const RDProcessor* p = ctx->processor;
     assume(p);
 
     if(!p->emulate)
-        return tl::nullopt;
+        return;
 
     m_currindex = idx;
 
     auto address = ctx->index_to_address(idx);
     assume(address.has_value());
+    m->unset(idx);
 
     if(usize sz = p->emulate(p, *address, api::to_c(this)); sz)
-        m->set_code(idx, sz);
-
-    return tl::nullopt;
+        m->set(idx, sz, BF_INSTR);
 }
 
 const Segment* Emulator::get_segment(usize idx) {
