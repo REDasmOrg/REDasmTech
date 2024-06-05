@@ -165,6 +165,8 @@ void MainWindow::show_context_view(bool candisassemble) {
     if(candisassemble)
         rd_disassemble();
 
+    rd_analyze();
+
     QFileInfo fi{m_filepath};
     QDir::setCurrent(fi.path());
     this->setWindowTitle(fi.fileName());

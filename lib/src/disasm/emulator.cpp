@@ -39,7 +39,6 @@ void Emulator::schedule(usize idx) {
 
 void Emulator::decode(usize idx) {
     const Segment* s = this->get_segment(idx);
-
     if(!s || !(s->type & SEGMENTTYPE_HASCODE))
         return;
 
@@ -122,7 +121,7 @@ void Emulator::add_dataref(usize idx, usize dr) {
     Context* ctx = state::context;
 
     stringfinder::classify(idx).map([idx, ctx](const RDStringResult& x) {
-        ctx->memory->set_unknown(idx, x.totalsize);
+        ctx->memory->unset(idx, x.totalsize);
         ctx->set_type(idx, x.type);
         ctx->memory->at(idx).set(BF_WEAK);
     });

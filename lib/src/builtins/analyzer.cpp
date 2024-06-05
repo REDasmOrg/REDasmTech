@@ -31,10 +31,63 @@ void strings_step(RDAddress& address, const RDMemoryInfo& mi) {
     }
 }
 
+void do_autorename(const RDAnalyzer*) {
+    Context* ctx = state::context;
+    const Database& db = ctx->database;
+
+    for(const Segment& seg : ctx->segments) {
+        if(!(seg.type & SEGMENTTYPE_HASCODE))
+            continue;
+
+        const auto& mem = ctx->memory;
+
+        for(usize i = seg.index; i < seg.endindex; i++) {
+            if(Byte b = mem->at(i); !b.has(BF_CALL))
+                continue;
+
+            const AddressDetail& d = db.get_detail(i);
+            if(d.calls.size() != 1)
+                continue;
+
+            if(usize callidx = d.calls.front(); callidx < mem->size()) {
+                Byte callb = mem->at(callidx);
+                std::string n;
+
+                if(callb.has(BF_JUMP)) {
+                    const AddressDetail& jd = db.get_detail(callidx);
+                    if(jd.jumps.size() != 1 || jd.jumps.front() >= mem->size())
+                        continue;
+
+                    n = "thunk_" + ctx->get_name(jd.jumps.front());
+                }
+                else if(callb.has(BF_CALL)) {
+                    const AddressDetail& cd = db.get_detail(callidx);
+                    if(cd.calls.empty() != 1 || cd.calls.front() >= mem->size())
+                        continue;
+
+                    n = "thunk_" + ctx->get_name(cd.calls.front());
+                }
+
+                if(!n.empty())
+                    ctx->set_name(callidx, n);
+            }
+        }
+    }
+}
+
 } // namespace
 
 void register_analyzers() {
+    RDAnalyzer autorename{};
+    autorename.name = "Autorename Nullsubs and Thunks";
+    autorename.order = 0;
+    autorename.isenabled = [](const RDAnalyzer*) { return true; };
+    autorename.execute = do_autorename; // TODO(davide): Nullsubs
+
+    api::internal::register_analyzer(autorename);
+
     RDAnalyzer strings{};
+
     strings.name = "Search and mark all strings";
     strings.order = std::numeric_limits<u32>::max();
     strings.isenabled = [](const RDAnalyzer*) { return true; };

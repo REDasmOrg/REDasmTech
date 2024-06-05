@@ -13,6 +13,7 @@ public:
     tl::optional<u8> get_byte(usize idx) const override;
     usize get_length(usize idx) const;
     void set(usize idx, usize len, u32 flags);
+    void unset(usize idx, usize len);
     void unset(usize idx);
 
     inline void set_unknown(usize idx, usize len) {

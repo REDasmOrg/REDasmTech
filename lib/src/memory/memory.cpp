@@ -14,6 +14,11 @@ tl::optional<u8> Memory::get_byte(usize idx) const {
     return tl::nullopt;
 }
 
+void Memory::unset(usize idx, usize len) {
+    for(usize i = idx; i < len && i < m_buffer.size(); i++)
+        m_buffer[i].value &= BF_MMASK; // Clear Specific Flags
+}
+
 void Memory::unset(usize idx) {
     u32 c = m_buffer[idx].category();
     if(c == BF_UNKNOWN)
@@ -33,7 +38,6 @@ void Memory::set(usize idx, usize len, u32 flags) {
     usize endlen = std::min(idx + len, m_buffer.size());
 
     for(usize i = idx; i < endlen; i++) {
-        m_buffer[i].value &= BF_MMASK; // Clear Specific Flags
         m_buffer[i].set(flags);
         flags |= BF_CONT;
     }

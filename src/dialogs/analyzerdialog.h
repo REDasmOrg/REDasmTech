@@ -11,9 +11,6 @@ class AnalyzerDialog: public QDialog {
 public:
     explicit AnalyzerDialog(QWidget* parent = nullptr);
 
-public Q_SLOTS:
-    void accept() override;
-
 private:
     void set_details_visible(bool b);
     void select_analyzers(bool select);

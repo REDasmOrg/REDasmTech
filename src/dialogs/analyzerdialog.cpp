@@ -25,11 +25,6 @@ AnalyzerDialog::AnalyzerDialog(QWidget* parent): QDialog{parent}, m_ui{this} {
             &AnalyzerDialog::get_analyzers);
 }
 
-void AnalyzerDialog::accept() {
-    rd_analyze();
-    QDialog::accept();
-}
-
 void AnalyzerDialog::set_details_visible(bool b) {
     m_ui.tblanalyzers->setColumnHidden(m_analyzersmodel->columnCount() - 1, !b);
     m_ui.tblanalyzers->horizontalHeader()->setVisible(b);
