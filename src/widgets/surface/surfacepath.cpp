@@ -20,8 +20,8 @@ void SurfacePath::paintEvent(QPaintEvent* event) {
 
     const RDSurfacePath* path = nullptr;
     usize c = rdsurface_getpath(m_surface->handle(), &path);
-    // if(!c)
-    // return;
+    if(!c)
+        return;
 
     QPainter painter{this};
     QFontMetrics fm = this->fontMetrics();
