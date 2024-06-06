@@ -81,6 +81,20 @@ bool Context::set_function(usize idx, const std::string& name) {
     return false;
 }
 
+bool Context::set_entry(usize idx, std::string name) {
+    if(name.empty())
+        name = EP_NAME;
+
+    if(this->set_function(idx, name)) {
+        this->set_export(idx);
+        this->disassembler.emulator.enqueue(idx);
+        this->entrypoint = idx;
+        return true;
+    }
+
+    return false;
+}
+
 bool Context::set_type(usize idx, std::string_view tname,
                        const std::string& dbname) {
     assume(idx < this->memory->size());

@@ -91,6 +91,14 @@ bool rd_setfunctionas(RDAddress address, const char* name) {
     return false;
 }
 
+bool rd_setentry(RDAddress address, const char* name) {
+    std::string n;
+    if(name)
+        n = name;
+
+    return redasm::api::internal::set_entry(address, name);
+}
+
 const char* rd_getname(RDAddress address) {
     static std::string res;
 

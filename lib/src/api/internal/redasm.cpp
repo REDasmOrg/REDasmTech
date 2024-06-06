@@ -489,6 +489,15 @@ bool set_function(RDAddress address) {
     return internal::set_function_as(address, {});
 }
 
+bool set_entry(RDAddress address, const std::string& name) {
+    spdlog::trace("set_entry({:x}, '{}')", address, name);
+
+    if(auto idx = state::context->address_to_index(address); idx)
+        return state::context->set_entry(*idx, name);
+
+    return false;
+}
+
 bool is_address(RDAddress address) {
     spdlog::trace("is_address({:x})", address);
     const Context* ctx = state::context;

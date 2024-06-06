@@ -3,7 +3,6 @@
 #include "surfacewidget.h"
 #include <QPainter>
 #include <QPainterPath>
-#include <QRandomGenerator>
 
 SurfacePath::SurfacePath(SurfaceWidget* surface, QWidget* parent)
     : QWidget{parent}, m_surface{surface} {
@@ -25,20 +24,20 @@ void SurfacePath::paintEvent(QPaintEvent* event) {
 
     QPainter painter{this};
     QFontMetrics fm = this->fontMetrics();
+    const int ROWS = m_surface->visible_rows();
+    const int W = fm.horizontalAdvance(" ");
+    const qreal H = m_surface->row_height();
+    qreal x = this->width() - (W * 2);
 
-    int rows = m_surface->visible_rows();
-    int w = fm.horizontalAdvance(" ");
-    qreal h = m_surface->row_height(), x = this->width() - (w * 2);
-
-    for(usize i = 0; i < c; i++, x -= w, path++) {
-        int y1 = (path->fromrow * h) + (h / 2);
-        int y2 = (std::min(path->torow, rows + 1) * h) + (h / 2);
-        int y = (std::min(path->torow, rows + 1) * h);
+    for(usize i = 0; i < c; i++, x -= W, path++) {
+        int y1 = (path->fromrow * H) + (H / 2);
+        int y2 = (std::min(path->torow, ROWS + 1) * H) + (H / 2);
+        int y = (std::min(path->torow, ROWS + 1) * H);
         qreal penwidth = this->is_path_selected(path) ? 3 : 2;
 
-        if(y2 > (y + (h / 2)))
+        if(y2 > (y + (H / 2)))
             y2 -= penwidth;
-        else if(y2 < (y + (h / 2)))
+        else if(y2 < (y + (H / 2)))
             y2 += penwidth;
 
         QVector<QLine> points;
@@ -46,7 +45,7 @@ void SurfacePath::paintEvent(QPaintEvent* event) {
         points.push_back(QLine(x, y1, x, y2));
         points.push_back(QLine(x, y2, this->width(), y2));
 
-        Qt::PenStyle penstyle = ((path->fromrow == -1) || (path->torow > rows))
+        Qt::PenStyle penstyle = ((path->fromrow == -1) || (path->torow > ROWS))
                                     ? Qt::DotLine
                                     : Qt::SolidLine;
         painter.setPen(

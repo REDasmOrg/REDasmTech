@@ -21,11 +21,13 @@ namespace redasm {
 class Context: public Object {
 public:
     static constexpr usize DEFAULT_MIN_STRING = 4;
+    static constexpr const char* EP_NAME = "__redasm_ep__";
 
     Context(const std::shared_ptr<AbstractBuffer>& b, const RDLoader* loader);
     void set_export(usize idx);
     void set_import(usize idx);
     bool set_function(usize idx, const std::string& name = {});
+    bool set_entry(usize idx, std::string name = EP_NAME);
     void memory_map(RDAddress base, usize size);
     RDAddress memory_copy(usize idx, RDOffset start, RDOffset end) const;
     tl::optional<usize> address_to_index(RDAddress address) const;
@@ -86,6 +88,7 @@ private:
     }
 
 public:
+    usize entrypoint{};
     int bits{}, minstring{DEFAULT_MIN_STRING};
     std::unordered_set<const RDAnalyzer*> selectedanalyzers;
     std::vector<std::string> availableprocessors;

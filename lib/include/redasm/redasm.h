@@ -94,6 +94,7 @@ REDASM_EXPORT void rd_schedule(RDAddress address);
 REDASM_EXPORT bool rd_settype(RDAddress address, const char* tname);
 REDASM_EXPORT bool rd_setfunction(RDAddress address);
 REDASM_EXPORT bool rd_setfunctionas(RDAddress address, const char* name);
+REDASM_EXPORT bool rd_setentry(RDAddress address, const char* name);
 
 REDASM_EXPORT const char* rd_getname(RDAddress address);
 REDASM_EXPORT usize rd_getreferences(RDAddress address, const RDRef** refs);

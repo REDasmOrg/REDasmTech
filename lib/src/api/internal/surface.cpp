@@ -98,6 +98,9 @@ void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
         loc->offset.valid = false;
     }
 
+    loc->listingindex.value = s->start;
+    loc->listingindex.valid = s->start < ctx->listing.size();
+
     loc->segment = seg ? seg->name.c_str() : nullptr;
 }
 

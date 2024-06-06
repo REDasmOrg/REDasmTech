@@ -45,6 +45,7 @@ inline PyMethodDef methods[] = {
     {"set_import", python::set_import, METH_O, nullptr},
     {"set_function", python::set_function, METH_O, nullptr},
     {"set_function_as", python::set_function_as, METH_VARARGS, nullptr},
+    {"set_entry", python::set_entry, METH_VARARGS, nullptr},
     {"set_processor", python::set_processor, METH_O, nullptr},
     {"register_loader", python::to_cfunction(python::register_loader), METH_VARARGS | METH_KEYWORDS, nullptr},
     {"register_processor", python::to_cfunction(python::register_processor), METH_VARARGS | METH_KEYWORDS, nullptr},

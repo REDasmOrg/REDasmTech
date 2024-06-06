@@ -80,6 +80,12 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
             });
 
     this->update_scrollbars();
+
+    RDSurfaceLocation loc;
+    rdsurface_getlocation(m_surface, &loc);
+
+    if(loc.listingindex.valid)
+        this->verticalScrollBar()->setValue(loc.listingindex.value);
 }
 
 SurfaceWidget::~SurfaceWidget() {

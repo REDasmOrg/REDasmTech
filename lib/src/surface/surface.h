@@ -51,7 +51,7 @@ private:
     void clear_selection();
 
 public:
-    usize start{static_cast<usize>(-1)};
+    usize start{0};
     SurfaceRows rows;
 
 private:

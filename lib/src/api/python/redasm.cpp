@@ -169,6 +169,20 @@ PyObject* set_function_as(PyObject* /*self*/, PyObject* args) {
     return internal::set_function_as(address, name) ? Py_True : Py_False;
 }
 
+PyObject* set_entry(PyObject* /*self*/, PyObject* args) {
+    RDAddress address{};
+    const char* name = nullptr;
+
+    if(!PyArg_ParseTuple(args, "Kz", &address, &name))
+        return nullptr;
+
+    std::string n;
+    if(name)
+        n = name;
+
+    return internal::set_entry(address, n) ? Py_True : Py_False;
+}
+
 PyObject* get_bool(PyObject* /*self*/, PyObject* args) {
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 

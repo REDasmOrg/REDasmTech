@@ -35,6 +35,11 @@ typedef struct RDSurfaceLocation {
         bool valid;
     } index;
 
+    struct {
+        usize value;
+        bool valid;
+    } listingindex;
+
     const char* segment;
 } RDSurfaceLocation;
 

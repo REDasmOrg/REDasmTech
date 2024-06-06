@@ -43,6 +43,7 @@ PyObject* set_export(PyObject* self, PyObject* args);
 PyObject* set_import(PyObject* self, PyObject* args);
 PyObject* set_function(PyObject* self, PyObject* args);
 PyObject* set_function_as(PyObject* self, PyObject* args);
+PyObject* set_entry(PyObject* self, PyObject* args);
 
 PyObject* get_bool(PyObject* self, PyObject* args);
 PyObject* get_char(PyObject* self, PyObject* args);
