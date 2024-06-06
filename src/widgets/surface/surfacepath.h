@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QWidget>
+#include <redasm/redasm.h>
 
 class SurfaceWidget;
 
@@ -12,6 +13,10 @@ public:
 
 protected:
     void paintEvent(QPaintEvent* event) override;
+
+private:
+    [[nodiscard]] bool is_path_selected(const RDSurfacePath* p) const;
+    void fill_arrow(QPainter* painter, int y, const QFontMetrics& fm);
 
 private:
     SurfaceWidget* m_surface;

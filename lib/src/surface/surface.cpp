@@ -134,6 +134,8 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
             break;
 
         const ListingItem& item = lst[lidx];
+        if(item.type != ListingItemType::INSTRUCTION)
+            continue;
 
         Byte b = mem->at(item.index);
         if(b.has(BF_IMPORT))
@@ -145,7 +147,8 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
             for(const auto& [fromidx, cr] : d.refs) {
                 if(cr != CR_JUMP || mem->at(fromidx).has(BF_IMPORT))
                     continue;
-                this->insert_path(fromidx, item.index);
+
+                this->insert_path(mem->at(fromidx), this->index_of(fromidx), i);
             }
         }
         else if(b.has(BF_JUMP)) {
@@ -154,7 +157,7 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
             for(usize toidx : d.jumps) {
                 if(mem->at(toidx).has(BF_IMPORT))
                     continue;
-                this->insert_path(item.index, toidx);
+                this->insert_path(b, i, this->last_index_of(toidx));
             }
         }
     }
@@ -313,6 +316,19 @@ const ListingItem& Surface::get_listing_item(const SurfaceRow& sfrow) const {
     return state::context->listing[sfrow.listingindex];
 }
 
+int Surface::index_of(usize idx) const {
+    for(usize i = 0; i < this->rows.size(); i++) {
+        const ListingItem& item = this->get_listing_item(this->rows[i]);
+
+        if(item.index == idx && item.type == ListingItemType::INSTRUCTION)
+            return i;
+        if(item.index > idx)
+            break;
+    }
+
+    return -1;
+}
+
 int Surface::last_index_of(usize idx) const {
     for(usize i = this->rows.size(); i-- > 0;) {
         const ListingItem& item = this->get_listing_item(this->rows[i]);
@@ -326,30 +342,17 @@ int Surface::last_index_of(usize idx) const {
     return -1;
 }
 
-int Surface::calculate_to_row(usize fromidx, usize toidx) const {
-    if(int torow = this->last_index_of(toidx); torow != -1)
-        return torow;
-
-    if(toidx >= fromidx)
-        return this->rows.size() + 1;
-
-    return -1;
-}
-
-void Surface::insert_path(usize fromidx, usize toidx) const {
-    if(fromidx == toidx)
+void Surface::insert_path(Byte b, int fromrow, int torow) const {
+    if(fromrow == torow)
         return;
 
-    if(auto it = m_done.emplace(fromidx, toidx); !it.second)
+    if(auto it = m_done.emplace(fromrow, torow); !it.second)
         return;
 
-    int fromrow = this->last_index_of(fromidx);
-    int torow = this->calculate_to_row(fromidx, toidx);
+    if(torow == -1)
+        torow = this->rows.size() + 1;
 
-    const Context* ctx = state::context;
-    Byte b = ctx->memory->at(fromidx);
-
-    if(fromidx > toidx) { // Loop
+    if(fromrow > torow) { // Loop
         if(b.has(BF_FLOW)) {
             m_path.push_back(
                 RDSurfacePath{fromrow, torow, THEME_GRAPHEDGELOOPCOND});

@@ -14,6 +14,10 @@ public:
     [[nodiscard]] inline float cell_height() const { return m_cellheight; }
     [[nodiscard]] inline float cell_width() const { return m_cellwidth; }
     [[nodiscard]] inline RDSurface* handle() const { return m_surface; }
+    [[nodiscard]] RDSurfacePosition position() const;
+    [[nodiscard]] int visible_columns() const;
+    [[nodiscard]] int visible_rows() const;
+    [[nodiscard]] qreal row_height() const;
 
 public Q_SLOTS:
     void jump_to(RDAddress address);
@@ -27,10 +31,7 @@ protected:
     void paintEvent(QPaintEvent* e) override;
 
 private:
-    [[nodiscard]] int visible_columns() const;
-    [[nodiscard]] int visible_lines() const;
     [[nodiscard]] RDSurfacePosition get_surface_coords(QPointF pt) const;
-    [[nodiscard]] RDSurfacePosition get_surface_position() const;
     [[nodiscard]] bool get_surface_index(usize* index) const;
     [[nodiscard]] usize get_listing_length() const;
     bool follow_under_cursor();

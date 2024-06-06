@@ -7,6 +7,7 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QScrollBar>
+#include <QTextBlock>
 #include <QTextCursor>
 #include <QTextDocument>
 
@@ -32,6 +33,7 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
 
     m_document.setDefaultFont(this->font());
     m_document.setUndoRedoEnabled(false);
+    m_document.setDocumentMargin(0);
 
     QFontMetricsF fm{this->font()};
     m_cellwidth = fm.horizontalAdvance(" ");
@@ -89,7 +91,7 @@ void SurfaceWidget::jump_to(RDAddress address) {
     usize idx;
 
     if(rdlisting_getindex(address, &idx)) {
-        const size_t DIFF = (this->visible_lines() / 4);
+        const size_t DIFF = (this->visible_rows() / 4);
         size_t relidx = idx;
         if(relidx > DIFF)
             relidx -= DIFF;
@@ -153,7 +155,7 @@ void SurfaceWidget::resizeEvent(QResizeEvent* e) {
 
 void SurfaceWidget::keyPressEvent(QKeyEvent* e) {
     QScrollBar* vscroll = this->verticalScrollBar();
-    auto [row, col] = this->get_surface_position();
+    auto [row, col] = this->position();
 
     if(e->matches(QKeySequence::MoveToNextChar)) {
         rdsurface_setposition(m_surface, row, col + 1);
@@ -182,7 +184,7 @@ void SurfaceWidget::keyPressEvent(QKeyEvent* e) {
         return;
     }
     else if(e->matches(QKeySequence::MoveToEndOfDocument)) {
-        vscroll->setValue(vscroll->value() + this->visible_lines() - 1);
+        vscroll->setValue(vscroll->value() + this->visible_rows() - 1);
         return;
     }
     else if(e->matches(QKeySequence::SelectNextChar)) {
@@ -211,12 +213,12 @@ void SurfaceWidget::keyPressEvent(QKeyEvent* e) {
         rdsurface_select(m_surface, 0, 0);
     }
     else if(e->matches(QKeySequence::SelectEndOfDocument)) {
-        rdsurface_select(m_surface, this->visible_lines() - row,
+        rdsurface_select(m_surface, this->visible_rows() - row,
                          this->visible_columns());
     }
     else if(e->matches(QKeySequence::SelectAll)) {
         rdsurface_setposition(m_surface, 0, 0);
-        rdsurface_select(m_surface, this->visible_lines(),
+        rdsurface_select(m_surface, this->visible_rows(),
                          this->visible_columns());
     }
     else {
@@ -234,7 +236,7 @@ void SurfaceWidget::paintEvent(QPaintEvent* e) {
     }
 
     rdsurface_render(m_surface, this->verticalScrollBar()->value(),
-                     this->visible_lines());
+                     this->visible_rows());
 
     m_document.clear();
     QTextCursor cursor(&m_document);
@@ -276,8 +278,17 @@ int SurfaceWidget::visible_columns() const {
     return qFloor(this->viewport()->width() / m_cellwidth);
 }
 
-int SurfaceWidget::visible_lines() const {
+int SurfaceWidget::visible_rows() const {
     return qCeil(this->viewport()->height() / m_cellheight);
+}
+
+qreal SurfaceWidget::row_height() const {
+    QTextBlock b = m_document.findBlockByLineNumber(0);
+
+    if(b.isValid())
+        return b.layout()->boundingRect().height();
+
+    return m_cellheight;
 }
 
 RDSurfacePosition SurfaceWidget::get_surface_coords(QPointF pt) const {
@@ -296,7 +307,7 @@ RDSurfacePosition SurfaceWidget::get_surface_coords(QPointF pt) const {
     };
 }
 
-RDSurfacePosition SurfaceWidget::get_surface_position() const {
+RDSurfacePosition SurfaceWidget::position() const {
     RDSurfacePosition pos;
     rdsurface_getposition(m_surface, &pos);
     return pos;

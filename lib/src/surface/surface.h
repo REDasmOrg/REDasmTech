@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../listing.h"
+#include "../memory/byte.h"
 #include "../utils/object.h"
 #include "renderer.h"
 #include <memory>
@@ -34,9 +35,9 @@ public:
 private:
     RDRendererParams create_render_params(const ListingItem& item) const;
     const ListingItem& get_listing_item(const SurfaceRow& sfrow) const;
+    int index_of(usize idx) const;
     int last_index_of(usize idx) const;
-    int calculate_to_row(usize fromidx, usize toidx) const;
-    void insert_path(usize fromidx, usize tidx) const;
+    void insert_path(Byte b, int fromrow, int torow) const;
     void render_hexdump(const ListingItem& item);
     void render_jump(const ListingItem& item);
     void render_segment(const ListingItem& item);

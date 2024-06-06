@@ -124,7 +124,7 @@ bool is_dark_theme() {
     return hsp <= 127.5;
 }
 
-QColor color(RDThemeKind kind) {
+QColor color(u8 kind) {
     if(kind >= THEME_COUNT)
         return {};
 
