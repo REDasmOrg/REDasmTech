@@ -40,7 +40,7 @@ TEST_CASE("Type System") {
     //
     // rd_analyze();
 
-    rd_disassemble();
+    // rd_disassemble();
 
     usize val = rd_sizeof("u8");
     REQUIRE(val == sizeof(u8));

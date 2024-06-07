@@ -162,11 +162,6 @@ void MainWindow::show_welcome_view() { // NOLINT
 }
 
 void MainWindow::show_context_view(bool candisassemble) {
-    // if(candisassemble)
-    //     rd_disassemble();
-    //
-    // rd_analyze();
-
     m_busy = true;
 
     QFileInfo fi{m_filepath};

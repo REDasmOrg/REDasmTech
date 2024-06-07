@@ -52,20 +52,4 @@ bool analyzer_isselected(const RDAnalyzer* self) {
     return analyzers.find(self) != analyzers.end();
 }
 
-void analyze() {
-    spdlog::trace("analyze()");
-
-    if(!state::context) {
-        spdlog::error("analyze: context not available");
-        return;
-    }
-
-    for(const RDAnalyzer& a : state::analyzers) {
-        if(a.execute && state::context->selectedanalyzers.count(&a))
-            a.execute(&a);
-    }
-
-    state::context->build_listing();
-}
-
 } // namespace redasm::api::internal

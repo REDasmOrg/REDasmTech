@@ -8,6 +8,5 @@ void register_analyzer(const RDAnalyzer& analyzer);
 usize get_analyzers(const RDAnalyzer** analyzers);
 bool analyzer_select(const RDAnalyzer* self, bool select);
 bool analyzer_isselected(const RDAnalyzer* self);
-void analyze();
 
 } // namespace redasm::api::internal

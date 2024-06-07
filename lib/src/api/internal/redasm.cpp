@@ -188,9 +188,6 @@ void select(RDContext* context) {
         if(c != ctx)
             delete c;
     }
-
-    if(!state::context->processor->emulate)
-        state::context->build_listing();
 }
 
 void free(Object* obj) { delete obj; }
@@ -241,8 +238,8 @@ void disassemble() {
     if(!state::context)
         return;
 
-    state::context->disassembler.execute(nullptr);
-    state::context->build_listing();
+    while(tick(nullptr))
+        ;
 }
 
 bool tick(const RDAnalysisStatus** s) {
