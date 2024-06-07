@@ -16,6 +16,11 @@ RDAddress SymbolsFilterModel::address(const QModelIndex& index) const {
     return this->symbols_model()->address(this->mapToSource(index));
 }
 
+void SymbolsFilterModel::resync() {
+    this->symbols_model()->resync();
+    this->invalidate();
+}
+
 bool SymbolsFilterModel::filterAcceptsRow(int source_row,
                                           const QModelIndex&) const {
     QModelIndex index = this->sourceModel()->index(source_row, 1);

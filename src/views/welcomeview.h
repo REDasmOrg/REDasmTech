@@ -1,9 +1,9 @@
 #pragma once
 
 #include "../ui/welcomeview.h"
-#include "dashboardwidget.h"
+#include "dashboardview.h"
 
-class WelcomeView: public DashboardWidget {
+class WelcomeView: public DashboardView {
     Q_OBJECT
 
 public:

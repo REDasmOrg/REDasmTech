@@ -1,10 +1,10 @@
-#include "dashboardwidget.h"
+#include "dashboardview.h"
 #include "../themeprovider.h"
 #include <QLabel>
 #include <QPixmap>
 #include <QPushButton>
 
-DashboardWidget::DashboardWidget(QWidget* parent): QWidget(parent) {
+DashboardView::DashboardView(QWidget* parent): QWidget(parent) {
     this->setAutoFillBackground(true);
 
     const QString FLAT_STYLESHEET =
@@ -16,7 +16,7 @@ DashboardWidget::DashboardWidget(QWidget* parent): QWidget(parent) {
     this->setStyleSheet(FLAT_STYLESHEET);
 }
 
-void DashboardWidget::make_bordered(QPushButton* pb) const {
+void DashboardView::make_bordered(QPushButton* pb) const {
     const QString BORDERED_STYLESHEET =
         QString("QPushButton {"
                 "border-color: %1;"
@@ -28,7 +28,7 @@ void DashboardWidget::make_bordered(QPushButton* pb) const {
     pb->setStyleSheet(BORDERED_STYLESHEET);
 }
 
-void DashboardWidget::apply_logo(QLabel* lbl) const {
+void DashboardView::apply_logo(QLabel* lbl) const {
     if(themeprovider::is_dark_theme())
         lbl->setPixmap(QPixmap(":/res/logo_dark.png"));
     else

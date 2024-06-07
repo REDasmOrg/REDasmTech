@@ -14,8 +14,8 @@
 #include "statusbar.h"
 #include "themeprovider.h"
 #include "utils.h"
-#include "widgets/contextview.h"
-#include "widgets/welcomeview.h"
+#include "views/contextview.h"
+#include "views/welcomeview.h"
 #include <QDragMoveEvent>
 #include <QFileDialog>
 #include <QMessageBox>
@@ -162,10 +162,12 @@ void MainWindow::show_welcome_view() { // NOLINT
 }
 
 void MainWindow::show_context_view(bool candisassemble) {
-    if(candisassemble)
-        rd_disassemble();
+    // if(candisassemble)
+    //     rd_disassemble();
+    //
+    // rd_analyze();
 
-    rd_analyze();
+    m_busy = true;
 
     QFileInfo fi{m_filepath};
     QDir::setCurrent(fi.path());
@@ -199,8 +201,18 @@ void MainWindow::clear_recents() {
     return qobject_cast<ContextView*>(m_ui.stackwidget->currentWidget());
 }
 
+bool MainWindow::loop() {
+    if(m_busy && this->context_view()) {
+        m_busy = rd_tick(&m_status);
+        this->context_view()->tick(m_status);
+        this->report_status();
+    }
+
+    return m_busy;
+}
+
 bool MainWindow::can_close() const {
-    if(qobject_cast<ContextView*>(m_ui.stackwidget->currentWidget())) {
+    if(this->context_view()) {
         QMessageBox msgbox{const_cast<MainWindow*>(this)};
         msgbox.setWindowTitle(tr("Closing"));
         msgbox.setText(tr("Are you sure?"));
@@ -256,13 +268,26 @@ void MainWindow::select_file() {
         this->open_file(s);
 }
 
+void MainWindow::report_status() {
+    QString s;
+
+    s += QString::fromWCharArray(L"<b>State: </b>%1\u00A0\u00A0")
+             .arg(m_status->stepslist[m_status->stepscurrent]);
+
+    if(m_status->address.valid)
+        s += QString::fromWCharArray(L"<b>Address: </b>%1\u00A0\u00A0")
+                 .arg(rd_tohex(m_status->address.value));
+
+    statusbar::set_status_text(s);
+}
+
 void MainWindow::select_analyzers(bool candisassemble) {
     if(rd_getanalyzers(nullptr)) {
         auto* dlganalyzers = new AnalyzerDialog(this);
         connect(
             dlganalyzers, &AnalyzerDialog::accepted, this,
             [&, candisassemble]() { this->show_context_view(candisassemble); });
-        dlganalyzers->open();
+        dlganalyzers->show();
     }
     else
         this->show_context_view(candisassemble);
@@ -343,8 +368,10 @@ void MainWindow::show_imports() {
 }
 
 void MainWindow::closeEvent(QCloseEvent* e) {
-    if(this->can_close())
+    if(this->can_close()) {
         QWidget::closeEvent(e);
+        Q_EMIT closed();
+    }
     else
         e->ignore();
 }

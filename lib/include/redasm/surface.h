@@ -82,3 +82,4 @@ REDASM_EXPORT void rdsurface_setposition(RDSurface* self, usize row, usize col);
 REDASM_EXPORT bool rdsurface_selectword(RDSurface* self, usize row, usize col);
 REDASM_EXPORT bool rdsurface_select(RDSurface* self, usize row, usize col);
 REDASM_EXPORT void rdsurface_seek(RDSurface* self, usize index);
+REDASM_EXPORT void rdsurface_seektoep(RDSurface* self);

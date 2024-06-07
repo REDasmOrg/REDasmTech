@@ -136,7 +136,7 @@ RDBuffer* load_file(const std::string& filepath) {
         return nullptr;
     }
 
-    auto* b = new File();
+    auto* b = new File(filepath);
     b->resize(ifs.tellg());
     ifs.seekg(0);
     ifs.read(reinterpret_cast<char*>(b->data()), b->size());
@@ -241,8 +241,17 @@ void disassemble() {
     if(!state::context)
         return;
 
-    state::context->disassembler.execute();
+    state::context->disassembler.execute(nullptr);
     state::context->build_listing();
+}
+
+bool tick(const RDAnalysisStatus** s) {
+    spdlog::trace("tick({})", fmt::ptr(s));
+
+    if(!state::context)
+        return false;
+
+    return state::context->disassembler.execute(s);
 }
 
 std::string to_hex_n(usize v, usize n) {

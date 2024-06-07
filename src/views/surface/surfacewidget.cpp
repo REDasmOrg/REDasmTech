@@ -1,5 +1,6 @@
 #include "surfacewidget.h"
 #include "../../actions.h"
+#include "../../settings.h"
 #include "../../statusbar.h"
 #include "../../themeprovider.h"
 #include <QAbstractTextDocumentLayout>
@@ -18,8 +19,8 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
 
     this->setCursor(Qt::ArrowCursor);
     this->setFocusPolicy(Qt::StrongFocus);
-    this->setFont(QFont{"monospace"});
     this->setFrameShape(QFrame::NoFrame);
+    this->setFont(REDasmSettings::font());
     this->setPalette(qApp->palette());
     this->verticalScrollBar()->setMinimum(0);
     this->verticalScrollBar()->setValue(0);
@@ -80,12 +81,7 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
             });
 
     this->update_scrollbars();
-
-    RDSurfaceLocation loc;
-    rdsurface_getlocation(m_surface, &loc);
-
-    if(loc.listingindex.valid)
-        this->verticalScrollBar()->setValue(loc.listingindex.value);
+    this->sync_location();
 }
 
 SurfaceWidget::~SurfaceWidget() {
@@ -105,6 +101,16 @@ void SurfaceWidget::jump_to(RDAddress address) {
         rdsurface_setposition(m_surface, idx - relidx, 0);
         this->verticalScrollBar()->setValue(relidx);
     }
+}
+
+void SurfaceWidget::jump_to_ep() {
+    rdsurface_seektoep(m_surface);
+    this->sync_location();
+}
+
+void SurfaceWidget::invalidate() {
+    this->update_scrollbars();
+    this->viewport()->update();
 }
 
 void SurfaceWidget::mouseDoubleClickEvent(QMouseEvent* e) {
@@ -360,4 +366,12 @@ void SurfaceWidget::create_context_menu() {
 
 void SurfaceWidget::update_scrollbars() {
     this->verticalScrollBar()->setRange(0, this->get_listing_length());
+}
+
+void SurfaceWidget::sync_location() {
+    RDSurfaceLocation loc;
+    rdsurface_getlocation(m_surface, &loc);
+
+    if(loc.listingindex.valid)
+        this->verticalScrollBar()->setValue(loc.listingindex.value);
 }

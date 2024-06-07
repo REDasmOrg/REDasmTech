@@ -1,6 +1,4 @@
 #include "contextview.h"
-#include "../mainwindow.h"
-#include "../utils.h"
 
 ContextView::ContextView(QWidget* parent): QWidget{parent}, m_ui{this} {
     m_functionsmodel = new SymbolsFilterModel(SYMBOL_FUNCTION, this);
@@ -12,13 +10,21 @@ ContextView::ContextView(QWidget* parent): QWidget{parent}, m_ui{this} {
 
     connect(m_ui.tvfunctions, &QTreeView::doubleClicked, this,
             [&](const QModelIndex& index) {
-                ContextView* ctxview = utils::mainwindow->context_view();
-                if(ctxview) {
-                    RDAddress address = m_functionsmodel->address(index);
-                    ctxview->surface_view()->jump_to(address);
-                    ctxview->surface_view()->setFocus();
-                }
+                RDAddress address = m_functionsmodel->address(index);
+                m_ui.surfaceview->jump_to(address);
+                m_ui.surfaceview->setFocus();
             });
 }
 
 ContextView::~ContextView() { rd_destroy(); }
+
+void ContextView::tick(const RDEngineStatus* s) {
+    if(s->stepscurrent == STEP_EMULATE)
+        return;
+
+    m_functionsmodel->resync();
+    m_ui.surfaceview->invalidate();
+
+    if(s->stepscurrent == STEP_DONE)
+        m_ui.surfaceview->jump_to_ep();
+}

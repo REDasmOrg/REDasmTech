@@ -11,6 +11,7 @@ public:
     [[nodiscard]] RDAddress address(const QModelIndex& index) const;
     inline void set_highlight_address(bool b) { m_highlightaddress = b; }
     inline void set_highlight_symbol(bool b) { m_highlightsymbol = b; }
+    void resync();
 
 public:
     [[nodiscard]] QVariant data(const QModelIndex& index,

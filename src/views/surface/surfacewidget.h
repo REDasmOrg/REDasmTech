@@ -21,6 +21,8 @@ public:
 
 public Q_SLOTS:
     void jump_to(RDAddress address);
+    void jump_to_ep();
+    void invalidate();
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent* e) override;
@@ -37,6 +39,7 @@ private:
     bool follow_under_cursor();
     void create_context_menu();
     void update_scrollbars();
+    void sync_location();
 
 Q_SIGNALS:
     void render_completed();

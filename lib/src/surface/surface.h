@@ -30,6 +30,7 @@ public:
     bool select_word(usize row, usize col);
     bool select(usize row, usize col);
     void seek(usize index);
+    void seek_to_ep();
     const std::vector<RDSurfacePath>& get_path() const;
 
 private:

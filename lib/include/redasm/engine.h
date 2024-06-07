@@ -1,18 +1,35 @@
 #pragma once
 
 #include <redasm/types.h>
+#include <time.h>
 
-typedef struct RDEngineStatus {
+enum RDAnalysisStep {
+    STEP_INIT = 0,
+    STEP_EMULATE,
+    STEP_CFG,
+    STEP_ANALYZE,
+    STEP_DONE,
+    STEP_LAST
+};
+
+typedef struct RDAnalysisStatus {
     // General
     const char* filepath;
-    const char* assembler;
-    const char* loader;
     usize filesize;
+
+    // Context
+    const char* loader;
+    const char* processor;
     bool busy;
 
+    struct {
+        RDAddress value;
+        bool valid;
+    } address;
+
     // Time
-    u64 analysisstart;
-    u64 analysisend;
+    time_t analysisstart;
+    time_t analysisend;
 
     // Steps
     const char* const* stepslist;
@@ -24,12 +41,4 @@ typedef struct RDEngineStatus {
     usize* analyzersdone;
     usize analyzerscount;
     usize analyzerscurrent;
-
-    // Stats
-    usize segmentscount;
-    usize functionscount;
-    usize labelscount;
-    int segmentsdiff;
-    int functionsdiff;
-    int labelsdiff;
 } RDEngineStatus;

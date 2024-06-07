@@ -3,6 +3,7 @@
 #include <redasm/analyzer.h>
 #include <redasm/byte.h>
 #include <redasm/common.h>
+#include <redasm/engine.h>
 #include <redasm/listing.h>
 #include <redasm/loader.h>
 #include <redasm/processor.h>
@@ -83,6 +84,8 @@ REDASM_EXPORT usize rd_getbits();
 REDASM_EXPORT bool rd_checkstring(RDAddress address, RDStringResult* r);
 REDASM_EXPORT void rd_memoryinfo(RDMemoryInfo* mi);
 REDASM_EXPORT const char* rd_rendertext(RDAddress address);
+
+REDASM_EXPORT bool rd_tick(const RDEngineStatus** s);
 
 REDASM_EXPORT void rd_addsearchpath(const char* path);
 REDASM_EXPORT RDBuffer* rd_loadfile(const char* filepath);

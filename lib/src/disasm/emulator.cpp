@@ -154,6 +154,13 @@ void Emulator::next() {
     this->decode(idx);
 }
 
+tl::optional<RDAddress> Emulator::get_next_address() const {
+    if(m_pending.empty())
+        return tl::nullopt;
+
+    return state::context->index_to_address(m_pending.front());
+}
+
 bool Emulator::has_next() const {
     return state::context->processor->emulate && !m_pending.empty();
 }

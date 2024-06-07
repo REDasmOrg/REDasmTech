@@ -8,8 +8,10 @@ namespace redasm {
 
 class Memory: public AbstractBufferT<Byte> {
 public:
-    Memory() = default;
-    explicit Memory(usize sz) { m_buffer.resize(sz); }
+    explicit Memory(usize sz): AbstractBufferT<Byte>{{}} {
+        m_buffer.resize(sz);
+    }
+
     tl::optional<u8> get_byte(usize idx) const override;
     usize get_length(usize idx) const;
     void set(usize idx, usize len, u32 flags);

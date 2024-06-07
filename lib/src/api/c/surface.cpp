@@ -70,3 +70,7 @@ bool rdsurface_select(RDSurface* self, usize row, usize col) {
 void rdsurface_seek(RDSurface* self, usize index) {
     redasm::api::internal::surface_seek(self, index);
 }
+
+void rdsurface_seektoep(RDSurface* self) {
+    redasm::api::internal::surface_seektoep(self);
+}

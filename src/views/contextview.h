@@ -10,6 +10,7 @@ public:
     explicit ContextView(QWidget* parent = nullptr);
     ~ContextView() override;
     [[nodiscard]] SurfaceView* surface_view() const { return m_ui.surfaceview; }
+    void tick(const RDEngineStatus* s);
 
 private:
     ui::ContextView m_ui;

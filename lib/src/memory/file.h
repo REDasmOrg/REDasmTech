@@ -6,6 +6,8 @@ namespace redasm {
 
 class File: public AbstractBufferT<u8> {
 public:
+    explicit File(std::string src): AbstractBufferT<u8>{std::move(src)} {}
+
     inline const typename Type::value_type* data() const {
         return m_buffer.data();
     }

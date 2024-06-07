@@ -13,6 +13,7 @@ public:
     explicit SymbolsFilterModel(QObject* parent = nullptr);
     explicit SymbolsFilterModel(usize filter, QObject* parent = nullptr);
     [[nodiscard]] RDAddress address(const QModelIndex& index) const;
+    void resync();
 
     inline void set_type_filter(usize s) {
         m_typefilter = s;

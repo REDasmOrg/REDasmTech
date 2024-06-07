@@ -15,6 +15,12 @@ RDAddress SymbolsModel::address(const QModelIndex& index) const {
     return {};
 }
 
+void SymbolsModel::resync() {
+    this->beginResetModel();
+    m_nsymbols = rdlisting_getsymbolslength();
+    this->endResetModel();
+}
+
 QVariant SymbolsModel::data(const QModelIndex& index, int role) const {
     RDSymbol symbol;
 

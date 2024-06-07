@@ -36,6 +36,7 @@ void discard();
 void enqueue(RDAddress address);
 void schedule(RDAddress address);
 void disassemble();
+bool tick(const RDAnalysisStatus** s);
 std::string to_hex_n(usize v, usize n);
 std::string to_hex(usize v);
 

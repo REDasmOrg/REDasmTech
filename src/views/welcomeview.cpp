@@ -19,7 +19,7 @@ void style_social_button(QPushButton* button, const QIcon& icon) {
 
 } // namespace
 
-WelcomeView::WelcomeView(QWidget* parent): DashboardWidget{parent}, m_ui{this} {
+WelcomeView::WelcomeView(QWidget* parent): DashboardView{parent}, m_ui{this} {
     this->apply_logo(m_ui.lblbrand);
 
     m_ui.lvrecents->viewport()->setAttribute(Qt::WA_Hover);

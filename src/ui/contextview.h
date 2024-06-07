@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../widgets/surface/surfaceview.h"
+#include "../views/surface/surfaceview.h"
 #include <QHeaderView>
 #include <QSplitter>
 #include <QTreeView>

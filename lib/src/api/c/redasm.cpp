@@ -11,6 +11,9 @@ void rd_free(void* obj) {
 }
 
 void rd_setloglevel(RDLogLevel l) { redasm::api::internal::set_loglevel(l); }
+bool rd_tick(const RDEngineStatus** s) {
+    return redasm::api::internal::tick(s);
+}
 
 usize rd_getsegments(const RDSegment** segments) {
     return redasm::api::internal::get_segments(segments);

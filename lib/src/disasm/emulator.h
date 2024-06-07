@@ -15,6 +15,7 @@ public:
     void add_dataref(usize idx, usize dr);
     void set_type(usize idx, std::string_view tname);
     void next();
+    tl::optional<RDAddress> get_next_address() const;
     [[nodiscard]] bool has_next() const;
 
 private:

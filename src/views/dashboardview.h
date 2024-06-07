@@ -5,11 +5,11 @@
 class QPushButton;
 class QLabel;
 
-class DashboardWidget: public QWidget {
+class DashboardView: public QWidget {
     Q_OBJECT
 
 public:
-    explicit DashboardWidget(QWidget* parent = nullptr);
+    explicit DashboardView(QWidget* parent = nullptr);
 
 protected:
     void make_bordered(QPushButton* pb) const;

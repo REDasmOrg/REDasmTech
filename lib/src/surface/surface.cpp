@@ -36,12 +36,7 @@ std::pair<bool, std::string> surface_checkpointer(const typing::ParsedType& pt,
 
 Surface::Surface(usize flags) {
     m_renderer = std::make_unique<Renderer>(flags);
-
-    Context* ctx = state::context;
-    auto it = ctx->listing.lower_bound(ctx->entrypoint);
-
-    if(it != ctx->listing.end())
-        this->start = std::distance(ctx->listing.cbegin(), it);
+    this->seek_to_ep();
 }
 
 tl::optional<usize> Surface::current_index() const {
@@ -124,6 +119,14 @@ void Surface::seek(usize index) {
         this->start = state::context->listing.size();
 
     this->clear_selection();
+}
+
+void Surface::seek_to_ep() {
+    Context* ctx = state::context;
+    auto it = ctx->listing.lower_bound(ctx->entrypoint);
+
+    if(it != ctx->listing.end())
+        this->start = std::distance(ctx->listing.cbegin(), it);
 }
 
 const std::vector<RDSurfacePath>& Surface::get_path() const {

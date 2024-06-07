@@ -51,12 +51,12 @@ target_sources(${PROJECT_NAME}
         src/dialogs/analyzerdialog.cpp
         src/dialogs/memorymapdialog.cpp
 
-        src/widgets/contextview.cpp
-        src/widgets/dashboardwidget.cpp
-        src/widgets/welcomeview.cpp
-        src/widgets/surface/surfacewidget.cpp
-        src/widgets/surface/surfaceview.cpp
-        src/widgets/surface/surfacepath.cpp
+        src/views/contextview.cpp
+        src/views/dashboardview.cpp
+        src/views/welcomeview.cpp
+        src/views/surface/surfacewidget.cpp
+        src/views/surface/surfaceview.cpp
+        src/views/surface/surfacepath.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

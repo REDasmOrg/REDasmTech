@@ -24,5 +24,6 @@ void surface_setposition(RDSurface* self, usize row, usize col);
 bool surface_selectword(RDSurface* self, usize row, usize col);
 bool surface_select(RDSurface* self, usize row, usize col);
 void surface_seek(RDSurface* self, usize index);
+void surface_seektoep(RDSurface* self);
 
 } // namespace redasm::api::internal

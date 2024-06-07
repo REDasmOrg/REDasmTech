@@ -1,38 +1,32 @@
 #pragma once
 
 #include "emulator.h"
+#include <memory>
 #include <redasm/engine.h>
 
 namespace redasm {
 
 class Disassembler {
-private:
-    enum Steps {
-        ENGINESTATE_STOP,
-        ENGINESTATE_EMULATE,
-        ENGINESTATE_CFG,
-        ENGINESTATE_ANALYZE,
-        ENGINESTATE_DONE,
-        ENGINESTATE_LAST
-    };
-
 public:
     Disassembler();
-    void execute();
+    bool execute(const RDAnalysisStatus** s);
     void execute(usize step);
-
-    inline void reset() { this->status.stepscurrent = ENGINESTATE_STOP; }
+    inline void reset() { m_currentstep = STEP_INIT; }
 
 private:
     void set_step(usize s);
     void next_step();
+    void init_step();
     void emulate_step();
     void analyze_step();
     void cfg_step();
 
 public:
-    RDEngineStatus status{};
     Emulator emulator;
+
+private:
+    std::unique_ptr<RDAnalysisStatus> m_status;
+    usize m_currentstep{STEP_INIT};
 };
 
 } // namespace redasm

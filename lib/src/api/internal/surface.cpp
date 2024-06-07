@@ -147,6 +147,11 @@ bool surface_select(RDSurface* self, usize row, usize col) {
     return api::from_c(self)->select(row, col);
 }
 
+void surface_seektoep(RDSurface* self) {
+    spdlog::trace("surface_seektoep({}, {}, {})", fmt::ptr(self));
+    return api::from_c(self)->seek_to_ep();
+}
+
 void surface_seek(RDSurface* self, usize index) {
     spdlog::trace("surface_seek({}, {})", fmt::ptr(self), index);
     api::from_c(self)->seek(index);

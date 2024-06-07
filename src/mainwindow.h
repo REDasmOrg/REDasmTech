@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ui/mainwindow.h"
-#include "widgets/contextview.h"
+#include "views/contextview.h"
 
 class MainWindow: public QMainWindow {
     Q_OBJECT
@@ -10,6 +10,7 @@ public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() override;
     [[nodiscard]] ContextView* context_view() const;
+    bool loop();
 
 protected:
     void dragEnterEvent(QDragEnterEvent* e) override;
@@ -27,6 +28,7 @@ private Q_SLOTS:
 
 private:
     [[nodiscard]] bool can_close() const;
+    void report_status();
     void select_analyzers(bool candisassemble);
     void show_context_view(bool candisassemble);
     void enable_context_actions(bool e);
@@ -36,7 +38,12 @@ private:
     void clear_recents();
     void load_recents();
 
+Q_SIGNALS:
+    void closed();
+
 private:
+    const RDEngineStatus* m_status;
     ui::MainWindow m_ui;
     QString m_filepath;
+    bool m_busy{false};
 };

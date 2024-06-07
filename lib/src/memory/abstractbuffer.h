@@ -6,12 +6,15 @@
 #include <redasm/types.h>
 #include <string_view>
 #include <tl/optional.hpp>
+#include <utility>
 #include <vector>
 
 namespace redasm {
 
 class AbstractBuffer: public Object {
 public:
+    explicit AbstractBuffer(std::string src): source{std::move(src)} {}
+
     [[nodiscard]] virtual tl::optional<u8> get_byte(usize idx) const = 0;
     [[nodiscard]] virtual usize size() const = 0;
 
@@ -129,6 +132,9 @@ private:
 
     tl::optional<typing::Value> get_type_impl(usize& idx,
                                               const typing::Type* t) const;
+
+public:
+    std::string source;
 };
 
 template<typename T>
@@ -143,7 +149,7 @@ public:
     void resize(usize sz) { m_buffer.resize(sz); }
     [[nodiscard]] usize size() const final { return m_buffer.size(); }
 
-    AbstractBufferT(): AbstractBuffer{} {}
+    explicit AbstractBufferT(std::string src): AbstractBuffer{std::move(src)} {}
     T& at(usize idx) { return m_buffer.at(idx); }
     T at(usize idx) const { return m_buffer.at(idx); }
     T operator[](usize idx) const { return m_buffer.at(idx); }
