@@ -112,6 +112,8 @@ bool Context::set_type(usize idx, std::string_view tname,
     bool isarray = pt->n > 0;
     AddressDetail& detail = this->database.get_detail(idx);
 
+    usize len;
+
     if(pt->type->is_str()) {
         tl::optional<std::string> s;
 
@@ -124,13 +126,17 @@ bool Context::set_type(usize idx, std::string_view tname,
             return false;
 
         pt->n = s->size();
-        detail.string_length =
-            pt->n + pt->type->size; // Null terminator included
+        detail.string_bytes = (pt->n * pt->type->size) +
+                              pt->type->size; // Null terminator included
         isarray = false;
+
+        len = detail.string_bytes;
     }
+    else
+        len = std::max<usize>(pt->n, 1) * pt->type->size;
 
     detail.type_name = tname;
-    this->memory->set_data(idx, pt->type->size * std::max<usize>(pt->n, 1));
+    this->memory->set_data(idx, len);
     this->memory->at(idx).set(isarray ? BF_ARRAY : BF_TYPE);
     this->set_name(idx, dbname);
     return true;
@@ -447,8 +453,8 @@ usize Context::process_listing_type(usize& idx, const typing::ParsedType& pt) {
         case typing::types::STR:
         case typing::types::WSTR: {
             const AddressDetail& d = this->database.get_detail(idx);
-            assume(d.string_length > 0);
-            idx += d.string_length;
+            assume(d.string_bytes > 0);
+            idx += d.string_bytes;
             break;
         }
 

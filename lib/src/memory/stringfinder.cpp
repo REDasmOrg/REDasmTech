@@ -65,7 +65,6 @@ bool check_heuristic(std::string_view s, bool gibberish) {
                 break;
             [[fallthrough]];
 
-        case ' ': break;
         case '%': return stringfinder::check_formats(s);
         default: return gibberish; // TODO(davide): Add Gibberish analyzer
     }

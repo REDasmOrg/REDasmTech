@@ -15,7 +15,7 @@ tl::optional<u8> Memory::get_byte(usize idx) const {
 }
 
 void Memory::unset(usize idx, usize len) {
-    for(usize i = idx; i < len && i < m_buffer.size(); i++)
+    for(usize i = idx; i < idx + len && i < m_buffer.size(); i++)
         m_buffer[i].value &= BF_MMASK; // Clear Specific Flags
 }
 

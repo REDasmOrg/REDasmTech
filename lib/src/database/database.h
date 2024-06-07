@@ -39,7 +39,7 @@ struct AddressDetail {
     std::vector<std::string> comments;
 
     union {
-        usize string_length;
+        usize string_bytes;
         usize flow;
     };
 };
