@@ -358,10 +358,13 @@ void SurfaceWidget::create_context_menu() {
     m_menu->addAction(actrefs);
     m_menu->addAction(actrename);
 
-    connect(m_menu, &QMenu::aboutToShow, this, [&, actcopy, actrename]() {
+    connect(m_menu, &QMenu::aboutToShow, this, [=]() {
+        RDAddress address{};
+        bool hasaddr = rdsurface_getaddressundercursor(m_surface, &address);
+
         actcopy->setVisible(rdsurface_hasselection(m_surface));
-        actrename->setVisible(
-            rdsurface_getaddressundercursor(m_surface, nullptr));
+        actrename->setVisible(hasaddr);
+        actrefs->setVisible(hasaddr && rd_getreferences(address, nullptr));
     });
 
     connect(this, &SurfaceWidget::customContextMenuRequested, this,
