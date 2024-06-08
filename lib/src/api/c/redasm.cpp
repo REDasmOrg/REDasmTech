@@ -102,6 +102,13 @@ bool rd_setentry(RDAddress address, const char* name) {
     return redasm::api::internal::set_entry(address, name);
 }
 
+bool rd_setname(RDAddress address, const char* name) {
+    if(name)
+        return redasm::api::internal::set_name(address, name);
+
+    return false;
+}
+
 const char* rd_getname(RDAddress address) {
     static std::string res;
 

@@ -29,8 +29,8 @@ private Q_SLOTS:
 private:
     [[nodiscard]] bool can_close() const;
     void report_status();
-    void select_analyzers(bool candisassemble);
-    void show_context_view(bool candisassemble);
+    void select_analyzers();
+    void show_context_view();
     void enable_context_actions(bool e);
     void open_file(const QString& filepath);
     void replace_view(QWidget* w);

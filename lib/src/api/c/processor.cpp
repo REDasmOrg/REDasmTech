@@ -22,7 +22,7 @@ void rd_registerprocessor(const RDProcessor* proc) {
         redasm::api::internal::register_processor(*proc);
 }
 
-void rd_selectprocessor(const char* name) {
+void rd_setprocessor(const char* name) {
     if(name)
         redasm::api::internal::set_processor(name);
 }

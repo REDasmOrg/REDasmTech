@@ -10,6 +10,7 @@ enum Type {
     GOTO,
     COPY,
     REFS,
+    RENAME,
 };
 
 void init(MainWindow* mw);

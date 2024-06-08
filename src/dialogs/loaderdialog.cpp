@@ -37,6 +37,9 @@ void LoaderDialog::accept() {
     this->context = ctx;
     rd_select(ctx);
 
+    if(usize idx = m_ui.cbprocessors->currentIndex(); idx < m_nprocessors)
+        rd_setprocessor(m_processors[idx].name);
+
     auto l = static_cast<RDLogLevel>(m_ui.cbloglevel->currentData().toUInt());
     rd_setloglevel(l);
 

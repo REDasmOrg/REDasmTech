@@ -10,10 +10,6 @@ class LoaderDialog: public QDialog {
 public:
     explicit LoaderDialog(RDBuffer* buffer, QWidget* parent = nullptr);
 
-    [[nodiscard]] inline bool can_disassemble() const {
-        return m_ui.chkdisassemble->isChecked();
-    }
-
 private:
     void select_processor(const RDProcessor* processor);
     void populate_processors();

@@ -6,6 +6,7 @@
 #include <QApplication>
 #include <QClipboard>
 #include <QHash>
+#include <QInputDialog>
 
 namespace actions {
 
@@ -60,6 +61,29 @@ void refs() {
     dlg->show();
 }
 
+void rename() {
+    ContextView* cv = g_mainwindow->context_view();
+    if(!cv)
+        return;
+
+    RDAddress address;
+    if(!rdsurface_getaddressundercursor(cv->surface_view()->handle(), &address))
+        return;
+
+    QString name;
+
+    if(const char* s = rd_getname(address); s)
+        name = s;
+
+    bool ok = false;
+    QString s = QInputDialog::getText(
+        g_mainwindow, QString("Rename @ %1").arg(rd_tohex(address)), "New Name",
+        QLineEdit::Normal, name, &ok);
+
+    if(ok && rd_setname(address, qUtf8Printable(s)))
+        cv->surface_view()->invalidate();
+}
+
 } // namespace
 
 void init(MainWindow* mw) {
@@ -75,6 +99,9 @@ void init(MainWindow* mw) {
     g_actions[Type::REFS] =
         mw->addAction("Cross References", QKeySequence(Qt::Key_X), mw,
                       []() { actions::refs(); });
+
+    g_actions[Type::RENAME] = mw->addAction("Rename", QKeySequence(Qt::Key_N),
+                                            mw, []() { actions::rename(); });
 }
 
 QAction* get(Type t) {

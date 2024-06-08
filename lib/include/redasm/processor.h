@@ -53,4 +53,4 @@ typedef struct RDProcessor {
 
 REDASM_EXPORT usize rd_getprocessors(const RDProcessor** processors);
 REDASM_EXPORT void rd_registerprocessor(const RDProcessor* proc);
-REDASM_EXPORT void rd_selectprocessor(const char* name);
+REDASM_EXPORT void rd_setprocessor(const char* name);

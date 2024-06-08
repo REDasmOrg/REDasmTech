@@ -161,7 +161,7 @@ void MainWindow::show_welcome_view() { // NOLINT
     this->enable_context_actions(false);
 }
 
-void MainWindow::show_context_view(bool candisassemble) {
+void MainWindow::show_context_view() {
     m_busy = true;
 
     QFileInfo fi{m_filepath};
@@ -250,9 +250,8 @@ void MainWindow::open_file(const QString& filepath) {
 
     auto* dlgloader = new LoaderDialog(buffer, this);
 
-    connect(dlgloader, &LoaderDialog::accepted, this, [&, dlgloader]() {
-        this->select_analyzers(dlgloader->can_disassemble());
-    });
+    connect(dlgloader, &LoaderDialog::accepted, this,
+            [&]() { this->select_analyzers(); });
 
     dlgloader->open();
 }
@@ -276,16 +275,15 @@ void MainWindow::report_status() {
     statusbar::set_status_text(s);
 }
 
-void MainWindow::select_analyzers(bool candisassemble) {
+void MainWindow::select_analyzers() {
     if(rd_getanalyzers(nullptr)) {
         auto* dlganalyzers = new AnalyzerDialog(this);
-        connect(
-            dlganalyzers, &AnalyzerDialog::accepted, this,
-            [&, candisassemble]() { this->show_context_view(candisassemble); });
+        connect(dlganalyzers, &AnalyzerDialog::accepted, this,
+                [&]() { this->show_context_view(); });
         dlganalyzers->show();
     }
     else
-        this->show_context_view(candisassemble);
+        this->show_context_view();
 }
 
 void MainWindow::show_segments() {

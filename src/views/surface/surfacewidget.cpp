@@ -24,7 +24,7 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
     this->setPalette(qApp->palette());
     this->verticalScrollBar()->setMinimum(0);
     this->verticalScrollBar()->setValue(0);
-    this->verticalScrollBar()->setSingleStep(1);
+    this->verticalScrollBar()->setSingleStep(SCROLL_SPEED);
     this->verticalScrollBar()->setPageStep(1);
     this->horizontalScrollBar()->setSingleStep(1);
     this->horizontalScrollBar()->setMinimum(0);
@@ -349,15 +349,19 @@ void SurfaceWidget::create_context_menu() {
 
     QAction* actcopy = actions::get(actions::COPY);
     QAction* actrefs = actions::get(actions::REFS);
+    QAction* actrename = actions::get(actions::RENAME);
 
     m_menu = new QMenu(this);
     m_menu->addAction(actions::get(actions::GOTO));
     m_menu->addSeparator();
     m_menu->addAction(actcopy);
     m_menu->addAction(actrefs);
+    m_menu->addAction(actrename);
 
-    connect(m_menu, &QMenu::aboutToShow, this, [&, actcopy]() {
+    connect(m_menu, &QMenu::aboutToShow, this, [&, actcopy, actrename]() {
         actcopy->setVisible(rdsurface_hasselection(m_surface));
+        actrename->setVisible(
+            rdsurface_getaddressundercursor(m_surface, nullptr));
     });
 
     connect(this, &SurfaceWidget::customContextMenuRequested, this,

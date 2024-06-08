@@ -20,7 +20,7 @@ struct LoaderDialog {
     QComboBox *cbprocessors, *cbloglevel;
     QSpinBox* sbminstring;
     QLineEdit *leentrypoint, *leoffset, *lebaseaddress;
-    QCheckBox *chknocodemerge, *chknodemangle, *chkdisassemble;
+    QCheckBox *chknocodemerge, *chknodemangle;
 
     explicit LoaderDialog(QDialog* self) {
         self->setAttribute(Qt::WA_DeleteOnClose);
@@ -110,9 +110,6 @@ private:
 
         auto* vbox = new QVBoxLayout(this->gboptions);
 
-        this->chkdisassemble = new QCheckBox("Disassemble");
-        this->chkdisassemble->setChecked(true);
-        vbox->addWidget(this->chkdisassemble);
         this->chknocodemerge = new QCheckBox("No Code Merge");
         vbox->addWidget(this->chknocodemerge);
         this->chknodemangle = new QCheckBox("No Demangle");

@@ -382,6 +382,20 @@ bool map_segment_n(const std::string& name, RDAddress address, usize asize,
     return true;
 }
 
+bool set_name(RDAddress address, const std::string& name) {
+    spdlog::trace("set_name({:x}, '{}')", address, name);
+
+    if(!state::context)
+        return false;
+
+    if(auto idx = state::context->address_to_index(address); idx) {
+        state::context->set_name(*idx, name);
+        return true;
+    }
+
+    return false;
+}
+
 std::string get_name(RDAddress address) {
     spdlog::trace("get_name({:x})", address);
 
@@ -447,17 +461,6 @@ tl::optional<typing::Value> set_type_as(RDAddress address,
         return tl::nullopt;
 
     return state::context->memory->get_type(*idx, tname);
-}
-
-bool set_name(RDAddress address, const std::string& name) {
-    spdlog::trace("set_name({:x}, '{}')", address, name);
-
-    auto idx = state::context->address_to_index(address);
-    if(!idx)
-        return false;
-
-    state::context->set_name(*idx, name);
-    return true;
 }
 
 bool set_export(RDAddress address) {
