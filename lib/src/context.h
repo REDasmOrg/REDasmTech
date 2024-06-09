@@ -2,6 +2,7 @@
 
 #include "database/database.h"
 #include "disasm/disassembler.h"
+#include "disasm/function.h"
 #include "listing.h"
 #include "memory/abstractbuffer.h"
 #include "memory/memory.h"
@@ -34,6 +35,7 @@ public:
     tl::optional<RDAddress> index_to_address(usize index) const;
     tl::optional<RDOffset> index_to_offset(usize index) const;
     const Segment* index_to_segment(usize index) const;
+    const Function* index_to_function(usize index) const;
     bool is_address(RDAddress address) const;
 
     void map_segment(const std::string& name, usize idx, usize endidx,
@@ -59,7 +61,7 @@ public:
     }
 
     [[nodiscard]] std::string to_hex(usize v, int n = 0) const;
-    void build_listing();
+    void process_memory();
 
 private:
     void process_listing_unknown(usize& idx);
@@ -67,6 +69,7 @@ private:
     void process_listing_code(usize& idx);
     void process_listing_array(usize& idx, const typing::ParsedType& pt);
     usize process_listing_type(usize& idx, const typing::ParsedType& pt);
+    void create_function_blocks(usize idx);
 
     template<typename Function>
     void process_hex_dump(usize& idx, Function f) {
@@ -99,6 +102,7 @@ public:
     const RDLoader* loader;
     const RDProcessor* processor;
     Listing listing;
+    std::vector<Function> functions;
     Database database;
     typing::Types types;
     std::unique_ptr<Memory> memory;

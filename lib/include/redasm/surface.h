@@ -21,6 +21,11 @@ enum RDSurfaceFlags {
 
 typedef struct RDSurfaceLocation {
     struct {
+        usize value;
+        bool valid;
+    } function;
+
+    struct {
         RDAddress value;
         bool valid;
     } address;

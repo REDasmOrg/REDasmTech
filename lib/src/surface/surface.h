@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../disasm/function.h"
 #include "../listing.h"
 #include "../memory/byte.h"
 #include "../utils/object.h"
@@ -17,6 +18,7 @@ public:
     inline Renderer* renderer() const { return m_renderer.get(); }
     [[nodiscard]] tl::optional<usize> current_index() const;
     [[nodiscard]] tl::optional<usize> index_under_cursor() const;
+    [[nodiscard]] const Function* current_function() const;
     [[nodiscard]] const Segment* current_segment() const;
     [[nodiscard]] RDSurfacePosition position() const;
     [[nodiscard]] RDSurfacePosition start_selection() const;

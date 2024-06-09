@@ -24,7 +24,7 @@ bool Disassembler::execute(const RDAnalysisStatus** s) {
         }
     }
     else
-        state::context->build_listing();
+        state::context->process_memory();
 
     if(s)
         *s = m_status.get();
@@ -62,7 +62,7 @@ void Disassembler::init_step() {
     m_status->stepslist = STEPS_LIST.data();
     m_status->stepscount = STEPS_LIST.size();
 
-    state::context->build_listing();
+    state::context->process_memory();
     this->next_step();
 }
 

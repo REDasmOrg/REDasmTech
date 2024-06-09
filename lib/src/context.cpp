@@ -193,9 +193,21 @@ const Segment* Context::index_to_segment(usize index) const {
     if(index >= state::context->memory->size())
         return {};
 
-    for(const Segment& s : state::context->segments) {
+    for(const Segment& s : this->segments) {
         if(index >= s.index && index < s.endindex)
             return &s;
+    }
+
+    return nullptr;
+}
+
+const Function* Context::index_to_function(usize index) const {
+    if(index >= state::context->memory->size())
+        return {};
+
+    for(const Function& f : this->functions) {
+        if(f.contains(index))
+            return &f;
     }
 
     return nullptr;
@@ -320,9 +332,10 @@ std::string Context::to_hex(usize v, int n) const {
     return hexstr;
 }
 
-void Context::build_listing() {
-    spdlog::info("Building listing...");
+void Context::process_memory() {
+    spdlog::info("Processing memory...");
     this->listing.clear();
+    this->functions.clear();
 
     if(this->memory) {
         for(usize idx = 0; idx < this->memory->size();) {
@@ -394,6 +407,11 @@ void Context::process_listing_code(usize& idx) {
         this->listing.pop_indent(2);
         this->listing.function(idx);
         this->listing.push_indent(2);
+
+        const Segment* s = this->listing.current_segment();
+
+        if(s && (s->type & SEGMENTTYPE_HASCODE))
+            this->create_function_blocks(idx);
     }
 
     if(b.has(BF_JUMPDST)) {
@@ -487,6 +505,63 @@ usize Context::process_listing_type(usize& idx, const typing::ParsedType& pt) {
         this->listing.pop_type();
 
     return listingidx;
+}
+
+void Context::create_function_blocks(usize idx) {
+    const Segment* seg = this->listing.current_segment();
+    assume(seg);
+    assume(seg->type & SEGMENTTYPE_HASCODE);
+
+    auto address = this->index_to_address(idx);
+    assume(address.has_value());
+    spdlog::info("Creating function blocks @ {}", this->to_hex(*address));
+
+    const Database& db = this->database;
+    const auto& mem = this->memory;
+    Function& f = this->functions.emplace_back(idx);
+    std::unordered_set<usize> done;
+    std::deque<usize> pending;
+    pending.push_back(idx);
+
+    while(!pending.empty()) {
+        usize startidx = pending.front();
+        pending.pop_front();
+
+        // Ignore loops
+        if(done.count(startidx))
+            continue;
+
+        done.insert(startidx);
+
+        usize blockidx = startidx;
+        Byte b = mem->at(blockidx);
+
+        while(blockidx < mem->size()) {
+            // Delay slots can have both FLOW and JUMP
+            if(b.has(BF_JUMP)) {
+                const AddressDetail& d = db.get_detail(blockidx);
+                for(usize jidx : d.jumps) {
+                    seg = this->index_to_segment(jidx);
+                    if(seg && seg->type & SEGMENTTYPE_HASCODE)
+                        pending.push_back(jidx);
+                }
+            }
+
+            if(b.has(BF_FLOW)) {
+                const AddressDetail& d = db.get_detail(blockidx);
+                blockidx = d.flow;
+                b = mem->at(blockidx);
+            }
+            else
+                break;
+        }
+
+        if(startidx != blockidx) {
+            if(blockidx < startidx)
+                std::swap(startidx, blockidx);
+            f.add_block(startidx, blockidx);
+        }
+    }
 }
 
 } // namespace redasm

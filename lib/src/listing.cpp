@@ -122,6 +122,7 @@ usize Listing::function(usize index) {
 usize Listing::segment(usize index) {
     usize idx = this->push_item(ListingItemType::SEGMENT, index);
     m_symbols.push_back(idx);
+    m_currentsegment = state::context->index_to_segment(index);
     return idx;
 }
 

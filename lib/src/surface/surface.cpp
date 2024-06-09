@@ -68,6 +68,13 @@ const Segment* Surface::current_segment() const {
     return nullptr;
 }
 
+const Function* Surface::current_function() const {
+    if(auto idx = this->current_index(); idx)
+        return state::context->index_to_function(*idx);
+
+    return nullptr;
+}
+
 void Surface::render(usize s, usize n) {
     this->start = s;
     m_renderer->clear();

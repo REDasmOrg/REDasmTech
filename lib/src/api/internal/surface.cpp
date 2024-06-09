@@ -80,6 +80,19 @@ void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
         loc->index.value = *index;
         loc->index.valid = true;
 
+        const Function* func = s->current_function();
+
+        if(func) {
+            auto ep = ctx->index_to_address(func->entry);
+
+            if(ep)
+                loc->function.value = *ep;
+
+            loc->function.valid = ep.has_value();
+        }
+        else
+            loc->function.valid = false;
+
         auto address = ctx->index_to_address(*index);
         auto offset = ctx->index_to_offset(*index);
 
@@ -93,6 +106,7 @@ void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
         loc->offset.valid = offset.has_value();
     }
     else {
+        loc->function.valid = false;
         loc->index.valid = false;
         loc->address.valid = false;
         loc->offset.valid = false;
