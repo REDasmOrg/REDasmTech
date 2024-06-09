@@ -147,26 +147,29 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
             continue;
 
         Byte b = mem->at(item.index);
-        if(b.has(BF_IMPORT))
-            continue;
 
         if(b.has(BF_JUMPDST)) {
             const AddressDetail& d = db.get_detail(item.index);
 
             for(const auto& [fromidx, cr] : d.refs) {
-                if(cr != CR_JUMP || mem->at(fromidx).has(BF_IMPORT))
+                if(cr != CR_JUMP)
                     continue;
 
-                this->insert_path(mem->at(fromidx), this->index_of(fromidx), i);
+                const Segment* seg = state::context->index_to_segment(fromidx);
+
+                if(seg && seg->type & SEGMENTTYPE_HASCODE) {
+                    this->insert_path(mem->at(fromidx),
+                                      this->calculate_index(fromidx), i);
+                }
             }
         }
         else if(b.has(BF_JUMP)) {
             const AddressDetail& d = db.get_detail(item.index);
 
             for(usize toidx : d.jumps) {
-                if(mem->at(toidx).has(BF_IMPORT))
-                    continue;
-                this->insert_path(b, i, this->last_index_of(toidx));
+                const Segment* seg = state::context->index_to_segment(toidx);
+                if(seg && seg->type & SEGMENTTYPE_HASCODE)
+                    this->insert_path(b, i, this->calculate_index(toidx));
             }
         }
     }
@@ -325,30 +328,34 @@ const ListingItem& Surface::get_listing_item(const SurfaceRow& sfrow) const {
     return state::context->listing[sfrow.listingindex];
 }
 
-int Surface::index_of(usize idx) const {
-    for(usize i = 0; i < this->rows.size(); i++) {
-        const ListingItem& item = this->get_listing_item(this->rows[i]);
+int Surface::calculate_index(usize idx) const {
+    if(!this->rows.empty()) {
+        const ListingItem& first = this->get_listing_item(this->rows.front());
+        if(idx < first.index)
+            return -1;
 
-        if(item.index == idx && item.type == ListingItemType::INSTRUCTION)
-            return i;
-        if(item.index > idx)
-            break;
+        const ListingItem& last = this->get_listing_item(this->rows.back());
+        if(idx > last.index)
+            return this->rows.size() + 1;
     }
 
-    return -1;
-}
+    int residx = -1;
 
-int Surface::last_index_of(usize idx) const {
     for(usize i = this->rows.size(); i-- > 0;) {
         const ListingItem& item = this->get_listing_item(this->rows[i]);
 
-        if(item.index == idx && item.type == ListingItemType::INSTRUCTION)
-            return i;
+        if(item.index == idx) {
+            residx = i;
+
+            if(item.type == ListingItemType::INSTRUCTION)
+                break;
+        }
+
         if(item.index < idx)
             break;
     }
 
-    return -1;
+    return residx;
 }
 
 void Surface::insert_path(Byte b, int fromrow, int torow) const {
@@ -357,9 +364,6 @@ void Surface::insert_path(Byte b, int fromrow, int torow) const {
 
     if(auto it = m_done.emplace(fromrow, torow); !it.second)
         return;
-
-    if(torow == -1)
-        torow = this->rows.size() + 1;
 
     if(fromrow > torow) { // Loop
         if(b.has(BF_FLOW)) {

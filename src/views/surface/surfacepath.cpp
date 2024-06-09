@@ -45,9 +45,10 @@ void SurfacePath::paintEvent(QPaintEvent* event) {
         points.push_back(QLine(x, y1, x, y2));
         points.push_back(QLine(x, y2, this->width(), y2));
 
-        Qt::PenStyle penstyle = ((path->fromrow == -1) || (path->torow > ROWS))
-                                    ? Qt::DotLine
-                                    : Qt::SolidLine;
+        bool dotted = path->fromrow == -1 || path->torow == 1 ||
+                      path->fromrow >= ROWS || path->torow >= ROWS;
+
+        Qt::PenStyle penstyle = dotted ? Qt::DotLine : Qt::SolidLine;
         painter.setPen(
             QPen{themeprovider::color(path->style), penwidth, penstyle});
         painter.drawLines(points);
