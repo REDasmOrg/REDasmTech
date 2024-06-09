@@ -533,13 +533,19 @@ void Context::create_function_blocks(usize idx) {
 
         done.insert(startidx);
 
-        usize blockidx = startidx;
-        Byte b = mem->at(blockidx);
+        usize endidx = startidx, curridx = startidx;
+        Byte b = mem->at(curridx);
 
-        while(blockidx < mem->size()) {
+        while(curridx < mem->size()) {
+            // Don't overlap functions
+            if((startidx != curridx) && b.has(BF_FUNCTION))
+                break;
+
             // Delay slots can have both FLOW and JUMP
             if(b.has(BF_JUMP)) {
-                const AddressDetail& d = db.get_detail(blockidx);
+                endidx = curridx;
+
+                const AddressDetail& d = db.get_detail(curridx);
                 for(usize jidx : d.jumps) {
                     seg = this->index_to_segment(jidx);
                     if(seg && seg->type & SEGMENTTYPE_HASCODE)
@@ -548,19 +554,17 @@ void Context::create_function_blocks(usize idx) {
             }
 
             if(b.has(BF_FLOW)) {
-                const AddressDetail& d = db.get_detail(blockidx);
-                blockidx = d.flow;
-                b = mem->at(blockidx);
+                const AddressDetail& d = db.get_detail(curridx);
+                endidx = curridx;
+                curridx = d.flow;
+                b = mem->at(curridx);
             }
             else
                 break;
         }
 
-        if(startidx != blockidx) {
-            if(blockidx < startidx)
-                std::swap(startidx, blockidx);
-            f.add_block(startidx, blockidx);
-        }
+        if(startidx != endidx)
+            f.add_block(startidx, endidx);
     }
 }
 
