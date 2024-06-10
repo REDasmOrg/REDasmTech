@@ -6,7 +6,7 @@
 
 RD_HANDLE(RDSurface);
 
-enum RDSurfaceFlags {
+typedef enum RDSurfaceFlags {
     SURFACE_DEFAULT = 0u,
     SURFACE_NOADDRESS = 1u << 0,
     SURFACE_NOREFS = 1u << 1,
@@ -17,7 +17,7 @@ enum RDSurfaceFlags {
     SURFACE_NOHIGHLIGHT = 1u << 6,
 
     SURFACE_TEXT = ~0u,
-};
+} RDSurfaceFlags;
 
 typedef struct RDSurfaceLocation {
     struct {

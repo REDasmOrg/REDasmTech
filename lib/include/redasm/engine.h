@@ -3,14 +3,14 @@
 #include <redasm/types.h>
 #include <time.h>
 
-enum RDAnalysisStep {
+typedef enum RDAnalysisStep {
     STEP_INIT = 0,
     STEP_EMULATE,
     STEP_CFG,
     STEP_ANALYZE,
     STEP_DONE,
     STEP_LAST
-};
+} RDAnalysisStep;
 
 typedef struct RDAnalysisStatus {
     // General

@@ -4,14 +4,14 @@
 #include <redasm/theme.h>
 #include <redasm/types.h>
 
-enum RDSymbolKind {
+typedef enum RDSymbolKind {
     SYMBOL_INVALID = 0,
     SYMBOL_SEGMENT,
     SYMBOL_FUNCTION,
     SYMBOL_TYPE,
     SYMBOL_STRING,
     SYMBOL_ARRAY,
-};
+} RDSymbolKind;
 
 typedef struct RDSymbol {
     RDAddress address;

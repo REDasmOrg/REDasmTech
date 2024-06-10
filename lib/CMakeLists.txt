@@ -43,6 +43,10 @@ target_sources(${PROJECT_NAME_LIB}
         src/disasm/disassembler.cpp
         src/disasm/emulator.cpp
         src/disasm/function.cpp
+        src/graph/graph.cpp
+        src/graph/datagraph.cpp
+        src/graph/styledgraph.cpp
+        src/graph/layouts/layeredlayout.cpp
         src/listing.cpp
         src/context.cpp
         src/segment.cpp
@@ -69,6 +73,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/internal/listing.cpp
         src/api/internal/surface.cpp
         src/api/internal/renderer.cpp
+        src/api/internal/graph.cpp
 
     PRIVATE # C
         src/api/c/redasm.cpp
@@ -80,6 +85,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/c/surface.cpp
         src/api/c/processor.cpp
         src/api/c/renderer.cpp
+        src/api/c/graph.cpp
 
     PRIVATE # Python
         src/api/python/buffer.cpp

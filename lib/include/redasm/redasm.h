@@ -4,6 +4,7 @@
 #include <redasm/byte.h>
 #include <redasm/common.h>
 #include <redasm/engine.h>
+#include <redasm/graph.h>
 #include <redasm/listing.h>
 #include <redasm/loader.h>
 #include <redasm/processor.h>
@@ -14,7 +15,7 @@
 #include <redasm/types.h>
 #include <redasm/typing.h>
 
-enum RDLogLevel {
+typedef enum RDLogLevel {
     LOGLEVEL_TRACE,
     LOGLEVEL_DEBUG,
     LOGLEVEL_INFO,
@@ -22,7 +23,7 @@ enum RDLogLevel {
     LOGLEVEL_ERROR,
     LOGLEVEL_CRITICAL,
     LOGLEVEL_OFF,
-};
+} RDLogLevel;
 
 RD_HANDLE(RDContext);
 RD_HANDLE(RDBuffer);
@@ -48,11 +49,11 @@ struct RDMemoryInfo {
     int bits;
 };
 
-enum RDSegmentType {
+typedef enum RDSegmentType {
     SEGMENTTYPE_UNKNOWN = 0,
     SEGMENTTYPE_HASDATA = 1 << 0,
     SEGMENTTYPE_HASCODE = 1 << 1,
-};
+} RDSegmentType;
 
 typedef struct RDSegment {
     const char* name;

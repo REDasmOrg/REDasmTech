@@ -3,7 +3,7 @@
 #include <redasm/common.h>
 
 // clang-format off
-enum RDThemeKind {
+typedef enum RDThemeKind {
     THEME_DEFAULT = 0,
     THEME_FOREGROUND, THEME_BACKGROUND, THEME_SEEK,
     THEME_AUTOCOMMENT, THEME_COMMENT,
@@ -18,7 +18,7 @@ enum RDThemeKind {
     THEME_GRAPHBG, THEME_GRAPHEDGE, THEME_GRAPHEDGELOOP, THEME_GRAPHEDGELOOPCOND,
     THEME_SUCCESS, THEME_FAIL, THEME_WARNING,
     THEME_COUNT,
-};
+} RDThemeKind;
 // clang-format on
 
 typedef const char** RDThemeColors;

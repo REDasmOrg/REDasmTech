@@ -5,7 +5,7 @@
 
 typedef u32 RDByte;
 
-enum RDByteFlags {
+typedef enum RDByteFlags {
     // Internal Use
     BF_MBYTE = 0x000000ff, // Mask for byte extraction
     BF_MUNKN = 0x60000000, // Mask for unknown flags
@@ -40,7 +40,7 @@ enum RDByteFlags {
 
     // Special Flags
     BF_CONT = 1U << 31, // Continuation flag
-};
+} RDByteFlags;
 
 REDASM_EXPORT bool rdbyte_isunknown(RDByte self);
 REDASM_EXPORT bool rdbyte_iscode(RDByte self);

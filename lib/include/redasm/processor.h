@@ -5,7 +5,7 @@
 
 RD_HANDLE(RDEmulator);
 
-enum RDRefType {
+typedef enum RDRefType {
     REF_UNKNWON = 0,
 
     DR_ADDRESS,
@@ -15,7 +15,7 @@ enum RDRefType {
     CR_CALL,
     CR_JUMP,
     CR_FLOW,
-};
+} RDRefType;
 
 struct RDRef {
     RDAddress address;

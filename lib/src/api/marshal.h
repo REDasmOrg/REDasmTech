@@ -12,11 +12,20 @@ class Renderer;
 class Emulator;
 class Context;
 class Surface;
+class StyledGraph;
 struct Segment;
 
 namespace api {
 
 inline Byte from_c(RDByte arg) { return Byte{arg}; }
+
+inline const StyledGraph* from_c(const RDGraph* arg) {
+    return reinterpret_cast<const StyledGraph*>(arg);
+}
+
+inline StyledGraph* from_c(RDGraph* arg) {
+    return reinterpret_cast<StyledGraph*>(arg);
+}
 
 inline Emulator* from_c(RDEmulator* arg) {
     return reinterpret_cast<Emulator*>(arg);
@@ -55,6 +64,10 @@ inline AbstractBuffer* from_c(RDBuffer* arg) {
 }
 
 inline RDByte to_c(Byte arg) { return arg.value; }
+
+inline RDGraph* to_c(StyledGraph* arg) {
+    return reinterpret_cast<RDGraph*>(arg);
+}
 
 inline RDEmulator* to_c(Emulator* arg) {
     return reinterpret_cast<RDEmulator*>(arg);
