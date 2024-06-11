@@ -1,5 +1,6 @@
 #include "surfaceview.h"
 #include "../../themeprovider.h"
+#include <QKeyEvent>
 #include <redasm/redasm.h>
 
 SurfaceView::SurfaceView(QWidget* parent): QSplitter{parent} {

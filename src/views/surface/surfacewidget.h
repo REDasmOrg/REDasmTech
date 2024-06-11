@@ -43,6 +43,7 @@ private:
 
 Q_SIGNALS:
     void render_completed();
+    void switch_view();
 
 private:
     RDSurface* m_surface{nullptr};

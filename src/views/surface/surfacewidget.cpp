@@ -233,6 +233,10 @@ void SurfaceWidget::keyPressEvent(QKeyEvent* e) {
         rdsurface_select(m_surface, this->visible_rows(),
                          this->visible_columns());
     }
+    else if(e->key() == Qt::Key_Space) {
+        Q_EMIT switch_view();
+        return;
+    }
     else {
         QAbstractScrollArea::keyPressEvent(e);
         return;

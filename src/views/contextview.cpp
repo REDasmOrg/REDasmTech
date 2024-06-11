@@ -14,6 +14,12 @@ ContextView::ContextView(QWidget* parent): QWidget{parent}, m_ui{this} {
                 m_ui.surfaceview->jump_to(address);
                 m_ui.surfaceview->setFocus();
             });
+
+    connect(m_ui.surfaceview->viewport(), &SurfaceWidget::switch_view, this,
+            [&]() { m_ui.stackedview->setCurrentWidget(m_ui.surfacegraph); });
+
+    connect(m_ui.surfacegraph, &SurfaceGraph::switch_view, this,
+            [&]() { m_ui.stackedview->setCurrentWidget(m_ui.surfaceview); });
 }
 
 ContextView::~ContextView() { rd_destroy(); }

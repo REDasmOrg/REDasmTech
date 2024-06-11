@@ -20,11 +20,7 @@
             cwd: "${ws.build_dir}",
             default: true,
             quickfix: true,
-
-            problems: {
-                ignoreoutput: false,
-                patterns: ["${globals.patterns.gcc}"]
-            }
+            compiler: "gcc",
         }
     ]
 }
