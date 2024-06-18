@@ -72,7 +72,7 @@ void LayeredLayout::create_blocks() {
 
         for(size_t i = 0; i < c; i++) {
             const RDGraphEdge& e = edges[i];
-            m_blocks[e.target].incoming.push_back(block.node);
+            m_blocks[e.src].incoming.push_back(block.node);
         }
     }
 }
@@ -100,22 +100,22 @@ void LayeredLayout::make_acyclic() {
 
             for(size_t i = 0; i < c; i++) {
                 const RDGraphEdge& e = edges[i];
-                if(visited.count(e.target))
+                if(visited.count(e.src))
                     continue;
 
                 // If node has no more unseen incoming edges, add it to the
                 // graph layout now
-                if(m_blocks[e.target].incoming.size() == 1) {
+                if(m_blocks[e.src].incoming.size() == 1) {
                     LayeredLayout::remove_from_deque(
-                        m_blocks[e.target].incoming, block.node);
-                    block.newoutgoing.push_back(e.target);
-                    queue.push(m_blocks[e.target].node);
-                    visited.insert(e.target);
+                        m_blocks[e.src].incoming, block.node);
+                    block.newoutgoing.push_back(e.src);
+                    queue.push(m_blocks[e.src].node);
+                    visited.insert(e.src);
                     changed = true;
                 }
                 else
                     LayeredLayout::remove_from_deque(
-                        m_blocks[e.target].incoming, block.node);
+                        m_blocks[e.src].incoming, block.node);
             }
         }
 
@@ -133,15 +133,15 @@ void LayeredLayout::make_acyclic() {
 
             for(size_t i = 0; i < c; i++) {
                 const RDGraphEdge& e = edges[i];
-                if(visited.count(e.target))
+                if(visited.count(e.src))
                     continue;
 
-                if(!best || (m_blocks[e.target].incoming.size() < bestedges) ||
-                   ((m_blocks[e.target].incoming.size() == bestedges) &&
-                    (e.target < best))) {
-                    best = e.target;
+                if(!best || (m_blocks[e.src].incoming.size() < bestedges) ||
+                   ((m_blocks[e.src].incoming.size() == bestedges) &&
+                    (e.src < best))) {
+                    best = e.src;
                     bestedges =
-                        static_cast<int>(m_blocks[e.target].incoming.size());
+                        static_cast<int>(m_blocks[e.src].incoming.size());
                     bestparent = block.node;
                 }
             }
@@ -192,7 +192,7 @@ void LayeredLayout::perform_edge_routing() {
 
         for(size_t i = 0; i < c; i++) {
             const RDGraphEdge& e = edges[i];
-            LLBlock& end = m_blocks[e.target];
+            LLBlock& end = m_blocks[e.src];
             start.edges.push_back(this->route_edge(m_horizedges, m_vertedges,
                                                    m_edgevalid, start, end));
         }

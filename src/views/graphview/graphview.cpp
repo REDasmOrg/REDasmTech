@@ -225,8 +225,8 @@ void GraphView::paintEvent(QPaintEvent*) {
         QColor c(rdgraph_getcolor(m_graph, std::addressof(it->first)));
         QPen pen(c);
 
-        if(m_selecteditem && ((it->first.source == m_selecteditem->node()) ||
-                              (it->first.target == m_selecteditem->node())))
+        if(m_selecteditem && ((it->first.src == m_selecteditem->node()) ||
+                              (it->first.src == m_selecteditem->node())))
             pen.setWidthF(2.0 / m_scalefactor);
         else {
             pen.setWidthF(1.0 / m_scalefactor);

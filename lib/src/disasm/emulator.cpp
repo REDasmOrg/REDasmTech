@@ -43,9 +43,10 @@ void Emulator::decode(usize idx) {
         return;
 
     Context* ctx = state::context;
-    Memory* m = ctx->memory.get();
+    auto& mem = ctx->memory;
 
-    if(Byte b = m->at(idx); !b.has_byte() || (!b.is_unknown() && !b.is_weak()))
+    if(Byte b = mem->at(idx);
+       !b.has_byte() || (!b.is_unknown() && !b.is_weak()))
         return;
 
     const RDProcessor* p = ctx->processor;
@@ -58,10 +59,10 @@ void Emulator::decode(usize idx) {
 
     auto address = ctx->index_to_address(idx);
     assume(address.has_value());
-    m->unset(idx);
+    mem->unset(idx);
 
     if(usize sz = p->emulate(p, *address, api::to_c(this)); sz)
-        m->set(idx, sz, BF_INSTR);
+        mem->set(idx, sz, BF_INSTR);
 }
 
 const Segment* Emulator::get_segment(usize idx) {

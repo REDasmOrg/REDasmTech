@@ -8,7 +8,7 @@ RD_HANDLE(RDGraph);
 typedef usize RDGraphNode;
 
 typedef struct RDGraphEdge {
-    RDGraphNode source, target;
+    RDGraphNode src, dst;
 } RDGraphEdge;
 
 typedef struct RDGraphPoint {
@@ -28,7 +28,7 @@ REDASM_EXPORT RDGraph* rdgraph_create(void);
 REDASM_EXPORT const RDGraphEdge*
 rdgraph_getedge(const RDGraph* self, RDGraphNode src, RDGraphNode tgt);
 
-REDASM_EXPORT RDGraphNode rdgraph_pushnode(RDGraph* self);
+REDASM_EXPORT RDGraphNode rdgraph_addnode(RDGraph* self);
 REDASM_EXPORT RDGraphNode rdgraph_getroot(const RDGraph* self);
 
 REDASM_EXPORT usize rdgraph_getoutgoing(const RDGraph* self, RDGraphNode n,
@@ -48,8 +48,8 @@ REDASM_EXPORT bool rdgraph_containsedge(const RDGraph* self, RDGraphNode src,
 
 REDASM_EXPORT bool rdgraph_isempty(const RDGraph* self);
 
-REDASM_EXPORT void rdgraph_pushedge(RDGraph* self, RDGraphNode src,
-                                    RDGraphNode tgt);
+REDASM_EXPORT void rdgraph_addedge(RDGraph* self, RDGraphNode src,
+                                   RDGraphNode tgt);
 
 REDASM_EXPORT void rdgraph_setroot(RDGraph* self, RDGraphNode n);
 REDASM_EXPORT void rdgraph_removeedge(RDGraph* self, const RDGraphEdge* e);
@@ -126,14 +126,14 @@ namespace std {
 template<>
 struct hash<RDGraphEdge> {
     size_t operator()(const RDGraphEdge& edge) const {
-        return edge.source ^ edge.target;
+        return edge.src ^ edge.dst;
     }
 };
 
 template<>
 struct equal_to<RDGraphEdge> {
     bool operator()(const RDGraphEdge& edge1, const RDGraphEdge& edge2) const {
-        return (edge1.source == edge2.source) && (edge1.target == edge2.target);
+        return (edge1.src == edge2.src) && (edge1.dst == edge2.dst);
     }
 };
 

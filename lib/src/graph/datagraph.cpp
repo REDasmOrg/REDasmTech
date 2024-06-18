@@ -12,13 +12,9 @@ const RDGraphData* DataGraph::data(RDGraphNode n) const {
     return (it != m_data.end()) ? std::addressof(it->second) : nullptr;
 }
 
-void DataGraph::set_data(RDGraphNode n, uintptr_t val) {
-    m_data[n].nu_data = val;
-}
+void DataGraph::set_data(RDGraphNode n, uptr val) { m_data[n].nu_data = val; }
 
-void DataGraph::set_data(RDGraphNode n, intptr_t val) {
-    m_data[n].ns_data = val;
-}
+void DataGraph::set_data(RDGraphNode n, iptr val) { m_data[n].ns_data = val; }
 
 void DataGraph::set_data(RDGraphNode n, const char* val) {
     m_data[n].s_data = val;

@@ -65,6 +65,10 @@ inline AbstractBuffer* from_c(RDBuffer* arg) {
 
 inline RDByte to_c(Byte arg) { return arg.value; }
 
+inline const RDGraph* to_c(const StyledGraph* arg) {
+    return reinterpret_cast<const RDGraph*>(arg);
+}
+
 inline RDGraph* to_c(StyledGraph* arg) {
     return reinterpret_cast<RDGraph*>(arg);
 }

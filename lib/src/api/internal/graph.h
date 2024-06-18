@@ -10,7 +10,7 @@ RDGraph* graph_create();
 const RDGraphEdge* graph_getedge(const RDGraph* self, RDGraphNode src,
                                  RDGraphNode tgt);
 
-RDGraphNode graph_pushnode(RDGraph* self);
+RDGraphNode graph_addnode(RDGraph* self);
 RDGraphNode graph_getroot(const RDGraph* self);
 
 usize graph_getoutgoing(const RDGraph* self, RDGraphNode n,
@@ -23,7 +23,7 @@ usize graph_getnodes(const RDGraph* self, const RDGraphNode** nodes);
 usize graph_getedges(const RDGraph* self, const RDGraphEdge** edges);
 bool graph_containsedge(const RDGraph* self, RDGraphNode src, RDGraphNode tgt);
 bool graph_isempty(const RDGraph* self);
-void graph_pushedge(RDGraph* self, RDGraphNode src, RDGraphNode tgt);
+void graph_addedge(RDGraph* self, RDGraphNode src, RDGraphNode tgt);
 
 void graph_setroot(RDGraph* self, RDGraphNode n);
 void graph_removeedge(RDGraph* self, const RDGraphEdge* e);
@@ -72,5 +72,7 @@ void graph_setheight(RDGraph* self, RDGraphNode n, int h);
 void graph_clearlayout(RDGraph* self);
 
 bool graphlayout_layered(RDGraph* self, usize type);
+
+const RDGraph* get_function_graph(RDAddress address);
 
 } // namespace redasm::api::internal

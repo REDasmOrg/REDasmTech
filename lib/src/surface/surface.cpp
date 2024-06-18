@@ -395,12 +395,12 @@ void Surface::insert_path(Byte b, int fromrow, int torow) const {
 void Surface::render_hexdump(const ListingItem& item) {
     static constexpr usize HEX_WIDTH = 16;
 
-    const Memory* memory = state::context->memory.get();
+    const auto& mem = state::context->memory;
     usize c = 0;
     m_renderer->new_row(item);
 
     for(usize i = item.start_index; i < item.end_index; i++, c += 3) {
-        Byte b = memory->at(i);
+        Byte b = mem->at(i);
 
         if(b.has_byte())
             m_renderer->chunk(state::context->to_hex(b.byte(), 2));
@@ -416,7 +416,7 @@ void Surface::render_hexdump(const ListingItem& item) {
     c = 0;
 
     for(usize i = item.start_index; i < item.end_index; i++, c++) {
-        Byte b = memory->at(i);
+        Byte b = mem->at(i);
 
         if(b.has_byte()) {
             std::string s{std::isprint(b.byte()) ? static_cast<char>(b.byte())
@@ -465,7 +465,7 @@ void Surface::render_type(const ListingItem& item) {
     assume(item.parsed_type);
 
     tl::optional<typing::ParsedType> pt = item.parsed_type_context;
-    const Memory* memory = state::context->memory.get();
+    const auto& mem = state::context->memory;
     std::string fname;
 
     if(item.field_index) {
@@ -494,9 +494,9 @@ void Surface::render_type(const ListingItem& item) {
             tl::optional<char> ch;
 
             if(pt->type->is_wide())
-                ch = memory->get_wchar(item.index);
+                ch = mem->get_wchar(item.index);
             else
-                ch = memory->get_char(item.index);
+                ch = mem->get_char(item.index);
 
             if(ch.has_value())
                 m_renderer->word("=").quote(std::string_view{&ch.value(), 1},
@@ -508,7 +508,7 @@ void Surface::render_type(const ListingItem& item) {
 
         case typing::types::I8:
         case typing::types::U8: {
-            auto v = memory->get_u8(item.index);
+            auto v = mem->get_u8(item.index);
 
             if(v.has_value()) {
 
@@ -523,7 +523,7 @@ void Surface::render_type(const ListingItem& item) {
 
         case typing::types::I16:
         case typing::types::U16: {
-            auto v = memory->get_u16(item.index, pt->type->is_big());
+            auto v = mem->get_u16(item.index, pt->type->is_big());
 
             if(v.has_value()) {
                 auto [isptr, val] = surface_checkpointer(*pt, *v);
@@ -538,7 +538,7 @@ void Surface::render_type(const ListingItem& item) {
 
         case typing::types::I32:
         case typing::types::U32: {
-            auto v = memory->get_u32(item.index, pt->type->is_big());
+            auto v = mem->get_u32(item.index, pt->type->is_big());
 
             if(v.has_value()) {
                 auto [isptr, val] = surface_checkpointer(*pt, *v);
@@ -552,7 +552,7 @@ void Surface::render_type(const ListingItem& item) {
 
         case typing::types::I64:
         case typing::types::U64: {
-            auto v = memory->get_u64(item.index, pt->type->is_big());
+            auto v = mem->get_u64(item.index, pt->type->is_big());
             assume(v.has_value());
             if(v.has_value())
                 m_renderer->word("=").constant(state::context->to_hex(*v, 16));
@@ -620,7 +620,7 @@ void Surface::render_refs(const ListingItem& item) {
         return;
 
     const Context* ctx = state::context;
-    const Memory* mem = ctx->memory.get();
+    const auto& mem = ctx->memory;
     const AddressDetail& d = state::context->database.get_detail(item.index);
 
     m_renderer->ws(COLUMN_PADDING);
@@ -654,13 +654,13 @@ void Surface::render_array(const ListingItem& item) {
     std::string chars;
 
     if(pt.type->is_char()) {
-        const Memory* memory = state::context->memory.get();
+        const auto& mem = state::context->memory;
         usize idx = item.index;
         chars += "\"";
 
-        for(usize i = 0; i < pt.n && idx < memory->size();
+        for(usize i = 0; i < pt.n && idx < mem->size();
             i++, idx += pt.type->size) {
-            auto b = memory->get_type(idx, pt.type->name);
+            auto b = mem->get_type(idx, pt.type->name);
 
             if(!b) {
                 chars += "\",?\"";

@@ -314,7 +314,7 @@ std::vector<RDRef> get_references(RDAddress address) {
 usize get_bytes(const RDByte** bytes) {
     spdlog::trace("get_bytes({})", fmt::ptr(bytes));
 
-    const Memory* m = state::context->memory.get();
+    const auto& m = state::context->memory;
 
     if(!m)
         return 0;

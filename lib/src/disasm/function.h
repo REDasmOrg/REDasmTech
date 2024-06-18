@@ -1,20 +1,29 @@
 #pragma once
 
-#include <redasm/types.h>
+#include "../graph/styledgraph.h"
+#include "../types.h"
 #include <vector>
 
 namespace redasm {
 
 struct Function {
-    using BasicBlock = std::pair<usize, usize>;
+    struct BasicBlock {
+        explicit BasicBlock(MIndex s): start{s}, end{s} {}
+
+        MIndex start;
+        MIndex end;
+        std::unordered_map<RDGraphNode, usize> theme;
+    };
+
     using Blocks = std::vector<BasicBlock>;
 
-    explicit Function(usize ep);
-    bool contains(usize idx) const;
-    void add_block(usize start, usize end);
-    [[nodiscard]] inline const Blocks& blocks() const { return m_blocks; }
+    explicit Function(MIndex ep);
+    bool contains(MIndex idx) const;
+    RDGraphNode try_add_block(MIndex start);
+    BasicBlock& get_basic_block(RDGraphNode n);
 
-    usize entry;
+    MIndex entry;
+    StyledGraph graph;
 
 private:
     Blocks m_blocks;

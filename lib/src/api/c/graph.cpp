@@ -8,8 +8,8 @@ const RDGraphEdge* rdgraph_getedge(const RDGraph* self, RDGraphNode src,
     return redasm::api::internal::graph_getedge(self, src, tgt);
 }
 
-RDGraphNode rdgraph_pushnode(RDGraph* self) {
-    return redasm::api::internal::graph_pushnode(self);
+RDGraphNode rdgraph_addnode(RDGraph* self) {
+    return redasm::api::internal::graph_addnode(self);
 }
 
 RDGraphNode rdgraph_getroot(const RDGraph* self) {
@@ -43,8 +43,8 @@ bool rdgraph_isempty(const RDGraph* self) {
     return redasm::api::internal::graph_isempty(self);
 }
 
-void rdgraph_pushedge(RDGraph* self, RDGraphNode src, RDGraphNode tgt) {
-    redasm::api::internal::graph_pushedge(self, src, tgt);
+void rdgraph_addedge(RDGraph* self, RDGraphNode src, RDGraphNode tgt) {
+    redasm::api::internal::graph_addedge(self, src, tgt);
 }
 
 void rdgraph_setroot(RDGraph* self, RDGraphNode n) {

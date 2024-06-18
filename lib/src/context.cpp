@@ -411,7 +411,7 @@ void Context::process_listing_code(usize& idx) {
         const Segment* s = this->listing.current_segment();
 
         if(s && (s->type & SEGMENTTYPE_HASCODE))
-            this->create_function_blocks(idx);
+            this->create_function_graph(idx);
     }
 
     if(b.has(BF_JUMPDST)) {
@@ -507,24 +507,24 @@ usize Context::process_listing_type(usize& idx, const typing::ParsedType& pt) {
     return listingidx;
 }
 
-void Context::create_function_blocks(usize idx) {
+void Context::create_function_graph(MIndex idx) {
     const Segment* seg = this->listing.current_segment();
     assume(seg);
     assume(seg->type & SEGMENTTYPE_HASCODE);
 
     auto address = this->index_to_address(idx);
     assume(address.has_value());
-    spdlog::info("Creating function blocks @ {}", this->to_hex(*address));
+    spdlog::info("Creating function graph @ {}", this->to_hex(*address));
 
     const Database& db = this->database;
     const auto& mem = this->memory;
     Function& f = this->functions.emplace_back(idx);
-    std::unordered_set<usize> done;
-    std::deque<usize> pending;
+    std::unordered_set<MIndex> done;
+    std::deque<MIndex> pending;
     pending.push_back(idx);
 
     while(!pending.empty()) {
-        usize startidx = pending.front();
+        MIndex startidx = pending.front();
         pending.pop_front();
 
         // Ignore loops
@@ -533,7 +533,8 @@ void Context::create_function_blocks(usize idx) {
 
         done.insert(startidx);
 
-        usize endidx = startidx, curridx = startidx;
+        RDGraphNode n = f.try_add_block(startidx);
+        MIndex curridx = startidx;
         Byte b = mem->at(curridx);
 
         while(curridx < mem->size()) {
@@ -543,28 +544,31 @@ void Context::create_function_blocks(usize idx) {
 
             // Delay slots can have both FLOW and JUMP
             if(b.has(BF_JUMP)) {
-                endidx = curridx;
+                Function::BasicBlock& bb = f.get_basic_block(n);
+                bb.end = curridx;
 
                 const AddressDetail& d = db.get_detail(curridx);
                 for(usize jidx : d.jumps) {
                     seg = this->index_to_segment(jidx);
-                    if(seg && seg->type & SEGMENTTYPE_HASCODE)
+
+                    if(seg && seg->type & SEGMENTTYPE_HASCODE) {
                         pending.push_back(jidx);
+                        RDGraphNode jn = f.try_add_block(jidx);
+                        f.graph.edge(n, jn);
+                    }
                 }
             }
 
             if(b.has(BF_FLOW)) {
                 const AddressDetail& d = db.get_detail(curridx);
-                endidx = curridx;
+                Function::BasicBlock& bb = f.get_basic_block(n);
+                bb.end = curridx;
                 curridx = d.flow;
                 b = mem->at(curridx);
             }
             else
                 break;
         }
-
-        if(startidx != endidx)
-            f.add_block(startidx, endidx);
     }
 }
 

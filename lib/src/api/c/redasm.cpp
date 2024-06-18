@@ -1,5 +1,6 @@
 #include "../internal/redasm.h"
 #include "../../utils/object.h"
+#include "../internal/graph.h"
 #include "../internal/memory.h"
 #include <redasm/redasm.h>
 
@@ -127,6 +128,10 @@ usize rd_getreferences(RDAddress address, const RDRef** refs) {
         *refs = r.data();
 
     return r.size();
+}
+
+const RDGraph* rd_getfunctiongraph(RDAddress address) {
+    return redasm::api::internal::get_function_graph(address);
 }
 
 bool rd_addresstosegment(RDAddress address, RDSegment* s) {

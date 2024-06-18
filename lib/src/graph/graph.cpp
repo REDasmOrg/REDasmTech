@@ -14,11 +14,10 @@ void Graph::clear() {
 }
 
 void Graph::remove_edge(const RDGraphEdge* edge) {
-    auto it = std::find_if(m_edges.begin(), m_edges.end(),
-                           [edge](const RDGraphEdge& e) {
-                               return std::tie(edge->source, edge->target) ==
-                                      std::tie(e.source, e.target);
-                           });
+    auto it = std::find_if(
+        m_edges.begin(), m_edges.end(), [edge](const RDGraphEdge& e) {
+            return std::tie(edge->src, edge->dst) == std::tie(e.src, e.dst);
+        });
 
     if(it != m_edges.end())
         m_edges.erase(it);
@@ -33,12 +32,12 @@ void Graph::remove_node(RDGraphNode n) {
     this->remove_edges(n);
 }
 
-void Graph::push_edge(RDGraphNode source, RDGraphNode target) {
-    if(!this->contains_edge(source, target))
-        m_edges.push_back({source, target});
+void Graph::add_edge(RDGraphNode src, RDGraphNode dst) {
+    if(!this->contains_edge(src, dst))
+        m_edges.push_back({src, dst});
 }
 
-RDGraphNode Graph::push_node() {
+RDGraphNode Graph::add_node() {
     RDGraphNode n = ++m_nodeid;
     m_nodes.push_back(n);
     return n;
@@ -52,8 +51,8 @@ std::string Graph::generate_dot() const {
         usize oc = this->outgoing(n, &edges);
 
         for(usize i = 0; i < oc; i++) {
-            s += "\t\"" + this->node_label(edges[i].source) + "\"";
-            s += " -> \"" + this->node_label(edges[i].target) + "\";\n";
+            s += "\t\"" + this->node_label(edges[i].src) + "\"";
+            s += " -> \"" + this->node_label(edges[i].src) + "\";\n";
         }
     }
 
@@ -63,9 +62,9 @@ std::string Graph::generate_dot() const {
 
 u32 Graph::hash() const { return hash::murmur2(this->generate_dot()); }
 
-const RDGraphEdge* Graph::edge(RDGraphNode source, RDGraphNode target) const {
+const RDGraphEdge* Graph::edge(RDGraphNode src, RDGraphNode dst) const {
     for(const RDGraphEdge& e : m_edges) {
-        if((e.source == source) && (e.target == target))
+        if((e.src == src) && (e.src == dst))
             return &e;
     }
 
@@ -76,7 +75,7 @@ usize Graph::outgoing(RDGraphNode n, const RDGraphEdge** edges) const {
     m_outgoings.clear();
 
     for(const RDGraphEdge& e : m_edges) {
-        if(e.source != n)
+        if(e.src != n)
             continue;
 
         m_outgoings.push_back(e);
@@ -91,7 +90,7 @@ usize Graph::incoming(RDGraphNode n, const RDGraphEdge** edges) const {
     m_incomings.clear();
 
     for(const RDGraphEdge& e : m_edges) {
-        if(e.target != n)
+        if(e.src != n)
             continue;
 
         m_incomings.push_back(e);
@@ -137,7 +136,7 @@ void Graph::remove_edges(RDGraphNode n) {
     for(usize i = 0; i < m_edges.size();) {
         const RDGraphEdge& e = m_edges[i];
 
-        if(e.source == n)
+        if(e.src == n)
             this->remove_edge(&e);
         else
             i++;

@@ -1,6 +1,8 @@
 #include "graph.h"
+#include "../../context.h"
 #include "../../graph/layouts/layeredlayout.h"
 #include "../../graph/styledgraph.h"
+#include "../../state.h"
 #include "../marshal.h"
 #include <spdlog/spdlog.h>
 
@@ -17,9 +19,9 @@ const RDGraphEdge* graph_getedge(const RDGraph* self, RDGraphNode src,
     return api::from_c(self)->edge(src, tgt);
 }
 
-RDGraphNode graph_pushnode(RDGraph* self) {
-    spdlog::trace("graph_pushnode({})", fmt::ptr(self));
-    return api::from_c(self)->push_node();
+RDGraphNode graph_addnode(RDGraph* self) {
+    spdlog::trace("graph_addnode({})", fmt::ptr(self));
+    return api::from_c(self)->add_node();
 }
 
 RDGraphNode graph_getroot(const RDGraph* self) {
@@ -61,9 +63,9 @@ bool graph_isempty(const RDGraph* self) {
     return api::from_c(self)->empty();
 }
 
-void graph_pushedge(RDGraph* self, RDGraphNode src, RDGraphNode tgt) {
-    spdlog::trace("graph_pushedge({}, {}, {})", fmt::ptr(self), src, tgt);
-    api::from_c(self)->push_edge(src, tgt);
+void graph_addedge(RDGraph* self, RDGraphNode src, RDGraphNode tgt) {
+    spdlog::trace("graph_addedge({}, {}, {})", fmt::ptr(self), src, tgt);
+    api::from_c(self)->add_edge(src, tgt);
 }
 
 void graph_setroot(RDGraph* self, RDGraphNode n) {
@@ -260,6 +262,21 @@ bool graphlayout_layered(RDGraph* self, usize type) {
 
     LayeredLayout ll(api::from_c(self), type);
     return ll.execute();
+}
+
+const RDGraph* get_function_graph(RDAddress address) {
+    const Context* ctx = state::context;
+
+    if(auto idx = ctx->address_to_index(address); idx) {
+        auto it = std::lower_bound(
+            ctx->functions.begin(), ctx->functions.end(), *idx,
+            [](const Function& f, usize ep) { return f.entry < ep; });
+
+        if(it != ctx->functions.end() && it->entry == *idx)
+            return api::to_c(&it->graph);
+    }
+
+    return nullptr;
 }
 
 } // namespace redasm::api::internal

@@ -69,7 +69,7 @@ private:
     void process_listing_code(usize& idx);
     void process_listing_array(usize& idx, const typing::ParsedType& pt);
     usize process_listing_type(usize& idx, const typing::ParsedType& pt);
-    void create_function_blocks(usize idx);
+    void create_function_graph(MIndex idx);
 
     template<typename Function>
     void process_hex_dump(usize& idx, Function f) {
@@ -97,12 +97,12 @@ public:
     std::vector<std::string> availableprocessors;
     std::vector<std::pair<usize, std::string>> collectedtypes;
     std::vector<Segment> segments;
+    std::vector<Function> functions;
     Disassembler disassembler;
     RDAddress baseaddress{};
     const RDLoader* loader;
     const RDProcessor* processor;
     Listing listing;
-    std::vector<Function> functions;
     Database database;
     typing::Types types;
     std::unique_ptr<Memory> memory;
