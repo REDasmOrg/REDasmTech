@@ -7,6 +7,10 @@ class SurfaceGraph: public GraphView {
 
 public:
     explicit SurfaceGraph(QWidget* parent = nullptr);
+    ~SurfaceGraph() override;
+    void jump_to(RDAddress address);
+    void set_location(const RDSurfaceLocation& loc);
+    void invalidate();
 
 protected:
     GraphViewItem* create_item(RDGraphNode n, const RDGraph* g) override;
@@ -14,4 +18,8 @@ protected:
 
 Q_SIGNALS:
     void switch_view();
+
+private:
+    RDFunction* m_function{nullptr};
+    RDSurface* m_surface{nullptr};
 };

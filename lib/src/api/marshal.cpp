@@ -46,4 +46,19 @@ std::vector<RDRef> to_c(const std::vector<AddressDetail::Ref>& arg) {
     return refs;
 }
 
+RDFunctionBasicBlock to_c(const Function::BasicBlock* bb) {
+    assume(bb);
+
+    auto startaddress = state::context->index_to_address(bb->start);
+    assume(startaddress.has_value());
+
+    auto endaddress = state::context->index_to_address(bb->end);
+    assume(endaddress.has_value());
+
+    return {
+        *startaddress,
+        *endaddress,
+    };
+}
+
 } // namespace redasm::api

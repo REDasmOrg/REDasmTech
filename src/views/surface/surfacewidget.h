@@ -15,6 +15,7 @@ public:
     [[nodiscard]] inline float cell_width() const { return m_cellwidth; }
     [[nodiscard]] inline RDSurface* handle() const { return m_surface; }
     [[nodiscard]] RDSurfacePosition position() const;
+    [[nodiscard]] RDSurfaceLocation location() const;
     [[nodiscard]] int visible_columns() const;
     [[nodiscard]] int visible_rows() const;
     [[nodiscard]] qreal row_height() const;

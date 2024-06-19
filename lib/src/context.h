@@ -31,11 +31,11 @@ public:
     bool set_entry(usize idx, std::string name = EP_NAME);
     void memory_map(RDAddress base, usize size);
     RDAddress memory_copy(usize idx, RDOffset start, RDOffset end) const;
-    tl::optional<usize> address_to_index(RDAddress address) const;
-    tl::optional<RDAddress> index_to_address(usize index) const;
-    tl::optional<RDOffset> index_to_offset(usize index) const;
-    const Segment* index_to_segment(usize index) const;
-    const Function* index_to_function(usize index) const;
+    tl::optional<MIndex> address_to_index(RDAddress address) const;
+    tl::optional<RDAddress> index_to_address(MIndex index) const;
+    tl::optional<RDOffset> index_to_offset(MIndex index) const;
+    const Segment* index_to_segment(MIndex index) const;
+    const Function* index_to_function(MIndex index) const;
     bool is_address(RDAddress address) const;
 
     void map_segment(const std::string& name, usize idx, usize endidx,

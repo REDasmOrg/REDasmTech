@@ -73,6 +73,4 @@ void graph_clearlayout(RDGraph* self);
 
 bool graphlayout_layered(RDGraph* self, usize type);
 
-const RDGraph* get_function_graph(RDAddress address);
-
 } // namespace redasm::api::internal

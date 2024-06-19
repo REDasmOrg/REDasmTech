@@ -329,6 +329,12 @@ RDSurfacePosition SurfaceWidget::position() const {
     return pos;
 }
 
+RDSurfaceLocation SurfaceWidget::location() const {
+    RDSurfaceLocation loc;
+    rdsurface_getlocation(m_surface, &loc);
+    return loc;
+}
+
 bool SurfaceWidget::get_surface_index(usize* index) const {
     return rdsurface_getindex(m_surface, index);
 }
@@ -380,8 +386,7 @@ void SurfaceWidget::update_scrollbars() {
 }
 
 void SurfaceWidget::sync_location() {
-    RDSurfaceLocation loc;
-    rdsurface_getlocation(m_surface, &loc);
+    RDSurfaceLocation loc = this->location();
 
     if(loc.listingindex.valid)
         this->verticalScrollBar()->setValue(loc.listingindex.value);

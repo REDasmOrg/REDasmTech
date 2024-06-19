@@ -4,6 +4,7 @@
 #include <redasm/byte.h>
 #include <redasm/common.h>
 #include <redasm/engine.h>
+#include <redasm/function.h>
 #include <redasm/graph.h>
 #include <redasm/listing.h>
 #include <redasm/loader.h>
@@ -103,7 +104,6 @@ REDASM_EXPORT bool rd_setentry(RDAddress address, const char* name);
 REDASM_EXPORT bool rd_setname(RDAddress address, const char* name);
 REDASM_EXPORT const char* rd_getname(RDAddress address);
 REDASM_EXPORT usize rd_getreferences(RDAddress address, const RDRef** refs);
-REDASM_EXPORT const RDGraph* rd_getfunctiongraph(RDAddress address);
 REDASM_EXPORT bool rd_addresstosegment(RDAddress address, RDSegment* s);
 REDASM_EXPORT bool rd_offsettosegment(RDOffset offset, RDSegment* s);
 REDASM_EXPORT bool rd_addresstoffset(RDAddress address, RDOffset* offset);

@@ -1,8 +1,6 @@
 #include "graph.h"
-#include "../../context.h"
 #include "../../graph/layouts/layeredlayout.h"
 #include "../../graph/styledgraph.h"
-#include "../../state.h"
 #include "../marshal.h"
 #include <spdlog/spdlog.h>
 
@@ -262,21 +260,6 @@ bool graphlayout_layered(RDGraph* self, usize type) {
 
     LayeredLayout ll(api::from_c(self), type);
     return ll.execute();
-}
-
-const RDGraph* get_function_graph(RDAddress address) {
-    const Context* ctx = state::context;
-
-    if(auto idx = ctx->address_to_index(address); idx) {
-        auto it = std::lower_bound(
-            ctx->functions.begin(), ctx->functions.end(), *idx,
-            [](const Function& f, usize ep) { return f.entry < ep; });
-
-        if(it != ctx->functions.end() && it->entry == *idx)
-            return api::to_c(&it->graph);
-    }
-
-    return nullptr;
 }
 
 } // namespace redasm::api::internal

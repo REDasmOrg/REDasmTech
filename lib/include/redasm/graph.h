@@ -1,7 +1,7 @@
 #pragma once
 
-#include "common.h"
-#include "types.h"
+#include <redasm/common.h>
+#include <redasm/types.h>
 
 RD_HANDLE(RDGraph);
 

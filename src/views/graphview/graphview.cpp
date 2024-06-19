@@ -249,7 +249,7 @@ void GraphView::paintEvent(QPaintEvent*) {
         if(!vpr.intersects(item->rect())) // Ignore blocks that are not in view
             continue;
 
-        size_t itemstate = GraphViewItem::NONE;
+        usize itemstate = GraphViewItem::NONE;
         if(m_selecteditem == item)
             itemstate |= GraphViewItem::SELECTED;
 
@@ -279,7 +279,7 @@ void GraphView::computed() {
 }
 
 void GraphView::compute_layout() {
-    // RDGraphLayout_Layered(m_graph, LayeredLayoutType_Medium);
+    rdgraphlayout_layered(m_graph, LAYEREDLAYOUT_MEDIUM);
 }
 
 void GraphView::update_graph() {
@@ -288,14 +288,26 @@ void GraphView::update_graph() {
     m_items.clear();
     m_lines.clear();
     m_arrows.clear();
+
+    if(!m_graph) {
+        this->viewport()->update();
+        return;
+    }
+
     rdgraph_clearlayout(m_graph);
 
     RDGraphNode root = rdgraph_getroot(m_graph);
 
     const RDGraphNode* nodes = nullptr;
-    size_t nc = rdgraph_getnodes(m_graph, &nodes);
+    usize nc = rdgraph_getnodes(m_graph, &nodes);
 
-    for(size_t i = 0; i < nc; i++) {
+    // Consistency check
+    if(static_cast<usize>(m_items.size()) != nc) {
+        this->viewport()->update();
+        return;
+    }
+
+    for(usize i = 0; i < nc; i++) {
         RDGraphNode n = nodes[i];
         auto* item = this->create_item(n, m_graph);
         if(!item)
@@ -312,13 +324,13 @@ void GraphView::update_graph() {
     }
 
     const RDGraphEdge* edges = nullptr;
-    size_t ec = rdgraph_getedges(m_graph, &edges);
-    for(size_t i = 0; i < ec; i++)
+    usize ec = rdgraph_getedges(m_graph, &edges);
+    for(usize i = 0; i < ec; i++)
         this->compute_edge(edges[i]);
 
     this->compute_layout();
 
-    for(size_t i = 0; i < nc; i++) {
+    for(usize i = 0; i < nc; i++) {
         RDGraphNode n = nodes[i];
         m_items[n]->move(
             QPoint(rdgraph_getx(m_graph, n), rdgraph_gety(m_graph, n)));
@@ -326,7 +338,7 @@ void GraphView::update_graph() {
                 [&]() { this->viewport()->update(); });
     }
 
-    for(size_t i = 0; i < ec; i++) {
+    for(usize i = 0; i < ec; i++) {
         const RDGraphEdge& e = edges[i];
         this->precompute_line(e);
         this->precompute_arrow(e);
@@ -467,12 +479,12 @@ void GraphView::adjustSize(int vpw, int vph, const QPointF& cursorpos,
 
 void GraphView::precompute_arrow(const RDGraphEdge& e) {
     const RDGraphPoint* path = nullptr;
-    size_t c = rdgraph_getarrow(m_graph, &e, &path);
+    usize c = rdgraph_getarrow(m_graph, &e, &path);
     QPolygon arrowhead;
 
-    for(size_t i = 0; i < c; i++) {
+    for(usize i = 0; i < c; i++) {
         const RDGraphPoint& p = path[i];
-        arrowhead << QPoint(p.x, p.y);
+        arrowhead << QPoint{p.x, p.y};
     }
 
     m_arrows[e] = arrowhead;
@@ -480,14 +492,13 @@ void GraphView::precompute_arrow(const RDGraphEdge& e) {
 
 void GraphView::precompute_line(const RDGraphEdge& e) {
     const RDGraphPoint* path = nullptr;
-    size_t c = rdgraph_getroutes(m_graph, &e, &path);
-
+    usize c = rdgraph_getroutes(m_graph, &e, &path);
     QVector<QLine> lines;
 
-    for(size_t i = 0; c && (i < c - 1); i++) {
+    for(usize i = 0; c && (i < c - 1); i++) {
         const RDGraphPoint& p1 = path[i];
         const RDGraphPoint& p2 = path[i + 1];
-        lines.push_back(QLine(p1.x, p1.y, p2.x, p2.y));
+        lines.push_back(QLine{p1.x, p1.y, p2.x, p2.y});
     }
 
     m_lines[e] = lines;

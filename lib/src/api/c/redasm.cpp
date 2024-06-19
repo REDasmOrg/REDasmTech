@@ -130,10 +130,6 @@ usize rd_getreferences(RDAddress address, const RDRef** refs) {
     return r.size();
 }
 
-const RDGraph* rd_getfunctiongraph(RDAddress address) {
-    return redasm::api::internal::get_function_graph(address);
-}
-
 bool rd_addresstosegment(RDAddress address, RDSegment* s) {
     return redasm::api::internal::address_to_segment(address, s);
 }

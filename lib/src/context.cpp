@@ -163,7 +163,7 @@ void Context::memory_map(RDAddress base, usize size) {
     this->collectedtypes.clear();
 }
 
-tl::optional<usize> Context::address_to_index(RDAddress address) const {
+tl::optional<MIndex> Context::address_to_index(RDAddress address) const {
     if(address < this->baseaddress)
         return tl::nullopt;
 
@@ -174,13 +174,13 @@ tl::optional<usize> Context::address_to_index(RDAddress address) const {
     return idx;
 }
 
-tl::optional<RDAddress> Context::index_to_address(usize index) const {
+tl::optional<RDAddress> Context::index_to_address(MIndex index) const {
     if(index > this->memory->size())
         return tl::nullopt;
     return this->baseaddress + index;
 }
 
-tl::optional<RDOffset> Context::index_to_offset(usize index) const {
+tl::optional<RDOffset> Context::index_to_offset(MIndex index) const {
     for(const Segment& s : this->segments) {
         if(index >= s.index && index < s.endindex)
             return s.offset + index;
@@ -189,7 +189,7 @@ tl::optional<RDOffset> Context::index_to_offset(usize index) const {
     return tl::nullopt;
 }
 
-const Segment* Context::index_to_segment(usize index) const {
+const Segment* Context::index_to_segment(MIndex index) const {
     if(index >= state::context->memory->size())
         return {};
 
@@ -534,6 +534,10 @@ void Context::create_function_graph(MIndex idx) {
         done.insert(startidx);
 
         RDGraphNode n = f.try_add_block(startidx);
+
+        if(startidx == idx)
+            f.graph.set_root(n);
+
         MIndex curridx = startidx;
         Byte b = mem->at(curridx);
 
@@ -544,8 +548,9 @@ void Context::create_function_graph(MIndex idx) {
 
             // Delay slots can have both FLOW and JUMP
             if(b.has(BF_JUMP)) {
-                Function::BasicBlock& bb = f.get_basic_block(n);
-                bb.end = curridx;
+                Function::BasicBlock* bb = f.get_basic_block(n);
+                assume(bb);
+                bb->end = curridx;
 
                 const AddressDetail& d = db.get_detail(curridx);
                 for(usize jidx : d.jumps) {
@@ -561,8 +566,9 @@ void Context::create_function_graph(MIndex idx) {
 
             if(b.has(BF_FLOW)) {
                 const AddressDetail& d = db.get_detail(curridx);
-                Function::BasicBlock& bb = f.get_basic_block(n);
-                bb.end = curridx;
+                Function::BasicBlock* bb = f.get_basic_block(n);
+                assume(bb);
+                bb->end = curridx;
                 curridx = d.flow;
                 b = mem->at(curridx);
             }

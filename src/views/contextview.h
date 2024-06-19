@@ -11,6 +11,7 @@ public:
     ~ContextView() override;
     [[nodiscard]] SurfaceView* surface_view() const { return m_ui.surfaceview; }
     void tick(const RDEngineStatus* s);
+    void jump_to(RDAddress address);
 
 private:
     ui::ContextView m_ui;

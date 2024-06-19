@@ -1,6 +1,6 @@
 #pragma once
 
-#include <redasm/types.h>
+#include "types.h"
 #include <string>
 
 namespace redasm {
@@ -8,8 +8,8 @@ namespace redasm {
 struct Segment {
     std::string name;
     usize type;
-    usize index;
-    usize endindex;
+    MIndex index;
+    MIndex endindex;
     RDOffset offset;
     RDOffset endoffset;
 };

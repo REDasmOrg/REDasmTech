@@ -20,7 +20,11 @@ struct Function {
     explicit Function(MIndex ep);
     bool contains(MIndex idx) const;
     RDGraphNode try_add_block(MIndex start);
-    BasicBlock& get_basic_block(RDGraphNode n);
+    BasicBlock* get_basic_block(RDGraphNode n);
+
+    inline const BasicBlock* get_basic_block(RDGraphNode n) const {
+        return const_cast<Function*>(this)->get_basic_block(n);
+    }
 
     MIndex entry;
     StyledGraph graph;

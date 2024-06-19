@@ -27,13 +27,16 @@ RDGraphNode Function::try_add_block(MIndex start) {
     return this->graph.add_datanode(static_cast<uptr>(idx));
 }
 
-Function::BasicBlock& Function::get_basic_block(RDGraphNode n) {
+Function::BasicBlock* Function::get_basic_block(RDGraphNode n) {
     const RDGraphData* data = this->graph.data(n);
-    assume(data);
+    if(!data)
+        return nullptr;
 
     auto idx = static_cast<usize>(data->nu_data);
-    assume(idx < m_blocks.size());
-    return m_blocks[idx];
+    if(idx < m_blocks.size())
+        return &m_blocks[idx];
+
+    return nullptr;
 }
 
 } // namespace redasm

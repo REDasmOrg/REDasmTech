@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../database/database.h"
+#include "../disasm/function.h"
 #include "../memory/byte.h"
 #include <redasm/redasm.h>
 
@@ -13,6 +14,7 @@ class Emulator;
 class Context;
 class Surface;
 class StyledGraph;
+struct Function;
 struct Segment;
 
 namespace api {
@@ -25,6 +27,14 @@ inline const StyledGraph* from_c(const RDGraph* arg) {
 
 inline StyledGraph* from_c(RDGraph* arg) {
     return reinterpret_cast<StyledGraph*>(arg);
+}
+
+inline const Function* from_c(const RDFunction* arg) {
+    return reinterpret_cast<const Function*>(arg);
+}
+
+inline Function* from_c(RDFunction* arg) {
+    return reinterpret_cast<Function*>(arg);
 }
 
 inline Emulator* from_c(RDEmulator* arg) {
@@ -97,9 +107,18 @@ inline RDBuffer* to_c(AbstractBuffer* arg) {
     return reinterpret_cast<RDBuffer*>(arg);
 }
 
+inline RDFunction* to_c(Function* arg) {
+    return reinterpret_cast<RDFunction*>(arg);
+}
+
+inline const RDFunction* to_c(const Function* arg) {
+    return reinterpret_cast<const RDFunction*>(arg);
+}
+
 RDSegment to_c(const Segment& arg);
 RDRef to_c(const AddressDetail::Ref& arg);
 std::vector<RDRef> to_c(const std::vector<AddressDetail::Ref>& arg);
+RDFunctionBasicBlock to_c(const Function::BasicBlock* bb);
 
 } // namespace api
 

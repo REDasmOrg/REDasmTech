@@ -74,12 +74,14 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/internal/surface.cpp
         src/api/internal/renderer.cpp
         src/api/internal/graph.cpp
+        src/api/internal/function.cpp
 
     PRIVATE # C
         src/api/c/redasm.cpp
         src/api/c/byte.cpp
         src/api/c/theme.cpp
         src/api/c/typing.cpp
+        src/api/c/function.cpp
         src/api/c/listing.cpp
         src/api/c/analyzer.cpp
         src/api/c/surface.cpp

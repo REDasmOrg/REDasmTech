@@ -57,6 +57,7 @@ target_sources(${PROJECT_NAME}
         src/views/surface/surfacewidget.cpp
         src/views/surface/surfaceview.cpp
         src/views/surface/surfacepath.cpp
+        src/views/surface/surfacegraphitem.cpp
         src/views/surface/surfacegraph.cpp
         src/views/graphview/graphviewitem.cpp
         src/views/graphview/graphview.cpp
