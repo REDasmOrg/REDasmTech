@@ -2,7 +2,7 @@
 #include "surfacegraphitem.h"
 
 SurfaceGraph::SurfaceGraph(QWidget* parent): GraphView{parent} {
-    m_surface = rdsurface_new(SURFACE_DEFAULT);
+    m_surface = rdsurface_new(SURFACE_GRAPH);
 }
 
 SurfaceGraph::~SurfaceGraph() {
@@ -18,7 +18,12 @@ void SurfaceGraph::set_location(const RDSurfaceLocation& loc) {
     else
         m_function = rd_getfunction(loc.function.value);
 
-    m_graph = m_function ? rdfunction_getgraph(m_function) : nullptr;
+    if(m_function) {
+        m_graph = rdfunction_getgraph(m_function);
+    }
+    else
+        m_graph = nullptr;
+
     this->set_graph(m_graph);
     this->update_graph();
 }

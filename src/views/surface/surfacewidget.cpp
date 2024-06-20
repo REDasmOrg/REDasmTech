@@ -49,6 +49,7 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
                             return;
 
                         if(idx < this->get_listing_length()) {
+                            rdsurface_clearselection(m_surface);
                             rdsurface_seek(m_surface, idx + SCROLL_SPEED);
                             this->viewport()->update();
                         }
@@ -61,6 +62,7 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
                             return;
 
                         if(idx > 0) {
+                            rdsurface_clearselection(m_surface);
                             rdsurface_seek(m_surface, idx - SCROLL_SPEED);
                             this->viewport()->update();
                         }
@@ -68,6 +70,7 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
                     }
 
                     case QScrollBar::SliderMove: {
+                        rdsurface_clearselection(m_surface);
                         rdsurface_seek(
                             m_surface,
                             this->verticalScrollBar()->sliderPosition());
@@ -104,7 +107,7 @@ void SurfaceWidget::jump_to(RDAddress address) {
 }
 
 void SurfaceWidget::jump_to_ep() {
-    rdsurface_seektoep(m_surface);
+    rdsurface_jumptoep(m_surface);
     this->sync_location();
 }
 
@@ -251,8 +254,8 @@ void SurfaceWidget::paintEvent(QPaintEvent* e) {
         return;
     }
 
-    rdsurface_render(m_surface, this->verticalScrollBar()->value(),
-                     this->visible_rows());
+    rdsurface_seek(m_surface, this->verticalScrollBar()->value());
+    rdsurface_render(m_surface, this->visible_rows());
 
     m_document.clear();
     QTextCursor cursor(&m_document);

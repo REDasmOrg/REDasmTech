@@ -21,6 +21,9 @@ typedef intptr_t iptr;
 typedef usize RDAddress;
 typedef usize RDOffset;
 
+typedef usize MIndex;
+typedef usize LIndex;
+
 #define RD_HANDLE(name)                                                        \
     typedef struct name {                                                      \
         void* ptr;                                                             \

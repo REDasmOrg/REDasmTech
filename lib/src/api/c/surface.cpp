@@ -10,8 +10,8 @@ bool rdsurface_getaddressundercursor(const RDSurface* self,
     return redasm::api::internal::surface_getaddressundercursor(self, address);
 }
 
-void rdsurface_render(RDSurface* self, usize start, usize n) {
-    redasm::api::internal::surface_render(self, start, n);
+void rdsurface_render(RDSurface* self, usize n) {
+    redasm::api::internal::surface_render(self, n);
 }
 
 bool rdsurface_hasselection(const RDSurface* self) {
@@ -67,10 +67,14 @@ bool rdsurface_select(RDSurface* self, usize row, usize col) {
     return redasm::api::internal::surface_select(self, row, col);
 }
 
-void rdsurface_seek(RDSurface* self, usize index) {
+void rdsurface_clearselection(RDSurface* self) {
+    redasm::api::internal::surface_clearselection(self);
+}
+
+void rdsurface_seek(RDSurface* self, LIndex index) {
     redasm::api::internal::surface_seek(self, index);
 }
 
-void rdsurface_seektoep(RDSurface* self) {
-    redasm::api::internal::surface_seektoep(self);
+void rdsurface_jumptoep(RDSurface* self) {
+    redasm::api::internal::surface_jumptoep(self);
 }

@@ -12,6 +12,7 @@ typedef struct RDFunctionBasicBlock {
 } RDFunctionBasicBlock;
 
 REDASM_EXPORT RDFunction* rd_getfunction(RDAddress address);
+REDASM_EXPORT RDAddress rdfunction_getentry(const RDFunction* self);
 REDASM_EXPORT RDGraph* rdfunction_getgraph(RDFunction* self);
 REDASM_EXPORT bool rdfunction_contains(const RDFunction* self,
                                        RDAddress address);

@@ -9,13 +9,17 @@ RD_HANDLE(RDSurface);
 typedef enum RDSurfaceFlags {
     SURFACE_DEFAULT = 0u,
     SURFACE_NOADDRESS = 1u << 0,
-    SURFACE_NOREFS = 1u << 1,
-    SURFACE_NOCOMMENTS = 1u << 2,
-    SURFACE_NOCURSOR = 1u << 3,
-    SURFACE_NOCURSORLINE = 1u << 4,
-    SURFACE_NOSELECTION = 1u << 5,
-    SURFACE_NOHIGHLIGHT = 1u << 6,
+    SURFACE_NOSEGMENT = 1u << 1,
+    SURFACE_NOFUNCTION = 1u << 2,
+    SURFACE_NOREFS = 1u << 3,
+    SURFACE_NOCOMMENTS = 1u << 3,
+    SURFACE_NOCURSOR = 1u << 4,
+    SURFACE_NOCURSORLINE = 1u << 5,
+    SURFACE_NOSELECTION = 1u << 6,
+    SURFACE_NOHIGHLIGHT = 1u << 7,
 
+    SURFACE_GRAPH = SURFACE_NOADDRESS | SURFACE_NOSEGMENT | SURFACE_NOFUNCTION |
+                    SURFACE_NOCOMMENTS | SURFACE_NOREFS,
     SURFACE_TEXT = ~0u,
 } RDSurfaceFlags;
 
@@ -66,7 +70,7 @@ typedef struct RDSurfacePath {
 } RDSurfacePath;
 
 REDASM_EXPORT RDSurface* rdsurface_new(usize flags);
-REDASM_EXPORT void rdsurface_render(RDSurface* self, usize start, usize n);
+REDASM_EXPORT void rdsurface_render(RDSurface* self, usize n);
 REDASM_EXPORT bool rdsurface_hasselection(const RDSurface* self);
 REDASM_EXPORT usize rdsurface_getrowcount(const RDSurface* self);
 REDASM_EXPORT usize rdsurface_getpath(const RDSurface* self,
@@ -86,5 +90,6 @@ REDASM_EXPORT void rdsurface_setcolumns(RDSurface* self, usize columns);
 REDASM_EXPORT void rdsurface_setposition(RDSurface* self, usize row, usize col);
 REDASM_EXPORT bool rdsurface_selectword(RDSurface* self, usize row, usize col);
 REDASM_EXPORT bool rdsurface_select(RDSurface* self, usize row, usize col);
-REDASM_EXPORT void rdsurface_seek(RDSurface* self, usize index);
-REDASM_EXPORT void rdsurface_seektoep(RDSurface* self);
+REDASM_EXPORT void rdsurface_clearselection(RDSurface* self);
+REDASM_EXPORT void rdsurface_seek(RDSurface* self, LIndex index);
+REDASM_EXPORT void rdsurface_jumptoep(RDSurface* self);

@@ -426,10 +426,11 @@ std::string render_text(RDAddress address) {
     if(it == state::context->listing.end() || it->index != *idx)
         return {};
 
-    usize lidx = std::distance(state::context->listing.cbegin(), it);
+    LIndex lidx = std::distance(state::context->listing.cbegin(), it);
 
     Surface s{SURFACE_TEXT};
-    s.render(lidx, 1);
+    s.seek(lidx);
+    s.render(1);
 
     return std::string{s.get_text()};
 }

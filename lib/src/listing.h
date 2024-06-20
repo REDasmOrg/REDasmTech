@@ -24,11 +24,11 @@ struct ListingItem {
     ListingItemType type;
 
     union {
-        usize start_index;
-        usize index;
+        MIndex start_index;
+        MIndex index;
     };
 
-    usize end_index;
+    MIndex end_index;
     usize indent;
 
     tl::optional<typing::ParsedType> parsed_type_context;

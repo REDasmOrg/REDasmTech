@@ -13,8 +13,8 @@ SurfaceGraphItem::SurfaceGraphItem(RDSurface* surface,
                                    const RDFunctionBasicBlock& fbb,
                                    RDGraphNode n, RDFunction* f,
                                    QWidget* parent)
-    : GraphViewItem(n, rdfunction_getgraph(f), parent), m_basicblock(fbb),
-      m_surface(surface) {}
+    : GraphViewItem{n, rdfunction_getgraph(f), parent}, m_basicblock{fbb},
+      m_surface{surface} {}
 
 bool SurfaceGraphItem::contains(RDAddress address) const {
     return rdfunction_contains(m_function, address);
@@ -38,6 +38,7 @@ QSize SurfaceGraphItem::size() const {
 void SurfaceGraphItem::itemselection_changed(bool selected) {
     // m_surface->activateCursor(selected);
 }
+
 void SurfaceGraphItem::mousedoubleclick_event(QMouseEvent*) {
     Q_EMIT follow_requested();
 }

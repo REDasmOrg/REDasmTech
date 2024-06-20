@@ -7,7 +7,7 @@
 namespace redasm::api::internal {
 
 RDSurface* surface_new(usize flags);
-void surface_render(RDSurface* self, usize start, usize n);
+void surface_render(RDSurface* self, usize n);
 bool surface_hasselection(const RDSurface* self);
 usize surface_getrowcount(const RDSurface* self);
 usize surface_getrow(const RDSurface* self, usize idx,
@@ -23,7 +23,9 @@ void surface_setcolumns(RDSurface* self, usize columns);
 void surface_setposition(RDSurface* self, usize row, usize col);
 bool surface_selectword(RDSurface* self, usize row, usize col);
 bool surface_select(RDSurface* self, usize row, usize col);
-void surface_seek(RDSurface* self, usize index);
-void surface_seektoep(RDSurface* self);
+void surface_clearselection(RDSurface* self);
+void surface_seek(RDSurface* self, LIndex index);
+bool surface_jumpto(RDSurface* self, MIndex index);
+bool surface_jumptoep(RDSurface* self);
 
 } // namespace redasm::api::internal

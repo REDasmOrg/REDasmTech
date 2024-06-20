@@ -7,10 +7,10 @@
 
 namespace redasm {
 
-Listing::ConstIterator Listing::lower_bound(usize idx) const {
+Listing::ConstIterator Listing::lower_bound(MIndex idx) const {
     auto it = std::lower_bound(
         m_items.begin(), m_items.end(), idx,
-        [](const ListingItem& x, usize index) { return x.index < index; });
+        [](const ListingItem& x, MIndex index) { return x.index < index; });
 
     if(it != m_items.end() && it->index == idx)
         return it;
@@ -18,11 +18,11 @@ Listing::ConstIterator Listing::lower_bound(usize idx) const {
     return m_items.end();
 };
 
-Listing::ConstIterator Listing::upper_bound(usize idx,
+Listing::ConstIterator Listing::upper_bound(MIndex idx,
                                             ConstIterator begin) const {
     return std::upper_bound(
         std::move(begin), m_items.end(), idx,
-        [](usize index, const ListingItem& x) { return index < x.index; });
+        [](MIndex index, const ListingItem& x) { return index < x.index; });
 }
 
 void Listing::clear() {

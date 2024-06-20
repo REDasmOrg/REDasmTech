@@ -36,7 +36,7 @@ std::pair<bool, std::string> surface_checkpointer(const typing::ParsedType& pt,
 
 Surface::Surface(usize flags) {
     m_renderer = std::make_unique<Renderer>(flags);
-    this->seek_to_ep();
+    this->jump_to_ep();
 }
 
 tl::optional<usize> Surface::current_index() const {
@@ -75,8 +75,7 @@ const Function* Surface::current_function() const {
     return nullptr;
 }
 
-void Surface::render(usize s, usize n) {
-    this->start = s;
+void Surface::render(usize n) {
     m_renderer->clear();
 
     const Listing& listing = state::context->listing;
@@ -119,22 +118,26 @@ void Surface::render(usize s, usize n) {
     m_renderer->swap(this->rows);
 }
 
-void Surface::seek(usize index) {
+void Surface::seek(LIndex index) {
     this->start = index;
 
     if(this->start > state::context->listing.size())
         this->start = state::context->listing.size();
-
-    this->clear_selection();
 }
 
-void Surface::seek_to_ep() {
+bool Surface::jump_to(MIndex index) {
     Context* ctx = state::context;
-    auto it = ctx->listing.lower_bound(ctx->entrypoint);
+    auto it = ctx->listing.lower_bound(index);
 
-    if(it != ctx->listing.end())
+    if(it != ctx->listing.end()) {
         this->start = std::distance(ctx->listing.cbegin(), it);
+        return true;
+    }
+
+    return false;
 }
+
+bool Surface::jump_to_ep() { return this->jump_to(state::context->entrypoint); }
 
 const std::vector<RDSurfacePath>& Surface::get_path() const {
     const Listing& lst = state::context->listing;
@@ -437,6 +440,9 @@ void Surface::render_jump(const ListingItem& item) {
 }
 
 void Surface::render_segment(const ListingItem& item) {
+    if(m_renderer->has_flag(SURFACE_NOSEGMENT))
+        return;
+
     m_renderer->new_row(item);
 
     const RDProcessor* p = state::context->processor;
@@ -449,6 +455,9 @@ void Surface::render_segment(const ListingItem& item) {
 }
 
 void Surface::render_function(const ListingItem& item) {
+    if(m_renderer->has_flag(SURFACE_NOFUNCTION))
+        return;
+
     m_renderer->new_row(item);
 
     const RDProcessor* p = state::context->processor;
@@ -656,7 +665,6 @@ void Surface::render_array(const ListingItem& item) {
     if(pt.type->is_char()) {
         const auto& mem = state::context->memory;
         usize idx = item.index;
-        chars += "\"";
 
         for(usize i = 0; i < pt.n && idx < mem->size();
             i++, idx += pt.type->size) {
@@ -672,8 +680,6 @@ void Surface::render_array(const ListingItem& item) {
             else
                 chars += fmt::format("\\x{}", static_cast<int>(b->ch_v));
         }
-
-        chars += "\"";
     }
 
     if(item.field_index) {

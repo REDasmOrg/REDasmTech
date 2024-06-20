@@ -25,15 +25,17 @@ public:
     [[nodiscard]] RDSurfacePosition end_selection() const;
     [[nodiscard]] std::string_view get_selected_text() const;
     [[nodiscard]] std::string_view get_text() const;
+    [[nodiscard]] const std::vector<RDSurfacePath>& get_path() const;
     [[nodiscard]] bool has_selection() const;
-    void render(usize s, usize n);
+    void clear_selection();
+    void render(usize n);
     void set_columns(usize cols);
     void set_position(usize row, usize col);
     bool select_word(usize row, usize col);
     bool select(usize row, usize col);
-    void seek(usize index);
-    void seek_to_ep();
-    const std::vector<RDSurfacePath>& get_path() const;
+    void seek(LIndex index);
+    bool jump_to(MIndex index);
+    bool jump_to_ep();
 
 private:
     RDRendererParams create_render_params(const ListingItem& item) const;
@@ -50,10 +52,9 @@ private:
     void render_comments(const ListingItem& item);
     void render_refs(const ListingItem& item);
     void fit(usize& row, usize& col);
-    void clear_selection();
 
 public:
-    usize start{0};
+    LIndex start{0};
     SurfaceRows rows;
 
 private:

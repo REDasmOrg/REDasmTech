@@ -69,10 +69,9 @@ struct Renderer {
 
     inline Renderer& string(std::string_view arg, bool quoted = true) {
         if(quoted)
-            this->chunk("\"", THEME_STRING);
-        this->chunk(arg, THEME_STRING);
-        if(quoted)
-            this->chunk("\"", THEME_STRING);
+            this->quote(arg, "\"", THEME_STRING);
+        else
+            this->chunk(arg, THEME_STRING);
 
         return *this;
     }
@@ -89,8 +88,10 @@ struct Renderer {
         return this->chunk(" ").chunk(arg).chunk(" ");
     }
 
-    inline Renderer& quote(std::string_view arg, std::string_view q = "\"") {
-        return this->chunk(q).chunk(arg).chunk(q);
+    inline Renderer& quote(std::string_view arg, std::string_view q = "\"",
+                           RDThemeKind fg = THEME_DEFAULT,
+                           RDThemeKind bg = THEME_DEFAULT) {
+        return this->chunk(q, fg, bg).chunk(arg, fg, bg).chunk(q, fg, bg);
     }
 
     inline Renderer& ws(usize n = 1) {

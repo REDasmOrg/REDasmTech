@@ -9,9 +9,9 @@ namespace redasm::api::internal {
 
 RDSurface* surface_new(usize flags) { return api::to_c(new Surface(flags)); }
 
-void surface_render(RDSurface* self, usize start, usize n) {
-    spdlog::trace("surface_render({}, {}, {})", fmt::ptr(self), start, n);
-    api::from_c(self)->render(start, n);
+void surface_render(RDSurface* self, usize n) {
+    spdlog::trace("surface_render({}, {})", fmt::ptr(self), n);
+    api::from_c(self)->render(n);
 }
 
 bool surface_hasselection(const RDSurface* self) {
@@ -161,12 +161,22 @@ bool surface_select(RDSurface* self, usize row, usize col) {
     return api::from_c(self)->select(row, col);
 }
 
-void surface_seektoep(RDSurface* self) {
-    spdlog::trace("surface_seektoep({}, {}, {})", fmt::ptr(self));
-    return api::from_c(self)->seek_to_ep();
+void surface_clearselection(RDSurface* self) {
+    spdlog::trace("surface_clearselection({})", fmt::ptr(self));
+    return api::from_c(self)->clear_selection();
 }
 
-void surface_seek(RDSurface* self, usize index) {
+bool surface_jumpto(RDSurface* self, MIndex index) {
+    spdlog::trace("surface_jumpto({}, {})", fmt::ptr(self), index);
+    return api::from_c(self)->jump_to(index);
+}
+
+bool surface_jumptoep(RDSurface* self) {
+    spdlog::trace("surface_jumptoep({}, {}, {})", fmt::ptr(self));
+    return api::from_c(self)->jump_to_ep();
+}
+
+void surface_seek(RDSurface* self, LIndex index) {
     spdlog::trace("surface_seek({}, {})", fmt::ptr(self), index);
     api::from_c(self)->seek(index);
 }

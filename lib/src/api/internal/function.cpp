@@ -38,6 +38,13 @@ bool function_contains(const RDFunction* self, RDAddress address) {
     return false;
 }
 
+RDAddress function_getentry(const RDFunction* self) {
+    spdlog::trace("function_getentry({})", fmt::ptr(self));
+    auto address = state::context->index_to_address(api::from_c(self)->entry);
+    assume(address.has_value());
+    return *address;
+}
+
 bool function_getbasicblock(const RDFunction* self, RDGraphNode n,
                             RDFunctionBasicBlock* bb) {
     spdlog::trace("function_getbasicblock({}, {}, {})", fmt::ptr(self), n,
