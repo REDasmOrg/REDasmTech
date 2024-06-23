@@ -2,7 +2,7 @@
 #include "../../actions.h"
 #include "../../settings.h"
 #include "../../statusbar.h"
-#include "../../themeprovider.h"
+#include "../../utils.h"
 #include <QAbstractTextDocumentLayout>
 #include <QApplication>
 #include <QPaintEvent>
@@ -35,10 +35,6 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
     m_document.setDefaultFont(this->font());
     m_document.setUndoRedoEnabled(false);
     m_document.setDocumentMargin(0);
-
-    QFontMetricsF fm{this->font()};
-    m_cellwidth = fm.horizontalAdvance(" ");
-    m_cellheight = fm.height();
 
     connect(this->verticalScrollBar(), &QScrollBar::actionTriggered, this,
             [&](int action) {
@@ -257,36 +253,10 @@ void SurfaceWidget::paintEvent(QPaintEvent* e) {
     rdsurface_seek(m_surface, this->verticalScrollBar()->value());
     rdsurface_render(m_surface, this->visible_rows());
 
-    m_document.clear();
-    QTextCursor cursor(&m_document);
-    cursor.beginEditBlock();
-
     usize nrows = rdsurface_getrowcount(m_surface);
-
-    for(usize i = 0; i < nrows; i++) {
-        const RDSurfaceCell* row = nullptr;
-        usize ncols = rdsurface_getrow(m_surface, i, &row);
-
-        for(usize j = 0; j < ncols; j++) {
-            QTextCharFormat cf;
-            QColor fg = themeprovider::color(row[j].fg);
-            QColor bg = themeprovider::color(row[j].bg);
-
-            if(fg.isValid())
-                cf.setForeground(fg);
-            if(bg.isValid())
-                cf.setBackground(bg);
-
-            cursor.insertText(QChar{row[j].ch}, cf);
-        }
-
-        cursor.insertBlock();
-    }
-
-    cursor.endEditBlock();
+    utils::draw_surface(m_surface, &m_document, 0, nrows);
 
     QPainter painter{this->viewport()};
-    painter.fillRect(this->rect(), Qt::white);
     m_document.drawContents(&painter);
 
     Q_EMIT render_completed();
@@ -294,11 +264,11 @@ void SurfaceWidget::paintEvent(QPaintEvent* e) {
 }
 
 int SurfaceWidget::visible_columns() const {
-    return qFloor(this->viewport()->width() / m_cellwidth);
+    return qFloor(this->viewport()->width() / utils::cell_width());
 }
 
 int SurfaceWidget::visible_rows() const {
-    return qCeil(this->viewport()->height() / m_cellheight);
+    return qCeil(this->viewport()->height() / utils::cell_height());
 }
 
 qreal SurfaceWidget::row_height() const {
@@ -307,7 +277,7 @@ qreal SurfaceWidget::row_height() const {
     if(b.isValid())
         return b.layout()->boundingRect().height();
 
-    return m_cellheight;
+    return utils::cell_height();
 }
 
 RDSurfacePosition SurfaceWidget::get_surface_coords(QPointF pt) const {

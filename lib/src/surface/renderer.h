@@ -30,7 +30,7 @@ struct Renderer {
                              RDSurfacePosition endsel);
     void highlight_cursor(usize row, usize col);
     void fill_columns();
-    void set_current_item(usize lidx, const ListingItem& item);
+    void set_current_item(LIndex lidx, const ListingItem& item);
 
     Renderer& new_row(const ListingItem& item);
 
@@ -111,7 +111,8 @@ private:
 private:
     SurfaceRows m_rows;
     RDAddress m_curraddress{};
-    usize m_listingidx{}, m_currsegment{0};
+    LIndex m_listingidx{};
+    usize m_currsegment{0};
 };
 
 } // namespace redasm

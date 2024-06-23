@@ -20,6 +20,7 @@ void SurfaceGraph::set_location(const RDSurfaceLocation& loc) {
 
     if(m_function) {
         m_graph = rdfunction_getgraph(m_function);
+        rdsurface_renderfunction(m_surface, m_function);
     }
     else
         m_graph = nullptr;

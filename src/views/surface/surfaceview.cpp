@@ -1,5 +1,6 @@
 #include "surfaceview.h"
 #include "../../themeprovider.h"
+#include "../../utils.h"
 #include <QKeyEvent>
 #include <redasm/redasm.h>
 
@@ -16,7 +17,7 @@ SurfaceView::SurfaceView(QWidget* parent): QSplitter{parent} {
     this->addWidget(m_surface);
 
     // Shrink the left side
-    auto w = qCeil(m_surface->cell_width()) * 8;
+    auto w = qCeil(utils::cell_width()) * 8;
     this->setSizes({w, this->width() - w});
     this->setHandleWidth(4);
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../graphview/graphviewitem.h"
+#include <QTextDocument>
 #include <redasm/redasm.h>
 
 class SurfaceGraphItem: public GraphViewItem {
@@ -30,6 +31,7 @@ Q_SIGNALS:
 
 private:
     RDFunctionBasicBlock m_basicblock;
+    QTextDocument m_document;
     RDFunction* m_function;
     RDSurface* m_surface;
 };

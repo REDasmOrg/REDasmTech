@@ -75,47 +75,32 @@ const Function* Surface::current_function() const {
     return nullptr;
 }
 
-void Surface::render(usize n) {
+void Surface::render_function(const Function& f) {
     m_renderer->clear();
+
+    if(!this->jump_to(f.entry))
+        return;
 
     const Listing& listing = state::context->listing;
 
-    auto it = std::next(listing.begin(), this->start);
-    if(it == listing.end())
-        return;
+    for(const Function::BasicBlock& bb : f.blocks) {
+        auto startit = listing.lower_bound(bb.start);
+        assume(startit != listing.end());
+        auto endit = listing.upper_bound(bb.end, startit);
+        assume(endit != listing.end());
 
-    usize l = std::min<usize>(n, listing.size());
-
-    for(usize i = 0; it != listing.end() && i < l; it++, i++) {
-        m_renderer->set_current_item(this->start + i, *it);
-
-        switch(it->type) {
-            case ListingItemType::EMPTY: m_renderer->new_row(*it); break;
-            case ListingItemType::HEX_DUMP: this->render_hexdump(*it); break;
-            case ListingItemType::SEGMENT: this->render_segment(*it); break;
-            case ListingItemType::FUNCTION: this->render_function(*it); break;
-            case ListingItemType::JUMP: this->render_jump(*it); break;
-            case ListingItemType::INSTRUCTION: this->render_instr(*it); break;
-            case ListingItemType::TYPE: this->render_type(*it); break;
-            case ListingItemType::ARRAY: this->render_array(*it); break;
-            default: break;
-        }
-
-        if(state::context->memory->at(it->index).has(BF_REFSTO))
-            this->render_refs(*it);
+        LIndex startidx = std::distance(listing.begin(), startit);
+        LIndex n = std::distance(startit, endit);
+        this->render_range(startidx, n);
     }
 
-    m_renderer->fill_columns();
-    m_renderer->highlight_row(m_row);
+    this->render_finalize();
+}
 
-    if(!this->has_selection())
-        m_renderer->highlight_words(m_row, m_col);
-
-    auto startsel = this->start_selection(), endsel = this->end_selection();
-    m_renderer->highlight_selection(startsel, endsel);
-
-    m_renderer->highlight_cursor(m_row, m_col);
-    m_renderer->swap(this->rows);
+void Surface::render(usize n) {
+    m_renderer->clear();
+    this->render_range(this->start, n);
+    this->render_finalize();
 }
 
 void Surface::seek(LIndex index) {
@@ -392,6 +377,49 @@ void Surface::insert_path(Byte b, int fromrow, int torow) const {
         else {
             m_path.push_back(RDSurfacePath{fromrow, torow, THEME_GRAPHEDGE});
         }
+    }
+}
+
+void Surface::render_finalize() {
+    m_renderer->fill_columns();
+    m_renderer->highlight_row(m_row);
+
+    if(!this->has_selection())
+        m_renderer->highlight_words(m_row, m_col);
+
+    auto startsel = this->start_selection(), endsel = this->end_selection();
+    m_renderer->highlight_selection(startsel, endsel);
+
+    m_renderer->highlight_cursor(m_row, m_col);
+    m_renderer->swap(this->rows);
+}
+
+void Surface::render_range(LIndex start, usize n) {
+    const Listing& listing = state::context->listing;
+
+    auto it = std::next(listing.begin(), start);
+    if(it == listing.end())
+        return;
+
+    usize l = std::min<usize>(n, listing.size());
+
+    for(usize i = 0; it != listing.end() && i < l; it++, i++) {
+        m_renderer->set_current_item(this->start + i, *it);
+
+        switch(it->type) {
+            case ListingItemType::EMPTY: m_renderer->new_row(*it); break;
+            case ListingItemType::HEX_DUMP: this->render_hexdump(*it); break;
+            case ListingItemType::SEGMENT: this->render_segment(*it); break;
+            case ListingItemType::FUNCTION: this->render_function(*it); break;
+            case ListingItemType::JUMP: this->render_jump(*it); break;
+            case ListingItemType::INSTRUCTION: this->render_instr(*it); break;
+            case ListingItemType::TYPE: this->render_type(*it); break;
+            case ListingItemType::ARRAY: this->render_array(*it); break;
+            default: break;
+        }
+
+        if(state::context->memory->at(it->index).has(BF_REFSTO))
+            this->render_refs(*it);
     }
 }
 
@@ -733,6 +761,28 @@ void Surface::fit(usize& row, usize& col) {
         else if(col >= this->rows[row].cells.size())
             col = this->rows[row].cells.size() - 1;
     }
+}
+
+int Surface::index_of(MIndex index) const {
+    for(usize i = 0; i < this->rows.size(); i++) {
+        const SurfaceRow& sfrow = this->rows[i];
+        const ListingItem& item = this->get_listing_item(sfrow);
+        if(item.index == index)
+            return static_cast<int>(i);
+    }
+
+    return -1;
+}
+
+int Surface::last_index_of(MIndex index) const {
+    for(usize i = this->rows.size(); i-- > 0;) {
+        const SurfaceRow& sfrow = this->rows[i];
+        const ListingItem& item = this->get_listing_item(sfrow);
+        if(item.index == index)
+            return static_cast<int>(i);
+    }
+
+    return -1;
 }
 
 void Surface::clear_selection() {

@@ -77,7 +77,7 @@ void Listing::pop_type() {
     m_currtype.pop_back();
 }
 
-usize Listing::type(usize index, const typing::ParsedType& pt) {
+usize Listing::type(MIndex index, const typing::ParsedType& pt) {
     usize lidx = this->push_item(ListingItemType::TYPE, index);
     m_items[lidx].parsed_type = pt;
 
@@ -91,7 +91,7 @@ usize Listing::type(usize index, const typing::ParsedType& pt) {
     return lidx;
 }
 
-usize Listing::array(usize index, const typing::ParsedType& pt) {
+usize Listing::array(MIndex index, const typing::ParsedType& pt) {
     usize lidx = this->push_item(ListingItemType::ARRAY, index);
     m_items[lidx].parsed_type = pt;
 
@@ -104,34 +104,34 @@ usize Listing::array(usize index, const typing::ParsedType& pt) {
     return lidx;
 }
 
-usize Listing::instruction(usize index) {
+usize Listing::instruction(MIndex index) {
     return this->push_item(ListingItemType::INSTRUCTION, index);
 }
 
-usize Listing::jump(usize index) {
+usize Listing::jump(MIndex index) {
     return this->push_item(ListingItemType::JUMP, index);
 }
 
-usize Listing::function(usize index) {
+usize Listing::function(MIndex index) {
     usize lidx = this->push_item(ListingItemType::FUNCTION, index);
     m_symbols.push_back(lidx);
     this->check_flags(lidx, index);
     return lidx;
 }
 
-usize Listing::segment(usize index) {
+usize Listing::segment(MIndex index) {
     usize idx = this->push_item(ListingItemType::SEGMENT, index);
     m_symbols.push_back(idx);
     m_currentsegment = state::context->index_to_segment(index);
     return idx;
 }
 
-void Listing::hex_dump(usize startindex, usize endindex) {
+void Listing::hex_dump(MIndex startindex, MIndex endindex) {
     usize lidx = this->push_item(ListingItemType::HEX_DUMP, startindex);
     m_items[lidx].end_index = endindex;
 }
 
-usize Listing::push_item(ListingItemType type, usize index) {
+usize Listing::push_item(ListingItemType type, MIndex index) {
     usize idx = m_items.size();
 
     ListingItem li{};
@@ -145,7 +145,7 @@ usize Listing::push_item(ListingItemType type, usize index) {
     return idx;
 }
 
-void Listing::check_flags(usize listingidx, usize index) {
+void Listing::check_flags(LIndex listingidx, MIndex index) {
     Byte b = state::context->memory->at(index);
 
     if(b.has(BF_IMPORT))

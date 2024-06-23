@@ -8,8 +8,9 @@ namespace redasm {
 
 struct Function {
     struct BasicBlock {
-        explicit BasicBlock(MIndex s): start{s}, end{s} {}
+        BasicBlock(RDGraphNode n, MIndex s): node{n}, start{s}, end{s} {}
 
+        RDGraphNode node;
         MIndex start;
         MIndex end;
         std::unordered_map<RDGraphNode, usize> theme;
@@ -28,9 +29,7 @@ struct Function {
 
     MIndex entry;
     StyledGraph graph;
-
-private:
-    Blocks m_blocks;
+    Blocks blocks;
 };
 
 } // namespace redasm

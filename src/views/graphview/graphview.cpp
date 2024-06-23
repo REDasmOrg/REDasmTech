@@ -301,12 +301,6 @@ void GraphView::update_graph() {
     const RDGraphNode* nodes = nullptr;
     usize nc = rdgraph_getnodes(m_graph, &nodes);
 
-    // Consistency check
-    if(static_cast<usize>(m_items.size()) != nc) {
-        this->viewport()->update();
-        return;
-    }
-
     for(usize i = 0; i < nc; i++) {
         RDGraphNode n = nodes[i];
         auto* item = this->create_item(n, m_graph);

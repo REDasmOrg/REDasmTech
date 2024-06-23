@@ -14,6 +14,10 @@ void rdsurface_render(RDSurface* self, usize n) {
     redasm::api::internal::surface_render(self, n);
 }
 
+void rdsurface_renderfunction(RDSurface* self, const RDFunction* f) {
+    redasm::api::internal::surface_renderfunction(self, f);
+}
+
 bool rdsurface_hasselection(const RDSurface* self) {
     return redasm::api::internal::surface_hasselection(self);
 }
@@ -41,6 +45,14 @@ void rdsurface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
 
 bool rdsurface_getindex(const RDSurface* self, usize* index) {
     return redasm::api::internal::surface_getindex(self, index);
+}
+
+int rdsurface_indexof(const RDSurface* self, RDAddress address) {
+    return redasm::api::internal::surface_indexof(self, address);
+}
+
+int rdsurface_lastindexof(const RDSurface* self, RDAddress address) {
+    return redasm::api::internal::surface_lastindexof(self, address);
 }
 
 const char* rdsurface_gettext(const RDSurface* self) {

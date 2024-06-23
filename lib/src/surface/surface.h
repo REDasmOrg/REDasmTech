@@ -27,7 +27,10 @@ public:
     [[nodiscard]] std::string_view get_text() const;
     [[nodiscard]] const std::vector<RDSurfacePath>& get_path() const;
     [[nodiscard]] bool has_selection() const;
+    int index_of(MIndex index) const;
+    int last_index_of(MIndex index) const;
     void clear_selection();
+    void render_function(const Function& f);
     void render(usize n);
     void set_columns(usize cols);
     void set_position(usize row, usize col);
@@ -42,6 +45,8 @@ private:
     const ListingItem& get_listing_item(const SurfaceRow& sfrow) const;
     int calculate_index(usize idx) const;
     void insert_path(Byte b, int fromrow, int torow) const;
+    void render_finalize();
+    void render_range(LIndex start, usize n);
     void render_hexdump(const ListingItem& item);
     void render_jump(const ListingItem& item);
     void render_segment(const ListingItem& item);

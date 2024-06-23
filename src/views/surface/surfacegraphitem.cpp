@@ -1,4 +1,6 @@
 #include "surfacegraphitem.h"
+#include "../../settings.h"
+#include "../../utils.h"
 #include <QApplication>
 #include <QPainter>
 #include <QWidget>
@@ -14,7 +16,11 @@ SurfaceGraphItem::SurfaceGraphItem(RDSurface* surface,
                                    RDGraphNode n, RDFunction* f,
                                    QWidget* parent)
     : GraphViewItem{n, rdfunction_getgraph(f), parent}, m_basicblock{fbb},
-      m_surface{surface} {}
+      m_surface{surface} {
+    m_document.setDefaultFont(REDasmSettings::font());
+    m_document.setUndoRedoEnabled(false);
+    m_document.setDocumentMargin(0);
+}
 
 bool SurfaceGraphItem::contains(RDAddress address) const {
     return rdfunction_contains(m_function, address);
@@ -29,11 +35,7 @@ int SurfaceGraphItem::current_row() const {
     return GraphViewItem::current_row();
 }
 
-QSize SurfaceGraphItem::size() const {
-    return {}; // m_surface->rangeSize(
-               //  RDFunctionBasicBlock_GetStartAddress(m_basicblock),
-               //  RDFunctionBasicBlock_GetEndAddress(m_basicblock));
-}
+QSize SurfaceGraphItem::size() const { return m_document.size().toSize(); }
 
 void SurfaceGraphItem::itemselection_changed(bool selected) {
     // m_surface->activateCursor(selected);
@@ -67,8 +69,8 @@ void SurfaceGraphItem::mousemove_event(QMouseEvent* e) {
 
 void SurfaceGraphItem::localpos_to_surface(const QPointF& pt, usize* row,
                                            usize* col) const {
-    // *row = this->start_row() + (pt.y() / m_surface->cellHeight());
-    // *col = (pt.x() / m_surface->cellWidth());
+    *row = this->start_row() + (pt.y() / utils::cell_height());
+    *col = (pt.x() / utils::cell_width());
 }
 
 int SurfaceGraphItem::start_row() const {
@@ -79,6 +81,23 @@ int SurfaceGraphItem::start_row() const {
 }
 
 void SurfaceGraphItem::render(QPainter* painter, usize state) {
+    if(m_surface) {
+        // if(m_basicblock.start == 0x00401000) {
+        //     qDebug("%08X, %08X >>>>>>>>>>>>>>>",
+        //            static_cast<unsigned int>(m_basicblock.start),
+        //            static_cast<unsigned int>(m_basicblock.end));
+        // }
+
+        int startidx = rdsurface_indexof(m_surface, m_basicblock.start);
+        int endidx = rdsurface_lastindexof(m_surface, m_basicblock.end);
+
+        if(startidx != -1 && endidx != -1)
+            utils::draw_surface(m_surface, &m_document, startidx,
+                                endidx - startidx);
+    }
+    else
+        m_document.clear();
+
     QRect r(QPoint(0, 0), this->size());
     r.adjust(BLOCK_MARGINS);
 
@@ -99,14 +118,8 @@ void SurfaceGraphItem::render(QPainter* painter, usize state) {
                           shadow);
 
     painter->fillRect(r, qApp->palette().color(QPalette::Base));
-
-    if(m_surface) {
-        painter->setClipRect(r);
-        // m_surface->renderRange(
-        // painter, RDFunctionBasicBlock_GetStartAddress(m_basicblock),
-        // RDFunctionBasicBlock_GetEndAddress(m_basicblock));
-    }
-
+    painter->setClipRect(r);
+    m_document.drawContents(painter);
     painter->setClipping(false);
 
     if(state & SurfaceGraphItem::SELECTED)

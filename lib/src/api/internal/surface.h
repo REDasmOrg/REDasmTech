@@ -8,6 +8,7 @@ namespace redasm::api::internal {
 
 RDSurface* surface_new(usize flags);
 void surface_render(RDSurface* self, usize n);
+void surface_renderfunction(RDSurface* self, const RDFunction* f);
 bool surface_hasselection(const RDSurface* self);
 usize surface_getrowcount(const RDSurface* self);
 usize surface_getrow(const RDSurface* self, usize idx,
@@ -15,6 +16,8 @@ usize surface_getrow(const RDSurface* self, usize idx,
 void surface_getposition(const RDSurface* self, RDSurfacePosition* pos);
 void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc);
 bool surface_getindex(const RDSurface* self, usize* index);
+int surface_indexof(const RDSurface* self, RDAddress address);
+int surface_lastindexof(const RDSurface* self, RDAddress address);
 usize surface_getpath(const RDSurface* self, const RDSurfacePath** path);
 std::string_view surface_gettext(const RDSurface* self);
 std::string_view surface_getselectedtext(const RDSurface* self);

@@ -542,8 +542,9 @@ void Context::create_function_graph(MIndex idx) {
         Byte b = mem->at(curridx);
 
         while(curridx < mem->size()) {
-            // Don't overlap functions
-            if((startidx != curridx) && b.has(BF_FUNCTION))
+            // Don't overlap functions & blocks
+            if((startidx != curridx) &&
+               (b.has(BF_FUNCTION) || b.has(BF_JUMPDST)))
                 break;
 
             // Delay slots can have both FLOW and JUMP

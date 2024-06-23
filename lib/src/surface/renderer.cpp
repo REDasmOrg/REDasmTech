@@ -115,7 +115,7 @@ void Renderer::fill_columns() {
     }
 }
 
-void Renderer::set_current_item(usize lidx, const ListingItem& item) {
+void Renderer::set_current_item(LIndex lidx, const ListingItem& item) {
     auto addr = state::context->index_to_address(item.index);
     assume(addr);
     m_curraddress = *addr;
@@ -208,7 +208,7 @@ void Renderer::check_current_segment(const ListingItem& item) {
 }
 
 std::string Renderer::word_at(usize row, usize col) const {
-    if(row > m_rows.size())
+    if(row >= m_rows.size())
         return {};
 
     const SurfaceRow& sfrow = m_rows[row];

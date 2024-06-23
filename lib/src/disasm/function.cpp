@@ -1,5 +1,4 @@
 #include "function.h"
-#include "../error.h"
 #include <algorithm>
 
 namespace redasm {
@@ -8,33 +7,28 @@ Function::Function(MIndex ep): entry{ep} {}
 
 bool Function::contains(MIndex idx) const {
     return std::any_of(
-        m_blocks.begin(), m_blocks.end(),
+        this->blocks.begin(), this->blocks.end(),
         [idx](const BasicBlock& x) { return idx >= x.start && idx <= x.end; });
 }
 
 RDGraphNode Function::try_add_block(MIndex start) {
-    for(RDGraphNode n : this->graph.nodes()) {
-        const RDGraphData* data = this->graph.data(n);
-        assume(data);
-        assume(data->nu_data < m_blocks.size());
-
-        if(m_blocks[data->nu_data].start == start)
-            return n;
+    for(const BasicBlock& bb : this->blocks) {
+        if(bb.start == start)
+            return bb.node;
     }
 
-    usize idx = m_blocks.size();
-    m_blocks.emplace_back(start);
-    return this->graph.add_datanode(static_cast<uptr>(idx));
+    auto it = std::lower_bound(
+        this->blocks.begin(), this->blocks.end(), start,
+        [](const BasicBlock& a, MIndex b) { return a.start < b; });
+
+    return this->blocks.emplace(it, this->graph.add_node(), start)->node;
 }
 
 Function::BasicBlock* Function::get_basic_block(RDGraphNode n) {
-    const RDGraphData* data = this->graph.data(n);
-    if(!data)
-        return nullptr;
-
-    auto idx = static_cast<usize>(data->nu_data);
-    if(idx < m_blocks.size())
-        return &m_blocks[idx];
+    for(BasicBlock& bb : this->blocks) {
+        if(bb.node == n)
+            return &bb;
+    }
 
     return nullptr;
 }

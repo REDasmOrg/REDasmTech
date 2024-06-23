@@ -14,6 +14,13 @@ void surface_render(RDSurface* self, usize n) {
     api::from_c(self)->render(n);
 }
 
+void surface_renderfunction(RDSurface* self, const RDFunction* f) {
+    spdlog::trace("surface_renderfunction({}, {})", fmt::ptr(self),
+                  fmt::ptr(f));
+    if(f)
+        api::from_c(self)->render_function(*api::from_c(f));
+}
+
 bool surface_hasselection(const RDSurface* self) {
     spdlog::trace("surface_hasselection({})", fmt::ptr(self));
     return api::from_c(self)->has_selection();
@@ -53,6 +60,24 @@ bool surface_getindex(const RDSurface* self, usize* index) {
     if(*index)
         *index = *idx;
     return idx.has_value();
+}
+
+int surface_indexof(const RDSurface* self, RDAddress address) {
+    spdlog::trace("surface_indexof({}, {:x})", fmt::ptr(self), address);
+
+    if(auto idx = state::context->address_to_index(address); idx)
+        return api::from_c(self)->index_of(*idx);
+
+    return -1;
+}
+
+int surface_lastindexof(const RDSurface* self, RDAddress address) {
+    spdlog::trace("surface_lastindexof({}, {:x})", fmt::ptr(self), address);
+
+    if(auto idx = state::context->address_to_index(address); idx)
+        return api::from_c(self)->last_index_of(*idx);
+
+    return -1;
 }
 
 usize surface_getpath(const RDSurface* self, const RDSurfacePath** path) {

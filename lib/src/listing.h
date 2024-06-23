@@ -62,13 +62,13 @@ public:
     inline auto& back() { return m_items.back(); }
     inline const auto& front() const { return m_items.front(); }
     inline const auto& back() const { return m_items.back(); }
-    inline ValueType& operator[](usize idx) { return m_items.at(idx); }
+    inline ValueType& operator[](LIndex idx) { return m_items.at(idx); }
 
-    inline const ValueType& operator[](usize idx) const {
+    inline const ValueType& operator[](LIndex idx) const {
         return m_items.at(idx);
     }
 
-    inline ConstIterator upper_bound(usize idx) const {
+    inline ConstIterator upper_bound(MIndex idx) const {
         return this->upper_bound(idx, m_items.begin());
     }
 
@@ -76,15 +76,15 @@ public:
     inline const IndexList& imports() const { return m_imports; }
     inline const IndexList& exports() const { return m_exports; }
 
-    ConstIterator lower_bound(usize idx) const;
-    ConstIterator upper_bound(usize idx, ConstIterator begin) const;
-    void hex_dump(usize startindex, usize endindex);
-    usize type(usize index, const typing::ParsedType& pt);
-    usize array(usize index, const typing::ParsedType& pt);
-    usize instruction(usize index);
-    usize jump(usize index);
-    usize function(usize index);
-    usize segment(usize index);
+    ConstIterator lower_bound(MIndex idx) const;
+    ConstIterator upper_bound(MIndex idx, ConstIterator begin) const;
+    void hex_dump(MIndex startindex, MIndex endindex);
+    usize type(MIndex index, const typing::ParsedType& pt);
+    usize array(MIndex index, const typing::ParsedType& pt);
+    usize instruction(MIndex index);
+    usize jump(MIndex index);
+    usize function(MIndex index);
+    usize segment(MIndex index);
 
 public: // State management functions
     tl::optional<usize> field_index() const;
@@ -99,8 +99,8 @@ public: // State management functions
     void pop_type();
 
 private:
-    usize push_item(ListingItemType type, usize index);
-    void check_flags(usize listingidx, usize index);
+    usize push_item(ListingItemType type, MIndex index);
+    void check_flags(LIndex listingidx, MIndex index);
 
 private:
     std::deque<usize> m_fieldindex;

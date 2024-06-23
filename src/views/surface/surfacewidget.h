@@ -11,8 +11,6 @@ class SurfaceWidget: public QAbstractScrollArea {
 public:
     explicit SurfaceWidget(QWidget* parent = nullptr);
     ~SurfaceWidget() override;
-    [[nodiscard]] inline float cell_height() const { return m_cellheight; }
-    [[nodiscard]] inline float cell_width() const { return m_cellwidth; }
     [[nodiscard]] inline RDSurface* handle() const { return m_surface; }
     [[nodiscard]] RDSurfacePosition position() const;
     [[nodiscard]] RDSurfaceLocation location() const;
@@ -49,6 +47,5 @@ Q_SIGNALS:
 private:
     RDSurface* m_surface{nullptr};
     QTextDocument m_document;
-    float m_cellwidth, m_cellheight;
     QMenu* m_menu;
 };

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <redasm/common.h>
+#include <redasm/function.h>
 #include <redasm/theme.h>
 #include <redasm/types.h>
 
@@ -71,6 +72,8 @@ typedef struct RDSurfacePath {
 
 REDASM_EXPORT RDSurface* rdsurface_new(usize flags);
 REDASM_EXPORT void rdsurface_render(RDSurface* self, usize n);
+REDASM_EXPORT void rdsurface_renderfunction(RDSurface* self,
+                                            const RDFunction* f);
 REDASM_EXPORT bool rdsurface_hasselection(const RDSurface* self);
 REDASM_EXPORT usize rdsurface_getrowcount(const RDSurface* self);
 REDASM_EXPORT usize rdsurface_getpath(const RDSurface* self,
@@ -82,6 +85,9 @@ REDASM_EXPORT void rdsurface_getposition(const RDSurface* self,
 REDASM_EXPORT void rdsurface_getlocation(const RDSurface* self,
                                          RDSurfaceLocation* loc);
 REDASM_EXPORT bool rdsurface_getindex(const RDSurface* self, usize* index);
+REDASM_EXPORT int rdsurface_indexof(const RDSurface* self, RDAddress address);
+REDASM_EXPORT int rdsurface_lastindexof(const RDSurface* self,
+                                        RDAddress address);
 REDASM_EXPORT const char* rdsurface_gettext(const RDSurface* self);
 REDASM_EXPORT const char* rdsurface_getselectedtext(const RDSurface* self);
 REDASM_EXPORT bool rdsurface_getaddressundercursor(const RDSurface* self,
