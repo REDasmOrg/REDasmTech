@@ -38,6 +38,7 @@ void StyledGraph::set_areawidth(int w) { m_areawidth = w; }
 void StyledGraph::set_areaheight(int h) { m_areaheight = h; }
 void StyledGraph::set_x(RDGraphNode n, int px) { m_nodeattributes[n].x = px; }
 void StyledGraph::set_y(RDGraphNode n, int py) { m_nodeattributes[n].y = py; }
+
 void StyledGraph::set_width(RDGraphNode n, int w) {
     m_nodeattributes[n].width = w;
 }

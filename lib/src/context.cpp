@@ -547,26 +547,35 @@ void Context::create_function_graph(MIndex idx) {
                (b.has(BF_FUNCTION) || b.has(BF_JUMPDST)))
                 break;
 
-            // Delay slots can have both FLOW and JUMP
+            // ?Delay slots? can have both FLOW and JUMP
             if(b.has(BF_JUMP)) {
                 Function::BasicBlock* bb = f.get_basic_block(n);
                 assume(bb);
                 bb->end = curridx;
 
                 const AddressDetail& d = db.get_detail(curridx);
+
                 for(usize jidx : d.jumps) {
                     seg = this->index_to_segment(jidx);
 
                     if(seg && seg->type & SEGMENTTYPE_HASCODE) {
                         pending.push_back(jidx);
-                        RDGraphNode jn = f.try_add_block(jidx);
-                        f.graph.edge(n, jn);
+                        RDGraphNode jtruen = f.try_add_block(jidx);
+                        f.graph.add_edge(n, jtruen);
                     }
                 }
             }
 
             if(b.has(BF_FLOW)) {
                 const AddressDetail& d = db.get_detail(curridx);
+
+                if(b.has(BF_JUMP)) {
+                    pending.push_back(d.flow);
+                    RDGraphNode jfalsen = f.try_add_block(d.flow);
+                    f.graph.add_edge(n, jfalsen);
+                    break;
+                }
+
                 Function::BasicBlock* bb = f.get_basic_block(n);
                 assume(bb);
                 bb->end = curridx;

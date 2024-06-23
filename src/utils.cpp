@@ -42,9 +42,9 @@ void draw_surface(RDSurface* s, QTextDocument* doc, usize start, usize n) {
     QTextCursor cursor(doc);
     cursor.beginEditBlock();
 
-    for(usize i = start; i < n; i++) {
+    for(usize i = 0; i < n; i++) {
         const RDSurfaceCell* row = nullptr;
-        usize ncols = rdsurface_getrow(s, i, &row);
+        usize ncols = rdsurface_getrow(s, start++, &row);
 
         for(usize j = 0; j < ncols; j++) {
             QTextCharFormat cf;

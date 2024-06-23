@@ -401,10 +401,8 @@ void Surface::render_range(LIndex start, usize n) {
     if(it == listing.end())
         return;
 
-    usize l = std::min<usize>(n, listing.size());
-
-    for(usize i = 0; it != listing.end() && i < l; it++, i++) {
-        m_renderer->set_current_item(this->start + i, *it);
+    for(usize i = 0; it != listing.end() && i < n; it++, i++) {
+        m_renderer->set_current_item(start + i, *it);
 
         switch(it->type) {
             case ListingItemType::EMPTY: m_renderer->new_row(*it); break;

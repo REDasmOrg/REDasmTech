@@ -251,7 +251,7 @@ void graph_setheight(RDGraph* self, RDGraphNode n, int h) {
 }
 
 void graph_clearlayout(RDGraph* self) {
-    spdlog::trace("graph_clearlayout({})");
+    spdlog::trace("graph_clearlayout({})", fmt::ptr(self));
     api::from_c(self)->clear_layout();
 }
 

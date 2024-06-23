@@ -48,11 +48,11 @@ std::string Graph::generate_dot() const {
 
     for(RDGraphNode n : m_nodes) {
         const RDGraphEdge* edges = nullptr;
-        usize oc = this->outgoing(n, &edges);
+        usize c = this->outgoing(n, &edges);
 
-        for(usize i = 0; i < oc; i++) {
+        for(usize i = 0; i < c; i++) {
             s += "\t\"" + this->node_label(edges[i].src) + "\"";
-            s += " -> \"" + this->node_label(edges[i].src) + "\";\n";
+            s += " -> \"" + this->node_label(edges[i].dst) + "\";\n";
         }
     }
 
@@ -64,7 +64,7 @@ u32 Graph::hash() const { return hash::murmur2(this->generate_dot()); }
 
 const RDGraphEdge* Graph::edge(RDGraphNode src, RDGraphNode dst) const {
     for(const RDGraphEdge& e : m_edges) {
-        if((e.src == src) && (e.src == dst))
+        if((e.src == src) && (e.dst == dst))
             return &e;
     }
 
@@ -75,10 +75,8 @@ usize Graph::outgoing(RDGraphNode n, const RDGraphEdge** edges) const {
     m_outgoings.clear();
 
     for(const RDGraphEdge& e : m_edges) {
-        if(e.src != n)
-            continue;
-
-        m_outgoings.push_back(e);
+        if(e.src == n)
+            m_outgoings.push_back(e);
     }
 
     if(edges)
@@ -90,10 +88,8 @@ usize Graph::incoming(RDGraphNode n, const RDGraphEdge** edges) const {
     m_incomings.clear();
 
     for(const RDGraphEdge& e : m_edges) {
-        if(e.src != n)
-            continue;
-
-        m_incomings.push_back(e);
+        if(e.dst == n)
+            m_incomings.push_back(e);
     }
 
     if(edges)

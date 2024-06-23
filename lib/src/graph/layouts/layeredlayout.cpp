@@ -52,9 +52,9 @@ bool LayeredLayout::execute() {
 
 void LayeredLayout::create_blocks() {
     const RDGraphNode* nodes = nullptr;
-    size_t c = m_graph->nodes(&nodes);
+    usize c = m_graph->nodes(&nodes);
 
-    for(size_t i = 0; i < c; i++) {
+    for(usize i = 0; i < c; i++) {
         RDGraphNode n = nodes[i];
         m_graph->set_height(n,
                             m_graph->height(n) +
@@ -70,9 +70,9 @@ void LayeredLayout::create_blocks() {
         const RDGraphEdge* edges = nullptr;
         c = m_graph->outgoing(item.first, &edges);
 
-        for(size_t i = 0; i < c; i++) {
+        for(usize i = 0; i < c; i++) {
             const RDGraphEdge& e = edges[i];
-            m_blocks[e.src].incoming.push_back(block.node);
+            m_blocks[e.dst].incoming.push_back(block.node);
         }
     }
 }
@@ -96,32 +96,32 @@ void LayeredLayout::make_acyclic() {
             m_blockorder.push_back(block.node);
 
             const RDGraphEdge* edges = nullptr;
-            size_t c = m_graph->outgoing(block.node, &edges);
+            usize c = m_graph->outgoing(block.node, &edges);
 
-            for(size_t i = 0; i < c; i++) {
+            for(usize i = 0; i < c; i++) {
                 const RDGraphEdge& e = edges[i];
-                if(visited.count(e.src))
+                if(visited.count(e.dst))
                     continue;
 
                 // If node has no more unseen incoming edges, add it to the
                 // graph layout now
-                if(m_blocks[e.src].incoming.size() == 1) {
-                    LayeredLayout::remove_from_deque(
-                        m_blocks[e.src].incoming, block.node);
-                    block.newoutgoing.push_back(e.src);
-                    queue.push(m_blocks[e.src].node);
-                    visited.insert(e.src);
+                if(m_blocks[e.dst].incoming.size() == 1) {
+                    LayeredLayout::remove_from_deque(m_blocks[e.dst].incoming,
+                                                     block.node);
+                    block.newoutgoing.push_back(e.dst);
+                    queue.push(m_blocks[e.dst].node);
+                    visited.insert(e.dst);
                     changed = true;
                 }
                 else
-                    LayeredLayout::remove_from_deque(
-                        m_blocks[e.src].incoming, block.node);
+                    LayeredLayout::remove_from_deque(m_blocks[e.dst].incoming,
+                                                     block.node);
             }
         }
 
         // No more nodes satisfy constraints, pick a node to continue
         // constructing the graph
-        size_t best = 0, bestparent, bestedges;
+        usize best = 0, bestparent, bestedges;
 
         for(auto& item : m_blocks) {
             LLBlock& block = item.second;
@@ -129,19 +129,19 @@ void LayeredLayout::make_acyclic() {
                 continue;
 
             const RDGraphEdge* edges = nullptr;
-            size_t c = m_graph->outgoing(block.node, &edges);
+            usize c = m_graph->outgoing(block.node, &edges);
 
-            for(size_t i = 0; i < c; i++) {
+            for(usize i = 0; i < c; i++) {
                 const RDGraphEdge& e = edges[i];
-                if(visited.count(e.src))
+                if(visited.count(e.dst))
                     continue;
 
-                if(!best || (m_blocks[e.src].incoming.size() < bestedges) ||
-                   ((m_blocks[e.src].incoming.size() == bestedges) &&
-                    (e.src < best))) {
-                    best = e.src;
+                if(!best || (m_blocks[e.dst].incoming.size() < bestedges) ||
+                   ((m_blocks[e.dst].incoming.size() == bestedges) &&
+                    (e.dst < best))) {
+                    best = e.dst;
                     bestedges =
-                        static_cast<int>(m_blocks[e.src].incoming.size());
+                        static_cast<int>(m_blocks[e.dst].incoming.size());
                     bestparent = block.node;
                 }
             }
@@ -188,11 +188,11 @@ void LayeredLayout::perform_edge_routing() {
         LLBlock& start = block;
 
         const RDGraphEdge* edges = nullptr;
-        size_t c = m_graph->outgoing(block.node, &edges);
+        usize c = m_graph->outgoing(block.node, &edges);
 
-        for(size_t i = 0; i < c; i++) {
+        for(usize i = 0; i < c; i++) {
             const RDGraphEdge& e = edges[i];
-            LLBlock& end = m_blocks[e.src];
+            LLBlock& end = m_blocks[e.dst];
             start.edges.push_back(this->route_edge(m_horizedges, m_vertedges,
                                                    m_edgevalid, start, end));
         }

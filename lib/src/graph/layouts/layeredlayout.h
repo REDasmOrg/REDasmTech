@@ -85,9 +85,9 @@ private:
     }
 
     template<typename T>
-    static void init_deque(std::deque<T>& v, size_t size, T value) {
+    static void init_deque(std::deque<T>& v, usize size, T value) {
         v.resize(size);
-        for(size_t i = 0; i < size; i++)
+        for(usize i = 0; i < size; i++)
             v[i] = value;
     }
 

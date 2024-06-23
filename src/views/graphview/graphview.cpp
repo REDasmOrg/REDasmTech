@@ -226,7 +226,7 @@ void GraphView::paintEvent(QPaintEvent*) {
         QPen pen(c);
 
         if(m_selecteditem && ((it->first.src == m_selecteditem->node()) ||
-                              (it->first.src == m_selecteditem->node())))
+                              (it->first.dst == m_selecteditem->node())))
             pen.setWidthF(2.0 / m_scalefactor);
         else {
             pen.setWidthF(1.0 / m_scalefactor);

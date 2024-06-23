@@ -40,7 +40,7 @@ struct AddressDetail {
 
     union {
         usize string_bytes;
-        usize flow;
+        MIndex flow;
     };
 };
 

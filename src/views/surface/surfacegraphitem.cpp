@@ -82,18 +82,20 @@ int SurfaceGraphItem::start_row() const {
 
 void SurfaceGraphItem::render(QPainter* painter, usize state) {
     if(m_surface) {
-        // if(m_basicblock.start == 0x00401000) {
-        //     qDebug("%08X, %08X >>>>>>>>>>>>>>>",
-        //            static_cast<unsigned int>(m_basicblock.start),
-        //            static_cast<unsigned int>(m_basicblock.end));
-        // }
+        if(m_basicblock.start != 0x00401000) {
+            // qDebug("%08X, %08X >>>>>>>>>>>>>>>",
+            // static_cast<unsigned int>(m_basicblock.start),
+            // static_cast<unsigned int>(m_basicblock.end));
+        }
 
         int startidx = rdsurface_indexof(m_surface, m_basicblock.start);
         int endidx = rdsurface_lastindexof(m_surface, m_basicblock.end);
 
-        if(startidx != -1 && endidx != -1)
-            utils::draw_surface(m_surface, &m_document, startidx,
-                                endidx - startidx);
+        if(startidx == -1 || endidx == -1)
+            return;
+
+        utils::draw_surface(m_surface, &m_document, startidx,
+                            endidx - startidx + 1);
     }
     else
         m_document.clear();
