@@ -13,6 +13,11 @@ RDGraph* rdfunction_getgraph(RDFunction* self) {
     return redasm::api::internal::function_getgraph(self);
 }
 
+RDThemeKind rdfunction_gettheme(const RDFunction* self,
+                                const RDGraphEdge* edge) {
+    return redasm::api::internal::function_gettheme(self, edge);
+}
+
 bool rdfunction_contains(const RDFunction* self, RDAddress address) {
     return redasm::api::internal::function_contains(self, address);
 }

@@ -60,7 +60,7 @@ void LayeredLayout::create_blocks() {
                             m_graph->height(n) +
                                 LLAYOUT_NODE_PADDING); // Pad Node
 
-        m_blocks[n] = LLBlock(n, m_graph->width(n), m_graph->height(n));
+        m_blocks[n] = LLBlock{n, m_graph->width(n), m_graph->height(n)};
     }
 
     // Populate incoming lists
@@ -313,8 +313,8 @@ void LayeredLayout::precompute_edge_coordinates() {
             auto startcol = start.col;
             auto lastindex = edge.startindex;
             RDGraphPoint lastpt = {
-                m_coledgex[startcol] + (LLAYOUT_PADDING_DIV2 * lastindex) + 4,
-                m_graph->y(block.node) + m_graph->height(block.node) + 4 -
+                m_coledgex[startcol] + (LLAYOUT_PADDING_DIV2 * lastindex),
+                m_graph->y(block.node) + m_graph->height(block.node) -
                     LLAYOUT_NODE_PADDING};
 
             GraphPoints pts;
@@ -332,7 +332,7 @@ void LayeredLayout::precompute_edge_coordinates() {
                                            4};
                 else
                     newpt = {m_coledgex[endcol] +
-                                 (LLAYOUT_PADDING_DIV2 * lastidx) + 4,
+                                 (LLAYOUT_PADDING_DIV2 * lastidx),
                              lastpt.y};
 
                 pts.push_back(newpt);

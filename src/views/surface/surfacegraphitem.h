@@ -23,6 +23,7 @@ protected:
     void mousemove_event(QMouseEvent* e) override;
 
 private:
+    void update_document();
     void localpos_to_surface(const QPointF& pt, usize* row, usize* col) const;
     [[nodiscard]] int start_row() const;
 

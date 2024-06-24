@@ -18,7 +18,7 @@ struct LLPoint {
 struct LLEdge {
     LLBlock *sourceblock, *targetblock;
     std::deque<LLPoint> points;
-    int startindex = 0;
+    int startindex{0};
     GraphPoints routes, arrow;
 
     void add_point(int row, int col, int index = 0) {

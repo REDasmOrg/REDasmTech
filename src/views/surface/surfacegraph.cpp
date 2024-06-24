@@ -1,4 +1,5 @@
 #include "surfacegraph.h"
+#include "../../themeprovider.h"
 #include "surfacegraphitem.h"
 
 SurfaceGraph::SurfaceGraph(QWidget* parent): GraphView{parent} {
@@ -30,6 +31,14 @@ void SurfaceGraph::set_location(const RDSurfaceLocation& loc) {
 }
 
 void SurfaceGraph::invalidate() {}
+
+void SurfaceGraph::compute_edge(const RDGraphEdge& e) {
+    RDThemeKind theme = rdfunction_gettheme(m_function, &e);
+    rdgraph_setcolor(m_graph, &e,
+                     qUtf8Printable(themeprovider::color(theme).name()));
+}
+
+void SurfaceGraph::compute_node(GraphViewItem*) {}
 
 GraphViewItem* SurfaceGraph::create_item(RDGraphNode n, const RDGraph*) {
     RDFunctionBasicBlock bb;

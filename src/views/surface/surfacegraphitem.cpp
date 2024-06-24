@@ -20,6 +20,7 @@ SurfaceGraphItem::SurfaceGraphItem(RDSurface* surface,
     m_document.setDefaultFont(REDasmSettings::font());
     m_document.setUndoRedoEnabled(false);
     m_document.setDocumentMargin(0);
+    this->update_document();
 }
 
 bool SurfaceGraphItem::contains(RDAddress address) const {
@@ -67,6 +68,21 @@ void SurfaceGraphItem::mousemove_event(QMouseEvent* e) {
     e->accept();
 }
 
+void SurfaceGraphItem::update_document() {
+    if(m_surface) {
+        int startidx = rdsurface_indexof(m_surface, m_basicblock.start);
+        int endidx = rdsurface_lastindexof(m_surface, m_basicblock.end);
+
+        if(startidx == -1 || endidx == -1)
+            return;
+
+        utils::draw_surface(m_surface, &m_document, startidx,
+                            endidx - startidx + 1);
+    }
+    else
+        m_document.clear();
+}
+
 void SurfaceGraphItem::localpos_to_surface(const QPointF& pt, usize* row,
                                            usize* col) const {
     *row = this->start_row() + (pt.y() / utils::cell_height());
@@ -81,26 +97,7 @@ int SurfaceGraphItem::start_row() const {
 }
 
 void SurfaceGraphItem::render(QPainter* painter, usize state) {
-    if(m_surface) {
-        if(m_basicblock.start != 0x00401000) {
-            // qDebug("%08X, %08X >>>>>>>>>>>>>>>",
-            // static_cast<unsigned int>(m_basicblock.start),
-            // static_cast<unsigned int>(m_basicblock.end));
-        }
-
-        int startidx = rdsurface_indexof(m_surface, m_basicblock.start);
-        int endidx = rdsurface_lastindexof(m_surface, m_basicblock.end);
-
-        if(startidx == -1 || endidx == -1)
-            return;
-
-        utils::draw_surface(m_surface, &m_document, startidx,
-                            endidx - startidx + 1);
-    }
-    else
-        m_document.clear();
-
-    QRect r(QPoint(0, 0), this->size());
+    QRect r{QPoint{}, this->size()};
     r.adjust(BLOCK_MARGINS);
 
     QColor shadow = painter->pen().color();
@@ -125,9 +122,9 @@ void SurfaceGraphItem::render(QPainter* painter, usize state) {
     painter->setClipping(false);
 
     if(state & SurfaceGraphItem::SELECTED)
-        painter->setPen(QPen(qApp->palette().color(QPalette::Highlight), 2.0));
+        painter->setPen(QPen{qApp->palette().color(QPalette::Highlight), 2.0});
     else
-        painter->setPen(QPen(qApp->palette().color(QPalette::WindowText), 1.5));
+        painter->setPen(QPen{qApp->palette().color(QPalette::WindowText), 1.5});
 
     painter->drawRect(r);
     painter->restore();

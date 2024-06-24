@@ -45,6 +45,14 @@ RDAddress function_getentry(const RDFunction* self) {
     return *address;
 }
 
+RDThemeKind function_gettheme(const RDFunction* self, const RDGraphEdge* e) {
+    spdlog::trace("function_gettheme({})", fmt::ptr(self), fmt::ptr(self));
+
+    if(e)
+        return api::from_c(self)->get_theme(*e);
+    return THEME_DEFAULT;
+}
+
 bool function_getbasicblock(const RDFunction* self, RDGraphNode n,
                             RDFunctionBasicBlock* bb) {
     spdlog::trace("function_getbasicblock({}, {}, {})", fmt::ptr(self), n,

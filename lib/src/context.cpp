@@ -560,8 +560,7 @@ void Context::create_function_graph(MIndex idx) {
 
                     if(seg && seg->type & SEGMENTTYPE_HASCODE) {
                         pending.push_back(jidx);
-                        RDGraphNode jtruen = f.try_add_block(jidx);
-                        f.graph.add_edge(n, jtruen);
+                        f.jmp_true(n, f.try_add_block(jidx));
                     }
                 }
             }
@@ -571,8 +570,7 @@ void Context::create_function_graph(MIndex idx) {
 
                 if(b.has(BF_JUMP)) {
                     pending.push_back(d.flow);
-                    RDGraphNode jfalsen = f.try_add_block(d.flow);
-                    f.graph.add_edge(n, jfalsen);
+                    f.jmp_false(n, f.try_add_block(d.flow));
                     break;
                 }
 
