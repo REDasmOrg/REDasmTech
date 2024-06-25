@@ -543,9 +543,15 @@ void Context::create_function_graph(MIndex idx) {
 
         while(curridx < mem->size()) {
             // Don't overlap functions & blocks
-            if((startidx != curridx) &&
-               (b.has(BF_FUNCTION) || b.has(BF_JUMPDST)))
+            if((startidx != curridx) && b.has(BF_FUNCTION))
                 break;
+
+            // Break loop and connect basic blocks
+            if((startidx != curridx) && b.has(BF_JUMPDST)) {
+                pending.push_back(curridx);
+                f.jmp(n, f.try_add_block(curridx));
+                break;
+            }
 
             // ?Delay slots? can have both FLOW and JUMP
             if(b.has(BF_JUMP)) {
