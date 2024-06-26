@@ -19,9 +19,13 @@ GraphView::GraphView(QWidget* parent): QAbstractScrollArea(parent) {
 }
 
 void GraphView::set_graph(RDGraph* graph) {
+    m_selecteditem = nullptr;
     m_scalefactor = m_scaleboost = 1.0;
     m_graph = graph;
+    qDeleteAll(m_items);
+    m_items.clear();
     this->update_graph();
+    this->focus_root_block();
 }
 
 void GraphView::set_selected_block(GraphViewItem* item) {
@@ -88,18 +92,14 @@ void GraphView::mouseDoubleClickEvent(QMouseEvent* e) {
     bool updated = this->update_selected_item(e, &itempos);
 
     if(m_selecteditem && (e->buttons() == Qt::LeftButton)) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         QMouseEvent iteme{e->type(),   itempos,      e->globalPosition(),
                           e->button(), e->buttons(), e->modifiers()};
-#else
-        QMouseEvent iteme{e->type(),   itempos,      e->globalPos(),
-                          e->button(), e->buttons(), e->modifiers()};
-#endif
         m_selecteditem->mousedoubleclick_event(&iteme);
     }
 
     if(updated)
         this->selected_item_changed_event();
+
     QAbstractScrollArea::mouseDoubleClickEvent(e);
 }
 
@@ -122,8 +122,10 @@ void GraphView::mousePressEvent(QMouseEvent* e) {
     }
 
     this->viewport()->update();
+
     if(updated)
         this->selected_item_changed_event();
+
     QAbstractScrollArea::mousePressEvent(e);
 }
 
@@ -197,7 +199,7 @@ void GraphView::wheelEvent(QWheelEvent* event) {
 }
 
 void GraphView::resizeEvent(QResizeEvent* e) {
-    this->adjustSize(e->size().width(), e->size().height());
+    this->adjust_size(e->size().width(), e->size().height());
 }
 
 void GraphView::paintEvent(QPaintEvent*) {
@@ -269,23 +271,22 @@ void GraphView::selected_item_changed_event() {
     Q_EMIT selected_item_changed();
 }
 
-void GraphView::compute_edge(const RDGraphEdge&) {}
-void GraphView::compute_node(GraphViewItem*) {}
-
-void GraphView::computed() {
-    auto it = m_items.find(rdgraph_getroot(m_graph));
-    if(it != m_items.end())
-        this->focus_block(it.value());
-}
+void GraphView::update_edge(const RDGraphEdge&) {}
+void GraphView::update_node(GraphViewItem*) {}
+void GraphView::begin_compute() {}
+void GraphView::end_compute() {}
 
 void GraphView::compute_layout() {
     rdgraphlayout_layered(m_graph, LAYEREDLAYOUT_MEDIUM);
 }
 
+void GraphView::focus_root_block() {
+    auto it = m_items.find(rdgraph_getroot(m_graph));
+    if(it != m_items.end())
+        this->focus_block(it.value());
+}
+
 void GraphView::update_graph() {
-    m_selecteditem = nullptr;
-    qDeleteAll(m_items);
-    m_items.clear();
     m_lines.clear();
     m_arrows.clear();
 
@@ -295,32 +296,50 @@ void GraphView::update_graph() {
     }
 
     rdgraph_clearlayout(m_graph);
-
-    RDGraphNode root = rdgraph_getroot(m_graph);
+    this->begin_compute();
 
     const RDGraphNode* nodes = nullptr;
     usize nc = rdgraph_getnodes(m_graph, &nodes);
+    QSet<RDGraphNode> nids;
 
     for(usize i = 0; i < nc; i++) {
         RDGraphNode n = nodes[i];
-        auto* item = this->create_item(n, m_graph);
-        if(!item)
-            continue;
-        if(n == root)
-            m_selecteditem = item; // Focus on root
+        GraphViewItem* item = nullptr;
 
-        item->setParent(this); // Take Ownership
-        m_items[n] = item;
-        this->compute_node(item);
+        if(!m_items.contains(n)) {
+            item = this->create_node(n, m_graph);
+            if(!item)
+                continue;
 
+            connect(m_items[n], &GraphViewItem::invalidated, this->viewport(),
+                    [&]() { this->viewport()->update(); });
+
+            item->setParent(this); // Take Ownership
+            m_items[n] = item;
+        }
+        else
+            item = m_items[n];
+
+        this->update_node(item);
+        nids.insert(n);
         rdgraph_setwidth(m_graph, item->node(), item->width());
         rdgraph_setheight(m_graph, item->node(), item->height());
+    }
+
+    // Remove orphan nodes
+    for(auto it = m_items.begin(); it != m_items.end();) {
+        if(!nids.contains(it.key())) {
+            it.value()->deleteLater();
+            it = m_items.erase(it);
+        }
+        else
+            it++;
     }
 
     const RDGraphEdge* edges = nullptr;
     usize ec = rdgraph_getedges(m_graph, &edges);
     for(usize i = 0; i < ec; i++)
-        this->compute_edge(edges[i]);
+        this->update_edge(edges[i]);
 
     this->compute_layout();
 
@@ -328,8 +347,6 @@ void GraphView::update_graph() {
         RDGraphNode n = nodes[i];
         m_items[n]->move(
             QPoint(rdgraph_getx(m_graph, n), rdgraph_gety(m_graph, n)));
-        connect(m_items[n], &GraphViewItem::invalidated, this->viewport(),
-                [&]() { this->viewport()->update(); });
     }
 
     for(usize i = 0; i < ec; i++) {
@@ -352,9 +369,9 @@ void GraphView::update_graph() {
         std::min(static_cast<qreal>(std::min(sx, sy) * (1 - m_scalestep)),
                  0.05); // If graph is very large...
 
-    this->adjustSize(areasize.width(), areasize.height());
+    this->adjust_size(areasize.width(), areasize.height());
     this->viewport()->update();
-    this->computed();
+    this->end_compute();
 }
 
 GraphViewItem* GraphView::item_from_mouse_event(QMouseEvent* e,
@@ -392,7 +409,7 @@ void GraphView::zoom_out(const QPointF& cursorpos) {
         m_scalefactor = m_scalemin;
 
     QSize vpsize = this->viewport()->size();
-    this->adjustSize(vpsize.width(), vpsize.height(), cursorpos);
+    this->adjust_size(vpsize.width(), vpsize.height(), cursorpos);
     this->viewport()->update();
 }
 
@@ -407,12 +424,12 @@ void GraphView::zoom_in(const QPointF& cursorpos) {
         m_scalefactor = m_scalemax;
 
     QSize vpsize = this->viewport()->size();
-    this->adjustSize(vpsize.width(), vpsize.height(), cursorpos);
+    this->adjust_size(vpsize.width(), vpsize.height(), cursorpos);
     this->viewport()->update();
 }
 
-void GraphView::adjustSize(int vpw, int vph, const QPointF& cursorpos,
-                           bool fit) {
+void GraphView::adjust_size(int vpw, int vph, const QPointF& cursorpos,
+                            bool fit) {
     // bugfix - resize event (during several initial calls) may reset correct
     // adjustment already made
     if(!m_graph || (vph < 30))

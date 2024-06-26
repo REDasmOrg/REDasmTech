@@ -14,37 +14,47 @@ SurfaceGraph::~SurfaceGraph() {
 void SurfaceGraph::jump_to(RDAddress address) {}
 
 void SurfaceGraph::set_location(const RDSurfaceLocation& loc) {
-    if(!loc.function.valid)
-        m_function = nullptr;
-    else
+    if(loc.function.valid)
         m_function = rd_getfunction(loc.function.value);
+    else
+        m_function = nullptr;
 
-    if(m_function) {
+    if(m_function)
         m_graph = rdfunction_getgraph(m_function);
-        rdsurface_renderfunction(m_surface, m_function);
-    }
     else
         m_graph = nullptr;
 
     this->set_graph(m_graph);
-    this->update_graph();
 }
 
 void SurfaceGraph::invalidate() {}
 
-void SurfaceGraph::compute_edge(const RDGraphEdge& e) {
+void SurfaceGraph::begin_compute() {
+    if(m_surface && m_function)
+        rdsurface_renderfunction(m_surface, m_function);
+}
+
+void SurfaceGraph::update_edge(const RDGraphEdge& e) {
     RDThemeKind theme = rdfunction_gettheme(m_function, &e);
     rdgraph_setcolor(m_graph, &e,
                      qUtf8Printable(themeprovider::color(theme).name()));
 }
 
-void SurfaceGraph::compute_node(GraphViewItem*) {}
+void SurfaceGraph::update_node(GraphViewItem* item) {
+    auto* g = static_cast<SurfaceGraphItem*>(item);
+    g->update_document();
+}
 
-GraphViewItem* SurfaceGraph::create_item(RDGraphNode n, const RDGraph*) {
+GraphViewItem* SurfaceGraph::create_node(RDGraphNode n, const RDGraph*) {
     RDFunctionBasicBlock bb;
 
-    if(rdfunction_getbasicblock(m_function, n, &bb))
-        return new SurfaceGraphItem(m_surface, bb, n, m_function, this);
+    if(rdfunction_getbasicblock(m_function, n, &bb)) {
+        auto* g = new SurfaceGraphItem(m_surface, bb, n, m_function, this);
+        g->setObjectName(QString::number(bb.start, 16));
+        connect(g, &SurfaceGraphItem::invalidated, this,
+                &SurfaceGraph::update_graph);
+        return g;
+    }
 
     return nullptr;
 }

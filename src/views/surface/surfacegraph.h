@@ -13,9 +13,10 @@ public:
     void invalidate();
 
 protected:
-    void compute_edge(const RDGraphEdge& e) override;
-    void compute_node(GraphViewItem*) override;
-    GraphViewItem* create_item(RDGraphNode n, const RDGraph* g) override;
+    void begin_compute() override;
+    void update_edge(const RDGraphEdge& e) override;
+    void update_node(GraphViewItem*) override;
+    GraphViewItem* create_node(RDGraphNode n, const RDGraph* g) override;
     void keyPressEvent(QKeyEvent* e) override;
 
 Q_SIGNALS:

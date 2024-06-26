@@ -23,24 +23,24 @@ SurfaceGraphItem::SurfaceGraphItem(RDSurface* surface,
     this->update_document();
 }
 
-bool SurfaceGraphItem::contains(RDAddress address) const {
-    return rdfunction_contains(m_function, address);
+bool SurfaceGraphItem::contains_address(RDAddress address) const {
+    return address >= m_basicblock.start && address <= m_basicblock.end;
 }
 
 int SurfaceGraphItem::current_row() const {
-    // RDAddress address = m_surface->currentAddress();
+    RDSurfaceLocation loc;
+    rdsurface_getlocation(m_surface, &loc);
 
-    // if((address != RD_NVAL) && this->contains(address))
-    // return m_surface->position().row - this->start_row();
+    if(loc.address.valid && this->contains_address(loc.address.value)) {
+        RDSurfacePosition pos;
+        rdsurface_getposition(m_surface, &pos);
+        return pos.row - this->start_row();
+    }
 
     return GraphViewItem::current_row();
 }
 
 QSize SurfaceGraphItem::size() const { return m_document.size().toSize(); }
-
-void SurfaceGraphItem::itemselection_changed(bool selected) {
-    // m_surface->activateCursor(selected);
-}
 
 void SurfaceGraphItem::mousedoubleclick_event(QMouseEvent*) {
     Q_EMIT follow_requested();
@@ -51,6 +51,7 @@ void SurfaceGraphItem::mousepress_event(QMouseEvent* e) {
         usize row, col;
         this->localpos_to_surface(e->position(), &row, &col);
         rdsurface_setposition(m_surface, row, col);
+        this->invalidate();
     }
     else
         GraphViewItem::mousepress_event(e);
@@ -65,6 +66,7 @@ void SurfaceGraphItem::mousemove_event(QMouseEvent* e) {
     usize row, col;
     this->localpos_to_surface(e->position(), &row, &col);
     rdsurface_select(m_surface, row, col);
+    this->invalidate();
     e->accept();
 }
 
@@ -90,10 +92,7 @@ void SurfaceGraphItem::localpos_to_surface(const QPointF& pt, usize* row,
 }
 
 int SurfaceGraphItem::start_row() const {
-    // return m_surface->indexOf(
-    //     RDFunctionBasicBlock_GetStartAddress(m_basicblock));
-
-    return -1;
+    return rdsurface_indexof(m_surface, m_basicblock.start);
 }
 
 void SurfaceGraphItem::render(QPainter* painter, usize state) {
