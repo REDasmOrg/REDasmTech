@@ -22,30 +22,44 @@ ContextView::ContextView(QWidget* parent): QWidget{parent}, m_ui{this} {
 
     connect(m_ui.surfacegraph, &SurfaceGraph::switch_view, this, [&]() {
         m_ui.stackedview->setCurrentWidget(m_ui.surfaceview);
-        m_ui.surfaceview->invalidate();
+        m_ui.surfaceview->set_location(m_ui.surfacegraph->location());
     });
 }
 
 ContextView::~ContextView() { rd_destroy(); }
+
+RDSurface* ContextView::handle() const {
+    if(m_ui.stackedview->currentWidget() == m_ui.surfacegraph)
+        return m_ui.surfacegraph->handle();
+
+    return m_ui.surfaceview->handle();
+}
 
 void ContextView::tick(const RDEngineStatus* s) {
     if(s->stepscurrent == STEP_EMULATE)
         return;
 
     m_functionsmodel->resync();
-    m_ui.surfaceview->invalidate();
+    this->invalidate();
 
     if(s->stepscurrent == STEP_DONE)
         m_ui.surfaceview->jump_to_ep();
 }
 
 void ContextView::jump_to(RDAddress address) { // NOLINT
-    if(m_ui.stackedview->currentWidget() == m_ui.surfaceview) {
-        m_ui.surfaceview->jump_to(address);
-        m_ui.surfaceview->setFocus();
-    }
-    else {
+    if(m_ui.stackedview->currentWidget() == m_ui.surfacegraph) {
         m_ui.surfacegraph->jump_to(address);
         m_ui.surfacegraph->setFocus();
     }
+    else {
+        m_ui.surfaceview->jump_to(address);
+        m_ui.surfaceview->setFocus();
+    }
+}
+
+void ContextView::invalidate() { // NOLINT
+    if(m_ui.stackedview->currentWidget() == m_ui.surfacegraph)
+        m_ui.surfacegraph->invalidate();
+    else
+        m_ui.surfaceview->invalidate();
 }

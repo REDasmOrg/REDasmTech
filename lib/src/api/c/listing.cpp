@@ -1,7 +1,7 @@
 #include "../internal/listing.h"
 #include <redasm/listing.h>
 
-bool rdlisting_getindex(RDAddress address, usize* idx) {
+bool rdlisting_getindex(RDAddress address, LIndex* idx) {
     auto lidx = redasm::api::internal::listing_getindex(address);
     if(!lidx)
         return false;

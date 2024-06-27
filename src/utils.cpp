@@ -1,6 +1,9 @@
 #include "utils.h"
+#include "actions.h"
 #include "settings.h"
 #include "themeprovider.h"
+#include <QKeyEvent>
+#include <QMenu>
 #include <QPainter>
 #include <QTextCursor>
 #include <QTextDocument>
@@ -64,6 +67,79 @@ void draw_surface(RDSurface* s, QTextDocument* doc, usize start, usize n) {
     }
 
     cursor.endEditBlock();
+}
+
+QMenu* create_surface_menu(RDSurface* s, QWidget* w) {
+    QAction* actcopy = actions::get(actions::COPY);
+    QAction* actrefs = actions::get(actions::REFS);
+    QAction* actrename = actions::get(actions::RENAME);
+
+    auto* menu = new QMenu(w);
+    menu->addAction(actions::get(actions::GOTO));
+    menu->addSeparator();
+    menu->addAction(actcopy);
+    menu->addAction(actrefs);
+    menu->addAction(actrename);
+
+    QObject::connect(menu, &QMenu::aboutToShow, w, [=]() {
+        RDAddress address{};
+        bool hasaddr = rdsurface_getaddressundercursor(s, &address);
+
+        actcopy->setVisible(rdsurface_hasselection(s));
+        actrename->setVisible(hasaddr);
+        actrefs->setVisible(hasaddr && rd_getreferences(address, nullptr));
+    });
+
+    return menu;
+}
+
+bool handle_key_press(RDSurface* s, QKeyEvent* e) {
+    RDSurfacePosition pos;
+    rdsurface_getposition(s, &pos);
+
+    auto [row, col] = pos;
+
+    if(e->matches(QKeySequence::MoveToNextChar)) {
+        rdsurface_setposition(s, row, col + 1);
+    }
+    else if(e->matches(QKeySequence::MoveToPreviousChar)) {
+        if(col > 0)
+            rdsurface_setposition(s, row, col - 1);
+    }
+    else if(e->matches(QKeySequence::MoveToNextLine)) {
+        rdsurface_setposition(s, row + 1, col);
+    }
+    else if(e->matches(QKeySequence::MoveToPreviousLine)) {
+        if(row > 0)
+            rdsurface_setposition(s, row - 1, col);
+    }
+    else if(e->matches(QKeySequence::MoveToStartOfLine)) {
+        rdsurface_setposition(s, row, 0);
+    }
+    else if(e->matches(QKeySequence::SelectNextChar)) {
+        rdsurface_select(s, row, col + 1);
+    }
+    else if(e->matches(QKeySequence::SelectPreviousChar)) {
+        if(col > 0)
+            rdsurface_select(s, row, col - 1);
+    }
+    else if(e->matches(QKeySequence::SelectNextLine)) {
+        rdsurface_select(s, row + 1, col);
+    }
+    else if(e->matches(QKeySequence::SelectPreviousLine)) {
+        if(row > 0)
+            rdsurface_select(s, row - 1, col);
+    }
+    else if(e->matches(QKeySequence::SelectStartOfLine)) {
+        rdsurface_select(s, row, 0);
+    }
+    else if(e->matches(QKeySequence::SelectStartOfDocument)) {
+        rdsurface_select(s, 0, 0);
+    }
+    else
+        return false;
+
+    return true;
 }
 
 } // namespace utils

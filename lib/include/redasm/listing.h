@@ -21,7 +21,7 @@ typedef struct RDSymbol {
     const char* value;
 } RDSymbol;
 
-REDASM_EXPORT bool rdlisting_getindex(RDAddress address, usize* idx);
+REDASM_EXPORT bool rdlisting_getindex(RDAddress address, LIndex* idx);
 REDASM_EXPORT bool rdlisting_getsymbol(usize idx, RDSymbol* symbol);
 REDASM_EXPORT usize rdlisting_getsymbolslength();
 REDASM_EXPORT bool rdlisting_getimport(usize idx, RDSymbol* symbol);

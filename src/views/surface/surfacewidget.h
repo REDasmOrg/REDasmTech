@@ -17,6 +17,7 @@ public:
     [[nodiscard]] int visible_columns() const;
     [[nodiscard]] int visible_rows() const;
     [[nodiscard]] qreal row_height() const;
+    void set_location(const RDSurfaceLocation& loc);
 
 public Q_SLOTS:
     void jump_to(RDAddress address);
@@ -36,7 +37,6 @@ private:
     [[nodiscard]] bool get_surface_index(usize* index) const;
     [[nodiscard]] usize get_listing_length() const;
     bool follow_under_cursor();
-    void create_context_menu();
     void update_scrollbars();
     void sync_location();
 

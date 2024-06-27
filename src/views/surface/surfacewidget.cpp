@@ -1,5 +1,4 @@
 #include "surfacewidget.h"
-#include "../../actions.h"
 #include "../../settings.h"
 #include "../../statusbar.h"
 #include "../../utils.h"
@@ -17,6 +16,7 @@ static constexpr int SCROLL_SPEED = 3;
 SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
     m_surface = rdsurface_new(SURFACE_DEFAULT);
 
+    this->setContextMenuPolicy(Qt::CustomContextMenu);
     this->setCursor(Qt::ArrowCursor);
     this->setFocusPolicy(Qt::StrongFocus);
     this->setFrameShape(QFrame::NoFrame);
@@ -30,7 +30,10 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
     this->horizontalScrollBar()->setMinimum(0);
     this->horizontalScrollBar()->setValue(0);
 
-    this->create_context_menu();
+    m_menu = utils::create_surface_menu(m_surface, this);
+
+    connect(this, &SurfaceWidget::customContextMenuRequested, this,
+            [&](const QPoint&) { m_menu->popup(QCursor::pos()); });
 
     m_document.setDefaultFont(this->font());
     m_document.setUndoRedoEnabled(false);
@@ -86,6 +89,11 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
 SurfaceWidget::~SurfaceWidget() {
     rd_free(m_surface);
     m_surface = nullptr;
+}
+
+void SurfaceWidget::set_location(const RDSurfaceLocation& loc) {
+    if(loc.address.valid)
+        this->jump_to(loc.address.value);
 }
 
 void SurfaceWidget::jump_to(RDAddress address) {
@@ -165,80 +173,41 @@ void SurfaceWidget::resizeEvent(QResizeEvent* e) {
 }
 
 void SurfaceWidget::keyPressEvent(QKeyEvent* e) {
-    QScrollBar* vscroll = this->verticalScrollBar();
-    auto [row, col] = this->position();
+    if(!utils::handle_key_press(m_surface, e)) {
+        QScrollBar* vscroll = this->verticalScrollBar();
+        auto [row, col] = this->position();
 
-    if(e->matches(QKeySequence::MoveToNextChar)) {
-        rdsurface_setposition(m_surface, row, col + 1);
-    }
-    else if(e->matches(QKeySequence::MoveToPreviousChar)) {
-        if(col == 0)
+        if(e->matches(QKeySequence::MoveToEndOfLine)) {
+            rdsurface_setposition(m_surface, row, this->visible_columns());
+        }
+        else if(e->matches(QKeySequence::MoveToStartOfDocument)) {
+            vscroll->setValue(0);
             return;
-        rdsurface_setposition(m_surface, row, col - 1);
-    }
-    else if(e->matches(QKeySequence::MoveToNextLine)) {
-        rdsurface_setposition(m_surface, row + 1, col);
-    }
-    else if(e->matches(QKeySequence::MoveToPreviousLine)) {
-        if(row == 0)
+        }
+        else if(e->matches(QKeySequence::MoveToEndOfDocument)) {
+            vscroll->setValue(vscroll->value() + this->visible_rows() - 1);
             return;
-        rdsurface_setposition(m_surface, row - 1, col);
-    }
-    else if(e->matches(QKeySequence::MoveToStartOfLine)) {
-        rdsurface_setposition(m_surface, row, 0);
-    }
-    else if(e->matches(QKeySequence::MoveToEndOfLine)) {
-        rdsurface_setposition(m_surface, row, this->visible_columns());
-    }
-    else if(e->matches(QKeySequence::MoveToStartOfDocument)) {
-        vscroll->setValue(0);
-        return;
-    }
-    else if(e->matches(QKeySequence::MoveToEndOfDocument)) {
-        vscroll->setValue(vscroll->value() + this->visible_rows() - 1);
-        return;
-    }
-    else if(e->matches(QKeySequence::SelectNextChar)) {
-        rdsurface_select(m_surface, row, col + 1);
-    }
-    else if(e->matches(QKeySequence::SelectPreviousChar)) {
-        if(col == 0)
+        }
+        else if(e->matches(QKeySequence::SelectEndOfLine)) {
+            rdsurface_select(m_surface, row, this->visible_columns());
+        }
+        else if(e->matches(QKeySequence::SelectEndOfDocument)) {
+            rdsurface_select(m_surface, this->visible_rows() - row,
+                             this->visible_columns());
+        }
+        else if(e->matches(QKeySequence::SelectAll)) {
+            rdsurface_setposition(m_surface, 0, 0);
+            rdsurface_select(m_surface, this->visible_rows(),
+                             this->visible_columns());
+        }
+        else if(e->key() == Qt::Key_Space) {
+            Q_EMIT switch_view();
             return;
-        rdsurface_select(m_surface, row, col - 1);
-    }
-    else if(e->matches(QKeySequence::SelectNextLine)) {
-        rdsurface_select(m_surface, row + 1, col);
-    }
-    else if(e->matches(QKeySequence::SelectPreviousLine)) {
-        if(row == 0)
+        }
+        else {
+            QAbstractScrollArea::keyPressEvent(e);
             return;
-        rdsurface_select(m_surface, row - 1, col);
-    }
-    else if(e->matches(QKeySequence::SelectStartOfLine)) {
-        rdsurface_select(m_surface, row, 0);
-    }
-    else if(e->matches(QKeySequence::SelectEndOfLine)) {
-        rdsurface_select(m_surface, row, this->visible_columns());
-    }
-    else if(e->matches(QKeySequence::SelectStartOfDocument)) {
-        rdsurface_select(m_surface, 0, 0);
-    }
-    else if(e->matches(QKeySequence::SelectEndOfDocument)) {
-        rdsurface_select(m_surface, this->visible_rows() - row,
-                         this->visible_columns());
-    }
-    else if(e->matches(QKeySequence::SelectAll)) {
-        rdsurface_setposition(m_surface, 0, 0);
-        rdsurface_select(m_surface, this->visible_rows(),
-                         this->visible_columns());
-    }
-    else if(e->key() == Qt::Key_Space) {
-        Q_EMIT switch_view();
-        return;
-    }
-    else {
-        QAbstractScrollArea::keyPressEvent(e);
-        return;
+        }
     }
 
     this->viewport()->update();
@@ -325,33 +294,6 @@ bool SurfaceWidget::follow_under_cursor() {
     }
 
     return false;
-}
-
-void SurfaceWidget::create_context_menu() {
-    this->setContextMenuPolicy(Qt::CustomContextMenu);
-
-    QAction* actcopy = actions::get(actions::COPY);
-    QAction* actrefs = actions::get(actions::REFS);
-    QAction* actrename = actions::get(actions::RENAME);
-
-    m_menu = new QMenu(this);
-    m_menu->addAction(actions::get(actions::GOTO));
-    m_menu->addSeparator();
-    m_menu->addAction(actcopy);
-    m_menu->addAction(actrefs);
-    m_menu->addAction(actrename);
-
-    connect(m_menu, &QMenu::aboutToShow, this, [=]() {
-        RDAddress address{};
-        bool hasaddr = rdsurface_getaddressundercursor(m_surface, &address);
-
-        actcopy->setVisible(rdsurface_hasselection(m_surface));
-        actrename->setVisible(hasaddr);
-        actrefs->setVisible(hasaddr && rd_getreferences(address, nullptr));
-    });
-
-    connect(this, &SurfaceWidget::customContextMenuRequested, this,
-            [&](const QPoint&) { m_menu->popup(QCursor::pos()); });
 }
 
 void SurfaceWidget::update_scrollbars() {

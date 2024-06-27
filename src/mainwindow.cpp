@@ -178,8 +178,8 @@ void MainWindow::update_menubar() {
     m_ui.mnuedit->addAction(actcopy);
 
     connect(m_ui.mnuedit, &QMenu::aboutToShow, this, [&, actcopy]() {
-        SurfaceView* sv = this->context_view()->surface_view();
-        actcopy->setVisible(rdsurface_hasselection(sv->handle()));
+        actcopy->setVisible(
+            rdsurface_hasselection(this->context_view()->handle()));
     });
 }
 
@@ -296,7 +296,7 @@ void MainWindow::show_segments() {
                     return;
 
                 auto* segmentsmodel = static_cast<SegmentsModel*>(dlg->model());
-                ctxview->surface_view()->jump_to(segmentsmodel->address(index));
+                ctxview->jump_to(segmentsmodel->address(index));
                 dlg->accept();
             });
 
@@ -315,7 +315,7 @@ void MainWindow::show_strings() {
                     return;
 
                 auto* m = static_cast<SymbolsModel*>(dlg->model());
-                ctxview->surface_view()->jump_to(m->address(index));
+                ctxview->jump_to(m->address(index));
                 dlg->accept();
             });
 
@@ -334,7 +334,7 @@ void MainWindow::show_exports() {
                     return;
 
                 auto* m = static_cast<ExportsModel*>(dlg->model());
-                ctxview->surface_view()->jump_to(m->address(index));
+                ctxview->jump_to(m->address(index));
                 dlg->accept();
             });
 
@@ -352,7 +352,7 @@ void MainWindow::show_imports() {
                     return;
 
                 auto* m = static_cast<ImportsModel*>(dlg->model());
-                ctxview->surface_view()->jump_to(m->address(index));
+                ctxview->jump_to(m->address(index));
                 dlg->accept();
             });
 

@@ -115,7 +115,7 @@ bool listing_getsymbol(usize idx, RDSymbol* symbol) {
     return true;
 }
 
-tl::optional<usize> listing_getindex(RDAddress address) {
+tl::optional<LIndex> listing_getindex(RDAddress address) {
     spdlog::trace("listing_getindex({:x})", address);
 
     auto idx = state::context->address_to_index(address);

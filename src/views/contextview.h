@@ -9,9 +9,10 @@ class ContextView: public QWidget {
 public:
     explicit ContextView(QWidget* parent = nullptr);
     ~ContextView() override;
-    [[nodiscard]] SurfaceView* surface_view() const { return m_ui.surfaceview; }
+    [[nodiscard]] RDSurface* handle() const;
     void tick(const RDEngineStatus* s);
     void jump_to(RDAddress address);
+    void invalidate();
 
 private:
     ui::ContextView m_ui;

@@ -13,7 +13,7 @@ usize listing_getimportslength();
 bool listing_getexport(usize idx, RDSymbol* symbol);
 usize listing_getexportslength();
 
-tl::optional<usize> listing_getindex(RDAddress address);
+tl::optional<LIndex> listing_getindex(RDAddress address);
 usize listing_getlength();
 
 } // namespace redasm::api::internal

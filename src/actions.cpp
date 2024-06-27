@@ -22,9 +22,8 @@ void show_goto() {
 
     auto* dlggoto = new GotoDialog(g_mainwindow);
 
-    QObject::connect(
-        dlggoto, &GotoDialog::accepted, g_mainwindow,
-        [&, cv, dlggoto]() { cv->surface_view()->jump_to(dlggoto->address); });
+    QObject::connect(dlggoto, &GotoDialog::accepted, g_mainwindow,
+                     [&, cv, dlggoto]() { cv->jump_to(dlggoto->address); });
 
     dlggoto->show();
 }
@@ -34,8 +33,7 @@ void copy() {
     if(!cv)
         return;
 
-    qApp->clipboard()->setText(
-        rdsurface_getselectedtext(cv->surface_view()->handle()));
+    qApp->clipboard()->setText(rdsurface_getselectedtext(cv->handle()));
 }
 
 void refs() {
@@ -44,7 +42,7 @@ void refs() {
         return;
 
     RDAddress address;
-    if(!rdsurface_getaddressundercursor(cv->surface_view()->handle(), &address))
+    if(!rdsurface_getaddressundercursor(cv->handle(), &address))
         return;
 
     auto* dlg = new TableDialog(
@@ -53,7 +51,7 @@ void refs() {
     QObject::connect(dlg, &TableDialog::double_clicked, g_mainwindow,
                      [cv, dlg](const QModelIndex& index) {
                          auto* m = static_cast<ReferencesModel*>(dlg->model());
-                         cv->surface_view()->jump_to(m->address(index));
+                         cv->jump_to(m->address(index));
                          dlg->accept();
                      });
 
@@ -67,7 +65,7 @@ void rename() {
         return;
 
     RDAddress address;
-    if(!rdsurface_getaddressundercursor(cv->surface_view()->handle(), &address))
+    if(!rdsurface_getaddressundercursor(cv->handle(), &address))
         return;
 
     QString name;
@@ -81,7 +79,7 @@ void rename() {
         QLineEdit::Normal, name, &ok);
 
     if(ok && rd_setname(address, qUtf8Printable(s)))
-        cv->surface_view()->invalidate();
+        cv->invalidate();
 }
 
 } // namespace

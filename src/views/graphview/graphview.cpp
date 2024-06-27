@@ -281,6 +281,9 @@ void GraphView::compute_layout() {
 }
 
 void GraphView::focus_root_block() {
+    if(!m_graph)
+        return;
+
     auto it = m_items.find(rdgraph_getroot(m_graph));
     if(it != m_items.end())
         this->focus_block(it.value());
