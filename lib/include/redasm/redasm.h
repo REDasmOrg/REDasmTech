@@ -9,6 +9,7 @@
 #include <redasm/listing.h>
 #include <redasm/loader.h>
 #include <redasm/processor.h>
+#include <redasm/rdil.h>
 #include <redasm/renderer.h>
 #include <redasm/stream.h>
 #include <redasm/surface.h>

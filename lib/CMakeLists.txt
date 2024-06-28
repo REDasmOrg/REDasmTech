@@ -47,6 +47,8 @@ target_sources(${PROJECT_NAME_LIB}
         src/graph/datagraph.cpp
         src/graph/styledgraph.cpp
         src/graph/layouts/layeredlayout.cpp
+        src/rdil/expression.cpp
+        src/rdil/rdil.cpp
         src/listing.cpp
         src/context.cpp
         src/segment.cpp
