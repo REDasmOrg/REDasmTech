@@ -1,14 +1,14 @@
 #pragma once
 
-#include "../graphview/graphviewitem.h"
+#include "../graphview/graphviewnode.h"
 #include <QTextDocument>
 #include <redasm/redasm.h>
 
-class SurfaceGraphItem: public GraphViewItem {
+class SurfaceGraphNode: public GraphViewNode {
     Q_OBJECT
 
 public:
-    explicit SurfaceGraphItem(RDSurface* surface,
+    explicit SurfaceGraphNode(RDSurface* surface,
                               const RDFunctionBasicBlock& fbb, RDGraphNode n,
                               RDFunction* f, QWidget* parent = nullptr);
     [[nodiscard]] bool contains_address(RDAddress address) const;

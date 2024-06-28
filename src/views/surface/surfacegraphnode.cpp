@@ -1,4 +1,4 @@
-#include "surfacegraphitem.h"
+#include "surfacegraphnode.h"
 #include "../../settings.h"
 #include "../../utils.h"
 #include <QApplication>
@@ -11,11 +11,11 @@ constexpr int DROP_SHADOW_SIZE = 10;
 
 }
 
-SurfaceGraphItem::SurfaceGraphItem(RDSurface* surface,
+SurfaceGraphNode::SurfaceGraphNode(RDSurface* surface,
                                    const RDFunctionBasicBlock& fbb,
                                    RDGraphNode n, RDFunction* f,
                                    QWidget* parent)
-    : GraphViewItem{n, rdfunction_getgraph(f), parent}, m_basicblock{fbb},
+    : GraphViewNode{n, rdfunction_getgraph(f), parent}, m_basicblock{fbb},
       m_surface{surface} {
     m_document.setDefaultFont(REDasmSettings::font());
     m_document.setUndoRedoEnabled(false);
@@ -23,11 +23,11 @@ SurfaceGraphItem::SurfaceGraphItem(RDSurface* surface,
     this->update_document();
 }
 
-bool SurfaceGraphItem::contains_address(RDAddress address) const {
+bool SurfaceGraphNode::contains_address(RDAddress address) const {
     return address >= m_basicblock.start && address <= m_basicblock.end;
 }
 
-int SurfaceGraphItem::current_row() const {
+int SurfaceGraphNode::current_row() const {
     RDSurfaceLocation loc;
     rdsurface_getlocation(m_surface, &loc);
 
@@ -37,16 +37,16 @@ int SurfaceGraphItem::current_row() const {
         return pos.row - this->start_row();
     }
 
-    return GraphViewItem::current_row();
+    return GraphViewNode::current_row();
 }
 
-QSize SurfaceGraphItem::size() const { return m_document.size().toSize(); }
+QSize SurfaceGraphNode::size() const { return m_document.size().toSize(); }
 
-void SurfaceGraphItem::mousedoubleclick_event(QMouseEvent*) {
+void SurfaceGraphNode::mousedoubleclick_event(QMouseEvent*) {
     Q_EMIT follow_requested();
 }
 
-void SurfaceGraphItem::mousepress_event(QMouseEvent* e) {
+void SurfaceGraphNode::mousepress_event(QMouseEvent* e) {
     if(e->buttons() == Qt::LeftButton) {
         usize row, col;
         this->localpos_to_surface(e->position(), &row, &col);
@@ -54,12 +54,12 @@ void SurfaceGraphItem::mousepress_event(QMouseEvent* e) {
         this->invalidate();
     }
     else
-        GraphViewItem::mousepress_event(e);
+        GraphViewNode::mousepress_event(e);
 
     e->accept();
 }
 
-void SurfaceGraphItem::mousemove_event(QMouseEvent* e) {
+void SurfaceGraphNode::mousemove_event(QMouseEvent* e) {
     if(e->buttons() != Qt::LeftButton)
         return;
 
@@ -70,7 +70,7 @@ void SurfaceGraphItem::mousemove_event(QMouseEvent* e) {
     e->accept();
 }
 
-void SurfaceGraphItem::update_document() {
+void SurfaceGraphNode::update_document() {
     if(m_surface) {
         int startidx = rdsurface_indexof(m_surface, m_basicblock.start);
         int endidx = rdsurface_lastindexof(m_surface, m_basicblock.end);
@@ -85,17 +85,17 @@ void SurfaceGraphItem::update_document() {
         m_document.clear();
 }
 
-void SurfaceGraphItem::localpos_to_surface(const QPointF& pt, usize* row,
+void SurfaceGraphNode::localpos_to_surface(const QPointF& pt, usize* row,
                                            usize* col) const {
     *row = this->start_row() + (pt.y() / utils::cell_height());
     *col = (pt.x() / utils::cell_width());
 }
 
-int SurfaceGraphItem::start_row() const {
+int SurfaceGraphNode::start_row() const {
     return rdsurface_indexof(m_surface, m_basicblock.start);
 }
 
-void SurfaceGraphItem::render(QPainter* painter, usize state) {
+void SurfaceGraphNode::render(QPainter* painter, usize state) {
     QRect r{QPoint{}, this->size()};
     r.adjust(BLOCK_MARGINS);
 
@@ -105,7 +105,7 @@ void SurfaceGraphItem::render(QPainter* painter, usize state) {
     painter->save();
     painter->translate(this->position());
 
-    if(state & SurfaceGraphItem::SELECTED) // Thicker shadow
+    if(state & SurfaceGraphNode::SELECTED) // Thicker shadow
         painter->fillRect(r.adjusted(DROP_SHADOW_SIZE, DROP_SHADOW_SIZE,
                                      DROP_SHADOW_SIZE + 2,
                                      DROP_SHADOW_SIZE + 2),
@@ -120,7 +120,7 @@ void SurfaceGraphItem::render(QPainter* painter, usize state) {
     m_document.drawContents(painter);
     painter->setClipping(false);
 
-    if(state & SurfaceGraphItem::SELECTED)
+    if(state & SurfaceGraphNode::SELECTED)
         painter->setPen(QPen{qApp->palette().color(QPalette::Highlight), 2.0});
     else
         painter->setPen(QPen{qApp->palette().color(QPalette::WindowText), 1.5});

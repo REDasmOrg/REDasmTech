@@ -9,7 +9,7 @@
 #define BLOCK_MARGIN 4
 #define BLOCK_MARGINS -BLOCK_MARGIN, 0, BLOCK_MARGIN, 0
 
-class GraphViewItem: public QObject {
+class GraphViewNode: public QObject {
     Q_OBJECT
 
     friend class GraphView;
@@ -18,7 +18,7 @@ public:
     enum { NONE = 0, SELECTED, FOCUSED };
 
 public:
-    explicit GraphViewItem(RDGraphNode node, const RDGraph* g,
+    explicit GraphViewNode(RDGraphNode node, const RDGraph* g,
                            QObject* parent = nullptr);
     [[nodiscard]] const RDGraph* graph() const;
     [[nodiscard]] RDGraphNode node() const;

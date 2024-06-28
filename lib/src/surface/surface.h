@@ -36,6 +36,7 @@ public:
     void set_position(usize row, usize col);
     bool select_word(usize row, usize col);
     bool select(usize row, usize col);
+    void seek_position(LIndex index);
     void seek(LIndex index);
     bool jump_to(MIndex index);
     bool jump_to_ep();

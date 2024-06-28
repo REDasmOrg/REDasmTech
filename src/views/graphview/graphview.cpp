@@ -22,17 +22,17 @@ void GraphView::set_graph(RDGraph* graph) {
     m_selecteditem = nullptr;
     m_scalefactor = m_scaleboost = 1.0;
     m_graph = graph;
-    qDeleteAll(m_items);
-    m_items.clear();
+    qDeleteAll(m_nodes);
+    m_nodes.clear();
     this->update_graph();
     this->focus_root_block();
 }
 
-void GraphView::set_selected_block(GraphViewItem* item) {
-    for(GraphViewItem* gvi : m_items) {
-        if(gvi != item)
+void GraphView::set_selected_node(const GraphViewNode* item) {
+    for(GraphViewNode* gvn : m_nodes) {
+        if(gvn != item)
             continue;
-        m_selecteditem = item;
+        m_selecteditem = gvn;
         this->focus_selected_block();
         break;
     }
@@ -40,7 +40,7 @@ void GraphView::set_selected_block(GraphViewItem* item) {
 
 void GraphView::set_focus_on_selection(bool b) { m_focusonselection = b; }
 
-GraphViewItem* GraphView::selected_item() const { return m_selecteditem; }
+GraphViewNode* GraphView::selected_item() const { return m_selecteditem; }
 RDGraph* GraphView::graph() const { return m_graph; }
 
 void GraphView::focus_selected_block() {
@@ -48,7 +48,7 @@ void GraphView::focus_selected_block() {
         this->focus_block(m_selecteditem);
 }
 
-void GraphView::focus_block(const GraphViewItem* item, bool force) {
+void GraphView::focus_block(const GraphViewNode* item, bool force) {
     // Don't update the view for blocks that are already fully in view
     int xofs = this->horizontalScrollBar()->value();
     int yofs = this->verticalScrollBar()->value();
@@ -144,7 +144,7 @@ void GraphView::mouseReleaseEvent(QMouseEvent* e) {
 void GraphView::mouseMoveEvent(QMouseEvent* e) {
     if(m_selecteditem) {
         QPoint itempos;
-        GraphViewItem* item = this->item_from_mouse_event(e, &itempos);
+        GraphViewNode* item = this->item_from_mouse_event(e, &itempos);
 
         if(item == m_selecteditem) {
             QMouseEvent iteme{
@@ -247,13 +247,13 @@ void GraphView::paintEvent(QPaintEvent*) {
     painter.restore();
 
     // Render nodes
-    for(auto* item : m_items) {
+    for(auto* item : m_nodes) {
         if(!vpr.intersects(item->rect())) // Ignore blocks that are not in view
             continue;
 
-        usize itemstate = GraphViewItem::NONE;
+        usize itemstate = GraphViewNode::NONE;
         if(m_selecteditem == item)
-            itemstate |= GraphViewItem::SELECTED;
+            itemstate |= GraphViewNode::SELECTED;
 
         item->render(&painter, itemstate);
     }
@@ -272,7 +272,7 @@ void GraphView::selected_item_changed_event() {
 }
 
 void GraphView::update_edge(const RDGraphEdge&) {}
-void GraphView::update_node(GraphViewItem*) {}
+void GraphView::update_node(GraphViewNode*) {}
 void GraphView::begin_compute() {}
 void GraphView::end_compute() {}
 
@@ -284,8 +284,8 @@ void GraphView::focus_root_block() {
     if(!m_graph)
         return;
 
-    auto it = m_items.find(rdgraph_getroot(m_graph));
-    if(it != m_items.end())
+    auto it = m_nodes.find(rdgraph_getroot(m_graph));
+    if(it != m_nodes.end())
         this->focus_block(it.value());
 }
 
@@ -307,21 +307,21 @@ void GraphView::update_graph() {
 
     for(usize i = 0; i < nc; i++) {
         RDGraphNode n = nodes[i];
-        GraphViewItem* item = nullptr;
+        GraphViewNode* item = nullptr;
 
-        if(!m_items.contains(n)) {
+        if(!m_nodes.contains(n)) {
             item = this->create_node(n, m_graph);
             if(!item)
                 continue;
 
-            connect(m_items[n], &GraphViewItem::invalidated, this->viewport(),
+            connect(m_nodes[n], &GraphViewNode::invalidated, this->viewport(),
                     [&]() { this->viewport()->update(); });
 
             item->setParent(this); // Take Ownership
-            m_items[n] = item;
+            m_nodes[n] = item;
         }
         else
-            item = m_items[n];
+            item = m_nodes[n];
 
         this->update_node(item);
         nids.insert(n);
@@ -330,10 +330,10 @@ void GraphView::update_graph() {
     }
 
     // Remove orphan nodes
-    for(auto it = m_items.begin(); it != m_items.end();) {
+    for(auto it = m_nodes.begin(); it != m_nodes.end();) {
         if(!nids.contains(it.key())) {
             it.value()->deleteLater();
-            it = m_items.erase(it);
+            it = m_nodes.erase(it);
         }
         else
             it++;
@@ -348,7 +348,7 @@ void GraphView::update_graph() {
 
     for(usize i = 0; i < nc; i++) {
         RDGraphNode n = nodes[i];
-        m_items[n]->move(
+        m_nodes[n]->move(
             QPoint(rdgraph_getx(m_graph, n), rdgraph_gety(m_graph, n)));
     }
 
@@ -377,7 +377,7 @@ void GraphView::update_graph() {
     this->end_compute();
 }
 
-GraphViewItem* GraphView::item_from_mouse_event(QMouseEvent* e,
+GraphViewNode* GraphView::item_from_mouse_event(QMouseEvent* e,
                                                 QPoint* itempos) const {
     // Convert coordinates to system used in blocks
     int xofs = this->horizontalScrollBar()->value();
@@ -390,7 +390,7 @@ GraphViewItem* GraphView::item_from_mouse_event(QMouseEvent* e,
             (e->position().y() + yofs - m_renderoffset.y()) / m_scalefactor)),
     };
 
-    for(GraphViewItem* item : m_items) {
+    for(GraphViewNode* item : m_nodes) {
         if(!item->contains(pos))
             continue;
         if(itempos)
@@ -519,7 +519,7 @@ void GraphView::precompute_line(const RDGraphEdge& e) {
 }
 
 bool GraphView::update_selected_item(QMouseEvent* e, QPoint* itempos) {
-    GraphViewItem* olditem = m_selecteditem;
+    GraphViewNode* olditem = m_selecteditem;
     m_selecteditem = this->item_from_mouse_event(e, itempos);
 
     if(olditem) {

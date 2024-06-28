@@ -2,7 +2,6 @@
 #include "../../statusbar.h"
 #include "../../themeprovider.h"
 #include "../../utils.h"
-#include "surfacegraphitem.h"
 
 SurfaceGraph::SurfaceGraph(QWidget* parent): GraphView{parent} {
     this->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -29,32 +28,8 @@ RDSurfaceLocation SurfaceGraph::location() const {
 }
 
 void SurfaceGraph::jump_to(RDAddress address) {
-    LIndex idx;
-
-    if(!rdlisting_getindex(address, &idx))
-        return;
-
-    rdsurface_seek(m_surface, idx);
-
-    // Trigger redraw
-    this->set_location(this->location());
-}
-
-void SurfaceGraph::set_location(const RDSurfaceLocation& loc) {
-    if(loc.function.valid)
-        m_function = rd_getfunction(loc.function.value);
-    else
-        m_function = nullptr;
-
-    if(m_function)
-        m_graph = rdfunction_getgraph(m_function);
-    else
-        m_graph = nullptr;
-
-    this->set_graph(m_graph);
-
-    if(!m_graph) // No graph here, switch to listing
-        Q_EMIT switch_view();
+    if(this->seek_to_address(address))
+        this->set_location(this->location(), false);
 }
 
 void SurfaceGraph::invalidate() { this->update_graph(); }
@@ -72,26 +47,26 @@ void SurfaceGraph::update_edge(const RDGraphEdge& e) {
                      qUtf8Printable(themeprovider::color(theme).name()));
 }
 
-void SurfaceGraph::update_node(GraphViewItem* item) {
-    auto* g = static_cast<SurfaceGraphItem*>(item);
+void SurfaceGraph::update_node(GraphViewNode* item) {
+    auto* g = static_cast<SurfaceGraphNode*>(item);
     g->update_document();
 }
 
-GraphViewItem* SurfaceGraph::create_node(RDGraphNode n, const RDGraph*) {
+GraphViewNode* SurfaceGraph::create_node(RDGraphNode n, const RDGraph*) {
     RDFunctionBasicBlock bb;
 
     if(rdfunction_getbasicblock(m_function, n, &bb)) {
-        auto* g = new SurfaceGraphItem(m_surface, bb, n, m_function, this);
+        auto* g = new SurfaceGraphNode(m_surface, bb, n, m_function, this);
         g->setObjectName(QString::number(bb.start, 16));
 
-        connect(g, &SurfaceGraphItem::follow_requested, this, [&]() {
+        connect(g, &SurfaceGraphNode::follow_requested, this, [&]() {
             RDAddress address;
 
             if(rdsurface_getaddressundercursor(m_surface, &address))
                 this->jump_to(address);
         });
 
-        connect(g, &SurfaceGraphItem::invalidated, this,
+        connect(g, &SurfaceGraphNode::invalidated, this,
                 &SurfaceGraph::update_graph);
         return g;
     }
@@ -104,4 +79,51 @@ void SurfaceGraph::keyPressEvent(QKeyEvent* e) {
         Q_EMIT switch_view();
     else
         GraphView::keyPressEvent(e);
+}
+
+SurfaceGraphNode* SurfaceGraph::find_node(RDAddress address) {
+    for(GraphViewNode* g : m_nodes) {
+        auto* sg = static_cast<SurfaceGraphNode*>(g);
+        if(sg->contains_address(address))
+            return sg;
+    }
+
+    return nullptr;
+}
+
+bool SurfaceGraph::seek_to_address(RDAddress address) {
+    LIndex idx;
+
+    if(!rdlisting_getindex(address, &idx))
+        return false;
+
+    rdsurface_seekposition(m_surface, idx);
+    return true;
+}
+
+void SurfaceGraph::set_location(const RDSurfaceLocation& loc, bool seek) {
+    if(loc.function.valid)
+        m_function = rd_getfunction(loc.function.value);
+    else
+        m_function = nullptr;
+
+    if(m_function)
+        m_graph = rdfunction_getgraph(m_function);
+    else
+        m_graph = nullptr;
+
+    if(seek && loc.address.valid)
+        this->seek_to_address(loc.address.value);
+
+    this->set_graph(m_graph);
+
+    if(m_graph) {
+        if(!loc.address.valid)
+            return;
+
+        if(SurfaceGraphNode* n = this->find_node(loc.address.value); n)
+            this->set_selected_node(n);
+    }
+    else // No graph, switch to listing
+        Q_EMIT switch_view();
 }

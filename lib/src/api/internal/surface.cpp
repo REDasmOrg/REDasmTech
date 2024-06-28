@@ -201,6 +201,11 @@ bool surface_jumptoep(RDSurface* self) {
     return api::from_c(self)->jump_to_ep();
 }
 
+void surface_seekposition(RDSurface* self, LIndex index) {
+    spdlog::trace("surface_seekposition({}, {})", fmt::ptr(self), index);
+    api::from_c(self)->seek_position(index);
+}
+
 void surface_seek(RDSurface* self, LIndex index) {
     spdlog::trace("surface_seek({}, {})", fmt::ptr(self), index);
     api::from_c(self)->seek(index);

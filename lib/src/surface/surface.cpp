@@ -78,8 +78,8 @@ const Function* Surface::current_function() const {
 void Surface::render_function(const Function& f) {
     m_renderer->clear();
 
-    if(!this->jump_to(f.entry))
-        return;
+    // if(!this->jump_to(f.entry))
+    //     return;
 
     const Listing& listing = state::context->listing;
 
@@ -101,6 +101,24 @@ void Surface::render(usize n) {
     m_renderer->clear();
     this->render_range(this->start, n);
     this->render_finalize();
+}
+
+void Surface::seek_position(LIndex index) {
+    if(!this->rows.empty()) {
+        LIndex s = this->rows.front().listingindex;
+        LIndex e = this->rows.back().listingindex;
+
+        if(index >= s && index <= e) {
+            for(usize i = 0; i < this->rows.size(); i++) {
+                if(this->rows[i].listingindex == index) {
+                    this->set_position(i, 0);
+                    return;
+                }
+            }
+        }
+    }
+
+    this->seek(index);
 }
 
 void Surface::seek(LIndex index) {

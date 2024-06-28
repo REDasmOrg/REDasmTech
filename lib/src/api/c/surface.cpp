@@ -83,6 +83,10 @@ void rdsurface_clearselection(RDSurface* self) {
     redasm::api::internal::surface_clearselection(self);
 }
 
+void rdsurface_seekposition(RDSurface* self, LIndex index) {
+    redasm::api::internal::surface_seekposition(self, index);
+}
+
 void rdsurface_seek(RDSurface* self, LIndex index) {
     redasm::api::internal::surface_seek(self, index);
 }

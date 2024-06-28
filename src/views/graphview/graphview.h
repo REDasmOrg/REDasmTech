@@ -4,7 +4,7 @@
 //   https://github.com/x64dbg/x64dbg/blob/development/src/gui/Src/Gui/DisassemblerGraphView.h
 //   https://github.com/x64dbg/x64dbg/blob/development/src/gui/Src/Gui/DisassemblerGraphView.cpp
 
-#include "graphviewitem.h"
+#include "graphviewnode.h"
 #include <QAbstractScrollArea>
 #include <QList>
 #include <QVector>
@@ -17,10 +17,10 @@ class GraphView: public QAbstractScrollArea {
 public:
     explicit GraphView(QWidget* parent = nullptr);
     void set_graph(RDGraph* graph);
-    void set_selected_block(GraphViewItem* item);
+    void set_selected_node(const GraphViewNode* item);
     void set_focus_on_selection(bool b);
     void focus_root_block();
-    GraphViewItem* selected_item() const;
+    GraphViewNode* selected_item() const;
     RDGraph* graph() const;
 
 public Q_SLOTS:
@@ -36,17 +36,17 @@ protected:
     void resizeEvent(QResizeEvent* e) override;
     void paintEvent(QPaintEvent*) override;
     void showEvent(QShowEvent* e) override;
-    void focus_block(const GraphViewItem* item, bool force = false);
+    void focus_block(const GraphViewNode* item, bool force = false);
     virtual void selected_item_changed_event();
-    virtual GraphViewItem* create_node(RDGraphNode n, const RDGraph* g) = 0;
+    virtual GraphViewNode* create_node(RDGraphNode n, const RDGraph* g) = 0;
     virtual void update_edge(const RDGraphEdge&);
-    virtual void update_node(GraphViewItem*);
+    virtual void update_node(GraphViewNode*);
     virtual void compute_layout();
     virtual void begin_compute();
     virtual void end_compute();
 
 private:
-    GraphViewItem* item_from_mouse_event(QMouseEvent* e,
+    GraphViewNode* item_from_mouse_event(QMouseEvent* e,
                                          QPoint* itempos = nullptr) const;
     void zoom_out(const QPointF& cursorpos);
     void zoom_in(const QPointF& cursorpos);
@@ -61,10 +61,10 @@ Q_SIGNALS:
 
 protected:
     RDGraph* m_graph{nullptr};
-    QHash<RDGraphNode, GraphViewItem*> m_items;
+    QHash<RDGraphNode, GraphViewNode*> m_nodes;
 
 private:
-    GraphViewItem* m_selecteditem{nullptr};
+    GraphViewNode* m_selecteditem{nullptr};
     std::unordered_map<RDGraphEdge, QVector<QLine>> m_lines;
     std::unordered_map<RDGraphEdge, QPolygon> m_arrows;
     QPoint m_renderoffset, m_scrollbase;
