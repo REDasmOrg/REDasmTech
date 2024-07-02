@@ -1,5 +1,6 @@
 #pragma once
 
+#include <redasm/common.h>
 #include <redasm/types.h>
 
 // clang-format off
@@ -47,10 +48,12 @@
    +---------+-----------+-----------+-----------+----------------------------------+
  */
 
-RD_HANDLE(RDILFunction);
 RD_HANDLE(RDILExpression);
+RD_HANDLE(RDILExpressionTree);
 
-typedef enum RDILOpCodes {
+typedef RDILExpressionTree RDILFunction;
+
+typedef enum RDILOp {
     RDIL_INVALID = 0,
     RDIL_UNKNOWN,                                         // Special
     RDIL_NOP,                                             // Other
@@ -64,7 +67,7 @@ typedef enum RDILOpCodes {
     RDIL_EQ, RDIL_NE, RDIL_LT, RDIL_LE, RDIL_GT, RDIL_GE, // Compare
     RDIL_PUSH, RDIL_POP,                                  // Stack
     RDIL_INT,                                             // Privileged
-} RDILOpCodes;
+} RDILOp;
 // clang-format on
 
 #define RD_PRIVATE_RDIL_VALUE_FIELDS                                           \
@@ -76,6 +79,98 @@ typedef enum RDILOpCodes {
     const char* reg;
 
 typedef struct RDILValue {
-    RDILOpCodes type;
+    RDILOp type;
     RD_PRIVATE_RDIL_VALUE_FIELDS
 } RDILValue;
+
+REDASM_EXPORT const RDILExpression* rdil_unknown(RDILExpressionTree* self);
+REDASM_EXPORT const RDILExpression* rdil_nop(RDILExpressionTree* self);
+REDASM_EXPORT const RDILExpression* rdil_var(RDILExpressionTree* self,
+                                             RDAddress address);
+REDASM_EXPORT const RDILExpression* rdil_reg(RDILExpressionTree* self,
+                                             const char* reg);
+REDASM_EXPORT const RDILExpression* rdil_cnst(RDILExpressionTree* self,
+                                              u64 value);
+REDASM_EXPORT const RDILExpression* rdil_add(RDILExpressionTree* self,
+                                             const RDILExpression* l,
+                                             const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_sub(RDILExpressionTree* self,
+                                             const RDILExpression* l,
+                                             const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_mul(RDILExpressionTree* self,
+                                             const RDILExpression* l,
+                                             const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_div(RDILExpressionTree* self,
+                                             const RDILExpression* l,
+                                             const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_mod(RDILExpressionTree* self,
+                                             const RDILExpression* l,
+                                             const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_and(RDILExpressionTree* self,
+                                             const RDILExpression* l,
+                                             const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_or(RDILExpressionTree* self,
+                                            const RDILExpression* l,
+                                            const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_xor(RDILExpressionTree* self,
+                                             const RDILExpression* l,
+                                             const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_lsl(RDILExpressionTree* self,
+                                             const RDILExpression* l,
+                                             const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_lsr(RDILExpressionTree* self,
+                                             const RDILExpression* l,
+                                             const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_asl(RDILExpressionTree* self,
+                                             const RDILExpression* l,
+                                             const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_asr(RDILExpressionTree* self,
+                                             const RDILExpression* l,
+                                             const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_rol(RDILExpressionTree* self,
+                                             const RDILExpression* l,
+                                             const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_ror(RDILExpressionTree* self,
+                                             const RDILExpression* l,
+                                             const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_not(RDILExpressionTree* self,
+                                             const RDILExpression* e);
+REDASM_EXPORT const RDILExpression* rdil_mem(RDILExpressionTree* self,
+                                             const RDILExpression* e);
+REDASM_EXPORT const RDILExpression* rdil_copy(RDILExpressionTree* self,
+                                              const RDILExpression* dst,
+                                              const RDILExpression* src);
+REDASM_EXPORT const RDILExpression* rdil_goto(RDILExpressionTree* self,
+                                              const RDILExpression* e);
+REDASM_EXPORT const RDILExpression* rdil_call(RDILExpressionTree* self,
+                                              const RDILExpression* e);
+REDASM_EXPORT const RDILExpression* rdil_ret(RDILExpressionTree* self,
+                                             const RDILExpression* e);
+REDASM_EXPORT const RDILExpression* rdil_if(RDILExpressionTree* self,
+                                            const RDILExpression* cond,
+                                            const RDILExpression* t,
+                                            const RDILExpression* f);
+REDASM_EXPORT const RDILExpression* rdil_eq(RDILExpressionTree* self,
+                                            const RDILExpression* l,
+                                            const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_ne(RDILExpressionTree* self,
+                                            const RDILExpression* l,
+                                            const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_lt(RDILExpressionTree* self,
+                                            const RDILExpression* l,
+                                            const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_le(RDILExpressionTree* self,
+                                            const RDILExpression* l,
+                                            const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_gt(RDILExpressionTree* self,
+                                            const RDILExpression* l,
+                                            const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_ge(RDILExpressionTree* self,
+                                            const RDILExpression* l,
+                                            const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_push(RDILExpressionTree* self,
+                                              const RDILExpression* e);
+REDASM_EXPORT const RDILExpression* rdil_pop(RDILExpressionTree* self,
+                                             const RDILExpression* e);
+REDASM_EXPORT const RDILExpression* rdil_int(RDILExpressionTree* self,
+                                             const RDILExpression* e);

@@ -1,5 +1,6 @@
 #include "rdil.h"
 #include "../context.h"
+#include "../error.h"
 #include "../state.h"
 #include <unordered_map>
 
@@ -16,9 +17,9 @@ enum class WalkType {
     WHITESPACE,
 };
 
-void wrap_format(const Expression* e, std::string& res);
+void wrap_format(const ILExpression* e, std::string& res);
 
-bool has_value(const Expression* e) {
+bool has_value(const ILExpression* e) {
     switch(e->op) {
         case RDIL_VAR:
         case RDIL_REG:
@@ -30,7 +31,7 @@ bool has_value(const Expression* e) {
     return false;
 }
 
-std::string text_op(const Expression* e) {
+std::string text_op(const ILExpression* e) {
     switch(e->op) {
         case RDIL_ADD: return "+";
         case RDIL_SUB: return "-";
@@ -58,10 +59,10 @@ std::string text_op(const Expression* e) {
 }
 
 template<typename ToStringCallback>
-void to_string(const Expression* e, ToStringCallback cb);
+void to_string(const ILExpression* e, ToStringCallback cb);
 
 template<typename ToStringCallback>
-void wrap_walk(const Expression* e, ToStringCallback cb) {
+void wrap_walk(const ILExpression* e, ToStringCallback cb) {
     if(rdil::has_value(e) || (e->op == RDIL_MEM)) {
         rdil::to_string(e, cb);
         return;
@@ -72,7 +73,7 @@ void wrap_walk(const Expression* e, ToStringCallback cb) {
     cb(e, ")", WalkType::NORMAL);
 }
 
-bool get_format_impl(const Expression* e, std::string& res) {
+bool get_format_impl(const ILExpression* e, std::string& res) {
     switch(e->op) {
         case RDIL_ADD:
         case RDIL_SUB:
@@ -161,7 +162,7 @@ bool get_format_impl(const Expression* e, std::string& res) {
     return true;
 }
 
-void wrap_format(const Expression* e, std::string& res) {
+void wrap_format(const ILExpression* e, std::string& res) {
     if(rdil::has_value(e) || e->op == RDIL_MEM) {
         rdil::get_format_impl(e, res);
         return;
@@ -173,7 +174,7 @@ void wrap_format(const Expression* e, std::string& res) {
 }
 
 template<typename ToStringCallback>
-void to_string(const Expression* e, ToStringCallback cb) {
+void to_string(const ILExpression* e, ToStringCallback cb) {
     switch(e->op) {
         case RDIL_ADD:
         case RDIL_SUB:
@@ -285,9 +286,9 @@ void to_string(const Expression* e, ToStringCallback cb) {
     }
 }
 
-void get_text_impl(const Expression* e, std::string& res) {
+void get_text_impl(const ILExpression* e, std::string& res) {
     rdil::to_string(
-        e, [&res](const Expression* expr, const std::string& s, WalkType) {
+        e, [&res](const ILExpression* expr, const std::string& s, WalkType) {
             Context* ctx = state::context;
 
             switch(expr->op) {
@@ -340,13 +341,13 @@ usize get_op_type(std::string_view id) {
     return RDIL_INVALID;
 }
 
-std::string get_text(const Expression* e) {
+std::string get_text(const ILExpression* e) {
     std::string res;
     rdil::get_text_impl(e, res);
     return res;
 }
 
-std::string get_format(const Expression* e) {
+std::string get_format(const ILExpression* e) {
     if(!e)
         return {};
 
@@ -354,6 +355,16 @@ std::string get_format(const Expression* e) {
     if(!rdil::get_format_impl(e, fmt))
         return {};
     return fmt;
+}
+
+bool generate(const Function& f, ILFunction& ilf) {
+    const RDProcessor* p = state::context->processor;
+    assume(p);
+
+    for(const Function::BasicBlock& bb : f.blocks) {
+    }
+
+    return false;
 }
 
 } // namespace redasm::rdil

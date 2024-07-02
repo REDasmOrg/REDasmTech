@@ -7,6 +7,13 @@
 
 namespace redasm {
 
+namespace rdil {
+
+struct ILExpression;
+class ILExpressionTree;
+
+} // namespace rdil
+
 class AbstractStream;
 class AbstractBuffer;
 class Renderer;
@@ -35,6 +42,14 @@ inline const Function* from_c(const RDFunction* arg) {
 
 inline Function* from_c(RDFunction* arg) {
     return reinterpret_cast<Function*>(arg);
+}
+
+inline rdil::ILExpressionTree* from_c(RDILExpressionTree* arg) {
+    return reinterpret_cast<rdil::ILExpressionTree*>(arg);
+}
+
+inline const rdil::ILExpression* from_c(const RDILExpression* arg) {
+    return reinterpret_cast<const rdil::ILExpression*>(arg);
 }
 
 inline Emulator* from_c(RDEmulator* arg) {
@@ -113,6 +128,14 @@ inline RDFunction* to_c(Function* arg) {
 
 inline const RDFunction* to_c(const Function* arg) {
     return reinterpret_cast<const RDFunction*>(arg);
+}
+
+inline RDILExpressionTree* to_c(rdil::ILExpressionTree* arg) {
+    return reinterpret_cast<RDILExpressionTree*>(arg);
+}
+
+inline const RDILExpression* to_c(const rdil::ILExpression* arg) {
+    return reinterpret_cast<const RDILExpression*>(arg);
 }
 
 RDSegment to_c(const Segment& arg);

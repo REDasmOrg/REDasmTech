@@ -26,9 +26,10 @@ namespace redasm {
 
 namespace {
 
-constexpr std::array<char, 16> INTHEX_TABLE = {'0', '1', '2', '3', '4', '5',
-                                               '6', '7', '8', '9', 'A', 'B',
-                                               'C', 'D', 'E', 'F'};
+constexpr std::array<char, 16> INTHEX_TABLE = {
+    '0', '1', '2', '3', '4', '5', '6', '7',
+    '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
+};
 
 int calculate_bits(RDAddress address) {
     if(address <= std::numeric_limits<u8>::max())

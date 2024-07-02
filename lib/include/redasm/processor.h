@@ -1,7 +1,8 @@
 #pragma once
 
-#include "common.h"
-#include "renderer.h"
+#include <redasm/common.h>
+#include <redasm/rdil.h>
+#include <redasm/renderer.h>
 
 RD_HANDLE(RDEmulator);
 
@@ -32,6 +33,8 @@ REDASM_EXPORT void rdemulator_settype(RDEmulator* self, RDAddress address,
 struct RDProcessor;
 
 typedef usize (*RDProcessorEmulate)(const RDProcessor*, RDAddress, RDEmulator*);
+typedef void (*RDProcessorLift)(const RDProcessor*, RDAddress,
+                                RDILExpressionTree*);
 typedef bool (*RDProcessorRenderSegment)(const RDProcessor*,
                                          const RDRendererParams*);
 typedef bool (*RDProcessorRenderFunction)(const RDProcessor*,
@@ -45,6 +48,7 @@ typedef struct RDProcessor {
     void* userdata;
 
     RDProcessorEmulate emulate;
+    RDProcessorLift lift;
     RDProcessorRenderSegment rendersegment;
     RDProcessorRenderFunction renderfunction;
     RDProcessorRenderInstruction renderinstruction;

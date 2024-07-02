@@ -6,74 +6,74 @@
 
 namespace redasm::rdil {
 
-struct Expression {
-    RDILOpCodes op{RDIL_INVALID};
+struct ILExpression {
+    RDILOp op{RDIL_INVALID};
 
     union {
-        const Expression *n1{nullptr}, *u, *cond;
+        const ILExpression *n1{nullptr}, *u, *cond;
     };
 
     union {
-        const Expression *n2{nullptr}, *dst, *l, *t;
+        const ILExpression *n2{nullptr}, *dst, *l, *t;
     };
 
     union {
-        const Expression *n3{nullptr}, *src, *r, *f;
+        const ILExpression *n3{nullptr}, *src, *r, *f;
     };
 
     RD_PRIVATE_RDIL_VALUE_FIELDS
 };
 
-class ExpressionTree: public Object {
+class ILExpressionTree: public Object {
 public:
-    Expression* expr_unknown();
-    Expression* expr_nop();
-    Expression* expr_pop(const Expression* e);
-    Expression* expr_push(const Expression* e);
-    Expression* expr_reg(const char* reg);
-    Expression* expr_cnst(u64 value);
-    Expression* expr_var(RDAddress address);
-    Expression* expr_goto(const Expression* e);
-    Expression* expr_call(const Expression* e);
-    Expression* expr_ret(const Expression* e);
-    Expression* expr_mem(const Expression* e);
-    Expression* expr_not(const Expression* e);
-    Expression* expr_add(const Expression* l, const Expression* r);
-    Expression* expr_sub(const Expression* l, const Expression* r);
-    Expression* expr_mul(const Expression* l, const Expression* r);
-    Expression* expr_div(const Expression* l, const Expression* r);
-    Expression* expr_mod(const Expression* l, const Expression* r);
-    Expression* expr_and(const Expression* l, const Expression* r);
-    Expression* expr_or(const Expression* l, const Expression* r);
-    Expression* expr_xor(const Expression* l, const Expression* r);
-    Expression* expr_lsl(const Expression* l, const Expression* r);
-    Expression* expr_lsr(const Expression* l, const Expression* r);
-    Expression* expr_asl(const Expression* l, const Expression* r);
-    Expression* expr_asr(const Expression* l, const Expression* r);
-    Expression* expr_rol(const Expression* l, const Expression* r);
-    Expression* expr_ror(const Expression* l, const Expression* r);
-    Expression* expr_copy(const Expression* dst, const Expression* src);
-    Expression* expr_if(const Expression* cond, const Expression* t,
-                        const Expression* f);
-    Expression* expr_eq(const Expression* l, const Expression* r);
-    Expression* expr_ne(const Expression* l, const Expression* r);
-    Expression* expr_lt(const Expression* l, const Expression* r);
-    Expression* expr_le(const Expression* l, const Expression* r);
-    Expression* expr_gt(const Expression* l, const Expression* r);
-    Expression* expr_ge(const Expression* l, const Expression* r);
-    Expression* expr_int(const Expression* e);
+    ILExpression* expr_unknown();
+    ILExpression* expr_nop();
+    ILExpression* expr_pop(const ILExpression* e);
+    ILExpression* expr_push(const ILExpression* e);
+    ILExpression* expr_reg(const char* reg);
+    ILExpression* expr_cnst(u64 value);
+    ILExpression* expr_var(RDAddress address);
+    ILExpression* expr_goto(const ILExpression* e);
+    ILExpression* expr_call(const ILExpression* e);
+    ILExpression* expr_ret(const ILExpression* e);
+    ILExpression* expr_mem(const ILExpression* e);
+    ILExpression* expr_not(const ILExpression* e);
+    ILExpression* expr_add(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_sub(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_mul(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_div(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_mod(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_and(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_or(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_xor(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_lsl(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_lsr(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_asl(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_asr(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_rol(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_ror(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_copy(const ILExpression* dst, const ILExpression* src);
+    ILExpression* expr_if(const ILExpression* cond, const ILExpression* t,
+                          const ILExpression* f);
+    ILExpression* expr_eq(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_ne(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_lt(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_le(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_gt(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_ge(const ILExpression* l, const ILExpression* r);
+    ILExpression* expr_int(const ILExpression* e);
 
 private:
-    const Expression* check(const Expression* e);
-    Expression* expr_ds(RDILOpCodes op, const Expression* dst,
-                        const Expression* src);
-    Expression* expr_lr(RDILOpCodes op, const Expression* l,
-                        const Expression* r);
-    Expression* expr_u(RDILOpCodes op, const Expression* u);
-    Expression* expr(RDILOpCodes op);
+    const ILExpression* check(const ILExpression* e);
+    ILExpression* expr_ds(RDILOp op, const ILExpression* dst,
+                          const ILExpression* src);
+    ILExpression* expr_lr(RDILOp op, const ILExpression* l,
+                          const ILExpression* r);
+    ILExpression* expr_u(RDILOp op, const ILExpression* u);
+    ILExpression* expr(RDILOp op);
 
 private:
-    std::forward_list<Expression> m_pool;
+    std::forward_list<ILExpression> m_pool;
 };
 
 } // namespace redasm::rdil

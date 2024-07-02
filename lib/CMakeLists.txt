@@ -48,6 +48,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/graph/styledgraph.cpp
         src/graph/layouts/layeredlayout.cpp
         src/rdil/expression.cpp
+        src/rdil/function.cpp
         src/rdil/rdil.cpp
         src/listing.cpp
         src/context.cpp
@@ -62,6 +63,7 @@ target_sources(${PROJECT_NAME_LIB}
     PRIVATE # Internal
         src/api/marshal.cpp
         src/api/internal/redasm.cpp
+        src/api/internal/rdil.cpp
         src/api/internal/byte.cpp
         src/api/internal/loader.cpp
         src/api/internal/analyzer.cpp
@@ -90,6 +92,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/c/processor.cpp
         src/api/c/renderer.cpp
         src/api/c/graph.cpp
+        src/api/c/rdil.cpp
 
     PRIVATE # Python
         src/api/python/buffer.cpp
