@@ -34,7 +34,7 @@ struct RDProcessor;
 
 typedef usize (*RDProcessorEmulate)(const RDProcessor*, RDAddress, RDEmulator*);
 typedef void (*RDProcessorLift)(const RDProcessor*, RDAddress,
-                                RDILExpressionTree*);
+                                RDILExpressionList*);
 typedef bool (*RDProcessorRenderSegment)(const RDProcessor*,
                                          const RDRendererParams*);
 typedef bool (*RDProcessorRenderFunction)(const RDProcessor*,

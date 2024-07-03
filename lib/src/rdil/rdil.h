@@ -2,7 +2,7 @@
 
 #include "../disasm/function.h"
 #include "expression.h"
-#include "function.h"
+#include "expressionlist.h"
 #include <redasm/rdil.h>
 #include <string_view>
 
@@ -13,6 +13,6 @@ usize get_op_type(std::string_view id);
 std::string get_text(const ILExpression* e);
 std::string get_format(const ILExpression* e);
 
-bool generate(const Function& f, ILFunction& ilf);
+bool generate(const Function& f, ILExpressionList& res);
 
 } // namespace redasm::rdil

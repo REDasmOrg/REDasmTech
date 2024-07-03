@@ -1,26 +1,27 @@
-#include "function.h"
+#include "expressionlist.h"
 
 namespace redasm::rdil {
 
-void ILFunction::insert(usize idx, const ILExpression* e) {}
+void ILExpressionList::append(const ILExpression* e) {
+    e = this->check(e);
+    m_expressions.emplace_back(this->currentindex, e);
+}
 
-void ILFunction::append(const ILExpression* e) {}
-
-const ILExpression* ILFunction::first() const {
+const ILExpression* ILExpressionList::first() const {
     if(m_expressions.empty())
         return nullptr;
 
     return m_expressions.front().second;
 }
 
-const ILExpression* ILFunction::last() const {
+const ILExpression* ILExpressionList::last() const {
     if(m_expressions.empty())
         return nullptr;
 
     return m_expressions.back().second;
 }
 
-const ILExpression* ILFunction::expression(usize idx) const {
+const ILExpression* ILExpressionList::at(usize idx) const {
     if(idx >= m_expressions.size())
         return nullptr;
 

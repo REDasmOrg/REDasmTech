@@ -10,7 +10,8 @@ namespace redasm {
 namespace rdil {
 
 struct ILExpression;
-class ILExpressionTree;
+class ILExpressionPool;
+class ILExpressionList;
 
 } // namespace rdil
 
@@ -44,8 +45,16 @@ inline Function* from_c(RDFunction* arg) {
     return reinterpret_cast<Function*>(arg);
 }
 
-inline rdil::ILExpressionTree* from_c(RDILExpressionTree* arg) {
-    return reinterpret_cast<rdil::ILExpressionTree*>(arg);
+inline rdil::ILExpressionPool* from_c(RDILExpressionPool* arg) {
+    return reinterpret_cast<rdil::ILExpressionPool*>(arg);
+}
+
+inline const rdil::ILExpressionList* from_c(const RDILExpressionList* arg) {
+    return reinterpret_cast<const rdil::ILExpressionList*>(arg);
+}
+
+inline rdil::ILExpressionList* from_c(RDILExpressionList* arg) {
+    return reinterpret_cast<rdil::ILExpressionList*>(arg);
 }
 
 inline const rdil::ILExpression* from_c(const RDILExpression* arg) {
@@ -130,8 +139,12 @@ inline const RDFunction* to_c(const Function* arg) {
     return reinterpret_cast<const RDFunction*>(arg);
 }
 
-inline RDILExpressionTree* to_c(rdil::ILExpressionTree* arg) {
-    return reinterpret_cast<RDILExpressionTree*>(arg);
+inline RDILExpressionPool* to_c(rdil::ILExpressionPool* arg) {
+    return reinterpret_cast<RDILExpressionPool*>(arg);
+}
+
+inline RDILExpressionList* to_c(rdil::ILExpressionList* arg) {
+    return reinterpret_cast<RDILExpressionList*>(arg);
 }
 
 inline const RDILExpression* to_c(const rdil::ILExpression* arg) {

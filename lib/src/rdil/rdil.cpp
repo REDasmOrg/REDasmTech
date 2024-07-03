@@ -357,11 +357,13 @@ std::string get_format(const ILExpression* e) {
     return fmt;
 }
 
-bool generate(const Function& f, ILFunction& ilf) {
+bool generate(const Function& f, ILExpressionList& res) {
     const RDProcessor* p = state::context->processor;
     assume(p);
 
     for(const Function::BasicBlock& bb : f.blocks) {
+        MIndex idx = bb.start;
+        res.currentindex = idx;
     }
 
     return false;
