@@ -42,7 +42,7 @@ Q_SIGNALS:
     void closed();
 
 private:
-    const RDEngineStatus* m_status;
+    const RDEngineStatus* m_status{nullptr};
     ui::MainWindow m_ui;
     QString m_filepath;
     bool m_busy{false};

@@ -33,8 +33,7 @@ REDASM_EXPORT void rdemulator_settype(RDEmulator* self, RDAddress address,
 struct RDProcessor;
 
 typedef usize (*RDProcessorEmulate)(const RDProcessor*, RDAddress, RDEmulator*);
-typedef void (*RDProcessorLift)(const RDProcessor*, RDAddress,
-                                RDILExpressionList*);
+typedef bool (*RDProcessorLift)(const RDProcessor*, RDAddress, RDILList*);
 typedef bool (*RDProcessorRenderSegment)(const RDProcessor*,
                                          const RDRendererParams*);
 typedef bool (*RDProcessorRenderFunction)(const RDProcessor*,

@@ -1,4 +1,5 @@
 #include "contextview.h"
+#include "../statusbar.h"
 
 ContextView::ContextView(QWidget* parent): QWidget{parent}, m_ui{this} {
     m_functionsmodel = new SymbolsFilterModel(SYMBOL_FUNCTION, this);
@@ -24,6 +25,9 @@ ContextView::ContextView(QWidget* parent): QWidget{parent}, m_ui{this} {
         m_ui.stackedview->setCurrentWidget(m_ui.surfaceview);
         m_ui.surfaceview->set_location(m_ui.surfacegraph->location());
     });
+
+    connect(statusbar::status_icon(), &QPushButton::clicked, this,
+            [&]() { m_active = !m_active; });
 }
 
 ContextView::~ContextView() { rd_destroy(); }
@@ -36,13 +40,13 @@ RDSurface* ContextView::handle() const {
 }
 
 void ContextView::tick(const RDEngineStatus* s) {
-    if(s->stepscurrent == STEP_EMULATE)
+    if(s->step == STEP_EMULATE)
         return;
 
     m_functionsmodel->resync();
     this->invalidate();
 
-    if(s->stepscurrent == STEP_DONE)
+    if(s->step == STEP_DONE)
         m_ui.surfaceview->jump_to_ep();
 }
 

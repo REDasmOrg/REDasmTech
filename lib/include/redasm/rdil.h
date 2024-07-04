@@ -49,8 +49,8 @@
  */
 
 RD_HANDLE(RDILExpression);
-RD_HANDLE(RDILExpressionPool);
-RD_HANDLE(RDILExpressionList);
+RD_HANDLE(RDILPool);
+RD_HANDLE(RDILList);
 
 typedef enum RDILOp {
     RDIL_INVALID = 0,
@@ -82,105 +82,79 @@ typedef struct RDILValue {
     RD_PRIVATE_RDIL_VALUE_FIELDS
 } RDILValue;
 
-REDASM_EXPORT const RDILExpression* rdil_unknown(RDILExpressionPool* self);
-REDASM_EXPORT const RDILExpression* rdil_nop(RDILExpressionPool* self);
-REDASM_EXPORT const RDILExpression* rdil_var(RDILExpressionPool* self,
-                                             RDAddress address);
-REDASM_EXPORT const RDILExpression* rdil_reg(RDILExpressionPool* self,
-                                             const char* reg);
-REDASM_EXPORT const RDILExpression* rdil_cnst(RDILExpressionPool* self,
-                                              u64 value);
-REDASM_EXPORT const RDILExpression* rdil_add(RDILExpressionPool* self,
-                                             const RDILExpression* l,
-                                             const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_sub(RDILExpressionPool* self,
-                                             const RDILExpression* l,
-                                             const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_mul(RDILExpressionPool* self,
-                                             const RDILExpression* l,
-                                             const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_div(RDILExpressionPool* self,
-                                             const RDILExpression* l,
-                                             const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_mod(RDILExpressionPool* self,
-                                             const RDILExpression* l,
-                                             const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_and(RDILExpressionPool* self,
-                                             const RDILExpression* l,
-                                             const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_or(RDILExpressionPool* self,
-                                            const RDILExpression* l,
-                                            const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_xor(RDILExpressionPool* self,
-                                             const RDILExpression* l,
-                                             const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_lsl(RDILExpressionPool* self,
-                                             const RDILExpression* l,
-                                             const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_lsr(RDILExpressionPool* self,
-                                             const RDILExpression* l,
-                                             const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_asl(RDILExpressionPool* self,
-                                             const RDILExpression* l,
-                                             const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_asr(RDILExpressionPool* self,
-                                             const RDILExpression* l,
-                                             const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_rol(RDILExpressionPool* self,
-                                             const RDILExpression* l,
-                                             const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_ror(RDILExpressionPool* self,
-                                             const RDILExpression* l,
-                                             const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_not(RDILExpressionPool* self,
+REDASM_EXPORT const RDILExpression* rdil_unknown(RDILPool* self);
+REDASM_EXPORT const RDILExpression* rdil_nop(RDILPool* self);
+REDASM_EXPORT const RDILExpression* rdil_var(RDILPool* self, RDAddress address);
+REDASM_EXPORT const RDILExpression* rdil_reg(RDILPool* self, const char* reg);
+REDASM_EXPORT const RDILExpression* rdil_cnst(RDILPool* self, u64 value);
+REDASM_EXPORT const RDILExpression*
+rdil_add(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_sub(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_mul(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_div(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_mod(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_and(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_or(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_xor(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_lsl(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_lsr(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_asl(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_asr(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_rol(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_ror(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_not(RDILPool* self,
                                              const RDILExpression* e);
-REDASM_EXPORT const RDILExpression* rdil_mem(RDILExpressionPool* self,
+REDASM_EXPORT const RDILExpression* rdil_mem(RDILPool* self,
                                              const RDILExpression* e);
-REDASM_EXPORT const RDILExpression* rdil_copy(RDILExpressionPool* self,
-                                              const RDILExpression* dst,
-                                              const RDILExpression* src);
-REDASM_EXPORT const RDILExpression* rdil_goto(RDILExpressionPool* self,
+REDASM_EXPORT const RDILExpression*
+rdil_copy(RDILPool* self, const RDILExpression* dst, const RDILExpression* src);
+REDASM_EXPORT const RDILExpression* rdil_goto(RDILPool* self,
                                               const RDILExpression* e);
-REDASM_EXPORT const RDILExpression* rdil_call(RDILExpressionPool* self,
+REDASM_EXPORT const RDILExpression* rdil_call(RDILPool* self,
                                               const RDILExpression* e);
-REDASM_EXPORT const RDILExpression* rdil_ret(RDILExpressionPool* self,
+REDASM_EXPORT const RDILExpression* rdil_ret(RDILPool* self,
                                              const RDILExpression* e);
-REDASM_EXPORT const RDILExpression* rdil_if(RDILExpressionPool* self,
+REDASM_EXPORT const RDILExpression* rdil_if(RDILPool* self,
                                             const RDILExpression* cond,
                                             const RDILExpression* t,
                                             const RDILExpression* f);
-REDASM_EXPORT const RDILExpression* rdil_eq(RDILExpressionPool* self,
-                                            const RDILExpression* l,
-                                            const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_ne(RDILExpressionPool* self,
-                                            const RDILExpression* l,
-                                            const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_lt(RDILExpressionPool* self,
-                                            const RDILExpression* l,
-                                            const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_le(RDILExpressionPool* self,
-                                            const RDILExpression* l,
-                                            const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_gt(RDILExpressionPool* self,
-                                            const RDILExpression* l,
-                                            const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_ge(RDILExpressionPool* self,
-                                            const RDILExpression* l,
-                                            const RDILExpression* r);
-REDASM_EXPORT const RDILExpression* rdil_push(RDILExpressionPool* self,
-                                              const RDILExpression* e);
-REDASM_EXPORT const RDILExpression* rdil_pop(RDILExpressionPool* self,
-                                             const RDILExpression* e);
-REDASM_EXPORT const RDILExpression* rdil_int(RDILExpressionPool* self,
-                                             const RDILExpression* e);
-
-REDASM_EXPORT RDILExpressionPool*
-rdilexpressionlist_getpool(RDILExpressionList* self);
-
 REDASM_EXPORT const RDILExpression*
-rdilexpressionlist_at(const RDILExpressionList* self, usize idx);
-
-REDASM_EXPORT void rdilexpressionlist_append(RDILExpressionList* self,
+rdil_eq(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_ne(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_lt(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_le(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_gt(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression*
+rdil_ge(RDILPool* self, const RDILExpression* l, const RDILExpression* r);
+REDASM_EXPORT const RDILExpression* rdil_push(RDILPool* self,
+                                              const RDILExpression* e);
+REDASM_EXPORT const RDILExpression* rdil_pop(RDILPool* self,
                                              const RDILExpression* e);
-REDASM_EXPORT bool rdilexpressionlist_isempty(const RDILExpressionList* self);
-REDASM_EXPORT usize rdilexpressionlist_getsize(const RDILExpressionList* self);
+REDASM_EXPORT const RDILExpression* rdil_int(RDILPool* self,
+                                             const RDILExpression* e);
+
+REDASM_EXPORT RDILPool* rdillist_getpool(RDILList* self);
+
+REDASM_EXPORT const RDILExpression* rdillist_at(const RDILList* self,
+                                                usize idx);
+
+REDASM_EXPORT void rdillist_append(RDILList* self, const RDILExpression* e);
+REDASM_EXPORT bool rdillist_isempty(const RDILList* self);
+REDASM_EXPORT usize rdillist_getsize(const RDILList* self);

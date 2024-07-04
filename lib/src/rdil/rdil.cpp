@@ -1,4 +1,5 @@
 #include "rdil.h"
+#include "../api/marshal.h"
 #include "../context.h"
 #include "../error.h"
 #include "../state.h"
@@ -357,16 +358,30 @@ std::string get_format(const ILExpression* e) {
     return fmt;
 }
 
-bool generate(const Function& f, ILExpressionList& res) {
-    const RDProcessor* p = state::context->processor;
+void generate(const Function& f, ILExpressionList& res) {
+    const Context* ctx = state::context;
+    const auto& mem = state::context->memory;
+    const RDProcessor* p = ctx->processor;
     assume(p);
 
     for(const Function::BasicBlock& bb : f.blocks) {
-        MIndex idx = bb.start;
-        res.currentindex = idx;
-    }
+        for(MIndex idx = bb.start; idx <= bb.end; idx++) {
+            res.currentindex = idx;
 
-    return false;
+            auto address = ctx->index_to_address(idx);
+            assume(address.has_value());
+
+            if(!p->lift(p, *address, api::to_c(&res)))
+                res.append(res.expr_unknown());
+
+            if(auto nextidx = mem->get_next(idx); nextidx) {
+                assume(*nextidx > idx);
+                idx = *nextidx;
+            }
+            else
+                break;
+        }
+    }
 }
 
 } // namespace redasm::rdil

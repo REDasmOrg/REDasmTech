@@ -34,7 +34,7 @@ typedef struct RDAnalysisStatus {
     // Steps
     const char* const* stepslist;
     usize stepscount;
-    usize stepscurrent;
+    usize step;
 
     // Analyzers
     const char* const* analyzerslist;

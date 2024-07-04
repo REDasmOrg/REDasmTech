@@ -9,6 +9,7 @@ class ContextView: public QWidget {
 public:
     explicit ContextView(QWidget* parent = nullptr);
     ~ContextView() override;
+    [[nodiscard]] inline bool active() const { return m_active; }
     [[nodiscard]] RDSurface* handle() const;
     void tick(const RDEngineStatus* s);
     void jump_to(RDAddress address);
@@ -17,4 +18,5 @@ public:
 private:
     ui::ContextView m_ui;
     SymbolsFilterModel* m_functionsmodel;
+    bool m_active{true};
 };

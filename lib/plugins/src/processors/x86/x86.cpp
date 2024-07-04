@@ -159,6 +159,16 @@ usize X86Processor::emulate(RDAddress address, RDEmulator* e) {
     return m_instr.length;
 }
 
+bool X86Processor::lift(RDAddress address, RDILList* l) {
+    if(!this->decode(address)) {
+        return false;
+    }
+
+    RDILPool* pool = rdillist_getpool(l);
+    rdillist_append(l, rdil_nop(pool));
+    return true;
+}
+
 void X86Processor::process_refs(RDAddress address, RDEmulator* e) const {
     if(m_instr.mnemonic == ZYDIS_MNEMONIC_LEA) {
         return;
@@ -300,6 +310,10 @@ usize emulate(const RDProcessor* self, RDAddress address, RDEmulator* e) {
     return reinterpret_cast<X86Processor*>(self->userdata)->emulate(address, e);
 }
 
+bool lift(const RDProcessor* self, RDAddress address, RDILList* l) {
+    return reinterpret_cast<X86Processor*>(self->userdata)->lift(address, l);
+}
+
 RDProcessor x86_32{};
 RDProcessor x86_64{};
 
@@ -310,12 +324,14 @@ void rdplugin_init() {
     x86_32.userdata = new X86Processor(32);
     x86_32.renderinstruction = render_instruction;
     x86_32.emulate = emulate;
+    x86_32.lift = lift;
     rd_registerprocessor(&x86_32);
 
     x86_64.name = "x86_64";
     x86_64.userdata = new X86Processor(64);
     x86_64.renderinstruction = render_instruction;
     x86_64.emulate = emulate;
+    x86_64.lift = lift;
     rd_registerprocessor(&x86_64);
 }
 

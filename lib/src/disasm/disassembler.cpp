@@ -11,7 +11,7 @@ Disassembler::Disassembler() { m_status = std::make_unique<RDEngineStatus>(); }
 
 bool Disassembler::execute(const RDAnalysisStatus** s) {
     bool busy = m_currentstep < STEP_DONE;
-    m_status->stepscurrent = m_currentstep;
+    m_status->step = m_currentstep;
     m_status->address.valid = false;
 
     if(busy) {

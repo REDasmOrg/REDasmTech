@@ -45,6 +45,9 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
     m_ui.statusbar->addPermanentWidget(
         statusbar::set_status_label(new QLabel(this)), 70);
 
+    m_ui.statusbar->addPermanentWidget(statusbar::set_status_icon(
+        new QPushButton(this), m_ui.statusbar->height()));
+
     connect(m_ui.actfileexit, &QAction::triggered, this, &MainWindow::close);
     connect(m_ui.actfileopen, &QAction::triggered, this,
             &MainWindow::select_file);
@@ -197,10 +200,20 @@ void MainWindow::clear_recents() {
 }
 
 bool MainWindow::loop() {
-    if(m_busy && this->context_view()) {
+    ContextView* cv = this->context_view();
+
+    if(m_busy && cv) {
         m_busy = rd_tick(&m_status);
-        this->context_view()->tick(m_status);
-        this->report_status();
+        cv->tick(m_status);
+
+        if(m_status->step == STEP_DONE)
+            statusbar::set_stop_status();
+        else if(cv->active()) {
+            statusbar::set_play_status();
+            this->report_status();
+        }
+        else
+            statusbar::set_pause_status();
     }
 
     return m_busy;
@@ -266,7 +279,7 @@ void MainWindow::report_status() {
     QString s;
 
     s += QString::fromWCharArray(L"<b>State: </b>%1\u00A0\u00A0")
-             .arg(m_status->stepslist[m_status->stepscurrent]);
+             .arg(m_status->stepslist[m_status->step]);
 
     if(m_status->address.valid)
         s += QString::fromWCharArray(L"<b>Address: </b>%1\u00A0\u00A0")

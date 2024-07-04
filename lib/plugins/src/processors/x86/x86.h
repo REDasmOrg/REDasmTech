@@ -11,6 +11,7 @@ class X86Processor {
 public:
     explicit X86Processor(usize bits);
     bool render_instruction(const RDRendererParams* r);
+    bool lift(RDAddress address, RDILList* l);
     usize emulate(RDAddress address, RDEmulator* e);
 
 private:

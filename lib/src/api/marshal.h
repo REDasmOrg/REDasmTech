@@ -45,15 +45,15 @@ inline Function* from_c(RDFunction* arg) {
     return reinterpret_cast<Function*>(arg);
 }
 
-inline rdil::ILExpressionPool* from_c(RDILExpressionPool* arg) {
+inline rdil::ILExpressionPool* from_c(RDILPool* arg) {
     return reinterpret_cast<rdil::ILExpressionPool*>(arg);
 }
 
-inline const rdil::ILExpressionList* from_c(const RDILExpressionList* arg) {
+inline const rdil::ILExpressionList* from_c(const RDILList* arg) {
     return reinterpret_cast<const rdil::ILExpressionList*>(arg);
 }
 
-inline rdil::ILExpressionList* from_c(RDILExpressionList* arg) {
+inline rdil::ILExpressionList* from_c(RDILList* arg) {
     return reinterpret_cast<rdil::ILExpressionList*>(arg);
 }
 
@@ -139,12 +139,12 @@ inline const RDFunction* to_c(const Function* arg) {
     return reinterpret_cast<const RDFunction*>(arg);
 }
 
-inline RDILExpressionPool* to_c(rdil::ILExpressionPool* arg) {
-    return reinterpret_cast<RDILExpressionPool*>(arg);
+inline RDILPool* to_c(rdil::ILExpressionPool* arg) {
+    return reinterpret_cast<RDILPool*>(arg);
 }
 
-inline RDILExpressionList* to_c(rdil::ILExpressionList* arg) {
-    return reinterpret_cast<RDILExpressionList*>(arg);
+inline RDILList* to_c(rdil::ILExpressionList* arg) {
+    return reinterpret_cast<RDILList*>(arg);
 }
 
 inline const RDILExpression* to_c(const rdil::ILExpression* arg) {
