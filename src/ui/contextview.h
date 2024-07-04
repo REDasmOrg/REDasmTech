@@ -1,7 +1,6 @@
 #pragma once
 
-#include "../views/surface/surfacegraph.h"
-#include "../views/surface/surfaceview.h"
+#include "../views/surface/surfacesplitview.h"
 #include <QHeaderView>
 #include <QSplitter>
 #include <QStackedWidget>
@@ -12,18 +11,11 @@ namespace ui {
 
 struct ContextView {
     QSplitter* splitter;
-    SurfaceView* surfaceview;
-    SurfaceGraph* surfacegraph;
-    QStackedWidget* stackedview;
+    SurfaceSplitView* splitview;
     QTreeView* tvfunctions;
 
     explicit ContextView(QWidget* self) {
-        this->surfaceview = new SurfaceView();
-        this->surfacegraph = new SurfaceGraph();
-
-        this->stackedview = new QStackedWidget();
-        this->stackedview->addWidget(this->surfaceview);
-        this->stackedview->addWidget(this->surfacegraph);
+        this->splitview = new SurfaceSplitView();
 
         this->tvfunctions = new QTreeView();
         this->tvfunctions->header()->setStretchLastSection(true);
@@ -33,7 +25,7 @@ struct ContextView {
 
         this->splitter = new QSplitter();
         this->splitter->addWidget(this->tvfunctions);
-        this->splitter->addWidget(this->stackedview);
+        this->splitter->addWidget(this->splitview);
         this->splitter->setStretchFactor(0, 20);
         this->splitter->setStretchFactor(1, 80);
 
