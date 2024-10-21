@@ -2,8 +2,8 @@
 
 #include <QBoxLayout>
 #include <QDialog>
+#include <QHexView/qhexview.h>
 #include <QVBoxLayout>
-#include <qhexview/qhexview.h>
 
 namespace ui {
 

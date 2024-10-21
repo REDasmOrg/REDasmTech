@@ -1,6 +1,6 @@
 #pragma once
 
-#include <qhexview/model/buffer/qhexbuffer.h>
+#include <QHexView/model/buffer/qhexbuffer.h>
 #include <redasm/redasm.h>
 
 class FlagsBuffer: public QHexBuffer {
@@ -9,10 +9,7 @@ class FlagsBuffer: public QHexBuffer {
 public:
     explicit FlagsBuffer(QObject* parent = nullptr);
     [[nodiscard]] bool accept(qint64 idx) const override;
-
-    [[nodiscard]] inline quint64 base_address() const {
-        return m_meminfo.baseaddress;
-    }
+    [[nodiscard]] quint64 base_address() const { return m_meminfo.baseaddress; }
 
 public:
     [[nodiscard]] qint64 length() const override;
