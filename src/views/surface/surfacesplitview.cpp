@@ -1,62 +1,121 @@
 #include "surfacesplitview.h"
 #include "../../fontawesome.h"
 #include "../../themeprovider.h"
+#include ".././splitview/splitwidget.h"
 
-SurfaceSplitView::SurfaceSplitView(QWidget* parent)
-    : SplitView{new QStackedWidget(), parent} {
+SurfaceSplitDelegate::SurfaceSplitDelegate(QObject* parent)
+    : SplitDelegate{parent} {}
 
-    QAction* actback = this->add_button(
+QWidget* SurfaceSplitDelegate::create_widget(SplitWidget* split) {
+    QAction* actback = split->add_button(
         FA_ICON_COLOR(0xf053, themeprovider::color(THEME_GRAPHEDGELOOPCOND)));
-    QAction* actforward = this->add_button(
+    QAction* actforward = split->add_button(
         FA_ICON_COLOR(0xf054, themeprovider::color(THEME_GRAPHEDGELOOPCOND)));
-    QAction* actgoto = this->add_button(FA_ICON(0xf1e5));
+    QAction* actgoto = split->add_button(FA_ICON(0xf1e5));
 
-    m_surfaceview = new SurfaceView();
-    m_surfacegraph = new SurfaceGraph();
+    auto* stack = new QStackedWidget();
+    auto* surfaceview = new SurfaceView();
+    auto* surfacegraph = new SurfaceGraph();
+    stack->addWidget(surfaceview);
+    stack->addWidget(surfacegraph);
 
-    this->stacked_widget()->addWidget(m_surfaceview);
-    this->stacked_widget()->addWidget(m_surfacegraph);
-
-    connect(m_surfaceview->viewport(), &SurfaceWidget::switch_view, this,
-            [&]() {
-                this->stacked_widget()->setCurrentWidget(m_surfacegraph);
-                m_surfacegraph->set_location(m_surfaceview->location());
+    connect(surfaceview->viewport(), &SurfaceWidget::switch_view, this,
+            [stack, surfaceview, surfacegraph]() {
+                stack->setCurrentWidget(surfacegraph);
+                surfacegraph->set_location(surfaceview->location());
             });
 
-    connect(m_surfacegraph, &SurfaceGraph::switch_view, this, [&]() {
-        this->stacked_widget()->setCurrentWidget(m_surfaceview);
-        m_surfaceview->set_location(m_surfacegraph->location());
-    });
+    connect(surfacegraph, &SurfaceGraph::switch_view, this,
+            [stack, surfaceview, surfacegraph]() {
+                stack->setCurrentWidget(surfaceview);
+                surfaceview->set_location(surfacegraph->location());
+            });
 
     connect(actback, &QAction::triggered, this, [=]() {});
     connect(actforward, &QAction::triggered, this, [=]() {});
     connect(actgoto, &QAction::triggered, this, [=]() {});
+
+    return stack;
 }
 
-RDSurface* SurfaceSplitView::handle() const {
-    if(this->stacked_widget()->currentWidget() == m_surfacegraph)
-        return m_surfacegraph->handle();
+SurfaceSplitView::SurfaceSplitView(QWidget* parent)
+    : SplitView{new SurfaceSplitDelegate(), parent} {}
 
-    return m_surfaceview->handle();
+RDSurface* SurfaceSplitView::handle() const {
+    auto* stackw =
+        qobject_cast<QStackedWidget*>(this->selected_split()->widget());
+
+    if(stackw) {
+        QWidget* w = stackw->currentWidget();
+
+        if(auto* sv = qobject_cast<SurfaceView*>(w); sv)
+            return sv->handle();
+
+        if(auto* sg = qobject_cast<SurfaceGraph*>(w); sg)
+            return sg->handle();
+    }
+
+    return nullptr;
 }
 
 void SurfaceSplitView::jump_to(RDAddress address) { // NO LINT
-    if(this->stacked_widget()->currentWidget() == m_surfacegraph) {
-        m_surfacegraph->jump_to(address);
-        m_surfacegraph->setFocus();
-    }
-    else {
-        m_surfaceview->jump_to(address);
-        m_surfaceview->setFocus();
+    auto* stackw =
+        qobject_cast<QStackedWidget*>(this->selected_split()->widget());
+
+    if(stackw) {
+        QWidget* w = stackw->currentWidget();
+
+        if(auto* sv = qobject_cast<SurfaceView*>(w); sv) {
+            sv->jump_to(address);
+            sv->setFocus();
+        }
+        else if(auto* sg = qobject_cast<SurfaceGraph*>(w); sg) {
+            sg->jump_to(address);
+            sg->setFocus();
+        }
     }
 }
 
 void SurfaceSplitView::invalidate() {
+    auto* stackw =
+        qobject_cast<QStackedWidget*>(this->selected_split()->widget());
 
-    if(this->stacked_widget()->currentWidget() == m_surfacegraph)
-        m_surfacegraph->invalidate();
-    else
-        m_surfaceview->invalidate();
+    if(stackw) {
+        QWidget* w = stackw->currentWidget();
+
+        if(auto* sv = qobject_cast<SurfaceView*>(w); sv)
+            sv->invalidate();
+        else if(auto* sg = qobject_cast<SurfaceGraph*>(w); sg)
+            sg->invalidate();
+    }
 }
 
-SplitView* SurfaceSplitView::create_split() const { return nullptr; }
+SurfaceView* SurfaceSplitView::surface_view() const {
+    auto* stackw =
+        qobject_cast<QStackedWidget*>(this->selected_split()->widget());
+
+    qDebug() << this->selected_split()->widget();
+
+    if(stackw) {
+        for(int i = 0; i < stackw->count(); i++) {
+            if(auto* w = qobject_cast<SurfaceView*>(stackw->widget(i)); w)
+                return w;
+        }
+    }
+
+    return nullptr;
+}
+
+SurfaceGraph* SurfaceSplitView::surface_graph() const {
+    auto* stackw =
+        qobject_cast<QStackedWidget*>(this->selected_split()->widget());
+
+    if(stackw) {
+        for(int i = 0; i < stackw->count(); i++) {
+            if(auto* w = qobject_cast<SurfaceGraph*>(stackw->widget(i)); w)
+                return w;
+        }
+    }
+
+    return nullptr;
+}

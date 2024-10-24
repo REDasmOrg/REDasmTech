@@ -51,10 +51,11 @@ target_sources(${PROJECT_NAME}
         src/dialogs/analyzerdialog.cpp
         src/dialogs/memorymapdialog.cpp
 
-        src/views/splitview.cpp
         src/views/contextview.cpp
         src/views/dashboardview.cpp
         src/views/welcomeview.cpp
+        src/views/splitview/splitwidget.cpp
+        src/views/splitview/splitview.cpp
         src/views/surface/surfacewidget.cpp
         src/views/surface/surfacesplitview.cpp
         src/views/surface/surfaceview.cpp
