@@ -12,7 +12,8 @@ SplitWidget::SplitWidget(SplitView* view): m_view{view} {
     m_tbactions->setIconSize({16, 16});
     m_tbactions->setToolButtonStyle(Qt::ToolButtonIconOnly);
 
-    m_widget = view->split_delegate()->create_widget(this);
+    m_widget =
+        view->split_delegate()->create_widget(this, view->current_split());
     this->create_default_buttons();
 
     auto* vbox = new QVBoxLayout(this);
@@ -92,8 +93,13 @@ void SplitWidget::open_in_dialog() {
 
 void SplitWidget::close_widget() {
     auto* psplitter = qobject_cast<QSplitter*>(this->parentWidget());
-    if(psplitter)
-        psplitter->widget(psplitter->indexOf(this))->deleteLater();
+
+    if(psplitter) {
+        QList<int> sizes = psplitter->sizes();
+        sizes.removeAt(psplitter->indexOf(this));
+        this->deleteLater();
+        psplitter->setSizes(sizes);
+    }
 }
 
 void SplitWidget::update_close_button() {
@@ -105,11 +111,17 @@ void SplitWidget::split(Qt::Orientation orientation) {
     if(!psplitter)
         return;
 
+    QList<int> sizes = psplitter->sizes();
+
     if(psplitter->orientation() != orientation) {
         auto* ssplitter = new QSplitter(orientation);
-        psplitter->insertWidget(psplitter->indexOf(this), ssplitter);
+        int index = psplitter->indexOf(this);
+        psplitter->insertWidget(index, ssplitter);
         ssplitter->addWidget(this);
         ssplitter->addWidget(new SplitWidget(m_view));
+
+        sizes.append(sizes[index] / 2);
+        psplitter->setSizes(sizes);
     }
     else
         psplitter->addWidget(new SplitWidget(m_view));

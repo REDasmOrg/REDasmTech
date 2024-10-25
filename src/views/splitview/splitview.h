@@ -9,7 +9,8 @@ class SplitDelegate: public QObject {
 
 public:
     explicit SplitDelegate(QObject* parent = nullptr): QObject{parent} {}
-    [[nodiscard]] virtual QWidget* create_widget(SplitWidget* split) = 0;
+    [[nodiscard]] virtual QWidget* create_widget(SplitWidget* split,
+                                                 SplitWidget* current) = 0;
 };
 
 class SplitView: public QSplitter {
@@ -18,7 +19,7 @@ class SplitView: public QSplitter {
 public:
     explicit SplitView(SplitDelegate* delegate, QWidget* parent = nullptr);
     [[nodiscard]] SplitDelegate* split_delegate() const { return m_delegate; }
-    [[nodiscard]] SplitWidget* selected_split() const { return m_selsplit; }
+    [[nodiscard]] SplitWidget* current_split() const { return m_currsplit; }
     [[nodiscard]] int count() const { return m_count; }
 
 private:
@@ -33,7 +34,7 @@ Q_SIGNALS:
 private:
     int m_count{0};
     SplitDelegate* m_delegate;
-    SplitWidget* m_selsplit{nullptr};
+    SplitWidget* m_currsplit{nullptr};
 
     friend class SplitWidget;
 };

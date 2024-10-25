@@ -13,10 +13,10 @@ SplitView::SplitView(SplitDelegate* delegate, QWidget* parent)
 }
 
 void SplitView::set_selected_widget(SplitWidget* sw) {
-    if(m_selsplit == sw)
+    if(m_currsplit == sw)
         return;
 
-    m_selsplit = sw;
+    m_currsplit = sw;
     Q_EMIT selected_changed();
 }
 

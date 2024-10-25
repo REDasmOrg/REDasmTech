@@ -3,10 +3,47 @@
 #include "../../themeprovider.h"
 #include ".././splitview/splitwidget.h"
 
+namespace {
+
+SurfaceView* splitwidget_findsurfaceview(SplitWidget* split) {
+    if(!split)
+        return nullptr;
+
+    auto* stackw = qobject_cast<QStackedWidget*>(split->widget());
+
+    if(stackw) {
+        for(int i = 0; i < stackw->count(); i++) {
+            if(auto* w = qobject_cast<SurfaceView*>(stackw->widget(i)); w)
+                return w;
+        }
+    }
+
+    return nullptr;
+}
+
+SurfaceGraph* splitwidget_findsurfacegraph(SplitWidget* split) {
+    if(!split)
+        return nullptr;
+
+    auto* stackw = qobject_cast<QStackedWidget*>(split->widget());
+
+    if(stackw) {
+        for(int i = 0; i < stackw->count(); i++) {
+            if(auto* w = qobject_cast<SurfaceGraph*>(stackw->widget(i)); w)
+                return w;
+        }
+    }
+
+    return nullptr;
+}
+
+} // namespace
+
 SurfaceSplitDelegate::SurfaceSplitDelegate(QObject* parent)
     : SplitDelegate{parent} {}
 
-QWidget* SurfaceSplitDelegate::create_widget(SplitWidget* split) {
+QWidget* SurfaceSplitDelegate::create_widget(SplitWidget* split,
+                                             SplitWidget* current) {
     QAction* actback = split->add_button(
         FA_ICON_COLOR(0xf053, themeprovider::color(THEME_GRAPHEDGELOOPCOND)));
     QAction* actforward = split->add_button(
@@ -18,6 +55,16 @@ QWidget* SurfaceSplitDelegate::create_widget(SplitWidget* split) {
     auto* surfacegraph = new SurfaceGraph();
     stack->addWidget(surfaceview);
     stack->addWidget(surfacegraph);
+
+    // Sync locations
+    SurfaceView* currview = splitwidget_findsurfaceview(current);
+    SurfaceGraph* currgraph = splitwidget_findsurfacegraph(current);
+
+    if(currview)
+        surfaceview->set_location(currview->location());
+
+    if(currgraph)
+        surfacegraph->set_location(currgraph->location());
 
     connect(surfaceview->viewport(), &SurfaceWidget::switch_view, this,
             [stack, surfaceview, surfacegraph]() {
@@ -43,7 +90,7 @@ SurfaceSplitView::SurfaceSplitView(QWidget* parent)
 
 RDSurface* SurfaceSplitView::handle() const {
     auto* stackw =
-        qobject_cast<QStackedWidget*>(this->selected_split()->widget());
+        qobject_cast<QStackedWidget*>(this->current_split()->widget());
 
     if(stackw) {
         QWidget* w = stackw->currentWidget();
@@ -60,7 +107,7 @@ RDSurface* SurfaceSplitView::handle() const {
 
 void SurfaceSplitView::jump_to(RDAddress address) { // NO LINT
     auto* stackw =
-        qobject_cast<QStackedWidget*>(this->selected_split()->widget());
+        qobject_cast<QStackedWidget*>(this->current_split()->widget());
 
     if(stackw) {
         QWidget* w = stackw->currentWidget();
@@ -78,7 +125,7 @@ void SurfaceSplitView::jump_to(RDAddress address) { // NO LINT
 
 void SurfaceSplitView::invalidate() {
     auto* stackw =
-        qobject_cast<QStackedWidget*>(this->selected_split()->widget());
+        qobject_cast<QStackedWidget*>(this->current_split()->widget());
 
     if(stackw) {
         QWidget* w = stackw->currentWidget();
@@ -91,31 +138,9 @@ void SurfaceSplitView::invalidate() {
 }
 
 SurfaceView* SurfaceSplitView::surface_view() const {
-    auto* stackw =
-        qobject_cast<QStackedWidget*>(this->selected_split()->widget());
-
-    qDebug() << this->selected_split()->widget();
-
-    if(stackw) {
-        for(int i = 0; i < stackw->count(); i++) {
-            if(auto* w = qobject_cast<SurfaceView*>(stackw->widget(i)); w)
-                return w;
-        }
-    }
-
-    return nullptr;
+    return splitwidget_findsurfaceview(this->current_split());
 }
 
 SurfaceGraph* SurfaceSplitView::surface_graph() const {
-    auto* stackw =
-        qobject_cast<QStackedWidget*>(this->selected_split()->widget());
-
-    if(stackw) {
-        for(int i = 0; i < stackw->count(); i++) {
-            if(auto* w = qobject_cast<SurfaceGraph*>(stackw->widget(i)); w)
-                return w;
-        }
-    }
-
-    return nullptr;
+    return splitwidget_findsurfacegraph(this->current_split());
 }
