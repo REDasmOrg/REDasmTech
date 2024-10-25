@@ -56,15 +56,13 @@ QWidget* SurfaceSplitDelegate::create_widget(SplitWidget* split,
     stack->addWidget(surfaceview);
     stack->addWidget(surfacegraph);
 
-    // Sync locations
-    SurfaceView* currview = splitwidget_findsurfaceview(current);
-    SurfaceGraph* currgraph = splitwidget_findsurfacegraph(current);
+    // Sync view location
+    if(SurfaceView* cview = splitwidget_findsurfaceview(current); cview)
+        surfaceview->set_location(cview->location());
 
-    if(currview)
-        surfaceview->set_location(currview->location());
-
-    if(currgraph)
-        surfacegraph->set_location(currgraph->location());
+    // Sync graph location
+    if(SurfaceGraph* cgraph = splitwidget_findsurfacegraph(current); cgraph)
+        surfacegraph->set_location(cgraph->location());
 
     connect(surfaceview->viewport(), &SurfaceWidget::switch_view, this,
             [stack, surfaceview, surfacegraph]() {
