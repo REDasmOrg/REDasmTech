@@ -96,6 +96,23 @@ void SurfaceWidget::set_location(const RDSurfaceLocation& loc) {
         this->jump_to(loc.address.value);
 }
 
+bool SurfaceWidget::go_back() {
+    if(rdsurface_goback(m_surface)) {
+        this->sync_location();
+        return true;
+    }
+
+    return false;
+}
+bool SurfaceWidget::go_forward() {
+    if(rdsurface_goforward(m_surface)) {
+        this->sync_location();
+        return true;
+    }
+
+    return false;
+}
+
 void SurfaceWidget::jump_to(RDAddress address) {
     usize idx;
 
@@ -134,17 +151,18 @@ void SurfaceWidget::mouseDoubleClickEvent(QMouseEvent* e) {
 
 void SurfaceWidget::mousePressEvent(QMouseEvent* e) {
     if(m_surface) {
-        if(e->button() == Qt::LeftButton) {
-            RDSurfacePosition p = this->get_surface_coords(e->position());
-            rdsurface_setposition(m_surface, p.row, p.col);
-            this->viewport()->update();
+        switch(e->button()) {
+            case Qt::LeftButton: {
+                RDSurfacePosition p = this->get_surface_coords(e->position());
+                rdsurface_setposition(m_surface, p.row, p.col);
+                this->viewport()->update();
+                break;
+            }
+
+            case Qt::BackButton: this->go_back(); break;
+            case Qt::ForwardButton: this->go_forward(); break;
+            default: return;
         }
-        // else if(event->button() == Qt::BackButton)
-        // m_surface->goBack();
-        // else if(event->button() == Qt::ForwardButton)
-        // m_surface->goForward();
-        else
-            return;
 
         e->accept();
     }
@@ -230,6 +248,14 @@ void SurfaceWidget::paintEvent(QPaintEvent* e) {
 
     Q_EMIT render_completed();
     statusbar::set_location(m_surface);
+}
+
+bool SurfaceWidget::can_goback() const {
+    return rdsurface_cangoback(m_surface);
+}
+
+bool SurfaceWidget::can_goforward() const {
+    return rdsurface_cangoforward(m_surface);
 }
 
 int SurfaceWidget::visible_columns() const {

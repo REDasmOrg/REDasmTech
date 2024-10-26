@@ -8,15 +8,21 @@
 #include <memory>
 #include <redasm/renderer.h>
 #include <set>
+#include <stack>
 #include <string>
 
 namespace redasm {
 
 class Surface: public Object {
+private:
+    using History = std::stack<MIndex>;
+
 public:
     explicit Surface(usize flags = SURFACE_DEFAULT);
-    inline Renderer* renderer() const { return m_renderer.get(); }
-    [[nodiscard]] tl::optional<usize> current_index() const;
+    Renderer* renderer() const { return m_renderer.get(); }
+    [[nodiscard]] bool can_goback() const { return !m_histback.empty(); }
+    [[nodiscard]] bool can_goforward() const { return !m_histforward.empty(); }
+    [[nodiscard]] tl::optional<MIndex> current_index() const;
     [[nodiscard]] tl::optional<usize> index_under_cursor() const;
     [[nodiscard]] const Function* current_function() const;
     [[nodiscard]] const Segment* current_segment() const;
@@ -36,6 +42,8 @@ public:
     void set_position(usize row, usize col);
     bool select_word(usize row, usize col);
     bool select(usize row, usize col);
+    bool go_back();
+    bool go_forward();
     void seek_position(LIndex index);
     void seek(LIndex index);
     bool jump_to(MIndex index);
@@ -45,6 +53,7 @@ private:
     RDRendererParams create_render_params(const ListingItem& item) const;
     const ListingItem& get_listing_item(const SurfaceRow& sfrow) const;
     int calculate_index(usize idx) const;
+    void update_history(History& history) const;
     void insert_path(Byte b, int fromrow, int torow) const;
     void render_finalize();
     void render_range(LIndex start, usize n);
@@ -59,15 +68,24 @@ private:
     void render_refs(const ListingItem& item);
     void fit(usize& row, usize& col);
 
+    template<typename Callback>
+    void lock_history(Callback cb) {
+        m_lockhistory = true;
+        cb();
+        m_lockhistory = false;
+    }
+
 public:
     LIndex start{0};
     SurfaceRows rows;
 
 private:
     std::unique_ptr<Renderer> m_renderer;
+    History m_histback, m_histforward;
     mutable std::set<std::pair<usize, usize>> m_done;
     mutable std::vector<RDSurfacePath> m_path;
     mutable std::string m_strcache;
+    bool m_lockhistory{false};
     usize m_row{0}, m_col{0};
     usize m_selrow{0}, m_selcol{0};
 };

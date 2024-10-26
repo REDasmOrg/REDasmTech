@@ -91,6 +91,22 @@ void rdsurface_seek(RDSurface* self, LIndex index) {
     redasm::api::internal::surface_seek(self, index);
 }
 
-void rdsurface_jumptoep(RDSurface* self) {
-    redasm::api::internal::surface_jumptoep(self);
+bool rdsurface_jumptoep(RDSurface* self) {
+    return redasm::api::internal::surface_jumptoep(self);
+}
+
+bool rdsurface_cangoback(const RDSurface* self) {
+    return redasm::api::internal::surface_cangoback(self);
+}
+
+bool rdsurface_cangoforward(const RDSurface* self) {
+    return redasm::api::internal::surface_cangoforward(self);
+}
+
+bool rdsurface_goback(RDSurface* self) {
+    return redasm::api::internal::surface_goback(self);
+}
+
+bool rdsurface_goforward(RDSurface* self) {
+    return redasm::api::internal::surface_goforward(self);
 }

@@ -11,15 +11,19 @@ class SurfaceWidget: public QAbstractScrollArea {
 public:
     explicit SurfaceWidget(QWidget* parent = nullptr);
     ~SurfaceWidget() override;
-    [[nodiscard]] inline RDSurface* handle() const { return m_surface; }
+    [[nodiscard]] RDSurface* handle() const { return m_surface; }
     [[nodiscard]] RDSurfacePosition position() const;
     [[nodiscard]] RDSurfaceLocation location() const;
+    [[nodiscard]] bool can_goback() const;
+    [[nodiscard]] bool can_goforward() const;
     [[nodiscard]] int visible_columns() const;
     [[nodiscard]] int visible_rows() const;
     [[nodiscard]] qreal row_height() const;
     void set_location(const RDSurfaceLocation& loc);
 
 public Q_SLOTS:
+    bool go_back();
+    bool go_forward();
     void jump_to(RDAddress address);
     void jump_to_ep();
     void invalidate();

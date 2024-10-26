@@ -9,18 +9,18 @@ class ContextView: public QWidget {
 public:
     explicit ContextView(QWidget* parent = nullptr);
     ~ContextView() override;
-    [[nodiscard]] inline bool active() const { return m_active; }
+    [[nodiscard]] bool active() const { return m_active; }
     void tick(const RDEngineStatus* s);
 
-    inline void jump_to(RDAddress address) { // NOLINT
-        return m_ui.splitview->jump_to(address);
+    void jump_to(RDAddress address) { // NOLINT
+        m_ui.splitview->jump_to(address);
     }
 
-    inline void invalidate() { // NOLINT
-        return m_ui.splitview->invalidate();
+    void invalidate() { // NOLINT
+        m_ui.splitview->invalidate();
     }
 
-    [[nodiscard]] inline RDSurface* handle() const {
+    [[nodiscard]] RDSurface* handle() const {
         return m_ui.splitview->handle();
     };
 

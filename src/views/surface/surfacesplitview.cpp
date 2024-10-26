@@ -5,6 +5,30 @@
 
 namespace {
 
+// SurfaceView* splitwidget_getcurrentview(SplitWidget* split) {
+//     if(!split)
+//         return nullptr;
+//
+//     auto* stackw = qobject_cast<QStackedWidget*>(split->widget());
+//
+//     if(stackw)
+//         return qobject_cast<SurfaceView*>(stackw->currentWidget());
+//
+//     return nullptr;
+// }
+//
+// SurfaceGraph* splitwidget_getcurrentgraph(SplitWidget* split) {
+//     if(!split)
+//         return nullptr;
+//
+//     auto* stackw = qobject_cast<QStackedWidget*>(split->widget());
+//
+//     if(stackw)
+//         return qobject_cast<SurfaceGraph*>(stackw->currentWidget());
+//
+//     return nullptr;
+// }
+
 SurfaceView* splitwidget_findsurfaceview(SplitWidget* split) {
     if(!split)
         return nullptr;
@@ -55,6 +79,10 @@ QWidget* SurfaceSplitDelegate::create_widget(SplitWidget* split,
     auto* surfacegraph = new SurfaceGraph();
     stack->addWidget(surfaceview);
     stack->addWidget(surfacegraph);
+
+    // Initialize Actions
+    actback->setEnabled(surfaceview->viewport()->can_goback());
+    actforward->setEnabled(surfaceview->viewport()->can_goforward());
 
     // Sync view location
     if(SurfaceView* cview = splitwidget_findsurfaceview(current); cview)

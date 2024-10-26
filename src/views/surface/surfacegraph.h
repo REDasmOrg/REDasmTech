@@ -10,14 +10,20 @@ class SurfaceGraph: public GraphView {
 public:
     explicit SurfaceGraph(QWidget* parent = nullptr);
     ~SurfaceGraph() override;
-    [[nodiscard]] inline RDSurface* handle() const { return m_surface; }
+    [[nodiscard]] RDSurface* handle() const { return m_surface; }
+    [[nodiscard]] bool can_goback() const;
+    [[nodiscard]] bool can_goforward() const;
     RDSurfaceLocation location() const;
     void jump_to(RDAddress address);
     void invalidate();
 
-    inline void set_location(const RDSurfaceLocation& loc) {
+    void set_location(const RDSurfaceLocation& loc) {
         this->set_location(loc, true);
     }
+
+public Q_SLOTS:
+    bool go_back();
+    bool go_forward();
 
 protected:
     void begin_compute() override;

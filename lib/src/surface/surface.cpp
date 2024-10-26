@@ -1,8 +1,10 @@
 #include "surface.h"
+
 #include "../api/marshal.h"
 #include "../builtins/processor.h"
 #include "../context.h"
 #include "../state.h"
+#include <algorithm>
 
 namespace redasm {
 
@@ -36,14 +38,15 @@ std::pair<bool, std::string> surface_checkpointer(const typing::ParsedType& pt,
 
 Surface::Surface(usize flags) {
     m_renderer = std::make_unique<Renderer>(flags);
-    this->jump_to_ep();
+
+    this->lock_history([&]() { this->jump_to_ep(); });
 }
 
-tl::optional<usize> Surface::current_index() const {
+tl::optional<MIndex> Surface::current_index() const {
     if(state::context->listing.empty())
         return tl::nullopt;
 
-    usize idx =
+    LIndex idx =
         std::min(this->start + m_row, state::context->listing.size() - 1);
     return state::context->listing[idx].index;
 }
@@ -103,6 +106,30 @@ void Surface::render(usize n) {
     this->render_finalize();
 }
 
+bool Surface::go_back() {
+    if(m_histback.empty())
+        return false;
+
+    MIndex mindex = m_histback.top();
+    m_histback.pop();
+
+    this->update_history(m_histforward);
+    this->lock_history([&]() { this->jump_to(mindex); });
+    return true;
+}
+
+bool Surface::go_forward() {
+    if(m_histforward.empty())
+        return false;
+
+    MIndex mindex = m_histforward.top();
+    m_histforward.pop();
+
+    this->update_history(m_histback);
+    this->lock_history([&]() { this->jump_to(mindex); });
+    return true;
+}
+
 void Surface::seek_position(LIndex index) {
     if(!this->rows.empty()) {
         LIndex s = this->rows.front().listingindex;
@@ -122,10 +149,8 @@ void Surface::seek_position(LIndex index) {
 }
 
 void Surface::seek(LIndex index) {
-    this->start = index;
-
-    if(this->start > state::context->listing.size())
-        this->start = state::context->listing.size();
+    this->start = std::min(index, state::context->listing.size());
+    this->update_history(m_histback);
 }
 
 bool Surface::jump_to(MIndex index) {
@@ -133,6 +158,7 @@ bool Surface::jump_to(MIndex index) {
     auto it = ctx->listing.lower_bound(index);
 
     if(it != ctx->listing.end()) {
+        this->update_history(m_histback);
         this->start = std::distance(ctx->listing.cbegin(), it);
         return true;
     }
@@ -369,6 +395,17 @@ int Surface::calculate_index(usize idx) const {
     }
 
     return residx;
+}
+
+void Surface::update_history(History& history) const {
+    if(m_lockhistory)
+        return;
+
+    this->current_index().map([&](MIndex index) {
+        if(!history.empty() && history.top() == index)
+            return;
+        history.push(index);
+    });
 }
 
 void Surface::insert_path(Byte b, int fromrow, int torow) const {

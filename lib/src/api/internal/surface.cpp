@@ -188,7 +188,7 @@ bool surface_select(RDSurface* self, usize row, usize col) {
 
 void surface_clearselection(RDSurface* self) {
     spdlog::trace("surface_clearselection({})", fmt::ptr(self));
-    return api::from_c(self)->clear_selection();
+    api::from_c(self)->clear_selection();
 }
 
 bool surface_jumpto(RDSurface* self, MIndex index) {
@@ -209,6 +209,26 @@ void surface_seekposition(RDSurface* self, LIndex index) {
 void surface_seek(RDSurface* self, LIndex index) {
     spdlog::trace("surface_seek({}, {})", fmt::ptr(self), index);
     api::from_c(self)->seek(index);
+}
+
+bool surface_cangoback(const RDSurface* self) {
+    spdlog::trace("surface_cangoback({})", fmt::ptr(self));
+    return api::from_c(self)->can_goback();
+}
+
+bool surface_cangoforward(const RDSurface* self) {
+    spdlog::trace("surface_cangoforward({})", fmt::ptr(self));
+    return api::from_c(self)->can_goforward();
+}
+
+bool surface_goback(RDSurface* self) {
+    spdlog::trace("surface_goback({})", fmt::ptr(self));
+    return api::from_c(self)->go_back();
+}
+
+bool surface_goforward(RDSurface* self) {
+    spdlog::trace("surface_goforward({})", fmt::ptr(self));
+    return api::from_c(self)->go_forward();
 }
 
 } // namespace redasm::api::internal

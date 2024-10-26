@@ -31,5 +31,9 @@ void surface_seekposition(RDSurface* self, LIndex index);
 void surface_seek(RDSurface* self, LIndex index);
 bool surface_jumpto(RDSurface* self, MIndex index);
 bool surface_jumptoep(RDSurface* self);
+bool surface_cangoback(const RDSurface* self);
+bool surface_cangoforward(const RDSurface* self);
+bool surface_goback(RDSurface* self);
+bool surface_goforward(RDSurface* self);
 
 } // namespace redasm::api::internal
