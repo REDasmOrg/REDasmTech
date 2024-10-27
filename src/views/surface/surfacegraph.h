@@ -19,11 +19,13 @@ public:
 
     void set_location(const RDSurfaceLocation& loc) {
         this->set_location(loc, true);
+        Q_EMIT history_updated();
     }
 
 public Q_SLOTS:
     bool go_back();
     bool go_forward();
+    void clear_history();
 
 protected:
     void begin_compute() override;
@@ -39,6 +41,7 @@ private:
     void set_location(const RDSurfaceLocation& loc, bool seek);
 
 Q_SIGNALS:
+    void history_updated();
     void switch_view();
 
 private:

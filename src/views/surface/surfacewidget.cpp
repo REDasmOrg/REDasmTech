@@ -99,6 +99,7 @@ void SurfaceWidget::set_location(const RDSurfaceLocation& loc) {
 bool SurfaceWidget::go_back() {
     if(rdsurface_goback(m_surface)) {
         this->sync_location();
+        Q_EMIT history_updated();
         return true;
     }
 
@@ -107,10 +108,16 @@ bool SurfaceWidget::go_back() {
 bool SurfaceWidget::go_forward() {
     if(rdsurface_goforward(m_surface)) {
         this->sync_location();
+        Q_EMIT history_updated();
         return true;
     }
 
     return false;
+}
+
+void SurfaceWidget::clear_history() {
+    rdsurface_clearhistory(m_surface);
+    Q_EMIT history_updated();
 }
 
 void SurfaceWidget::jump_to(RDAddress address) {
@@ -123,12 +130,14 @@ void SurfaceWidget::jump_to(RDAddress address) {
             relidx -= DIFF;
 
         rdsurface_setposition(m_surface, idx - relidx, 0);
+        Q_EMIT history_updated();
         this->verticalScrollBar()->setValue(relidx);
     }
 }
 
 void SurfaceWidget::jump_to_ep() {
     rdsurface_jumptoep(m_surface);
+    Q_EMIT history_updated();
     this->sync_location();
 }
 
@@ -155,6 +164,7 @@ void SurfaceWidget::mousePressEvent(QMouseEvent* e) {
             case Qt::LeftButton: {
                 RDSurfacePosition p = this->get_surface_coords(e->position());
                 rdsurface_setposition(m_surface, p.row, p.col);
+                Q_EMIT history_updated();
                 this->viewport()->update();
                 break;
             }

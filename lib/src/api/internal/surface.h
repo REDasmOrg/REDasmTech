@@ -27,6 +27,7 @@ void surface_setposition(RDSurface* self, usize row, usize col);
 bool surface_selectword(RDSurface* self, usize row, usize col);
 bool surface_select(RDSurface* self, usize row, usize col);
 void surface_clearselection(RDSurface* self);
+void surface_clearhistory(RDSurface* self);
 void surface_seekposition(RDSurface* self, LIndex index);
 void surface_seek(RDSurface* self, LIndex index);
 bool surface_jumpto(RDSurface* self, MIndex index);

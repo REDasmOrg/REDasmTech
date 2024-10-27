@@ -226,6 +226,7 @@ void Surface::set_position(usize row, usize col) {
     m_selcol = col;
     this->fit(m_selrow, m_selcol);
     this->select(m_selrow, m_selcol);
+    this->update_history(m_histback);
 }
 
 bool Surface::select_word(usize row, usize col) {
@@ -841,6 +842,14 @@ int Surface::last_index_of(MIndex index) const {
 void Surface::clear_selection() {
     m_selrow = m_row;
     m_selcol = m_col;
+}
+
+void Surface::clear_history() {
+    while(!m_histback.empty())
+        m_histback.pop();
+
+    while(!m_histforward.empty())
+        m_histforward.pop();
 }
 
 } // namespace redasm

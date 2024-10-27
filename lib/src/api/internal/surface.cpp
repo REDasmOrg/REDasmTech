@@ -191,6 +191,11 @@ void surface_clearselection(RDSurface* self) {
     api::from_c(self)->clear_selection();
 }
 
+void surface_clearhistory(RDSurface* self) {
+    spdlog::trace("surface_clearhistory({})", fmt::ptr(self));
+    api::from_c(self)->clear_history();
+}
+
 bool surface_jumpto(RDSurface* self, MIndex index) {
     spdlog::trace("surface_jumpto({}, {})", fmt::ptr(self), index);
     return api::from_c(self)->jump_to(index);

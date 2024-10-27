@@ -5,29 +5,29 @@
 
 namespace {
 
-// SurfaceView* splitwidget_getcurrentview(SplitWidget* split) {
-//     if(!split)
-//         return nullptr;
-//
-//     auto* stackw = qobject_cast<QStackedWidget*>(split->widget());
-//
-//     if(stackw)
-//         return qobject_cast<SurfaceView*>(stackw->currentWidget());
-//
-//     return nullptr;
-// }
-//
-// SurfaceGraph* splitwidget_getcurrentgraph(SplitWidget* split) {
-//     if(!split)
-//         return nullptr;
-//
-//     auto* stackw = qobject_cast<QStackedWidget*>(split->widget());
-//
-//     if(stackw)
-//         return qobject_cast<SurfaceGraph*>(stackw->currentWidget());
-//
-//     return nullptr;
-// }
+SurfaceView* splitwidget_getcurrentview(SplitWidget* split) {
+    if(!split)
+        return nullptr;
+
+    auto* stackw = qobject_cast<QStackedWidget*>(split->widget());
+
+    if(stackw)
+        return qobject_cast<SurfaceView*>(stackw->currentWidget());
+
+    return nullptr;
+}
+
+SurfaceGraph* splitwidget_getcurrentgraph(SplitWidget* split) {
+    if(!split)
+        return nullptr;
+
+    auto* stackw = qobject_cast<QStackedWidget*>(split->widget());
+
+    if(stackw)
+        return qobject_cast<SurfaceGraph*>(stackw->currentWidget());
+
+    return nullptr;
+}
 
 SurfaceView* splitwidget_findsurfaceview(SplitWidget* split) {
     if(!split)
@@ -92,6 +92,19 @@ QWidget* SurfaceSplitDelegate::create_widget(SplitWidget* split,
     if(SurfaceGraph* cgraph = splitwidget_findsurfacegraph(current); cgraph)
         surfacegraph->set_location(cgraph->location());
 
+    connect(surfaceview->viewport(), &SurfaceWidget::history_updated,
+            [surfaceview, actback, actforward]() {
+                actback->setEnabled(surfaceview->viewport()->can_goback());
+                actforward->setEnabled(
+                    surfaceview->viewport()->can_goforward());
+            });
+
+    connect(surfacegraph, &SurfaceGraph::history_updated,
+            [surfacegraph, actback, actforward]() {
+                actback->setEnabled(surfacegraph->can_goback());
+                actforward->setEnabled(surfacegraph->can_goforward());
+            });
+
     connect(surfaceview->viewport(), &SurfaceWidget::switch_view, this,
             [stack, surfaceview, surfacegraph]() {
                 stack->setCurrentWidget(surfacegraph);
@@ -104,8 +117,20 @@ QWidget* SurfaceSplitDelegate::create_widget(SplitWidget* split,
                 surfaceview->set_location(surfacegraph->location());
             });
 
-    connect(actback, &QAction::triggered, this, [=]() {});
-    connect(actforward, &QAction::triggered, this, [=]() {});
+    connect(actback, &QAction::triggered, this, [split]() {
+        if(SurfaceView* v = splitwidget_getcurrentview(split); v)
+            v->viewport()->go_back();
+        else if(SurfaceGraph* g = splitwidget_getcurrentgraph(split); g)
+            g->go_back();
+    });
+
+    connect(actforward, &QAction::triggered, this, [split]() {
+        if(SurfaceView* v = splitwidget_getcurrentview(split); v)
+            v->viewport()->go_forward();
+        else if(SurfaceGraph* g = splitwidget_getcurrentgraph(split); g)
+            g->go_forward();
+    });
+
     connect(actgoto, &QAction::triggered, this, [=]() {});
 
     return stack;

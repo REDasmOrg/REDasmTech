@@ -24,6 +24,7 @@ public:
 public Q_SLOTS:
     bool go_back();
     bool go_forward();
+    void clear_history();
     void jump_to(RDAddress address);
     void jump_to_ep();
     void invalidate();
@@ -45,6 +46,7 @@ private:
     void sync_location();
 
 Q_SIGNALS:
+    void history_updated();
     void render_completed();
     void switch_view();
 

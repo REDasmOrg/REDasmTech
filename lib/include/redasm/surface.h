@@ -97,6 +97,7 @@ REDASM_EXPORT void rdsurface_setposition(RDSurface* self, usize row, usize col);
 REDASM_EXPORT bool rdsurface_selectword(RDSurface* self, usize row, usize col);
 REDASM_EXPORT bool rdsurface_select(RDSurface* self, usize row, usize col);
 REDASM_EXPORT void rdsurface_clearselection(RDSurface* self);
+REDASM_EXPORT void rdsurface_clearhistory(RDSurface* self);
 REDASM_EXPORT void rdsurface_seekposition(RDSurface* self, LIndex index);
 REDASM_EXPORT void rdsurface_seek(RDSurface* self, LIndex index);
 REDASM_EXPORT bool rdsurface_jumptoep(RDSurface* self);

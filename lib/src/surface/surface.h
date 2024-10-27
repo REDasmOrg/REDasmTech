@@ -36,6 +36,7 @@ public:
     int index_of(MIndex index) const;
     int last_index_of(MIndex index) const;
     void clear_selection();
+    void clear_history();
     void render_function(const Function& f);
     void render(usize n);
     void set_columns(usize cols);

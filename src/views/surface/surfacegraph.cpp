@@ -34,8 +34,10 @@ RDSurfaceLocation SurfaceGraph::location() const {
 }
 
 void SurfaceGraph::jump_to(RDAddress address) {
-    if(this->seek_to_address(address))
+    if(this->seek_to_address(address)) {
         this->set_location(this->location(), false);
+        Q_EMIT history_updated();
+    }
 }
 
 void SurfaceGraph::invalidate() { this->update_graph(); }
@@ -43,6 +45,7 @@ void SurfaceGraph::invalidate() { this->update_graph(); }
 bool SurfaceGraph::go_back() {
     if(rdsurface_goback(m_surface)) {
         this->set_location(this->location(), false);
+        Q_EMIT history_updated();
         return true;
     }
 
@@ -52,10 +55,16 @@ bool SurfaceGraph::go_back() {
 bool SurfaceGraph::go_forward() {
     if(rdsurface_goforward(m_surface)) {
         this->set_location(this->location(), false);
+        Q_EMIT history_updated();
         return true;
     }
 
     return false;
+}
+
+void SurfaceGraph::clear_history() {
+    rdsurface_clearhistory(m_surface);
+    Q_EMIT history_updated();
 }
 
 void SurfaceGraph::begin_compute() {
