@@ -98,7 +98,8 @@ void SurfaceWidget::set_location(const RDSurfaceLocation& loc) {
 
 bool SurfaceWidget::go_back() {
     if(rdsurface_goback(m_surface)) {
-        this->sync_location();
+        if(!this->sync_location())
+            this->viewport()->update();
         Q_EMIT history_updated();
         return true;
     }
@@ -107,7 +108,8 @@ bool SurfaceWidget::go_back() {
 }
 bool SurfaceWidget::go_forward() {
     if(rdsurface_goforward(m_surface)) {
-        this->sync_location();
+        if(!this->sync_location())
+            this->viewport()->update();
         Q_EMIT history_updated();
         return true;
     }
@@ -336,9 +338,17 @@ void SurfaceWidget::update_scrollbars() {
     this->verticalScrollBar()->setRange(0, this->get_listing_length());
 }
 
-void SurfaceWidget::sync_location() {
+bool SurfaceWidget::sync_location() {
     RDSurfaceLocation loc = this->location();
 
-    if(loc.listingindex.valid)
-        this->verticalScrollBar()->setValue(loc.listingindex.value);
+    if(loc.listingindex.valid) {
+        auto oldvalue = static_cast<usize>(this->verticalScrollBar()->value());
+
+        if(oldvalue != loc.listingindex.value) {
+            this->verticalScrollBar()->setValue(loc.listingindex.value);
+            return true;
+        }
+    }
+
+    return false;
 }

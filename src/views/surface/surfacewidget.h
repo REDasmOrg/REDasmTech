@@ -43,7 +43,7 @@ private:
     [[nodiscard]] usize get_listing_length() const;
     bool follow_under_cursor();
     void update_scrollbars();
-    void sync_location();
+    bool sync_location();
 
 Q_SIGNALS:
     void history_updated();

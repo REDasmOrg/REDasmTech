@@ -110,11 +110,16 @@ bool Surface::go_back() {
     if(m_histback.empty())
         return false;
 
-    MIndex mindex = m_histback.top();
-    m_histback.pop();
+    HistoryItem hitem = m_histback.front();
+    m_histback.pop_front();
 
     this->update_history(m_histforward);
-    this->lock_history([&]() { this->jump_to(mindex); });
+
+    this->lock_history([&]() {
+        this->start = hitem.start;
+        this->set_position(hitem.row, hitem.col);
+    });
+
     return true;
 }
 
@@ -122,11 +127,16 @@ bool Surface::go_forward() {
     if(m_histforward.empty())
         return false;
 
-    MIndex mindex = m_histforward.top();
-    m_histforward.pop();
+    HistoryItem hitem = m_histforward.front();
+    m_histforward.pop_front();
 
     this->update_history(m_histback);
-    this->lock_history([&]() { this->jump_to(mindex); });
+
+    this->lock_history([&]() {
+        this->start = hitem.start;
+        this->set_position(hitem.row, hitem.col);
+    });
+
     return true;
 }
 
@@ -148,9 +158,8 @@ void Surface::seek_position(LIndex index) {
     this->seek(index);
 }
 
-void Surface::seek(LIndex index) {
+void Surface::seek(LIndex index) { // Seek doesn't update back/forward stack
     this->start = std::min(index, state::context->listing.size());
-    this->update_history(m_histback);
 }
 
 bool Surface::jump_to(MIndex index) {
@@ -402,11 +411,16 @@ void Surface::update_history(History& history) const {
     if(m_lockhistory)
         return;
 
-    this->current_index().map([&](MIndex index) {
-        if(!history.empty() && history.top() == index)
-            return;
-        history.push(index);
-    });
+    RDSurfacePosition pos = this->end_selection();
+
+    HistoryItem hitem = {
+        this->start,
+        pos.row,
+        pos.col,
+    };
+
+    if(history.empty() || history.front() != hitem)
+        history.emplace_front(hitem);
 }
 
 void Surface::insert_path(Byte b, int fromrow, int torow) const {
@@ -845,11 +859,8 @@ void Surface::clear_selection() {
 }
 
 void Surface::clear_history() {
-    while(!m_histback.empty())
-        m_histback.pop();
-
-    while(!m_histforward.empty())
-        m_histforward.pop();
+    m_histback.clear();
+    m_histforward.clear();
 }
 
 } // namespace redasm

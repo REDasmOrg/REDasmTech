@@ -9,6 +9,7 @@ class SurfaceView: public QSplitter {
 
 public:
     explicit SurfaceView(QWidget* parent = nullptr);
+    void clear_history() { m_surface->clear_history(); }
     void jump_to_ep() { m_surface->jump_to_ep(); }
     void jump_to(RDAddress address) { m_surface->jump_to(address); }
     void invalidate() { m_surface->invalidate(); }

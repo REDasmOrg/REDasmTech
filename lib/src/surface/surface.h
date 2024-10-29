@@ -5,17 +5,31 @@
 #include "../memory/byte.h"
 #include "../utils/object.h"
 #include "renderer.h"
+#include <deque>
 #include <memory>
 #include <redasm/renderer.h>
 #include <set>
-#include <stack>
 #include <string>
 
 namespace redasm {
 
 class Surface: public Object {
 private:
-    using History = std::stack<MIndex>;
+    struct HistoryItem {
+        LIndex start;
+        usize row, col;
+
+        bool operator==(const HistoryItem& rhs) const {
+            return this->start == rhs.start && this->row == rhs.row &&
+                   this->col == rhs.col;
+        }
+
+        bool operator!=(const HistoryItem& rhs) const {
+            return !this->operator==(rhs);
+        }
+    };
+
+    using History = std::deque<HistoryItem>;
 
 public:
     explicit Surface(usize flags = SURFACE_DEFAULT);
