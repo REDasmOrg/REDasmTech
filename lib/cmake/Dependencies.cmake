@@ -17,11 +17,11 @@ function(setup_dependencies)
 
     CPMAddPackage("gh:TartanLlama/expected@1.1.0")
     CPMAddPackage("gh:TartanLlama/optional@1.1.0")
-    CPMAddPackage("gh:fmtlib/fmt#10.1.1")
+    CPMAddPackage("gh:fmtlib/fmt#10.2.1")
 
     CPMAddPackage(
         NAME spdlog
-        VERSION "1.12.0"
+        VERSION "1.14.1"
         GITHUB_REPOSITORY "gabime/spdlog"
         OPTIONS "SPDLOG_FMT_EXTERNAL ON"
     )
