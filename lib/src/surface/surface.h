@@ -68,7 +68,7 @@ private:
     RDRendererParams create_render_params(const ListingItem& item) const;
     const ListingItem& get_listing_item(const SurfaceRow& sfrow) const;
     int calculate_index(usize idx) const;
-    void update_history(History& history) const;
+    void update_history();
     void insert_path(Byte b, int fromrow, int torow) const;
     void render_finalize();
     void render_range(LIndex start, usize n);

@@ -113,7 +113,8 @@ bool Surface::go_back() {
     HistoryItem hitem = m_histback.front();
     m_histback.pop_front();
 
-    this->update_history(m_histforward);
+    if(m_histforward.empty() || m_histforward.front() != hitem)
+        m_histforward.emplace_front(hitem);
 
     this->lock_history([&]() {
         this->start = hitem.start;
@@ -130,7 +131,8 @@ bool Surface::go_forward() {
     HistoryItem hitem = m_histforward.front();
     m_histforward.pop_front();
 
-    this->update_history(m_histback);
+    if(m_histback.empty() || m_histback.front() != hitem)
+        m_histback.emplace_front(hitem);
 
     this->lock_history([&]() {
         this->start = hitem.start;
@@ -167,7 +169,7 @@ bool Surface::jump_to(MIndex index) {
     auto it = ctx->listing.lower_bound(index);
 
     if(it != ctx->listing.end()) {
-        this->update_history(m_histback);
+        this->update_history();
         this->start = std::distance(ctx->listing.cbegin(), it);
         return true;
     }
@@ -175,7 +177,12 @@ bool Surface::jump_to(MIndex index) {
     return false;
 }
 
-bool Surface::jump_to_ep() { return this->jump_to(state::context->entrypoint); }
+bool Surface::jump_to_ep() {
+    bool res = false;
+    this->lock_history(
+        [&]() { res = this->jump_to(state::context->entrypoint); });
+    return res;
+}
 
 const std::vector<RDSurfacePath>& Surface::get_path() const {
     const Listing& lst = state::context->listing;
@@ -231,11 +238,12 @@ void Surface::set_position(usize row, usize col) {
     if(row == m_selrow && col == m_selcol)
         return;
 
+    this->update_history();
+
     m_selrow = row;
     m_selcol = col;
     this->fit(m_selrow, m_selcol);
     this->select(m_selrow, m_selcol);
-    this->update_history(m_histback);
 }
 
 bool Surface::select_word(usize row, usize col) {
@@ -407,7 +415,7 @@ int Surface::calculate_index(usize idx) const {
     return residx;
 }
 
-void Surface::update_history(History& history) const {
+void Surface::update_history() {
     if(m_lockhistory)
         return;
 
@@ -419,8 +427,8 @@ void Surface::update_history(History& history) const {
         pos.col,
     };
 
-    if(history.empty() || history.front() != hitem)
-        history.emplace_front(hitem);
+    if(m_histback.empty() || m_histback.front() != hitem)
+        m_histback.emplace_front(hitem);
 }
 
 void Surface::insert_path(Byte b, int fromrow, int torow) const {

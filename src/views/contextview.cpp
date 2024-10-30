@@ -28,8 +28,6 @@ void ContextView::tick(const RDEngineStatus* s) {
     m_functionsmodel->resync();
     m_ui.splitview->invalidate();
 
-    if(s->step == STEP_DONE) {
+    if(s->step == STEP_DONE)
         m_ui.splitview->surface_view()->jump_to_ep();
-        m_ui.splitview->surface_view()->clear_history();
-    }
 }
