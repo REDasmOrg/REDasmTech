@@ -202,7 +202,7 @@ bool surface_jumpto(RDSurface* self, MIndex index) {
 }
 
 bool surface_jumptoep(RDSurface* self) {
-    spdlog::trace("surface_jumptoep({}, {}, {})", fmt::ptr(self));
+    spdlog::trace("surface_jumptoep({})", fmt::ptr(self));
     return api::from_c(self)->jump_to_ep();
 }
 

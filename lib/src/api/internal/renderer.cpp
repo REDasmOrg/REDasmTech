@@ -8,7 +8,7 @@
 namespace redasm::api::internal {
 
 void renderer_themed(RDRenderer* self, std::string_view s, RDThemeKind kind) {
-    spdlog::trace("renderer_themed({}, '{}',, {})", fmt::ptr(self), s,
+    spdlog::trace("renderer_themed({}, '{}', {})", fmt::ptr(self), s,
                   static_cast<int>(kind));
 
     api::from_c(self)->chunk(s, kind);

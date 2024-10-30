@@ -95,19 +95,17 @@ void deinit() {
 void set_loglevel(RDLogLevel l) {
     spdlog::trace("set_loglevel('{}')", static_cast<int>(l));
 
+    // clang-format off
     switch(l) {
         case LOGLEVEL_TRACE: spdlog::set_level(spdlog::level::trace); break;
         case LOGLEVEL_INFO: spdlog::set_level(spdlog::level::info); break;
         case LOGLEVEL_WARNING: spdlog::set_level(spdlog::level::warn); break;
         case LOGLEVEL_ERROR: spdlog::set_level(spdlog::level::err); break;
-
-        case LOGLEVEL_CRITICAL:
-            spdlog::set_level(spdlog::level::critical);
-            break;
-
+        case LOGLEVEL_CRITICAL: spdlog::set_level(spdlog::level::critical); break;
         case LOGLEVEL_OFF: spdlog::set_level(spdlog::level::off); break;
         default: spdlog::error("set_loglevel(): Invalid log-level"); break;
     }
+    // clang-format on
 }
 
 std::string symbolize(std::string s) {
