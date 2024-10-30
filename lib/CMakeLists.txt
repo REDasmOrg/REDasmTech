@@ -106,11 +106,11 @@ target_sources(${PROJECT_NAME_LIB}
 target_include_directories(${PROJECT_NAME_LIB} PUBLIC "${PROJECT_SOURCE_DIR}/include")
 
 target_link_libraries(${PROJECT_NAME_LIB}
-    PUBLIC
+    PRIVATE
         expected
         optional
         fmt
-        spdlog
+        spdlog::spdlog_header_only
         Python3::Python
 )
 
