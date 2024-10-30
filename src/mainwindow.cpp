@@ -35,8 +35,6 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
     actions::init(this);
     this->update_menubar();
 
-    rd_setloglevel(LOGLEVEL_TRACE);
-
     QString searchpath = qApp->applicationDirPath() + "/lib/plugins/src";
     rd_addsearchpath(qUtf8Printable(searchpath));
 
