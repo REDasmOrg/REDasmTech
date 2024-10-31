@@ -43,29 +43,29 @@ Surface::Surface(usize flags) {
 }
 
 tl::optional<MIndex> Surface::current_index() const {
-    if(state::context->listing.empty())
+    if(!this->start || state::context->listing.empty())
         return tl::nullopt;
 
     LIndex idx =
-        std::min(this->start + m_row, state::context->listing.size() - 1);
+        std::min(*this->start + m_row, state::context->listing.size() - 1);
     return state::context->listing[idx].index;
 }
 
 tl::optional<usize> Surface::index_under_cursor() const {
-    if(std::string w = m_renderer->word_at(m_row, m_col); !w.empty())
-        return state::context->database.get_index(w);
+    if(this->start) {
+        if(std::string w = m_renderer->word_at(m_row, m_col); !w.empty())
+            return state::context->database.get_index(w);
+    }
 
     return tl::nullopt;
 }
 
 const Segment* Surface::current_segment() const {
-    auto idx = this->current_index();
-    if(!idx)
-        return nullptr;
-
-    for(const Segment& s : state::context->segments) {
-        if(*idx >= s.index && *idx < s.endindex)
-            return &s;
+    if(auto idx = this->current_index(); idx) {
+        for(const Segment& s : state::context->segments) {
+            if(*idx >= s.index && *idx < s.endindex)
+                return &s;
+        }
     }
 
     return nullptr;
@@ -102,7 +102,7 @@ void Surface::render_function(const Function& f) {
 
 void Surface::render(usize n) {
     m_renderer->clear();
-    this->render_range(this->start, n);
+    this->start.map([&](LIndex s) { this->render_range(s, n); });
     this->render_finalize();
 }
 
@@ -113,8 +113,7 @@ bool Surface::go_back() {
     HistoryItem hitem = m_histback.front();
     m_histback.pop_front();
 
-    if(m_histforward.empty() || m_histforward.front() != hitem)
-        m_histforward.emplace_front(hitem);
+    this->update_history(m_histforward);
 
     this->lock_history([&]() {
         this->start = hitem.start;
@@ -131,8 +130,7 @@ bool Surface::go_forward() {
     HistoryItem hitem = m_histforward.front();
     m_histforward.pop_front();
 
-    if(m_histback.empty() || m_histback.front() != hitem)
-        m_histback.emplace_front(hitem);
+    this->update_history(m_histback);
 
     this->lock_history([&]() {
         this->start = hitem.start;
@@ -169,7 +167,7 @@ bool Surface::jump_to(MIndex index) {
     auto it = ctx->listing.lower_bound(index);
 
     if(it != ctx->listing.end()) {
-        this->update_history();
+        this->update_history(m_histback);
         this->start = std::distance(ctx->listing.cbegin(), it);
         return true;
     }
@@ -192,8 +190,8 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
     m_path.clear();
     m_done.clear();
 
-    for(usize i = 0; i < this->rows.size(); i++) {
-        usize lidx = this->start + i;
+    for(usize i = 0; this->start && i < this->rows.size(); i++) {
+        usize lidx = *this->start + i;
         if(lidx >= lst.size())
             break;
 
@@ -238,7 +236,7 @@ void Surface::set_position(usize row, usize col) {
     if(row == m_selrow && col == m_selcol)
         return;
 
-    this->update_history();
+    this->update_history(m_histback);
 
     m_selrow = row;
     m_selcol = col;
@@ -415,20 +413,20 @@ int Surface::calculate_index(usize idx) const {
     return residx;
 }
 
-void Surface::update_history() {
-    if(m_lockhistory)
+void Surface::update_history(History& history) const {
+    if(!this->start || m_lockhistory)
         return;
 
     RDSurfacePosition pos = this->end_selection();
 
     HistoryItem hitem = {
-        this->start,
+        *this->start,
         pos.row,
         pos.col,
     };
 
-    if(m_histback.empty() || m_histback.front() != hitem)
-        m_histback.emplace_front(hitem);
+    if(history.empty() || history.front() != hitem)
+        history.emplace_front(hitem);
 }
 
 void Surface::insert_path(Byte b, int fromrow, int torow) const {

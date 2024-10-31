@@ -10,6 +10,7 @@
 #include <redasm/renderer.h>
 #include <set>
 #include <string>
+#include <tl/optional.hpp>
 
 namespace redasm {
 
@@ -68,7 +69,7 @@ private:
     RDRendererParams create_render_params(const ListingItem& item) const;
     const ListingItem& get_listing_item(const SurfaceRow& sfrow) const;
     int calculate_index(usize idx) const;
-    void update_history();
+    void update_history(History& history) const;
     void insert_path(Byte b, int fromrow, int torow) const;
     void render_finalize();
     void render_range(LIndex start, usize n);
@@ -91,7 +92,7 @@ private:
     }
 
 public:
-    LIndex start{0};
+    tl::optional<LIndex> start{0};
     SurfaceRows rows;
 
 private:
