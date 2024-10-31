@@ -16,6 +16,7 @@ public:
     [[nodiscard]] QAction* action(int idx) const;
     [[nodiscard]] QWidget* widget() const { return m_widget; }
     QAction* add_button(const QIcon& icon);
+    QAction* add_button(QAction* action);
 
 public Q_SLOTS:
     void split_horizontally();

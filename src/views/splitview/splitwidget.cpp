@@ -44,14 +44,17 @@ QAction* SplitWidget::action(int idx) const {
 }
 
 QAction* SplitWidget::add_button(const QIcon& icon) {
-    auto* act = new QAction(icon, QString{}, m_tbactions);
+    return this->add_button(new QAction(icon, QString{}, m_tbactions));
+}
+
+QAction* SplitWidget::add_button(QAction* action) {
 
     if(m_actfirstdefault)
-        m_tbactions->insertAction(m_actfirstdefault, act);
+        m_tbactions->insertAction(m_actfirstdefault, action);
     else
-        m_tbactions->addAction(act);
+        m_tbactions->addAction(action);
 
-    return act;
+    return action;
 }
 
 void SplitWidget::create_default_buttons() {

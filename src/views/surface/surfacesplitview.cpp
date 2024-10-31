@@ -1,4 +1,5 @@
 #include "surfacesplitview.h"
+#include "../../actions.h"
 #include "../../fontawesome.h"
 #include "../../themeprovider.h"
 #include ".././splitview/splitwidget.h"
@@ -72,7 +73,7 @@ QWidget* SurfaceSplitDelegate::create_widget(SplitWidget* split,
         FA_ICON_COLOR(0xf053, themeprovider::color(THEME_GRAPHEDGELOOPCOND)));
     QAction* actforward = split->add_button(
         FA_ICON_COLOR(0xf054, themeprovider::color(THEME_GRAPHEDGELOOPCOND)));
-    QAction* actgoto = split->add_button(FA_ICON(0xf1e5));
+    split->add_button(actions::get(actions::GOTO));
 
     auto* stack = new QStackedWidget();
     auto* surfaceview = new SurfaceView();
@@ -130,8 +131,6 @@ QWidget* SurfaceSplitDelegate::create_widget(SplitWidget* split,
         else if(SurfaceGraph* g = splitwidget_getcurrentgraph(split); g)
             g->go_forward();
     });
-
-    connect(actgoto, &QAction::triggered, this, [=]() {});
 
     return stack;
 }

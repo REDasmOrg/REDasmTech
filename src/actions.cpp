@@ -1,6 +1,7 @@
 #include "actions.h"
 #include "dialogs/gotodialog.h"
 #include "dialogs/tabledialog.h"
+#include "fontawesome.h"
 #include "mainwindow.h"
 #include "models/referencesmodel.h"
 #include <QApplication>
@@ -87,8 +88,9 @@ void rename() {
 void init(MainWindow* mw) {
     g_mainwindow = mw;
 
-    g_actions[Type::GOTO] = mw->addAction("Goto…", QKeySequence(Qt::Key_G), mw,
-                                          []() { actions::show_goto(); });
+    g_actions[Type::GOTO] =
+        mw->addAction(FA_ICON(0xf1e5), "Goto…", QKeySequence(Qt::Key_G), mw,
+                      []() { actions::show_goto(); });
 
     g_actions[Type::COPY] =
         mw->addAction("Copy", QKeySequence(Qt::CTRL | Qt::Key_C), mw,
