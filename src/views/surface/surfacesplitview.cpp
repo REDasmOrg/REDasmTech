@@ -95,15 +95,19 @@ QWidget* SurfaceSplitDelegate::create_widget(SplitWidget* split,
 
     connect(surfaceview->viewport(), &SurfaceWidget::history_updated,
             [surfaceview, actback, actforward]() {
-                actback->setEnabled(surfaceview->viewport()->can_goback());
-                actforward->setEnabled(
-                    surfaceview->viewport()->can_goforward());
+                if(surfaceview->isVisible()) { // Ignore spurious signals
+                    actback->setEnabled(surfaceview->viewport()->can_goback());
+                    actforward->setEnabled(
+                        surfaceview->viewport()->can_goforward());
+                }
             });
 
     connect(surfacegraph, &SurfaceGraph::history_updated,
             [surfacegraph, actback, actforward]() {
-                actback->setEnabled(surfacegraph->can_goback());
-                actforward->setEnabled(surfacegraph->can_goforward());
+                if(surfacegraph->isVisible()) { // Ignore spurious signals
+                    actback->setEnabled(surfacegraph->can_goback());
+                    actforward->setEnabled(surfacegraph->can_goforward());
+                }
             });
 
     connect(surfaceview->viewport(), &SurfaceWidget::switch_view, this,
