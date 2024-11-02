@@ -67,15 +67,15 @@ void rdsurface_setcolumns(RDSurface* self, usize columns) {
     redasm::api::internal::surface_setcolumns(self, columns);
 }
 
-void rdsurface_setposition(RDSurface* self, usize row, usize col) {
+void rdsurface_setposition(RDSurface* self, int row, int col) {
     redasm::api::internal::surface_setposition(self, row, col);
 }
 
-bool rdsurface_selectword(RDSurface* self, usize row, usize col) {
+bool rdsurface_selectword(RDSurface* self, int row, int col) {
     return redasm::api::internal::surface_selectword(self, row, col);
 }
 
-bool rdsurface_select(RDSurface* self, usize row, usize col) {
+bool rdsurface_select(RDSurface* self, int row, int col) {
     return redasm::api::internal::surface_select(self, row, col);
 }
 

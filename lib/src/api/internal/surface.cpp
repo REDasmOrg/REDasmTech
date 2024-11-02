@@ -175,17 +175,17 @@ void surface_setcolumns(RDSurface* self, usize columns) {
     api::from_c(self)->set_columns(columns);
 }
 
-void surface_setposition(RDSurface* self, usize row, usize col) {
+void surface_setposition(RDSurface* self, int row, int col) {
     spdlog::trace("surface_setposition({}, {}, {})", fmt::ptr(self), row, col);
     api::from_c(self)->set_position(row, col);
 }
 
-bool surface_selectword(RDSurface* self, usize row, usize col) {
+bool surface_selectword(RDSurface* self, int row, int col) {
     spdlog::trace("surface_selectword({}, {}, {})", fmt::ptr(self), row, col);
     return api::from_c(self)->select_word(row, col);
 }
 
-bool surface_select(RDSurface* self, usize row, usize col) {
+bool surface_select(RDSurface* self, int row, int col) {
     spdlog::trace("surface_select({}, {}, {})", fmt::ptr(self), row, col);
     return api::from_c(self)->select(row, col);
 }

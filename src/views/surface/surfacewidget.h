@@ -41,6 +41,8 @@ private:
     [[nodiscard]] RDSurfacePosition get_surface_coords(QPointF pt) const;
     [[nodiscard]] bool get_surface_index(usize* index) const;
     [[nodiscard]] usize get_listing_length() const;
+    [[nodiscard]] QPair<LIndex, LIndex> get_visible_range() const;
+    [[nodiscard]] bool is_index_visible(LIndex index) const;
     bool follow_under_cursor();
     void update_scrollbars();
     bool sync_location();

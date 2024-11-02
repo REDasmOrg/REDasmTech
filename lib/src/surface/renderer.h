@@ -20,15 +20,15 @@ using SurfaceRows = std::vector<SurfaceRow>;
 
 struct Renderer {
     explicit Renderer(usize f);
-    [[nodiscard]] std::string word_at(usize row, usize col) const;
+    [[nodiscard]] std::string word_at(int row, int col) const;
     [[nodiscard]] usize current_address() const;
     void swap(SurfaceRows& r) { m_rows.swap(r); }
     void clear() { m_rows.clear(); }
-    void highlight_row(usize row);
-    void highlight_words(usize row, usize col);
+    void highlight_row(int row);
+    void highlight_words(int row, int col);
     void highlight_selection(RDSurfacePosition startsel,
                              RDSurfacePosition endsel);
-    void highlight_cursor(usize row, usize col);
+    void highlight_cursor(int row, int col);
     void fill_columns();
     void set_current_item(LIndex lidx, const ListingItem& item);
 

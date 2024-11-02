@@ -16,20 +16,20 @@ const Segment* Renderer::current_segment() const {
     return &state::context->segments[m_currsegment];
 }
 
-void Renderer::highlight_row(usize idx) {
+void Renderer::highlight_row(int row) {
     if(this->has_flag(SURFACE_NOCURSORLINE))
         return;
 
-    if(idx >= m_rows.size())
+    if(row >= static_cast<int>(m_rows.size()))
         return;
 
-    SurfaceRow& row = m_rows[idx];
+    SurfaceRow& sfrow = m_rows[row];
 
-    for(RDSurfaceCell& cell : row.cells)
+    for(RDSurfaceCell& cell : sfrow.cells)
         cell.bg = THEME_SEEK;
 }
 
-void Renderer::highlight_words(usize row, usize col) {
+void Renderer::highlight_words(int row, int col) {
     if(this->has_flag(SURFACE_NOHIGHLIGHT))
         return;
 
@@ -70,9 +70,9 @@ void Renderer::highlight_selection(RDSurfacePosition startsel,
     if(this->has_flag(SURFACE_NOSELECTION))
         return;
 
-    for(usize row = startsel.row; row < m_rows.size() && row <= endsel.row;
-        row++) {
-        usize startcol = 0, endcol = 0;
+    for(int row = startsel.row;
+        row < static_cast<int>(m_rows.size()) && row <= endsel.row; row++) {
+        int startcol = 0, endcol = 0;
 
         if(!m_rows[row].cells.empty())
             endcol = m_rows[row].cells.size() - 1;
@@ -82,8 +82,9 @@ void Renderer::highlight_selection(RDSurfacePosition startsel,
         if(row == endsel.row)
             endcol = endsel.col;
 
-        for(usize col = startcol;
-            col < m_rows[row].cells.size() && col <= endcol; col++) {
+        for(int col = startcol;
+            col < static_cast<int>(m_rows[row].cells.size()) && col <= endcol;
+            col++) {
             RDSurfaceCell& c = m_rows[row].cells[col];
             c.fg = THEME_SELECTIONFG;
             c.bg = THEME_SELECTIONBG;
@@ -91,17 +92,17 @@ void Renderer::highlight_selection(RDSurfacePosition startsel,
     }
 }
 
-void Renderer::highlight_cursor(usize row, usize col) {
+void Renderer::highlight_cursor(int row, int col) {
     if(this->has_flag(SURFACE_NOCURSOR) || m_rows.empty())
         return;
 
-    if(row >= m_rows.size())
+    if(row >= static_cast<int>(m_rows.size()))
         row = m_rows.size() - 1;
 
     if(m_rows[row].cells.empty())
         return;
 
-    if(col >= m_rows[row].cells.size())
+    if(col >= static_cast<int>(m_rows[row].cells.size()))
         col = m_rows[row].cells.size() - 1;
 
     m_rows[row].cells[col].fg = THEME_CURSORFG;
@@ -207,13 +208,13 @@ void Renderer::check_current_segment(const ListingItem& item) {
     m_currsegment = state::context->segments.size();
 }
 
-std::string Renderer::word_at(usize row, usize col) const {
-    if(row >= m_rows.size())
+std::string Renderer::word_at(int row, int col) const {
+    if(row >= static_cast<int>(m_rows.size()))
         return {};
 
     const SurfaceRow& sfrow = m_rows[row];
 
-    if(col >= sfrow.cells.size())
+    if(col >= static_cast<int>(sfrow.cells.size()))
         col = sfrow.cells.size() - 1;
 
     if(is_char_skippable(sfrow.cells[col].ch))
@@ -221,7 +222,7 @@ std::string Renderer::word_at(usize row, usize col) const {
 
     std::string word;
 
-    for(usize i = col; i-- > 0;) {
+    for(int i = col; i-- > 0;) {
         RDSurfaceCell cell = sfrow.cells[i];
         if(is_char_skippable(cell.ch))
             break;
@@ -229,7 +230,7 @@ std::string Renderer::word_at(usize row, usize col) const {
         word.insert(0, &cell.ch, 1);
     }
 
-    for(usize i = col; i < sfrow.cells.size(); i++) {
+    for(int i = col; i < static_cast<int>(sfrow.cells.size()); i++) {
         RDSurfaceCell cell = sfrow.cells[i];
         if(is_char_skippable(cell.ch))
             break;

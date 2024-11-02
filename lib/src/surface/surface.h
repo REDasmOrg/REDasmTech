@@ -18,7 +18,7 @@ class Surface: public Object {
 private:
     struct HistoryItem {
         LIndex start;
-        usize row, col;
+        int row, col;
 
         bool operator==(const HistoryItem& rhs) const {
             return this->start == rhs.start && this->row == rhs.row &&
@@ -55,9 +55,9 @@ public:
     void render_function(const Function& f);
     void render(usize n);
     void set_columns(usize cols);
-    void set_position(usize row, usize col);
-    bool select_word(usize row, usize col);
-    bool select(usize row, usize col);
+    void set_position(int row, int col);
+    bool select_word(int row, int col);
+    bool select(int row, int col);
     bool go_back();
     bool go_forward();
     void seek_position(LIndex index);
@@ -82,7 +82,12 @@ private:
     void render_instr(const ListingItem& item);
     void render_comments(const ListingItem& item);
     void render_refs(const ListingItem& item);
-    void fit(usize& row, usize& col);
+    void fit(int& row, int& col);
+    int rows_count() const { return static_cast<int>(this->rows.size()); }
+
+    int cols_count(int row) const {
+        return static_cast<int>(this->rows[row].cells.size());
+    }
 
     template<typename Callback>
     void lock_history(Callback cb) {
@@ -98,12 +103,12 @@ public:
 private:
     std::unique_ptr<Renderer> m_renderer;
     History m_histback, m_histforward;
-    mutable std::set<std::pair<usize, usize>> m_done;
+    mutable std::set<std::pair<int, int>> m_done;
     mutable std::vector<RDSurfacePath> m_path;
     mutable std::string m_strcache;
     bool m_lockhistory{false};
-    usize m_row{0}, m_col{0};
-    usize m_selrow{0}, m_selcol{0};
+    int m_row{0}, m_col{0};
+    int m_selrow{0}, m_selcol{0};
 };
 
 } // namespace redasm

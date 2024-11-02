@@ -54,8 +54,8 @@ typedef struct RDSurfaceLocation {
 } RDSurfaceLocation;
 
 typedef struct RDSurfacePosition {
-    usize row;
-    usize col;
+    int row;
+    int col;
 } RDSurfacePosition;
 
 typedef struct RDSurfaceCell {
@@ -93,9 +93,9 @@ REDASM_EXPORT const char* rdsurface_getselectedtext(const RDSurface* self);
 REDASM_EXPORT bool rdsurface_getaddressundercursor(const RDSurface* self,
                                                    RDAddress* address);
 REDASM_EXPORT void rdsurface_setcolumns(RDSurface* self, usize columns);
-REDASM_EXPORT void rdsurface_setposition(RDSurface* self, usize row, usize col);
-REDASM_EXPORT bool rdsurface_selectword(RDSurface* self, usize row, usize col);
-REDASM_EXPORT bool rdsurface_select(RDSurface* self, usize row, usize col);
+REDASM_EXPORT void rdsurface_setposition(RDSurface* self, int row, int col);
+REDASM_EXPORT bool rdsurface_selectword(RDSurface* self, int row, int col);
+REDASM_EXPORT bool rdsurface_select(RDSurface* self, int row, int col);
 REDASM_EXPORT void rdsurface_clearselection(RDSurface* self);
 REDASM_EXPORT void rdsurface_clearhistory(RDSurface* self);
 REDASM_EXPORT void rdsurface_seekposition(RDSurface* self, LIndex index);

@@ -123,17 +123,24 @@ void SurfaceWidget::clear_history() {
 }
 
 void SurfaceWidget::jump_to(RDAddress address) {
-    usize idx;
+    LIndex index;
 
-    if(rdlisting_getindex(address, &idx)) {
-        const size_t DIFF = (this->visible_rows() / 4);
-        size_t relidx = idx;
-        if(relidx > DIFF)
-            relidx -= DIFF;
+    if(rdlisting_getindex(address, &index)) {
+        if(this->is_index_visible(index)) {
+            auto [start, end] = this->get_visible_range();
+            rdsurface_setposition(m_surface, index - start, -1);
+        }
+        else {
+            const usize DIFF = (this->visible_rows() / 4);
+            usize relidx = index;
+            if(relidx > DIFF)
+                relidx -= DIFF;
 
-        rdsurface_setposition(m_surface, idx - relidx, 0);
+            rdsurface_setposition(m_surface, index - relidx, -1);
+            this->verticalScrollBar()->setValue(relidx);
+        }
+
         Q_EMIT history_updated();
-        this->verticalScrollBar()->setValue(relidx);
     }
 }
 
@@ -298,8 +305,8 @@ RDSurfacePosition SurfaceWidget::get_surface_coords(QPointF pt) const {
     c.setPosition(pos);
 
     return {
-        static_cast<usize>(c.blockNumber()),
-        static_cast<usize>(c.columnNumber()),
+        c.blockNumber(),
+        c.columnNumber(),
     };
 }
 
@@ -321,6 +328,17 @@ bool SurfaceWidget::get_surface_index(usize* index) const {
 
 usize SurfaceWidget::get_listing_length() const {
     return rdlisting_getlength();
+}
+
+QPair<LIndex, LIndex> SurfaceWidget::get_visible_range() const {
+    LIndex vscrollstart = this->verticalScrollBar()->value();
+    LIndex vscrollend = vscrollstart + this->visible_rows();
+    return {vscrollstart, qMin(vscrollend, this->get_listing_length())};
+}
+
+bool SurfaceWidget::is_index_visible(LIndex index) const {
+    auto [start, end] = this->get_visible_range();
+    return index >= start && index < end;
 }
 
 bool SurfaceWidget::follow_under_cursor() {

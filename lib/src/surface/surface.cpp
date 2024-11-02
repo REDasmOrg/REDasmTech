@@ -232,25 +232,28 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
 
 void Surface::set_columns(usize cols) { m_renderer->columns = cols; }
 
-void Surface::set_position(usize row, usize col) {
+void Surface::set_position(int row, int col) {
     if(row == m_selrow && col == m_selcol)
         return;
 
     this->update_history(m_histback);
 
-    m_selrow = row;
-    m_selcol = col;
+    if(row >= 0)
+        m_selrow = row;
+    if(col >= 0)
+        m_selcol = col;
+
     this->fit(m_selrow, m_selcol);
     this->select(m_selrow, m_selcol);
 }
 
-bool Surface::select_word(usize row, usize col) {
-    if(row >= this->rows.size())
+bool Surface::select_word(int row, int col) {
+    if(row >= this->rows_count())
         return false;
 
     const SurfaceRow& sfrow = this->rows[row];
 
-    if(col >= sfrow.cells.size())
+    if(col >= static_cast<int>(sfrow.cells.size()))
         col = sfrow.cells.size() - 1;
 
     if(Renderer::is_char_skippable(sfrow.cells[col].ch))
@@ -258,7 +261,7 @@ bool Surface::select_word(usize row, usize col) {
 
     usize startcol = 0, endcol = 0;
 
-    for(usize i = col; i-- > 0;) {
+    for(int i = col; i-- > 0;) {
         RDSurfaceCell cell = sfrow.cells[i];
         if(Renderer::is_char_skippable(cell.ch)) {
             startcol = i + 1;
@@ -266,7 +269,7 @@ bool Surface::select_word(usize row, usize col) {
         }
     }
 
-    for(usize i = col; i < sfrow.cells.size(); i++) {
+    for(int i = col; i < static_cast<int>(sfrow.cells.size()); i++) {
         RDSurfaceCell cell = sfrow.cells[i];
         if(Renderer::is_char_skippable(cell.ch)) {
             endcol = i - 1;
@@ -282,12 +285,15 @@ bool Surface::select_word(usize row, usize col) {
     return false;
 }
 
-bool Surface::select(usize row, usize col) {
+bool Surface::select(int row, int col) {
     if(row == m_row && col == m_col)
         return false;
 
-    m_row = row;
-    m_col = col;
+    if(row >= 0)
+        m_row = row;
+    if(col >= 0)
+        m_col = col;
+
     this->fit(m_row, m_col);
     return true;
 }
@@ -327,7 +333,7 @@ std::string_view Surface::get_selected_text() const {
     if(m_renderer->columns && m_strcache.capacity() < m_renderer->columns)
         m_strcache.reserve(m_renderer->columns * this->rows.size());
 
-    for(auto i = startrow; i < this->rows.size() && i <= endrow; i++) {
+    for(int i = startrow; i < this->rows_count() && i <= endrow; i++) {
         if(!m_strcache.empty())
             m_strcache += "\n";
 
@@ -821,19 +827,21 @@ void Surface::render_array(const ListingItem& item) {
     }
 }
 
-void Surface::fit(usize& row, usize& col) {
+void Surface::fit(int& row, int& col) {
     if(this->rows.empty()) {
         row = 0;
         col = 0;
     }
     else {
-        if(row >= this->rows.size())
-            row = this->rows.size() - 1;
+        if(row >= this->rows_count())
+            row = this->rows_count() - 1;
 
-        if(this->rows[row].cells.empty())
+        int ncols = this->cols_count(row);
+
+        if(!ncols)
             col = 0;
-        else if(col >= this->rows[row].cells.size())
-            col = this->rows[row].cells.size() - 1;
+        else if(col >= ncols)
+            col = ncols - 1;
     }
 }
 
