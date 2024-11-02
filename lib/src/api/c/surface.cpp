@@ -43,7 +43,7 @@ void rdsurface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
     redasm::api::internal::surface_getlocation(self, loc);
 }
 
-bool rdsurface_getindex(const RDSurface* self, usize* index) {
+bool rdsurface_getindex(const RDSurface* self, MIndex* index) {
     return redasm::api::internal::surface_getindex(self, index);
 }
 

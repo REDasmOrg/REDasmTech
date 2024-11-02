@@ -15,7 +15,7 @@ usize surface_getrow(const RDSurface* self, usize idx,
                      const RDSurfaceCell** row);
 void surface_getposition(const RDSurface* self, RDSurfacePosition* pos);
 void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc);
-bool surface_getindex(const RDSurface* self, usize* index);
+bool surface_getindex(const RDSurface* self, MIndex* index);
 int surface_indexof(const RDSurface* self, RDAddress address);
 int surface_lastindexof(const RDSurface* self, RDAddress address);
 usize surface_getpath(const RDSurface* self, const RDSurfacePath** path);

@@ -39,48 +39,48 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
     m_document.setUndoRedoEnabled(false);
     m_document.setDocumentMargin(0);
 
-    connect(this->verticalScrollBar(), &QScrollBar::actionTriggered, this,
-            [&](int action) {
-                switch(action) {
-                    case QScrollBar::SliderSingleStepAdd: {
-                        usize idx;
-                        if(!this->get_surface_index(&idx))
-                            return;
+    connect(
+        this->verticalScrollBar(), &QScrollBar::actionTriggered, this,
+        [&](int action) {
+            switch(action) {
+                case QScrollBar::SliderSingleStepAdd: {
+                    MIndex idx;
+                    if(!this->get_surface_index(&idx))
+                        return;
 
-                        if(idx < this->get_listing_length()) {
-                            rdsurface_clearselection(m_surface);
-                            rdsurface_seek(m_surface, idx + SCROLL_SPEED);
-                            this->viewport()->update();
-                        }
-                        break;
-                    }
-
-                    case QScrollBar::SliderSingleStepSub: {
-                        usize idx;
-                        if(!this->get_surface_index(&idx))
-                            return;
-
-                        if(idx > 0) {
-                            rdsurface_clearselection(m_surface);
-                            rdsurface_seek(m_surface, idx - SCROLL_SPEED);
-                            this->viewport()->update();
-                        }
-                        break;
-                    }
-
-                    case QScrollBar::SliderMove: {
+                    if(idx < this->get_listing_length()) {
                         rdsurface_clearselection(m_surface);
-                        rdsurface_seek(
-                            m_surface,
-                            this->verticalScrollBar()->sliderPosition());
-
+                        rdsurface_seekposition(m_surface, idx + SCROLL_SPEED);
                         this->viewport()->update();
-                        break;
                     }
-
-                    default: break;
+                    break;
                 }
-            });
+
+                case QScrollBar::SliderSingleStepSub: {
+                    MIndex idx;
+                    if(!this->get_surface_index(&idx))
+                        return;
+
+                    if(idx > 0) {
+                        rdsurface_clearselection(m_surface);
+                        rdsurface_seekposition(m_surface, idx - SCROLL_SPEED);
+                        this->viewport()->update();
+                    }
+                    break;
+                }
+
+                case QScrollBar::SliderMove: {
+                    rdsurface_clearselection(m_surface);
+                    rdsurface_seek(m_surface,
+                                   this->verticalScrollBar()->sliderPosition());
+
+                    this->viewport()->update();
+                    break;
+                }
+
+                default: break;
+            }
+        });
 
     this->update_scrollbars();
     this->sync_location();
@@ -322,7 +322,7 @@ RDSurfaceLocation SurfaceWidget::location() const {
     return loc;
 }
 
-bool SurfaceWidget::get_surface_index(usize* index) const {
+bool SurfaceWidget::get_surface_index(MIndex* index) const {
     return rdsurface_getindex(m_surface, index);
 }
 

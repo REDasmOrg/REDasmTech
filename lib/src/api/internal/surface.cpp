@@ -54,7 +54,7 @@ void surface_getposition(const RDSurface* self, RDSurfacePosition* pos) {
         *pos = api::from_c(self)->position();
 }
 
-bool surface_getindex(const RDSurface* self, usize* index) {
+bool surface_getindex(const RDSurface* self, MIndex* index) {
     spdlog::trace("surface_getindex({})", fmt::ptr(self));
     auto idx = api::from_c(self)->current_index();
     if(*index)
