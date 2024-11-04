@@ -4,7 +4,6 @@
 #include <QPainter>
 #include <QScrollBar>
 #include <QWheelEvent>
-#include <cmath>
 #include <redasm/redasm.h>
 
 GraphView::GraphView(QWidget* parent): QAbstractScrollArea(parent) {
@@ -73,17 +72,16 @@ void GraphView::focus_block(const GraphViewNode* item, bool force) {
             item->height() - (2 * fm.height()));
 
     if(force || !viewportrect.contains(r)) {
-        auto x =
-            (item->x() + static_cast<int>(item->width() / 2)) * m_scalefactor;
+        auto x = (item->x() + (item->width() / 2.0)) * m_scalefactor;
         auto y = (item->y() + (2 * fm.height()) +
                   (item->current_row() * fm.height())) *
                  m_scalefactor;
         this->horizontalScrollBar()->setValue(
             x + m_renderoffset.x() -
-            static_cast<int>(this->horizontalScrollBar()->pageStep() / 2));
+            (this->horizontalScrollBar()->pageStep() / 2.0));
         this->verticalScrollBar()->setValue(
             y + m_renderoffset.y() -
-            static_cast<int>(this->verticalScrollBar()->pageStep() / 2));
+            (this->verticalScrollBar()->pageStep() / 2.0));
     }
 }
 
@@ -407,9 +405,7 @@ void GraphView::zoom_out(const QPointF& cursorpos) {
     if(m_scalefactor <= m_scalemin)
         return;
     m_scalefactor *= (1 - m_scalestep * m_scaleboost);
-
-    if(m_scalefactor < m_scalemin)
-        m_scalefactor = m_scalemin;
+    m_scalefactor = qMax(m_scalefactor, m_scalemin);
 
     QSize vpsize = this->viewport()->size();
     this->adjust_size(vpsize.width(), vpsize.height(), cursorpos);
@@ -421,10 +417,9 @@ void GraphView::zoom_in(const QPointF& cursorpos) {
 
     if(m_scalefactor >= m_scalemax)
         return;
-    m_scalefactor /= (1 - m_scalestep * m_scaleboost);
 
-    if(m_scalefactor > m_scalemax)
-        m_scalefactor = m_scalemax;
+    m_scalefactor /= (1 - m_scalestep * m_scaleboost);
+    m_scalefactor = qMin(m_scalefactor, m_scalemax);
 
     QSize vpsize = this->viewport()->size();
     this->adjust_size(vpsize.width(), vpsize.height(), cursorpos);

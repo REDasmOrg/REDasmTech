@@ -28,15 +28,15 @@ struct Function {
     void jmp(RDGraphNode src, RDGraphNode dst,
              RDThemeKind theme = THEME_DEFAULT);
 
-    inline void jmp_true(RDGraphNode src, RDGraphNode dst) {
+    void jmp_true(RDGraphNode src, RDGraphNode dst) {
         this->jmp(src, dst, THEME_SUCCESS);
     }
 
-    inline void jmp_false(RDGraphNode src, RDGraphNode dst) {
+    void jmp_false(RDGraphNode src, RDGraphNode dst) {
         this->jmp(src, dst, THEME_FAIL);
     }
 
-    inline const BasicBlock* get_basic_block(RDGraphNode n) const {
+    const BasicBlock* get_basic_block(RDGraphNode n) const {
         return const_cast<Function*>(this)->get_basic_block(n);
     }
 

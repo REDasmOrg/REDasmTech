@@ -34,9 +34,7 @@ bool rd_checkstring(RDAddress address, RDStringResult* r) {
     return redasm::api::internal::check_string(address, r);
 }
 
-void rd_memoryinfo(RDMemoryInfo* mi) {
-    return redasm::api::internal::memory_info(mi);
-}
+void rd_memoryinfo(RDMemoryInfo* mi) { redasm::api::internal::memory_info(mi); }
 
 const char* rd_rendertext(RDAddress address) {
     static std::string s;

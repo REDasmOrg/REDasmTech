@@ -26,7 +26,7 @@ public:
     [[nodiscard]] tl::optional<std::string> get_wstring(usize idx,
                                                         usize n) const;
 
-    [[nodiscard]] inline tl::optional<u8> get_u8(usize idx) const {
+    [[nodiscard]] tl::optional<u8> get_u8(usize idx) const {
         return this->get_byte(idx);
     }
 
@@ -63,7 +63,7 @@ public:
         return this->get_number<u64>(idx, big);
     }
 
-    [[nodiscard]] inline tl::optional<i8> get_i8(usize idx) const {
+    [[nodiscard]] tl::optional<i8> get_i8(usize idx) const {
         if(auto b = this->get_u8(idx); b)
             return static_cast<i8>(*b);
         return tl::nullopt;

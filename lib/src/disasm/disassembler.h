@@ -11,7 +11,7 @@ public:
     Disassembler();
     bool execute(const RDAnalysisStatus** s);
     void execute(usize step);
-    inline void reset() { m_currentstep = STEP_INIT; }
+    void reset() { m_currentstep = STEP_INIT; }
 
 private:
     void set_step(usize s);

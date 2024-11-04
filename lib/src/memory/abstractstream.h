@@ -48,13 +48,9 @@ public:
 
     [[nodiscard]] virtual tl::optional<u8> at(usize idx) const = 0;
     [[nodiscard]] virtual usize size() const = 0;
-
-    [[nodiscard]] inline bool at_end() const {
-        return this->position >= this->size();
-    }
-
-    inline usize move(isize o) { return this->seek(this->position + o); }
-    inline void rewind() { this->position = 0; }
+    [[nodiscard]] bool at_end() const { return this->position >= this->size(); }
+    usize move(isize o) { return this->seek(this->position + o); }
+    void rewind() { this->position = 0; }
 
     template<typename T>
     tl::optional<T> peek(bool big = false) const {

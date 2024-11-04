@@ -41,33 +41,28 @@ struct Renderer {
     Renderer& chunk(std::string_view arg, RDThemeKind fg = THEME_DEFAULT,
                     RDThemeKind bg = THEME_DEFAULT);
 
-    [[nodiscard]] inline bool has_flag(usize f) const {
-        return this->flags & f;
-    }
+    [[nodiscard]] bool has_flag(usize f) const { return this->flags & f; }
 
-    inline Renderer& arr_index(usize idx) {
+    Renderer& arr_index(usize idx) {
         return this->chunk("[").constant(std::to_string(idx)).chunk("]");
     }
 
-    inline Renderer& address(std::string_view arg) {
+    Renderer& address(std::string_view arg) {
         return this->chunk(arg, THEME_ADDRESS);
     }
 
-    inline Renderer& nop(std::string_view arg) {
-        return this->chunk(arg, THEME_NOP);
-    }
+    Renderer& nop(std::string_view arg) { return this->chunk(arg, THEME_NOP); }
+    Renderer& unknown() { return this->nop("?"); }
 
-    inline Renderer& unknown() { return this->nop("?"); }
-
-    inline Renderer& comment(std::string_view arg) {
+    Renderer& comment(std::string_view arg) {
         return this->chunk(arg, THEME_COMMENT);
     }
 
-    inline Renderer& constant(std::string_view arg) {
+    Renderer& constant(std::string_view arg) {
         return this->chunk(arg, THEME_CONSTANT);
     }
 
-    inline Renderer& string(std::string_view arg, bool quoted = true) {
+    Renderer& string(std::string_view arg, bool quoted = true) {
         if(quoted)
             this->quote(arg, "\"", THEME_STRING);
         else
@@ -76,27 +71,25 @@ struct Renderer {
         return *this;
     }
 
-    inline Renderer& type(std::string_view arg) {
+    Renderer& type(std::string_view arg) {
         return this->chunk(arg, THEME_TYPE);
     }
 
-    inline Renderer& function(std::string_view arg) {
+    Renderer& function(std::string_view arg) {
         return this->chunk(arg, THEME_FUNCTION);
     }
 
-    inline Renderer& word(std::string_view arg) {
+    Renderer& word(std::string_view arg) {
         return this->chunk(" ").chunk(arg).chunk(" ");
     }
 
-    inline Renderer& quote(std::string_view arg, std::string_view q = "\"",
-                           RDThemeKind fg = THEME_DEFAULT,
-                           RDThemeKind bg = THEME_DEFAULT) {
+    Renderer& quote(std::string_view arg, std::string_view q = "\"",
+                    RDThemeKind fg = THEME_DEFAULT,
+                    RDThemeKind bg = THEME_DEFAULT) {
         return this->chunk(q, fg, bg).chunk(arg, fg, bg).chunk(q, fg, bg);
     }
 
-    inline Renderer& ws(usize n = 1) {
-        return this->chunk(std::string(n, ' '));
-    }
+    Renderer& ws(usize n = 1) { return this->chunk(std::string(n, ' ')); }
 
     static bool is_char_skippable(char ch);
 

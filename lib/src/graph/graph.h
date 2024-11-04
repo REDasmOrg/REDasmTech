@@ -21,7 +21,7 @@ public:
     std::string generate_dot() const;
     u32 hash() const;
 
-    inline RDGraphNode set_root(RDGraphNode n) {
+    RDGraphNode set_root(RDGraphNode n) {
         m_root = n;
         return n;
     }
@@ -32,13 +32,12 @@ public:
     usize incoming(RDGraphNode n, const RDGraphEdge** edges) const;
     usize nodes(const RDGraphNode** nodes) const;
     usize edges(const RDGraphEdge** edges) const;
+    const Nodes& nodes() const { return m_nodes; }
+    const Edges& edges() const { return m_edges; }
+    RDGraphNode root() const { return m_root; }
+    bool empty() const { return m_nodes.empty(); }
 
-    inline const Nodes& nodes() const { return m_nodes; }
-    inline const Edges& edges() const { return m_edges; }
-    inline RDGraphNode root() const { return m_root; }
-    inline bool empty() const { return m_nodes.empty(); }
-
-    inline bool contains_edge(RDGraphNode src, RDGraphNode dst) const {
+    bool contains_edge(RDGraphNode src, RDGraphNode dst) const {
         return this->edge(src, dst);
     }
 
