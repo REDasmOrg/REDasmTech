@@ -10,7 +10,7 @@
 namespace redasm {
 
 struct AddressDetail {
-    enum NS : usize {
+    enum NS : u8 {
         LABEL = 0,
         TYPE,
         ARRAY,
@@ -36,7 +36,7 @@ struct AddressDetail {
     std::array<std::string, NS::COUNT> names;
     std::vector<usize> jumps, calls;
     std::vector<Ref> refsto, refs;
-    std::vector<std::string> comments;
+    std::string comment;
 
     union {
         usize string_bytes;

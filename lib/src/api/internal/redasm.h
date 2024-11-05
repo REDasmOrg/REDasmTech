@@ -52,6 +52,7 @@ bool map_segment(const std::string& name, RDAddress address,
 bool map_segment_n(const std::string& name, RDAddress address, usize asize,
                    RDOffset offset, usize osize, usize type);
 
+std::string get_comment(RDAddress address);
 std::string get_name(RDAddress address);
 std::string render_text(RDAddress address);
 
@@ -60,6 +61,7 @@ tl::optional<typing::Value> set_type_as(RDAddress address,
                                         std::string_view tname,
                                         const std::string& dbname);
 
+bool set_comment(RDAddress address, std::string_view comment);
 bool set_name(RDAddress address, const std::string& name);
 bool set_export(RDAddress address);
 bool set_import(RDAddress address);

@@ -394,6 +394,15 @@ bool set_name(RDAddress address, const std::string& name) {
     return false;
 }
 
+std::string get_comment(RDAddress address) {
+    spdlog::trace("get_comment({:x})", address);
+
+    if(auto idx = state::context->address_to_index(address); idx)
+        return state::context->get_comment(*idx);
+
+    return {};
+}
+
 std::string get_name(RDAddress address) {
     spdlog::trace("get_name({:x})", address);
 
@@ -460,6 +469,15 @@ tl::optional<typing::Value> set_type_as(RDAddress address,
         return tl::nullopt;
 
     return state::context->memory->get_type(*idx, tname);
+}
+
+bool set_comment(RDAddress address, std::string_view comment) {
+    spdlog::trace("set_comment({:x}, {})", address, comment);
+
+    if(auto idx = state::context->address_to_index(address); idx)
+        return state::context->set_comment(*idx, comment);
+
+    return false;
 }
 
 bool set_export(RDAddress address) {

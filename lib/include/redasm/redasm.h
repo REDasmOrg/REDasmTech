@@ -97,6 +97,7 @@ REDASM_EXPORT void rd_disassemble();
 REDASM_EXPORT void rd_enqueue(RDAddress address);
 REDASM_EXPORT void rd_schedule(RDAddress address);
 
+REDASM_EXPORT bool rd_setcomment(RDAddress address, const char* comment);
 REDASM_EXPORT bool rd_settype(RDAddress address, const char* tname);
 REDASM_EXPORT bool rd_setfunction(RDAddress address);
 REDASM_EXPORT bool rd_setfunctionas(RDAddress address, const char* name);
@@ -104,6 +105,7 @@ REDASM_EXPORT bool rd_setentry(RDAddress address, const char* name);
 
 REDASM_EXPORT bool rd_setname(RDAddress address, const char* name);
 REDASM_EXPORT const char* rd_getname(RDAddress address);
+REDASM_EXPORT const char* rd_getcomment(RDAddress address);
 REDASM_EXPORT usize rd_getreferences(RDAddress address, const RDRef** refs);
 REDASM_EXPORT bool rd_addresstosegment(RDAddress address, RDSegment* s);
 REDASM_EXPORT bool rd_offsettosegment(RDOffset offset, RDSegment* s);

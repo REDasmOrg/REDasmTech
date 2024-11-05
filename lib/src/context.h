@@ -41,6 +41,8 @@ public:
     void map_segment(const std::string& name, usize idx, usize endidx,
                      RDOffset offset, RDOffset endoffset, usize type);
 
+    bool set_comment(usize idx, std::string_view comment = {});
+
     bool set_type(usize idx, std::string_view tname,
                   const std::string& dbname = {});
 
@@ -50,13 +52,13 @@ public:
     void set_name(usize idx, const std::string& name);
 
     std::string get_name(usize idx) const;
+    std::string get_comment(usize idx) const;
 
-    inline RDAddress memory_copy_n(usize idx, RDOffset start,
-                                   usize size) const {
+    RDAddress memory_copy_n(usize idx, RDOffset start, usize size) const {
         return this->memory_copy(idx, start, start + size);
     }
 
-    inline RDAddress end_baseaddress() const {
+    RDAddress end_baseaddress() const {
         return this->baseaddress + memory->size();
     }
 

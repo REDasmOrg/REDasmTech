@@ -96,11 +96,19 @@ bool Context::set_entry(usize idx, std::string name) {
     return false;
 }
 
+bool Context::set_comment(usize idx, std::string_view comment) {
+    if(idx >= this->memory->size())
+        return false;
+
+    AddressDetail& detail = this->database.get_detail(idx);
+    detail.comment.assign(comment.begin(), comment.end());
+    this->memory->at(idx).set_flag(BF_COMMENT, !comment.empty());
+    return true;
+}
+
 bool Context::set_type(usize idx, std::string_view tname,
                        const std::string& dbname) {
-    assume(idx < this->memory->size());
-
-    if(!this->memory->at(idx).is_unknown())
+    if(idx >= this->memory->size() || !this->memory->at(idx).is_unknown())
         return false;
 
     auto pt = this->types.parse(tname);
@@ -294,7 +302,9 @@ std::string Context::get_name(usize idx) const {
 }
 
 void Context::set_name(usize idx, const std::string& name) {
-    assume(idx < this->memory->size());
+    if(idx >= this->memory->size())
+        return;
+
     Byte& b = this->memory->at(idx);
     b.set_flag(BF_NAME, !name.empty());
 
@@ -306,6 +316,14 @@ void Context::set_name(usize idx, const std::string& name) {
         this->database.set_name(idx, name, AddressDetail::FUNCTION);
     else
         this->database.set_name(idx, name, AddressDetail::LABEL);
+}
+
+std::string Context::get_comment(usize idx) const {
+    if(idx >= this->memory->size() || !this->memory->at(idx).has(BF_COMMENT))
+        return {};
+
+    const AddressDetail& detail = this->database.get_detail(idx);
+    return detail.comment;
 }
 
 std::string Context::to_hex(usize v, int n) const {

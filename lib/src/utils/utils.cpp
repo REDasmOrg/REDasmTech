@@ -28,15 +28,6 @@ void detect_base(std::string_view& sv, int* res) {
 
 } // namespace impl
 
-tl::optional<Data> read_file(const std::string& filepath) {
-    std::ifstream ifs(filepath, std::ios::binary | std::ios::ate);
-    if(!ifs.is_open())
-        return tl::nullopt;
-
-    return Data(std::istreambuf_iterator<char>{ifs},
-                std::istreambuf_iterator<char>{});
-}
-
 std::string_view trim(std::string_view v) {
     int start = 0, end = v.size() - 1;
 
@@ -49,7 +40,16 @@ std::string_view trim(std::string_view v) {
     if(start < end)
         return v.substr(start, end - start + 1);
 
-    return std::string_view{};
+    return {};
+}
+
+tl::optional<Data> read_file(const std::string& filepath) {
+    std::ifstream ifs(filepath, std::ios::binary | std::ios::ate);
+    if(!ifs.is_open())
+        return tl::nullopt;
+
+    return Data(std::istreambuf_iterator<char>{ifs},
+                std::istreambuf_iterator<char>{});
 }
 
 std::string to_lower(std::string s) {
