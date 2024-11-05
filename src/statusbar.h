@@ -15,9 +15,9 @@ QPushButton* status_icon();
 // Functions
 void set_status_text(const QString& s);
 void set_location(const RDSurface* surface);
-void set_play_status();
+void set_busy_status();
 void set_pause_status();
-void set_stop_status();
+void set_ready_status();
 void hide_status_icon();
 
 } // namespace statusbar

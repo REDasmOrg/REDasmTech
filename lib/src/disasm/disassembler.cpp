@@ -68,12 +68,9 @@ void Disassembler::init_step() {
 
 void Disassembler::emulate_step() {
     if(emulator.has_next()) {
-
         auto a = emulator.get_next_address();
-        if(a)
-            m_status->address.value = *a;
+        a.map([&](RDAddress address) { m_status->address.value = address; });
         m_status->address.valid = a.has_value();
-
         emulator.next();
     }
     else

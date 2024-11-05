@@ -37,7 +37,6 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
 
     QString searchpath = qApp->applicationDirPath() + "/lib/plugins/src";
     rd_addsearchpath(qUtf8Printable(searchpath));
-
     rd_init();
 
     m_ui.statusbar->addPermanentWidget(
@@ -205,9 +204,9 @@ bool MainWindow::loop() {
         cv->tick(m_status);
 
         if(m_status->step == STEP_DONE)
-            statusbar::set_stop_status();
+            statusbar::set_ready_status();
         else if(cv->active()) {
-            statusbar::set_play_status();
+            statusbar::set_busy_status();
             this->report_status();
         }
         else

@@ -20,6 +20,7 @@ QLabel* set_status_label(QLabel* label) {
 QPushButton* set_status_icon(QPushButton* icon, int height) {
     g_btnstatusicon = icon;
     g_btnstatusicon->setFlat(true);
+    g_btnstatusicon->setText("\uf0c8");
     g_btnstatusicon->setFont(fontawesome::fa_font());
     g_btnstatusicon->setFixedHeight(height * 0.8);
     g_btnstatusicon->hide();
@@ -75,29 +76,26 @@ void set_location(const RDSurface* surface) {
     g_lblstatuslabel->setText(s);
 }
 
-void set_play_status() {
-    QString style =
-        QString{"color: %1;"}.arg(themeprovider::color(THEME_SUCCESS).name());
+void set_busy_status() {
+    static QString style =
+        QString{"color: %1;"}.arg(themeprovider::color(THEME_FAIL).name());
 
-    g_btnstatusicon->setText("\uf04b");
     g_btnstatusicon->setStyleSheet(style);
     g_btnstatusicon->show();
 }
 
 void set_pause_status() {
-    QString style =
+    static QString style =
         QString{"color: %1;"}.arg(themeprovider::color(THEME_WARNING).name());
 
-    g_btnstatusicon->setText("\uf04c");
     g_btnstatusicon->setStyleSheet(style);
     g_btnstatusicon->show();
 }
 
-void set_stop_status() {
-    QString style =
-        QString{"color: %1;"}.arg(themeprovider::color(THEME_FAIL).name());
+void set_ready_status() {
+    static QString style =
+        QString{"color: %1;"}.arg(themeprovider::color(THEME_SUCCESS).name());
 
-    g_btnstatusicon->setText("\uf04d");
     g_btnstatusicon->setStyleSheet(style);
     g_btnstatusicon->show();
 }
