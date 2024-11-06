@@ -3,25 +3,15 @@
 #include "segment.h"
 #include "typing/typing.h"
 #include <deque>
+#include <redasm/listing.h>
 #include <redasm/types.h>
 #include <tl/optional.hpp>
 #include <vector>
 
 namespace redasm {
 
-enum class ListingItemType {
-    EMPTY = 0,
-    HEX_DUMP,
-    INSTRUCTION,
-    JUMP,
-    SEGMENT,
-    FUNCTION,
-    TYPE,
-    ARRAY,
-};
-
 struct ListingItem {
-    ListingItemType type;
+    RDListingItemType type;
 
     union {
         MIndex start_index;
@@ -50,31 +40,28 @@ private:
 public:
     using IndexList = std::vector<usize>;
 
-    inline auto cbegin() const { return m_items.cbegin(); }
-    inline auto cend() const { return m_items.cend(); }
-    inline auto begin() { return m_items.begin(); }
-    inline auto end() { return m_items.end(); }
-    inline auto begin() const { return m_items.begin(); }
-    inline auto end() const { return m_items.end(); }
-    inline auto size() const { return m_items.size(); }
-    inline auto empty() const { return m_items.empty(); }
-    inline auto& front() { return m_items.front(); }
-    inline auto& back() { return m_items.back(); }
-    inline const auto& front() const { return m_items.front(); }
-    inline const auto& back() const { return m_items.back(); }
-    inline ValueType& operator[](LIndex idx) { return m_items.at(idx); }
+    auto cbegin() const { return m_items.cbegin(); }
+    auto cend() const { return m_items.cend(); }
+    auto begin() { return m_items.begin(); }
+    auto end() { return m_items.end(); }
+    auto begin() const { return m_items.begin(); }
+    auto end() const { return m_items.end(); }
+    auto size() const { return m_items.size(); }
+    auto empty() const { return m_items.empty(); }
+    auto& front() { return m_items.front(); }
+    auto& back() { return m_items.back(); }
+    const auto& front() const { return m_items.front(); }
+    const auto& back() const { return m_items.back(); }
+    ValueType& operator[](LIndex idx) { return m_items.at(idx); }
+    const ValueType& operator[](LIndex idx) const { return m_items.at(idx); }
 
-    inline const ValueType& operator[](LIndex idx) const {
-        return m_items.at(idx);
-    }
-
-    inline ConstIterator upper_bound(MIndex idx) const {
+    ConstIterator upper_bound(MIndex idx) const {
         return this->upper_bound(idx, m_items.begin());
     }
 
-    inline const IndexList& symbols() const { return m_symbols; }
-    inline const IndexList& imports() const { return m_imports; }
-    inline const IndexList& exports() const { return m_exports; }
+    const IndexList& symbols() const { return m_symbols; }
+    const IndexList& imports() const { return m_imports; }
+    const IndexList& exports() const { return m_exports; }
 
     ConstIterator lower_bound(MIndex idx) const;
     ConstIterator upper_bound(MIndex idx, ConstIterator begin) const;
@@ -89,7 +76,7 @@ public:
 public: // State management functions
     tl::optional<usize> field_index() const;
     tl::optional<typing::ParsedType> current_type() const;
-    inline const Segment* current_segment() const { return m_currentsegment; }
+    const Segment* current_segment() const { return m_currentsegment; }
     void clear();
     void push_indent(int c = 1);
     void pop_indent(int c = 1);
@@ -99,7 +86,7 @@ public: // State management functions
     void pop_type();
 
 private:
-    usize push_item(ListingItemType type, MIndex index);
+    usize push_item(RDListingItemType type, MIndex index);
     void check_flags(LIndex listingidx, MIndex index);
 
 private:

@@ -52,7 +52,7 @@ public:
     void set_name(usize idx, const std::string& name);
 
     std::string get_name(usize idx) const;
-    std::string get_comment(usize idx) const;
+    std::string get_comment(MIndex idx) const;
 
     RDAddress memory_copy_n(usize idx, RDOffset start, usize size) const {
         return this->memory_copy(idx, start, start + size);

@@ -37,6 +37,26 @@ void copy() {
     qApp->clipboard()->setText(rdsurface_getselectedtext(cv->handle()));
 }
 
+void comment() {
+    ContextView* cv = g_mainwindow->context_view();
+    if(!cv)
+        return;
+
+    RDAddress address;
+    if(!rdsurface_getaddressundercursor(cv->handle(), &address))
+        return;
+
+    bool ok = false;
+    const char* cmt = rd_getcomment(address);
+
+    QString s = QInputDialog::getMultiLineText(
+        g_mainwindow, QString{"Comment @ %1"}.arg(rd_tohex(address)),
+        "Insert comment (or leave empty):", cmt ? cmt : QString{}, &ok);
+
+    if(ok && rd_setcomment(address, qUtf8Printable(s)))
+        cv->invalidate();
+}
+
 void refs() {
     ContextView* cv = g_mainwindow->context_view();
     if(!cv)
@@ -89,19 +109,23 @@ void init(MainWindow* mw) {
     g_mainwindow = mw;
 
     g_actions[Type::GOTO] =
-        mw->addAction(FA_ICON(0xf1e5), "Goto…", QKeySequence(Qt::Key_G), mw,
+        mw->addAction(FA_ICON(0xf1e5), "Goto…", QKeySequence{Qt::Key_G}, mw,
                       []() { actions::show_goto(); });
 
     g_actions[Type::COPY] =
-        mw->addAction("Copy", QKeySequence(Qt::CTRL | Qt::Key_C), mw,
+        mw->addAction("Copy", QKeySequence{Qt::CTRL | Qt::Key_C}, mw,
                       []() { actions::copy(); });
 
     g_actions[Type::REFS] =
-        mw->addAction("Cross References", QKeySequence(Qt::Key_X), mw,
+        mw->addAction("Cross References", QKeySequence{Qt::Key_X}, mw,
                       []() { actions::refs(); });
 
     g_actions[Type::RENAME] = mw->addAction("Rename", QKeySequence(Qt::Key_N),
                                             mw, []() { actions::rename(); });
+
+    g_actions[Type::COMMENT] =
+        mw->addAction("Comment", QKeySequence{Qt::Key_Semicolon}, mw,
+                      []() { actions::comment(); });
 }
 
 QAction* get(Type t) {

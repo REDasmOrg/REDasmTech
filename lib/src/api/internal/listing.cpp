@@ -20,7 +20,7 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
     symbol->index = item.index;
 
     switch(item.type) {
-        case ListingItemType::SEGMENT: {
+        case LISTINGITEM_SEGMENT: {
             const Segment* s = ctx->index_to_segment(item.index);
             assume(s);
             symbol->type = SYMBOL_SEGMENT;
@@ -29,7 +29,7 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
             break;
         }
 
-        case ListingItemType::FUNCTION: {
+        case LISTINGITEM_FUNCTION: {
             value = ctx->get_name(item.index);
             symbol->type = SYMBOL_FUNCTION;
             symbol->theme = THEME_FUNCTION;
@@ -37,7 +37,7 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
             break;
         }
 
-        case ListingItemType::TYPE: {
+        case LISTINGITEM_TYPE: {
             tl::optional<std::string> s;
             assume(item.parsed_type);
 
@@ -79,7 +79,7 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
             break;
         }
 
-        case ListingItemType::ARRAY: {
+        case LISTINGITEM_ARRAY: {
             value = ctx->get_name(item.index);
 
             symbol->type = SYMBOL_ARRAY;

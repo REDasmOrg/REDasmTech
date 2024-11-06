@@ -73,21 +73,30 @@ QMenu* create_surface_menu(RDSurface* s, QWidget* w) {
     QAction* actcopy = actions::get(actions::COPY);
     QAction* actrefs = actions::get(actions::REFS);
     QAction* actrename = actions::get(actions::RENAME);
+    QAction* actcomment = actions::get(actions::COMMENT);
 
     auto* menu = new QMenu(w);
-    menu->addAction(actions::get(actions::GOTO));
-    menu->addSeparator();
     menu->addAction(actcopy);
     menu->addAction(actrefs);
     menu->addAction(actrename);
+    menu->addSeparator();
+    menu->addAction(actcomment);
+    menu->addAction(actions::get(actions::GOTO));
 
     QObject::connect(menu, &QMenu::aboutToShow, w, [=]() {
-        RDAddress address{};
-        bool hasaddr = rdsurface_getaddressundercursor(s, &address);
+        RDSurfaceLocation loc{};
+        rdsurface_getlocation(s, &loc);
+
+        actcomment->setVisible(
+            loc.listingindex.valid &&
+            (loc.listingindex.type == LISTINGITEM_INSTRUCTION ||
+             loc.listingindex.type == LISTINGITEM_ARRAY ||
+             loc.listingindex.type == LISTINGITEM_TYPE));
 
         actcopy->setVisible(rdsurface_hasselection(s));
-        actrename->setVisible(hasaddr);
-        actrefs->setVisible(hasaddr && rd_getreferences(address, nullptr));
+        actrename->setVisible(loc.cursoraddress.valid);
+        actrefs->setVisible(loc.cursoraddress.valid &&
+                            rd_getreferences(loc.cursoraddress.value, nullptr));
     });
 
     return menu;

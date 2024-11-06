@@ -37,6 +37,7 @@ public:
     Renderer* renderer() const { return m_renderer.get(); }
     [[nodiscard]] bool can_goback() const { return !m_histback.empty(); }
     [[nodiscard]] bool can_goforward() const { return !m_histforward.empty(); }
+    [[nodiscard]] tl::optional<LIndex> current_listing_index() const;
     [[nodiscard]] tl::optional<MIndex> current_index() const;
     [[nodiscard]] tl::optional<usize> index_under_cursor() const;
     [[nodiscard]] const Function* current_function() const;

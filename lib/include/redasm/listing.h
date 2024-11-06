@@ -13,6 +13,17 @@ typedef enum RDSymbolKind {
     SYMBOL_ARRAY,
 } RDSymbolKind;
 
+typedef enum RDListingItemType {
+    LISTINGITEM_EMPTY = 0,
+    LISTINGITEM_HEX_DUMP,
+    LISTINGITEM_INSTRUCTION,
+    LISTINGITEM_JUMP,
+    LISTINGITEM_SEGMENT,
+    LISTINGITEM_FUNCTION,
+    LISTINGITEM_TYPE,
+    LISTINGITEM_ARRAY,
+} RDListingItemType;
+
 typedef struct RDSymbol {
     RDAddress address;
     usize index;

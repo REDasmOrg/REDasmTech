@@ -105,44 +105,63 @@ void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
         loc->index.value = *index;
         loc->index.valid = true;
 
+        auto cursorindex = s->index_under_cursor();
+
+        if(cursorindex) {
+            auto cursoraddress = ctx->index_to_address(*cursorindex);
+            cursoraddress.map(
+                [&](RDAddress address) { loc->cursoraddress.value = address; });
+            loc->cursoraddress.valid = cursoraddress.has_value();
+        }
+        else
+            loc->cursoraddress.valid = false;
+
         const Function* func = s->current_function();
 
         if(func) {
             auto ep = ctx->index_to_address(func->entry);
-
-            if(ep)
-                loc->function.value = *ep;
-
+            ep.map([&](RDAddress ep) { loc->function.value = ep; });
             loc->function.valid = ep.has_value();
         }
         else
             loc->function.valid = false;
 
         auto address = ctx->index_to_address(*index);
-        auto offset = ctx->index_to_offset(*index);
-
-        if(address)
-            loc->address.value = *address;
-
-        if(offset)
-            loc->offset.value = *offset;
-
+        address.map([&](RDAddress address) { loc->address.value = address; });
         loc->address.valid = address.has_value();
+
+        auto offset = ctx->index_to_offset(*index);
+        offset.map([&](RDOffset offset) { loc->offset.value = offset; });
         loc->offset.valid = offset.has_value();
     }
     else {
         loc->function.valid = false;
         loc->index.valid = false;
+        loc->cursoraddress.valid = false;
         loc->address.valid = false;
         loc->offset.valid = false;
     }
 
     if(s->start) {
-        loc->listingindex.value = *s->start;
-        loc->listingindex.valid = s->start < ctx->listing.size();
+        loc->startindex.value = *s->start;
+        loc->startindex.valid = s->start < ctx->listing.size();
+
+        s->current_listing_index()
+            .map([&](LIndex index) {
+                loc->listingindex.valid = index < ctx->listing.size();
+
+                if(loc->listingindex.valid) {
+                    const ListingItem& item = ctx->listing[index];
+                    loc->listingindex.type = item.type;
+                    loc->listingindex.value = index;
+                }
+            })
+            .or_else([&]() { loc->listingindex.valid = false; });
     }
-    else
+    else {
+        loc->startindex.valid = false;
         loc->listingindex.valid = false;
+    }
 
     loc->segment = seg ? seg->name.c_str() : nullptr;
 }

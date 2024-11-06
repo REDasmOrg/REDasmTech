@@ -33,6 +33,11 @@ typedef struct RDSurfaceLocation {
     struct {
         RDAddress value;
         bool valid;
+    } cursoraddress;
+
+    struct {
+        RDAddress value;
+        bool valid;
     } address;
 
     struct {
@@ -41,12 +46,18 @@ typedef struct RDSurfaceLocation {
     } offset;
 
     struct {
-        usize value;
+        MIndex value;
         bool valid;
     } index;
 
     struct {
-        usize value;
+        LIndex value;
+        bool valid;
+    } startindex;
+
+    struct {
+        int type;
+        LIndex value;
         bool valid;
     } listingindex;
 

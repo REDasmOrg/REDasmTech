@@ -78,7 +78,7 @@ void Listing::pop_type() {
 }
 
 usize Listing::type(MIndex index, const typing::ParsedType& pt) {
-    usize lidx = this->push_item(ListingItemType::TYPE, index);
+    usize lidx = this->push_item(LISTINGITEM_TYPE, index);
     m_items[lidx].parsed_type = pt;
 
     if(!m_items[lidx].parsed_type_context)
@@ -92,7 +92,7 @@ usize Listing::type(MIndex index, const typing::ParsedType& pt) {
 }
 
 usize Listing::array(MIndex index, const typing::ParsedType& pt) {
-    usize lidx = this->push_item(ListingItemType::ARRAY, index);
+    usize lidx = this->push_item(LISTINGITEM_ARRAY, index);
     m_items[lidx].parsed_type = pt;
 
     if(!m_items[lidx].parsed_type_context)
@@ -105,33 +105,33 @@ usize Listing::array(MIndex index, const typing::ParsedType& pt) {
 }
 
 usize Listing::instruction(MIndex index) {
-    return this->push_item(ListingItemType::INSTRUCTION, index);
+    return this->push_item(LISTINGITEM_INSTRUCTION, index);
 }
 
 usize Listing::jump(MIndex index) {
-    return this->push_item(ListingItemType::JUMP, index);
+    return this->push_item(LISTINGITEM_JUMP, index);
 }
 
 usize Listing::function(MIndex index) {
-    usize lidx = this->push_item(ListingItemType::FUNCTION, index);
+    usize lidx = this->push_item(LISTINGITEM_FUNCTION, index);
     m_symbols.push_back(lidx);
     this->check_flags(lidx, index);
     return lidx;
 }
 
 usize Listing::segment(MIndex index) {
-    usize idx = this->push_item(ListingItemType::SEGMENT, index);
+    usize idx = this->push_item(LISTINGITEM_SEGMENT, index);
     m_symbols.push_back(idx);
     m_currentsegment = state::context->index_to_segment(index);
     return idx;
 }
 
 void Listing::hex_dump(MIndex startindex, MIndex endindex) {
-    usize lidx = this->push_item(ListingItemType::HEX_DUMP, startindex);
+    usize lidx = this->push_item(LISTINGITEM_HEX_DUMP, startindex);
     m_items[lidx].end_index = endindex;
 }
 
-usize Listing::push_item(ListingItemType type, MIndex index) {
+usize Listing::push_item(RDListingItemType type, MIndex index) {
     usize idx = m_items.size();
 
     ListingItem li{};

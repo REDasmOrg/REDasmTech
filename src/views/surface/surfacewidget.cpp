@@ -359,11 +359,11 @@ void SurfaceWidget::update_scrollbars() {
 bool SurfaceWidget::sync_location() {
     RDSurfaceLocation loc = this->location();
 
-    if(loc.listingindex.valid) {
+    if(loc.startindex.valid) {
         auto oldvalue = static_cast<usize>(this->verticalScrollBar()->value());
 
-        if(oldvalue != loc.listingindex.value) {
-            this->verticalScrollBar()->setValue(loc.listingindex.value);
+        if(oldvalue != loc.startindex.value) {
+            this->verticalScrollBar()->setValue(loc.startindex.value);
             return true;
         }
     }

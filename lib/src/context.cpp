@@ -318,7 +318,7 @@ void Context::set_name(usize idx, const std::string& name) {
         this->database.set_name(idx, name, AddressDetail::LABEL);
 }
 
-std::string Context::get_comment(usize idx) const {
+std::string Context::get_comment(MIndex idx) const {
     if(idx >= this->memory->size() || !this->memory->at(idx).has(BF_COMMENT))
         return {};
 

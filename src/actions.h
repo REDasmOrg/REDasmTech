@@ -6,11 +6,12 @@ class MainWindow;
 
 namespace actions {
 
-enum Type {
+enum Type : quint8 {
     GOTO,
     COPY,
     REFS,
     RENAME,
+    COMMENT,
 };
 
 void init(MainWindow* mw);

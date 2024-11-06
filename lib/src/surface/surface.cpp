@@ -4,7 +4,9 @@
 #include "../builtins/processor.h"
 #include "../context.h"
 #include "../state.h"
+#include "../utils/utils.h"
 #include <algorithm>
+#include <redasm/listing.h>
 
 namespace redasm {
 
@@ -42,13 +44,17 @@ Surface::Surface(usize flags) {
     this->lock_history([&]() { this->jump_to_ep(); });
 }
 
-tl::optional<MIndex> Surface::current_index() const {
-    if(!this->start || state::context->listing.empty())
+tl::optional<LIndex> Surface::current_listing_index() const {
+    if(!this->start || this->start >= state::context->listing.size() ||
+       state::context->listing.empty())
         return tl::nullopt;
 
-    LIndex idx =
-        std::min(*this->start + m_row, state::context->listing.size() - 1);
-    return state::context->listing[idx].index;
+    return std::min(*this->start + m_row, state::context->listing.size() - 1);
+}
+
+tl::optional<MIndex> Surface::current_index() const {
+    return this->current_listing_index().map(
+        [](LIndex index) { return state::context->listing[index].index; });
 }
 
 tl::optional<usize> Surface::index_under_cursor() const {
@@ -196,7 +202,7 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
             break;
 
         const ListingItem& item = lst[lidx];
-        if(item.type != ListingItemType::INSTRUCTION)
+        if(item.type != LISTINGITEM_INSTRUCTION)
             continue;
 
         Byte b = mem->at(item.index);
@@ -408,7 +414,7 @@ int Surface::calculate_index(usize idx) const {
         if(item.index == idx) {
             residx = i;
 
-            if(item.type == ListingItemType::INSTRUCTION)
+            if(item.type == LISTINGITEM_INSTRUCTION)
                 break;
         }
 
@@ -487,14 +493,27 @@ void Surface::render_range(LIndex start, usize n) {
         m_renderer->set_current_item(start + i, *it);
 
         switch(it->type) {
-            case ListingItemType::EMPTY: m_renderer->new_row(*it); break;
-            case ListingItemType::HEX_DUMP: this->render_hexdump(*it); break;
-            case ListingItemType::SEGMENT: this->render_segment(*it); break;
-            case ListingItemType::FUNCTION: this->render_function(*it); break;
-            case ListingItemType::JUMP: this->render_jump(*it); break;
-            case ListingItemType::INSTRUCTION: this->render_instr(*it); break;
-            case ListingItemType::TYPE: this->render_type(*it); break;
-            case ListingItemType::ARRAY: this->render_array(*it); break;
+            case LISTINGITEM_EMPTY: m_renderer->new_row(*it); break;
+            case LISTINGITEM_HEX_DUMP: this->render_hexdump(*it); break;
+            case LISTINGITEM_SEGMENT: this->render_segment(*it); break;
+            case LISTINGITEM_FUNCTION: this->render_function(*it); break;
+            case LISTINGITEM_JUMP: this->render_jump(*it); break;
+
+            case LISTINGITEM_INSTRUCTION:
+                this->render_instr(*it);
+                this->render_comments(*it);
+                break;
+
+            case LISTINGITEM_TYPE:
+                this->render_type(*it);
+                this->render_comments(*it);
+                break;
+
+            case LISTINGITEM_ARRAY:
+                this->render_array(*it);
+                this->render_comments(*it);
+                break;
+
             default: break;
         }
 
@@ -730,6 +749,19 @@ void Surface::render_instr(const ListingItem& item) {
 void Surface::render_comments(const ListingItem& item) {
     if(m_renderer->has_flag(SURFACE_NOCOMMENTS))
         return;
+
+    if(Byte b = state::context->memory->at(item.index); !b.has(BF_COMMENT))
+        return;
+
+    m_renderer->ws(8);
+    int i = 0;
+
+    utils::split_each(state::context->get_comment(item.index), '\n',
+                      [&](std::string_view x) {
+                          if(i++ > 0)
+                              m_renderer->comment(" | ");
+                          m_renderer->comment(x);
+                      });
 }
 
 void Surface::render_refs(const ListingItem& item) {
