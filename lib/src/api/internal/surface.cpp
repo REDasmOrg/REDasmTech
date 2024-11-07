@@ -189,6 +189,16 @@ bool surface_getaddressundercursor(const RDSurface* self, RDAddress* address) {
     return addr.has_value();
 }
 
+bool surface_hasrdil(const RDSurface* self) {
+    spdlog::trace("surface_hasrdil({})", fmt::ptr(self));
+    return api::from_c(self)->has_rdil();
+}
+
+void surface_setrdil(RDSurface* self, bool v) {
+    spdlog::trace("surface_setrdil({}, {})", fmt::ptr(self), v);
+    api::from_c(self)->set_rdil(v);
+}
+
 void surface_setcolumns(RDSurface* self, usize columns) {
     spdlog::trace("surface_setcolumns({}, {})", fmt::ptr(self), columns);
     api::from_c(self)->set_columns(columns);

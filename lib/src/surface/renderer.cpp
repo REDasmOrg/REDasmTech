@@ -1,6 +1,8 @@
 #include "renderer.h"
+#include "../api/marshal.h"
 #include "../context.h"
 #include "../error.h"
+#include "../rdil/rdil.h"
 #include "../state.h"
 #include <cctype>
 
@@ -122,6 +124,51 @@ void Renderer::set_current_item(LIndex lidx, const ListingItem& item) {
     m_curraddress = *addr;
     m_listingidx = lidx;
     this->check_current_segment(item);
+}
+
+RDRendererParams Renderer::create_render_params(const ListingItem& item) {
+    RDRendererParams rp{};
+    rp.renderer = api::to_c(this);
+    rp.address = m_curraddress;
+    rp.byte = state::context->memory->at(item.index).value;
+    return rp;
+}
+
+Renderer& Renderer::create_instr(const RDRendererParams& rp) {
+    const RDProcessor* p = state::context->processor;
+    assume(p);
+
+    if(p->renderinstruction && p->renderinstruction(p, &rp)) {
+        if(!Byte{rp.byte}.has(BF_REFS))
+            return *this;
+    }
+    else
+        this->chunk("???");
+
+    return *this;
+}
+
+Renderer& Renderer::create_rdil(const RDRendererParams& rp) {
+    const RDProcessor* p = state::context->processor;
+    assume(p);
+
+    RDAddress address = this->current_address();
+    rdil::ILExpressionList el;
+
+    if(!p->lift || !p->lift(p, address, api::to_c(&el)))
+        el.clear();
+
+    if(el.empty())
+        el.append(el.expr_unknown());
+
+    for(usize i = 0; i < el.size(); i++) {
+        if(i)
+            this->chunk("; ");
+
+        rdil::render(el.at(i), rp);
+    }
+
+    return *this;
 }
 
 Renderer& Renderer::new_row(const ListingItem& item) {

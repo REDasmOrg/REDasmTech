@@ -21,29 +21,43 @@
 #include <QMessageBox>
 #include <QMimeData>
 
+namespace {
+
+const QString LISTING_MODE_TEXT = "Listing";
+const QString RDIL_MODE_TEXT = "RDIL";
+
+} // namespace
+
 MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
     utils::mainwindow = this;
 
     if(themeprovider::is_dark_theme())
-        this->setWindowIcon(QIcon(":/res/logo_dark.png"));
+        this->setWindowIcon(QIcon{":/res/logo_dark.png"});
     else
-        this->setWindowIcon(QIcon(":/res/logo.png"));
+        this->setWindowIcon(QIcon{":/res/logo.png"});
 
-    this->show_welcome_view();
+    m_pbrdilswitch = new QPushButton(LISTING_MODE_TEXT);
+    m_pbrdilswitch->setFlat(true);
+    m_pbrdilswitch->setVisible(false);
+    m_pbrdilswitch->setFixedHeight(m_ui.statusbar->height());
+
     this->load_recents();
-
     actions::init(this);
     this->update_menubar();
-
-    QString searchpath = qApp->applicationDirPath() + "/lib/plugins/src";
-    rd_addsearchpath(qUtf8Printable(searchpath));
-    rd_init();
 
     m_ui.statusbar->addPermanentWidget(
         statusbar::set_status_label(new QLabel(this)), 70);
 
+    m_ui.statusbar->addPermanentWidget(m_pbrdilswitch);
+
     m_ui.statusbar->addPermanentWidget(statusbar::set_status_icon(
         new QPushButton(this), m_ui.statusbar->height()));
+
+    this->show_welcome_view();
+
+    QString searchpath = qApp->applicationDirPath() + "/lib/plugins/src";
+    rd_addsearchpath(qUtf8Printable(searchpath));
+    rd_init();
 
     connect(m_ui.actfileexit, &QAction::triggered, this, &MainWindow::close);
     connect(m_ui.actfileopen, &QAction::triggered, this,
@@ -68,6 +82,9 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
         auto* dlgflc = new FLCDialog(this);
         dlgflc->show();
     });
+
+    connect(m_pbrdilswitch, &QPushButton::clicked, this,
+            &MainWindow::toggle_rdil);
 }
 
 MainWindow::~MainWindow() { rd_deinit(); }
@@ -159,6 +176,7 @@ void MainWindow::show_welcome_view() { // NOLINT
 
     this->replace_view(welcomeview);
     this->enable_context_actions(false);
+    statusbar::hide_status_icon();
 }
 
 void MainWindow::show_context_view() {
@@ -242,6 +260,8 @@ void MainWindow::enable_context_actions(bool e) { // NOLINT
     m_ui.actviewexports->setVisible(e);
     m_ui.actviewimports->setVisible(e);
     m_ui.actviewstrings->setVisible(e);
+
+    m_pbrdilswitch->setVisible(e);
 }
 
 void MainWindow::open_file(const QString& filepath) {
@@ -264,6 +284,16 @@ void MainWindow::open_file(const QString& filepath) {
             [&]() { this->select_analyzers(); });
 
     dlgloader->open();
+}
+
+void MainWindow::toggle_rdil() {
+    ContextView* ctxview = this->context_view();
+    if(!ctxview)
+        return;
+
+    bool rdil = !ctxview->has_rdil();
+    ctxview->set_rdil(rdil);
+    m_pbrdilswitch->setText(rdil ? RDIL_MODE_TEXT : LISTING_MODE_TEXT);
 }
 
 void MainWindow::select_file() {

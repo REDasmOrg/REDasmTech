@@ -16,6 +16,8 @@ public:
     auto location() { return m_surface->location(); }
     [[nodiscard]] auto viewport() const { return m_surface; }
     [[nodiscard]] auto handle() const { return m_surface->handle(); }
+    [[nodiscard]] bool has_rdil() const { return m_surface->has_rdil(); }
+    void set_rdil(bool v) const { m_surface->set_rdil(v); }
 
     void set_location(const RDSurfaceLocation& loc) {
         m_surface->set_location(loc);

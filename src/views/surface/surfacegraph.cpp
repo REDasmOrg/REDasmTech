@@ -27,6 +27,8 @@ bool SurfaceGraph::can_goforward() const {
     return rdsurface_cangoforward(m_surface);
 }
 
+bool SurfaceGraph::has_rdil() const { return rdsurface_hasrdil(m_surface); }
+
 RDSurfaceLocation SurfaceGraph::location() const {
     RDSurfaceLocation loc;
     rdsurface_getlocation(m_surface, &loc);
@@ -41,6 +43,11 @@ void SurfaceGraph::jump_to(RDAddress address) {
 }
 
 void SurfaceGraph::invalidate() { this->update_graph(); }
+
+void SurfaceGraph::set_rdil(bool b) {
+    rdsurface_setrdil(m_surface, b);
+    this->update_graph();
+}
 
 bool SurfaceGraph::go_back() {
     if(rdsurface_goback(m_surface)) {

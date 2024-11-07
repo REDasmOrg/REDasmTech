@@ -13,9 +13,11 @@ public:
     [[nodiscard]] RDSurface* handle() const { return m_surface; }
     [[nodiscard]] bool can_goback() const;
     [[nodiscard]] bool can_goforward() const;
+    [[nodiscard]] bool has_rdil() const;
     RDSurfaceLocation location() const;
     void jump_to(RDAddress address);
     void invalidate();
+    void set_rdil(bool b);
 
     void set_location(const RDSurfaceLocation& loc) {
         this->set_location(loc, true);

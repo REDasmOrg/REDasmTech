@@ -19,6 +19,8 @@ class SurfaceSplitView: public SplitView {
 public:
     explicit SurfaceSplitView(QWidget* parent = nullptr);
     [[nodiscard]] RDSurface* handle() const;
+    [[nodiscard]] bool has_rdil() const;
+    void set_rdil(bool b);
     void jump_to(RDAddress address);
     void invalidate();
     [[nodiscard]] SurfaceView* surface_view() const;

@@ -49,12 +49,14 @@ public:
     [[nodiscard]] std::string_view get_text() const;
     [[nodiscard]] const std::vector<RDSurfacePath>& get_path() const;
     [[nodiscard]] bool has_selection() const;
+    [[nodiscard]] bool has_rdil() const;
     int index_of(MIndex index) const;
     int last_index_of(MIndex index) const;
     void clear_selection();
     void clear_history();
     void render_function(const Function& f);
     void render(usize n);
+    void set_rdil(bool v);
     void set_columns(usize cols);
     void set_position(int row, int col);
     bool select_word(int row, int col);
@@ -67,7 +69,6 @@ public:
     bool jump_to_ep();
 
 private:
-    RDRendererParams create_render_params(const ListingItem& item) const;
     const ListingItem& get_listing_item(const SurfaceRow& sfrow) const;
     int calculate_index(usize idx) const;
     void update_history(History& history) const;
@@ -80,7 +81,6 @@ private:
     void render_function(const ListingItem& item);
     void render_array(const ListingItem& item);
     void render_type(const ListingItem& item);
-    void render_instr(const ListingItem& item);
     void render_comment(const ListingItem& item);
     void render_refs(const ListingItem& item);
     void fit(int& row, int& col);

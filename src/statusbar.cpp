@@ -17,12 +17,12 @@ QLabel* set_status_label(QLabel* label) {
     return g_lblstatuslabel;
 };
 
-QPushButton* set_status_icon(QPushButton* icon, int height) {
+QPushButton* set_status_icon(QPushButton* icon, int size) {
     g_btnstatusicon = icon;
     g_btnstatusicon->setFlat(true);
     g_btnstatusicon->setText("\uf0c8");
     g_btnstatusicon->setFont(fontawesome::fa_font());
-    g_btnstatusicon->setFixedHeight(height * 0.8);
+    g_btnstatusicon->setFixedSize(size, size);
     g_btnstatusicon->hide();
     return g_btnstatusicon;
 }

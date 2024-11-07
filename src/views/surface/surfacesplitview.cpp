@@ -159,6 +159,36 @@ RDSurface* SurfaceSplitView::handle() const {
     return nullptr;
 }
 
+bool SurfaceSplitView::has_rdil() const {
+    auto* stackw =
+        qobject_cast<QStackedWidget*>(this->current_split()->widget());
+
+    if(stackw) {
+        QWidget* w = stackw->currentWidget();
+
+        if(auto* sv = qobject_cast<SurfaceView*>(w); sv)
+            return sv->has_rdil();
+        if(auto* sg = qobject_cast<SurfaceGraph*>(w); sg)
+            return sg->has_rdil();
+    }
+
+    return false;
+}
+
+void SurfaceSplitView::set_rdil(bool b) {
+    auto* stackw =
+        qobject_cast<QStackedWidget*>(this->current_split()->widget());
+
+    if(stackw) {
+        QWidget* w = stackw->currentWidget();
+
+        if(auto* sv = qobject_cast<SurfaceView*>(w); sv)
+            sv->set_rdil(b);
+        else if(auto* sg = qobject_cast<SurfaceGraph*>(w); sg)
+            sg->set_rdil(b);
+    }
+}
+
 void SurfaceSplitView::jump_to(RDAddress address) { // NO LINT
     auto* stackw =
         qobject_cast<QStackedWidget*>(this->current_split()->widget());

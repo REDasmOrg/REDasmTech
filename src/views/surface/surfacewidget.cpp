@@ -91,6 +91,13 @@ SurfaceWidget::~SurfaceWidget() {
     m_surface = nullptr;
 }
 
+bool SurfaceWidget::has_rdil() const { return rdsurface_hasrdil(m_surface); }
+
+void SurfaceWidget::set_rdil(bool v) const {
+    rdsurface_setrdil(m_surface, v);
+    this->viewport()->update();
+}
+
 void SurfaceWidget::set_location(const RDSurfaceLocation& loc) {
     if(loc.address.valid)
         this->jump_to(loc.address.value);

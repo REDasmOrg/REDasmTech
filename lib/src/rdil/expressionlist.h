@@ -16,6 +16,7 @@ public:
     const ILExpression* at(usize idx) const;
     bool empty() const { return m_expressions.empty(); }
     usize size() const { return m_expressions.size(); }
+    void clear() { m_expressions.clear(); }
 
 public:
     Container::iterator begin() { return m_expressions.begin(); }

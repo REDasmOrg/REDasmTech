@@ -32,6 +32,10 @@ struct Renderer {
     void fill_columns();
     void set_current_item(LIndex lidx, const ListingItem& item);
 
+    RDRendererParams create_render_params(const ListingItem& item);
+    Renderer& create_instr(const RDRendererParams& rp);
+    Renderer& create_rdil(const RDRendererParams& rp);
+
     Renderer& new_row(const ListingItem& item);
 
     Renderer& character(SurfaceRow& row, char ch,

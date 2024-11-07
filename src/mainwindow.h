@@ -2,6 +2,7 @@
 
 #include "ui/mainwindow.h"
 #include "views/contextview.h"
+#include <QPushButton>
 
 class MainWindow: public QMainWindow {
     Q_OBJECT
@@ -19,6 +20,7 @@ protected:
     void closeEvent(QCloseEvent* e) override;
 
 private Q_SLOTS:
+    void toggle_rdil();
     void select_file();
     void show_segments();
     void show_strings();
@@ -43,6 +45,7 @@ Q_SIGNALS:
 
 private:
     const RDEngineStatus* m_status{nullptr};
+    QPushButton* m_pbrdilswitch;
     ui::MainWindow m_ui;
     QString m_filepath;
     bool m_busy{false};

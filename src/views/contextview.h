@@ -11,6 +11,8 @@ public:
     ~ContextView() override;
     [[nodiscard]] bool active() const { return m_active; }
     void tick(const RDEngineStatus* s);
+    [[nodiscard]] bool has_rdil() const { return m_ui.splitview->has_rdil(); }
+    void set_rdil(bool b) { m_ui.splitview->set_rdil(b); } // NOLINT
 
     void jump_to(RDAddress address) { // NOLINT
         m_ui.splitview->jump_to(address);

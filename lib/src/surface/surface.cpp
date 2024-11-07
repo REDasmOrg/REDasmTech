@@ -1,5 +1,4 @@
 #include "surface.h"
-
 #include "../api/marshal.h"
 #include "../builtins/processor.h"
 #include "../context.h"
@@ -236,6 +235,13 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
     return m_path;
 }
 
+void Surface::set_rdil(bool v) {
+    if(v)
+        m_renderer->flags |= SURFACE_RDIL;
+    else
+        m_renderer->flags &= ~SURFACE_RDIL;
+}
+
 void Surface::set_columns(usize cols) { m_renderer->columns = cols; }
 
 void Surface::set_position(int row, int col) {
@@ -382,13 +388,7 @@ bool Surface::has_selection() const {
     return (m_row != m_selrow) || (m_col != m_selcol);
 }
 
-RDRendererParams Surface::create_render_params(const ListingItem& item) const {
-    RDRendererParams rp{};
-    rp.renderer = api::to_c(m_renderer.get());
-    rp.address = m_renderer->current_address();
-    rp.byte = state::context->memory->at(item.index).value;
-    return rp;
-}
+bool Surface::has_rdil() const { return m_renderer->has_flag(SURFACE_RDIL); }
 
 const ListingItem& Surface::get_listing_item(const SurfaceRow& sfrow) const {
     assume(sfrow.listingindex < state::context->listing.size());
@@ -499,10 +499,18 @@ void Surface::render_range(LIndex start, usize n) {
             case LISTINGITEM_FUNCTION: this->render_function(*it); break;
             case LISTINGITEM_JUMP: this->render_jump(*it); break;
 
-            case LISTINGITEM_INSTRUCTION:
-                this->render_instr(*it);
+            case LISTINGITEM_INSTRUCTION: {
+                RDRendererParams rp = m_renderer->create_render_params(*it);
+                m_renderer->new_row(*it);
+
+                if(this->has_rdil())
+                    m_renderer->create_rdil(rp);
+                else
+                    m_renderer->create_instr(rp);
+
                 this->render_comment(*it);
                 break;
+            }
 
             case LISTINGITEM_TYPE:
                 this->render_type(*it);
@@ -575,7 +583,7 @@ void Surface::render_segment(const ListingItem& item) {
     const RDProcessor* p = state::context->processor;
     assume(p);
 
-    RDRendererParams rp = this->create_render_params(item);
+    RDRendererParams rp = m_renderer->create_render_params(item);
 
     if(!p->rendersegment || !p->rendersegment(p, &rp))
         assume(builtins::processor::render_segment(&rp));
@@ -590,7 +598,7 @@ void Surface::render_function(const ListingItem& item) {
     const RDProcessor* p = state::context->processor;
     assume(p);
 
-    RDRendererParams rp = this->create_render_params(item);
+    RDRendererParams rp = m_renderer->create_render_params(item);
 
     if(!p->renderfunction || !p->renderfunction(p, &rp))
         assume(builtins::processor::render_function(&rp));
@@ -729,21 +737,6 @@ void Surface::render_type(const ListingItem& item) {
 
         default: unreachable; break;
     }
-}
-
-void Surface::render_instr(const ListingItem& item) {
-    m_renderer->new_row(item);
-
-    RDRendererParams rp = this->create_render_params(item);
-    const RDProcessor* p = state::context->processor;
-    assume(p);
-
-    if(p->renderinstruction && p->renderinstruction(p, &rp)) {
-        if(Byte b = state::context->memory->at(item.index); !b.has(BF_REFS))
-            return;
-    }
-    else
-        m_renderer->chunk("???");
 }
 
 void Surface::render_comment(const ListingItem& item) {

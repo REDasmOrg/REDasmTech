@@ -9,7 +9,7 @@ namespace statusbar {
 
 // Widgets
 QLabel* set_status_label(QLabel* label);
-QPushButton* set_status_icon(QPushButton* icon, int height);
+QPushButton* set_status_icon(QPushButton* icon, int size);
 QPushButton* status_icon();
 
 // Functions

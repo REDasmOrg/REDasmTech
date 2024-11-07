@@ -19,6 +19,8 @@ public:
     [[nodiscard]] int visible_columns() const;
     [[nodiscard]] int visible_rows() const;
     [[nodiscard]] qreal row_height() const;
+    [[nodiscard]] bool has_rdil() const;
+    void set_rdil(bool v) const;
     void set_location(const RDSurfaceLocation& loc);
 
 public Q_SLOTS:

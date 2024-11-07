@@ -160,13 +160,12 @@ usize X86Processor::emulate(RDAddress address, RDEmulator* e) {
 }
 
 bool X86Processor::lift(RDAddress address, RDILList* l) {
-    if(!this->decode(address)) {
+    if(!this->decode(address))
         return false;
-    }
 
     RDILPool* pool = rdillist_getpool(l);
     rdillist_append(l, rdil_nop(pool));
-    return true;
+    return false;
 }
 
 void X86Processor::process_refs(RDAddress address, RDEmulator* e) const {

@@ -22,6 +22,8 @@ usize surface_getpath(const RDSurface* self, const RDSurfacePath** path);
 std::string_view surface_gettext(const RDSurface* self);
 std::string_view surface_getselectedtext(const RDSurface* self);
 bool surface_getaddressundercursor(const RDSurface* self, RDAddress* address);
+bool surface_hasrdil(const RDSurface* self);
+void surface_setrdil(RDSurface* self, bool v);
 void surface_setcolumns(RDSurface* self, usize columns);
 void surface_setposition(RDSurface* self, int row, int col);
 bool surface_selectword(RDSurface* self, int row, int col);

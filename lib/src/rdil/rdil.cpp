@@ -3,16 +3,16 @@
 #include "../context.h"
 #include "../error.h"
 #include "../state.h"
+#include "../surface/surface.h"
 #include <unordered_map>
 
-#define RDIL_N(x)                                                              \
-    { x, #x }
+#define RDIL_N(x) {x, #x}
 
 namespace redasm::rdil {
 
 namespace {
 
-enum class WalkType {
+enum class WalkType : u8 {
     NORMAL = 0,
     MNEMONIC,
     WHITESPACE,
@@ -382,6 +382,42 @@ void generate(const Function& f, ILExpressionList& res) {
                 break;
         }
     }
+}
+
+void render(const ILExpression* e, const RDRendererParams& rp) {
+    rdil::to_string(
+        e, [&](const ILExpression* expr, std::string_view s, WalkType wt) {
+            Renderer* renderer = api::from_c(rp.renderer);
+
+            if(wt == WalkType::MNEMONIC) {
+                switch(expr->op) {
+                    case RDIL_GOTO: renderer->chunk(s, THEME_JUMP).ws(); break;
+                    case RDIL_RET: renderer->chunk(s, THEME_RET).ws(); break;
+                    case RDIL_NOP: renderer->chunk(s, THEME_NOP).ws(); break;
+
+                    case RDIL_UNKNOWN: {
+                        renderer->chunk(s, THEME_DEFAULT)
+                            .ws()
+                            .chunk("{")
+                            .create_instr(rp)
+                            .chunk("}");
+                        break;
+                    }
+
+                    default: renderer->chunk(s, THEME_DEFAULT).ws(); break;
+                }
+
+                return;
+            }
+
+            switch(expr->op) {
+                // case RDIL_CNST: renderer->renderReference(expr->u_value);
+                // break; case RDIL_VAR: renderer->renderText(expr->var,
+                // Theme_Label); break;
+                case RDIL_REG: renderer->chunk(expr->reg, THEME_REG); break;
+                default: renderer->chunk(s); break;
+            }
+        });
 }
 
 } // namespace redasm::rdil

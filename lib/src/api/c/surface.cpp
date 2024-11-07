@@ -63,6 +63,14 @@ const char* rdsurface_getselectedtext(const RDSurface* self) {
     return redasm::api::internal::surface_getselectedtext(self).data();
 }
 
+bool rdsurface_hasrdil(const RDSurface* self) {
+    return redasm::api::internal::surface_hasrdil(self);
+}
+
+void rdsurface_setrdil(RDSurface* self, bool v) {
+    redasm::api::internal::surface_setrdil(self, v);
+}
+
 void rdsurface_setcolumns(RDSurface* self, usize columns) {
     redasm::api::internal::surface_setcolumns(self, columns);
 }
