@@ -1,5 +1,6 @@
 #pragma once
 
+#include "x86_common.h"
 #include <Zydis/Zydis.h>
 #include <array>
 #include <optional>
@@ -23,14 +24,11 @@ private:
     void set_type(RDAddress address, const ZydisDecodedOperand& op,
                   RDEmulator* e) const;
     bool decode(RDAddress address);
-    [[nodiscard]] std::optional<RDAddress> calc_address(RDAddress address,
-                                                        usize idx) const;
 
 private:
     ZydisFormatter m_formatter;
     ZydisDecoder m_decoder;
-    std::array<ZydisDecodedOperand, ZYDIS_MAX_OPERAND_COUNT> m_ops;
+    X86Instruction m_instr;
     std::array<char, ZYDIS_MAX_INSTRUCTION_LENGTH> m_dbuffer;
     std::array<char, BUFFER_SIZE> m_rbuffer;
-    ZydisDecodedInstruction m_instr;
 };

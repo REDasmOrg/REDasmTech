@@ -391,12 +391,12 @@ void render(const ILExpression* e, const RDRendererParams& rp) {
 
             if(wt == WalkType::MNEMONIC) {
                 switch(expr->op) {
-                    case RDIL_GOTO: renderer->chunk(s, THEME_JUMP).ws(); break;
-                    case RDIL_RET: renderer->chunk(s, THEME_RET).ws(); break;
-                    case RDIL_NOP: renderer->chunk(s, THEME_NOP).ws(); break;
+                    case RDIL_GOTO: renderer->chunk(s, THEME_JUMP); break;
+                    case RDIL_RET: renderer->chunk(s, THEME_RET); break;
+                    case RDIL_NOP: renderer->chunk(s, THEME_NOP); break;
 
                     case RDIL_UNKNOWN: {
-                        renderer->chunk(s, THEME_DEFAULT)
+                        renderer->chunk(s, THEME_NOP)
                             .ws()
                             .chunk("{")
                             .create_instr(rp)
@@ -404,7 +404,7 @@ void render(const ILExpression* e, const RDRendererParams& rp) {
                         break;
                     }
 
-                    default: renderer->chunk(s, THEME_DEFAULT).ws(); break;
+                    default: renderer->chunk(s, THEME_DEFAULT); break;
                 }
 
                 return;
@@ -414,6 +414,10 @@ void render(const ILExpression* e, const RDRendererParams& rp) {
                 // case RDIL_CNST: renderer->renderReference(expr->u_value);
                 // break; case RDIL_VAR: renderer->renderText(expr->var,
                 // Theme_Label); break;
+                case RDIL_CNST:
+                    renderer->chunk("RDIL_CNST", THEME_CONSTANT);
+                    break;
+                case RDIL_VAR: renderer->chunk("RDIL_VAR", THEME_LABEL); break;
                 case RDIL_REG: renderer->chunk(expr->reg, THEME_REG); break;
                 default: renderer->chunk(s); break;
             }

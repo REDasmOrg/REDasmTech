@@ -1,4 +1,5 @@
 #include "x86.h"
+#include "x86_lifter.h"
 #include <redasm/redasm.h>
 #include <string>
 
@@ -42,8 +43,10 @@ bool X86Processor::decode(RDAddress address) {
     if(!n)
         return false;
 
+    m_instr.address = address;
+
     ZyanStatus s = ZydisDecoderDecodeFull(&m_decoder, m_dbuffer.data(), n,
-                                          &m_instr, m_ops.data());
+                                          &m_instr.d, m_instr.ops.data());
     return ZYAN_SUCCESS(s);
 }
 
@@ -52,8 +55,9 @@ bool X86Processor::render_instruction(const RDRendererParams* r) {
         return false;
 
     ZydisFormatterTokenConst* token = nullptr;
+
     ZyanStatus s = ZydisFormatterTokenizeInstruction(
-        &m_formatter, &m_instr, m_ops.data(), m_instr.operand_count,
+        &m_formatter, &m_instr.d, m_instr.ops.data(), m_instr.d.operand_count,
         m_rbuffer.data(), m_rbuffer.size(), r->address, &token, nullptr);
 
     if(!ZYAN_SUCCESS(s))
@@ -76,15 +80,15 @@ bool X86Processor::render_instruction(const RDRendererParams* r) {
             }
 
             case ZYDIS_TOKEN_MNEMONIC: {
-                if(m_instr.meta.category == ZYDIS_CATEGORY_COND_BR)
+                if(m_instr.d.meta.category == ZYDIS_CATEGORY_COND_BR)
                     rdrenderer_themed(r->renderer, tokenvalue, THEME_JUMPCOND);
-                else if(m_instr.meta.category == ZYDIS_CATEGORY_UNCOND_BR)
+                else if(m_instr.d.meta.category == ZYDIS_CATEGORY_UNCOND_BR)
                     rdrenderer_themed(r->renderer, tokenvalue, THEME_JUMP);
-                else if(m_instr.meta.category == ZYDIS_CATEGORY_CALL)
+                else if(m_instr.d.meta.category == ZYDIS_CATEGORY_CALL)
                     rdrenderer_themed(r->renderer, tokenvalue, THEME_CALL);
-                else if(m_instr.meta.category == ZYDIS_CATEGORY_RET)
+                else if(m_instr.d.meta.category == ZYDIS_CATEGORY_RET)
                     rdrenderer_themed(r->renderer, tokenvalue, THEME_RET);
-                else if(m_instr.meta.category == ZYDIS_CATEGORY_NOP)
+                else if(m_instr.d.meta.category == ZYDIS_CATEGORY_NOP)
                     rdrenderer_themed(r->renderer, tokenvalue, THEME_NOP);
                 else
                     rdrenderer_themed(r->renderer, tokenvalue, THEME_DEFAULT);
@@ -111,9 +115,9 @@ usize X86Processor::emulate(RDAddress address, RDEmulator* e) {
 
     bool flow = true;
 
-    switch(m_instr.meta.category) {
+    switch(m_instr.d.meta.category) {
         case ZYDIS_CATEGORY_CALL: {
-            auto addr = this->calc_address(address, 0);
+            auto addr = x86_common::calc_address(m_instr, address, 0);
 
             if(addr)
                 rdemulator_addcoderef(e, *addr, CR_CALL);
@@ -122,7 +126,7 @@ usize X86Processor::emulate(RDAddress address, RDEmulator* e) {
 
         case ZYDIS_CATEGORY_UNCOND_BR: {
             flow = false;
-            auto addr = this->calc_address(address, 0);
+            auto addr = x86_common::calc_address(m_instr, address, 0);
 
             if(addr)
                 rdemulator_addcoderef(e, *addr, CR_JUMP);
@@ -131,20 +135,20 @@ usize X86Processor::emulate(RDAddress address, RDEmulator* e) {
         }
 
         case ZYDIS_CATEGORY_COND_BR: {
-            auto addr = this->calc_address(address, 0);
+            auto addr = x86_common::calc_address(m_instr, address, 0);
             if(addr)
                 rdemulator_addcoderef(e, *addr, CR_JUMP);
             break;
         }
 
         case ZYDIS_CATEGORY_SYSTEM: {
-            if(m_instr.mnemonic == ZYDIS_MNEMONIC_HLT)
+            if(m_instr.d.mnemonic == ZYDIS_MNEMONIC_HLT)
                 flow = false;
             break;
         }
 
         case ZYDIS_CATEGORY_INTERRUPT: {
-            if(m_instr.mnemonic == ZYDIS_MNEMONIC_INT3)
+            if(m_instr.d.mnemonic == ZYDIS_MNEMONIC_INT3)
                 flow = false;
             break;
         }
@@ -154,27 +158,24 @@ usize X86Processor::emulate(RDAddress address, RDEmulator* e) {
     }
 
     if(flow)
-        rdemulator_addcoderef(e, address + m_instr.length, CR_FLOW);
+        rdemulator_addcoderef(e, address + m_instr.d.length, CR_FLOW);
 
-    return m_instr.length;
+    return m_instr.d.length;
 }
 
 bool X86Processor::lift(RDAddress address, RDILList* l) {
-    if(!this->decode(address))
-        return false;
-
-    RDILPool* pool = rdillist_getpool(l);
-    rdillist_append(l, rdil_nop(pool));
+    if(this->decode(address))
+        return x86_lifter::lift(m_instr, l);
     return false;
 }
 
 void X86Processor::process_refs(RDAddress address, RDEmulator* e) const {
-    if(m_instr.mnemonic == ZYDIS_MNEMONIC_LEA) {
+    if(m_instr.d.mnemonic == ZYDIS_MNEMONIC_LEA) {
         return;
     }
 
-    for(auto i = 0; i < m_instr.operand_count; i++) {
-        const ZydisDecodedOperand& op = m_ops[i];
+    for(auto i = 0; i < m_instr.d.operand_count; i++) {
+        const ZydisDecodedOperand& op = m_instr.ops[i];
         if(op.element_count != 1)
             continue;
 
@@ -256,46 +257,6 @@ void X86Processor::set_type(RDAddress address, const ZydisDecodedOperand& op,
 
         default: break;
     }
-}
-
-std::optional<RDAddress> X86Processor::calc_address(RDAddress address,
-                                                    usize idx) const {
-    if(idx >= m_instr.operand_count)
-        return std::nullopt;
-
-    RDAddress resaddr = 0;
-    const ZydisDecodedOperand& zop = m_ops[idx];
-
-    switch(zop.type) {
-        case ZYDIS_OPERAND_TYPE_IMMEDIATE: {
-            if(!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(&m_instr, &zop, address,
-                                                      &resaddr))) {
-                return zop.imm.value.u;
-            }
-
-            return resaddr;
-        }
-
-        case ZYDIS_OPERAND_TYPE_MEMORY: {
-            if(!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(&m_instr, &zop, address,
-                                                      &resaddr))) {
-                if((zop.mem.index != ZYDIS_REGISTER_NONE) &&
-                   zop.mem.disp.has_displacement) {
-                    // if(istable)
-                    //     *istable = true;
-                    return zop.mem.disp.value;
-                }
-            }
-            else
-                return resaddr;
-
-            break;
-        }
-
-        default: break;
-    }
-
-    return std::nullopt;
 }
 
 namespace {
