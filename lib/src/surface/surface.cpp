@@ -501,17 +501,17 @@ void Surface::render_range(LIndex start, usize n) {
 
             case LISTINGITEM_INSTRUCTION:
                 this->render_instr(*it);
-                this->render_comments(*it);
+                this->render_comment(*it);
                 break;
 
             case LISTINGITEM_TYPE:
                 this->render_type(*it);
-                this->render_comments(*it);
+                this->render_comment(*it);
                 break;
 
             case LISTINGITEM_ARRAY:
                 this->render_array(*it);
-                this->render_comments(*it);
+                this->render_comment(*it);
                 break;
 
             default: break;
@@ -746,7 +746,7 @@ void Surface::render_instr(const ListingItem& item) {
         m_renderer->chunk("???");
 }
 
-void Surface::render_comments(const ListingItem& item) {
+void Surface::render_comment(const ListingItem& item) {
     if(m_renderer->has_flag(SURFACE_NOCOMMENTS))
         return;
 
@@ -756,12 +756,10 @@ void Surface::render_comments(const ListingItem& item) {
     m_renderer->ws(8);
     int i = 0;
 
-    utils::split_each(state::context->get_comment(item.index), '\n',
-                      [&](std::string_view x) {
-                          if(i++ > 0)
-                              m_renderer->comment(" | ");
-                          m_renderer->comment(x);
-                      });
+    utils::split_each(
+        state::context->get_comment(item.index), '\n', [&](std::string_view x) {
+            m_renderer->comment(i++ > 0 ? " | " : "# ").comment(x);
+        });
 }
 
 void Surface::render_refs(const ListingItem& item) {

@@ -42,18 +42,19 @@ void comment() {
     if(!cv)
         return;
 
-    RDAddress address;
-    if(!rdsurface_getaddressundercursor(cv->handle(), &address))
+    RDSurfaceLocation loc{};
+    rdsurface_getlocation(cv->handle(), &loc);
+    if(!loc.address.valid)
         return;
 
     bool ok = false;
-    const char* cmt = rd_getcomment(address);
+    const char* cmt = rd_getcomment(loc.address.value);
 
     QString s = QInputDialog::getMultiLineText(
-        g_mainwindow, QString{"Comment @ %1"}.arg(rd_tohex(address)),
+        g_mainwindow, QString{"Comment @ %1"}.arg(rd_tohex(loc.address.value)),
         "Insert comment (or leave empty):", cmt ? cmt : QString{}, &ok);
 
-    if(ok && rd_setcomment(address, qUtf8Printable(s)))
+    if(ok && rd_setcomment(loc.address.value, qUtf8Printable(s)))
         cv->invalidate();
 }
 

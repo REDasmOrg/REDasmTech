@@ -81,7 +81,7 @@ private:
     void render_array(const ListingItem& item);
     void render_type(const ListingItem& item);
     void render_instr(const ListingItem& item);
-    void render_comments(const ListingItem& item);
+    void render_comment(const ListingItem& item);
     void render_refs(const ListingItem& item);
     void fit(int& row, int& col);
     int rows_count() const { return static_cast<int>(this->rows.size()); }
