@@ -136,6 +136,7 @@ void SurfaceWidget::jump_to(RDAddress address) {
         if(this->is_index_visible(index)) {
             auto [start, end] = this->get_visible_range();
             rdsurface_setposition(m_surface, index - start, -1);
+            this->viewport()->update();
         }
         else {
             const usize DIFF = (this->visible_rows() / 4);
@@ -289,7 +290,7 @@ int SurfaceWidget::visible_columns() const {
 }
 
 int SurfaceWidget::visible_rows() const {
-    return qCeil(this->viewport()->height() / utils::cell_height());
+    return qFloor(this->viewport()->height() / utils::cell_height());
 }
 
 qreal SurfaceWidget::row_height() const {

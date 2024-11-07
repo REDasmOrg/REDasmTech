@@ -49,6 +49,8 @@ void draw_surface(RDSurface* s, QTextDocument* doc, usize start, usize n) {
         if(i) // Insert new block after the default one
             cursor.insertBlock();
 
+        // cursor.insertText(QString::number(i + 1) + " ");
+
         const RDSurfaceCell* row = nullptr;
         usize ncols = rdsurface_getrow(s, start++, &row);
 
