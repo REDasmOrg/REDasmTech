@@ -58,7 +58,7 @@ const RDILExpr* lift_op(const X86Instruction& instr, usize idx,
                     disp = rdil_cnst(pool, op.mem.disp.value);
             }
             else
-                disp = rdil_cnst(pool, *addr);
+                disp = rdil_var(pool, *addr);
 
             const RDILExpr* lhs = nullptr;
             const RDILExpr* indexscale =
@@ -98,6 +98,27 @@ const RDILExpr* lift_op(const X86Instruction& instr, usize idx,
     return e;
 }
 
+const RDILExpr* lift_jump(const X86Instruction& instr, RDILPool* pool) {
+    const RDILExpr* cond = nullptr;
+
+    switch(instr.d.mnemonic) {
+        case ZYDIS_MNEMONIC_JZ:
+            cond = rdil_eq(pool, rdil_sym(pool, "z"), rdil_cnst(pool, 0));
+            break;
+
+        case ZYDIS_MNEMONIC_JNZ:
+            cond = rdil_ne(pool, rdil_sym(pool, "z"), rdil_cnst(pool, 0));
+            break;
+
+        default: return rdil_unknown(pool);
+    }
+
+    auto addr = x86_common::calc_address(instr, instr.address, 0);
+    const RDILExpr* t = rdil_var(pool, addr.value_or(instr.ops[0].imm.value.u));
+    const RDILExpr* f = rdil_var(pool, instr.address + instr.d.length);
+    return rdil_if(pool, cond, rdil_goto(pool, t), rdil_goto(pool, f));
+}
+
 } // namespace
 
 bool lift(const X86Instruction& instr, RDILList* l) {
@@ -118,6 +139,44 @@ bool lift(const X86Instruction& instr, RDILList* l) {
             break;
         }
 
+        case ZYDIS_MNEMONIC_MOV:
+        case ZYDIS_MNEMONIC_LEA: {
+            const RDILExpr* dst = x86_lifter::lift_op(instr, 0, pool);
+            const RDILExpr* src = x86_lifter::lift_op(instr, 1, pool);
+            const RDILExpr* c = rdil_copy(pool, dst, src);
+            rdillist_append(l, c);
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_PUSH: {
+            const RDILExpr* op = x86_lifter::lift_op(instr, 0, pool);
+            const RDILExpr* c = rdil_push(pool, op);
+            rdillist_append(l, c);
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_POP: {
+            const RDILExpr* op = x86_lifter::lift_op(instr, 0, pool);
+            const RDILExpr* c = rdil_pop(pool, op);
+            rdillist_append(l, c);
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_CMP: {
+            const RDILExpr* left = x86_lifter::lift_op(instr, 0, pool);
+            const RDILExpr* right = x86_lifter::lift_op(instr, 1, pool);
+            const RDILExpr* v = rdil_sym(pool, "z");
+            const RDILExpr* s = rdil_sub(pool, left, right);
+            rdillist_append(l, rdil_copy(pool, v, s));
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_JZ:
+        case ZYDIS_MNEMONIC_JNZ:
+            rdillist_append(l, x86_lifter::lift_jump(instr, pool));
+            break;
+
+        case ZYDIS_MNEMONIC_NOP: rdillist_append(l, rdil_nop(pool)); break;
         default: return false;
     }
 
