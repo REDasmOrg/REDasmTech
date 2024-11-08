@@ -21,6 +21,10 @@ const RDILExpr* rdilpool_reg(RDILPool* self, const char* reg) {
     return api::to_c(api::from_c(self)->expr_reg(reg));
 }
 
+const RDILExpr* rdilpool_sym(RDILPool* self, const char* sym) {
+    return api::to_c(api::from_c(self)->expr_sym(sym));
+}
+
 const RDILExpr* rdilpool_cnst(RDILPool* self, u64 value) {
     return api::to_c(api::from_c(self)->expr_cnst(value));
 }

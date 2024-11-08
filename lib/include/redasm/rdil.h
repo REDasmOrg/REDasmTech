@@ -56,7 +56,7 @@ typedef enum RDILOp {
     RDIL_INVALID = 0,
     RDIL_UNKNOWN,                                         // Special
     RDIL_NOP,                                             // Other
-    RDIL_REG, RDIL_CNST, RDIL_VAR,                        // Value
+    RDIL_REG, RDIL_CNST, RDIL_VAR, RDIL_SYM,              // Value
     RDIL_ADD, RDIL_SUB, RDIL_MUL, RDIL_DIV, RDIL_MOD,     // Math
     RDIL_AND, RDIL_OR, RDIL_XOR, RDIL_NOT,                // Logic
     RDIL_LSL, RDIL_LSR, RDIL_ASL, RDIL_ASR,               // Shift
@@ -75,7 +75,10 @@ typedef enum RDILOp {
     RDOffset offset;                                                           \
     u64 u_value;                                                               \
     i64 s_value;                                                               \
-    const char* reg;
+    union {                                                                    \
+        const char* reg;                                                       \
+        const char* sym;                                                       \
+    };
 
 typedef struct RDILValue {
     RDILOp type;
@@ -86,6 +89,7 @@ REDASM_EXPORT const RDILExpr* rdil_unknown(RDILPool* self);
 REDASM_EXPORT const RDILExpr* rdil_nop(RDILPool* self);
 REDASM_EXPORT const RDILExpr* rdil_var(RDILPool* self, RDAddress address);
 REDASM_EXPORT const RDILExpr* rdil_reg(RDILPool* self, const char* reg);
+REDASM_EXPORT const RDILExpr* rdil_sym(RDILPool* self, const char* sym);
 REDASM_EXPORT const RDILExpr* rdil_cnst(RDILPool* self, u64 value);
 REDASM_EXPORT const RDILExpr* rdil_add(RDILPool* self, const RDILExpr* l,
                                        const RDILExpr* r);

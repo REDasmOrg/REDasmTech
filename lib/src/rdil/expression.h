@@ -34,6 +34,7 @@ public:
     const ILExpr* expr_pop(const ILExpr* e);
     const ILExpr* expr_push(const ILExpr* e);
     const ILExpr* expr_reg(const char* reg);
+    const ILExpr* expr_sym(const char* sym);
     const ILExpr* expr_cnst(u64 value);
     const ILExpr* expr_var(RDAddress address);
     const ILExpr* expr_goto(const ILExpr* e);
@@ -55,10 +56,8 @@ public:
     const ILExpr* expr_asr(const ILExpr* l, const ILExpr* r);
     const ILExpr* expr_rol(const ILExpr* l, const ILExpr* r);
     const ILExpr* expr_ror(const ILExpr* l, const ILExpr* r);
-    const ILExpr* expr_copy(const ILExpr* dst,
-                                  const ILExpr* src);
-    const ILExpr* expr_if(const ILExpr* cond, const ILExpr* t,
-                                const ILExpr* f);
+    const ILExpr* expr_copy(const ILExpr* dst, const ILExpr* src);
+    const ILExpr* expr_if(const ILExpr* cond, const ILExpr* t, const ILExpr* f);
     const ILExpr* expr_eq(const ILExpr* l, const ILExpr* r);
     const ILExpr* expr_ne(const ILExpr* l, const ILExpr* r);
     const ILExpr* expr_lt(const ILExpr* l, const ILExpr* r);
@@ -71,10 +70,8 @@ protected:
     const ILExpr* check(const ILExpr* e);
 
 private:
-    ILExpr* expr_ds(RDILOp op, const ILExpr* dst,
-                          const ILExpr* src);
-    ILExpr* expr_lr(RDILOp op, const ILExpr* l,
-                          const ILExpr* r);
+    ILExpr* expr_ds(RDILOp op, const ILExpr* dst, const ILExpr* src);
+    ILExpr* expr_lr(RDILOp op, const ILExpr* l, const ILExpr* r);
     ILExpr* expr_u(RDILOp op, const ILExpr* u);
     ILExpr* expr(RDILOp op);
 

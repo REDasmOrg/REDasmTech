@@ -24,6 +24,7 @@ bool has_value(const ILExpr* e) {
     switch(e->op) {
         case RDIL_VAR:
         case RDIL_REG:
+        case RDIL_SYM:
         case RDIL_CNST: return true;
 
         default: break;
@@ -157,6 +158,7 @@ bool get_format_impl(const ILExpr* e, std::string& res) {
         case RDIL_CNST: res += "cnst"; break;
         case RDIL_VAR: res += "var"; break;
         case RDIL_REG: res += "reg"; break;
+        case RDIL_SYM: res += "sym"; break;
         default: except("Unknown IL Expression"); break;
     }
 
@@ -237,7 +239,8 @@ void to_string(const ILExpr* e, ToStringCallback cb) {
 
         case RDIL_CNST:
         case RDIL_VAR:
-        case RDIL_REG: cb(e, std::string{}, WalkType::NORMAL); break;
+        case RDIL_REG:
+        case RDIL_SYM: cb(e, std::string{}, WalkType::NORMAL); break;
 
         case RDIL_COPY:
             rdil::to_string(e->dst, cb);
@@ -300,6 +303,7 @@ void get_text_impl(const ILExpr* e, std::string& res) {
                                 res += ctx->to_hex(expr->address);
                                 break;
                             case RDIL_REG: res += expr->reg; break;
+                            case RDIL_SYM: res += expr->sym; break;
                             default: res += s; break;
                         }
                     });
@@ -310,16 +314,16 @@ void get_text_impl(const ILExpr* e, std::string& res) {
 std::string_view get_op_name(usize t) {
     static const std::unordered_map<usize, std::string_view> NAMES = {
         RDIL_N(RDIL_UNKNOWN), RDIL_N(RDIL_NOP),  RDIL_N(RDIL_REG),
-        RDIL_N(RDIL_CNST),    RDIL_N(RDIL_VAR),  RDIL_N(RDIL_ADD),
-        RDIL_N(RDIL_SUB),     RDIL_N(RDIL_MUL),  RDIL_N(RDIL_DIV),
-        RDIL_N(RDIL_MOD),     RDIL_N(RDIL_AND),  RDIL_N(RDIL_OR),
-        RDIL_N(RDIL_XOR),     RDIL_N(RDIL_NOT),  RDIL_N(RDIL_LSL),
-        RDIL_N(RDIL_LSR),     RDIL_N(RDIL_ASL),  RDIL_N(RDIL_ASR),
-        RDIL_N(RDIL_ROL),     RDIL_N(RDIL_ROR),  RDIL_N(RDIL_MEM),
-        RDIL_N(RDIL_COPY),    RDIL_N(RDIL_GOTO), RDIL_N(RDIL_CALL),
-        RDIL_N(RDIL_RET),     RDIL_N(RDIL_IF),   RDIL_N(RDIL_EQ),
-        RDIL_N(RDIL_NE),      RDIL_N(RDIL_PUSH), RDIL_N(RDIL_POP),
-        RDIL_N(RDIL_INT),
+        RDIL_N(RDIL_SYM),     RDIL_N(RDIL_CNST), RDIL_N(RDIL_VAR),
+        RDIL_N(RDIL_ADD),     RDIL_N(RDIL_SUB),  RDIL_N(RDIL_MUL),
+        RDIL_N(RDIL_DIV),     RDIL_N(RDIL_MOD),  RDIL_N(RDIL_AND),
+        RDIL_N(RDIL_OR),      RDIL_N(RDIL_XOR),  RDIL_N(RDIL_NOT),
+        RDIL_N(RDIL_LSL),     RDIL_N(RDIL_LSR),  RDIL_N(RDIL_ASL),
+        RDIL_N(RDIL_ASR),     RDIL_N(RDIL_ROL),  RDIL_N(RDIL_ROR),
+        RDIL_N(RDIL_MEM),     RDIL_N(RDIL_COPY), RDIL_N(RDIL_GOTO),
+        RDIL_N(RDIL_CALL),    RDIL_N(RDIL_RET),  RDIL_N(RDIL_IF),
+        RDIL_N(RDIL_EQ),      RDIL_N(RDIL_NE),   RDIL_N(RDIL_PUSH),
+        RDIL_N(RDIL_POP),     RDIL_N(RDIL_INT),
     };
 
     auto it = NAMES.find(t);
@@ -329,15 +333,16 @@ std::string_view get_op_name(usize t) {
 usize get_op_type(std::string_view id) {
     static const std::unordered_map<std::string_view, usize> IDS = {
         {"unknown", RDIL_UNKNOWN}, {"nop", RDIL_NOP},   {"reg", RDIL_REG},
-        {"cnst", RDIL_CNST},       {"var", RDIL_VAR},   {"add", RDIL_ADD},
-        {"sub", RDIL_SUB},         {"mul", RDIL_MUL},   {"div", RDIL_DIV},
-        {"mod", RDIL_MOD},         {"and", RDIL_AND},   {"or", RDIL_OR},
-        {"xor", RDIL_XOR},         {"not", RDIL_NOT},   {"lsl", RDIL_LSL},
-        {"lsr", RDIL_LSR},         {"asl", RDIL_ASL},   {"asr", RDIL_ASR},
-        {"rol", RDIL_ROL},         {"ror", RDIL_ROR},   {"mem", RDIL_MEM},
-        {"copy", RDIL_COPY},       {"goto", RDIL_GOTO}, {"call", RDIL_CALL},
-        {"ret", RDIL_RET},         {"eq", RDIL_EQ},     {"ne", RDIL_NE},
-        {"push", RDIL_PUSH},       {"pop", RDIL_POP},   {"int", RDIL_INT},
+        {"sym", RDIL_SYM},         {"cnst", RDIL_CNST}, {"var", RDIL_VAR},
+        {"add", RDIL_ADD},         {"sub", RDIL_SUB},   {"mul", RDIL_MUL},
+        {"div", RDIL_DIV},         {"mod", RDIL_MOD},   {"and", RDIL_AND},
+        {"or", RDIL_OR},           {"xor", RDIL_XOR},   {"not", RDIL_NOT},
+        {"lsl", RDIL_LSL},         {"lsr", RDIL_LSR},   {"asl", RDIL_ASL},
+        {"asr", RDIL_ASR},         {"rol", RDIL_ROL},   {"ror", RDIL_ROR},
+        {"mem", RDIL_MEM},         {"copy", RDIL_COPY}, {"goto", RDIL_GOTO},
+        {"call", RDIL_CALL},       {"ret", RDIL_RET},   {"eq", RDIL_EQ},
+        {"ne", RDIL_NE},           {"push", RDIL_PUSH}, {"pop", RDIL_POP},
+        {"int", RDIL_INT},
     };
 
     auto it = IDS.find(id);
@@ -421,6 +426,7 @@ void render(const ILExpr* e, const RDRendererParams& rp) {
 
                 case RDIL_VAR: renderer->ref(expr->address); break;
                 case RDIL_REG: renderer->chunk(expr->reg, THEME_REG); break;
+                case RDIL_SYM: renderer->chunk(expr->sym, THEME_ADDRESS); break;
                 default: renderer->chunk(s); break;
             }
         });

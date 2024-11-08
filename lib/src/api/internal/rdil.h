@@ -7,6 +7,7 @@ const RDILExpr* rdilpool_unknown(RDILPool* self);
 const RDILExpr* rdilpool_nop(RDILPool* self);
 const RDILExpr* rdilpool_var(RDILPool* self, RDAddress address);
 const RDILExpr* rdilpool_reg(RDILPool* self, const char* reg);
+const RDILExpr* rdilpool_sym(RDILPool* self, const char* sym);
 const RDILExpr* rdilpool_cnst(RDILPool* self, u64 value);
 const RDILExpr* rdilpool_add(RDILPool* self, const RDILExpr* l, const RDILExpr* r);
 const RDILExpr* rdilpool_sub(RDILPool* self, const RDILExpr* l, const RDILExpr* r);
