@@ -33,3 +33,7 @@ void rdrenderer_text(RDRenderer* self, const char* s) {
 void rdrenderer_reference(RDRenderer* self, RDAddress address) {
     redasm::api::internal::renderer_reference(self, address);
 }
+
+void rdrenderer_constant(RDRenderer* self, usize value, int base) {
+    redasm::api::internal::renderer_constant(self, value, base);
+}

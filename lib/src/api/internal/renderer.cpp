@@ -32,8 +32,13 @@ void renderer_text(RDRenderer* self, std::string_view s) {
 }
 
 void renderer_reference(RDRenderer* self, RDAddress address) {
-    spdlog::trace("renderer_reference({}, '{}')", fmt::ptr(self), address);
+    spdlog::trace("renderer_reference({}, {})", fmt::ptr(self), address);
     api::from_c(self)->ref(address);
+}
+
+void renderer_constant(RDRenderer* self, usize value, int base) {
+    spdlog::trace("renderer_constant({}, {}, {})", fmt::ptr(self), value, base);
+    api::from_c(self)->constant(value, base);
 }
 
 } // namespace redasm::api::internal
