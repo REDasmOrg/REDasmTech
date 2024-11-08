@@ -32,11 +32,8 @@ struct Renderer {
     void fill_columns();
     void set_current_item(LIndex lidx, const ListingItem& item);
 
-    RDRendererParams create_render_params(const ListingItem& item);
-    Renderer& create_instr(const RDRendererParams& rp);
-    Renderer& create_rdil(const RDRendererParams& rp);
-
     Renderer& new_row(const ListingItem& item);
+    Renderer& constant(usize c, int base = 0);
 
     Renderer& character(SurfaceRow& row, char ch,
                         RDThemeKind fg = THEME_DEFAULT,
@@ -48,7 +45,7 @@ struct Renderer {
     [[nodiscard]] bool has_flag(usize f) const { return this->flags & f; }
 
     Renderer& arr_index(usize idx) {
-        return this->chunk("[").constant(std::to_string(idx)).chunk("]");
+        return this->chunk("[").constant(idx).chunk("]");
     }
 
     Renderer& address(std::string_view arg) {
@@ -60,10 +57,6 @@ struct Renderer {
 
     Renderer& comment(std::string_view arg) {
         return this->chunk(arg, THEME_COMMENT);
-    }
-
-    Renderer& constant(std::string_view arg) {
-        return this->chunk(arg, THEME_CONSTANT);
     }
 
     Renderer& string(std::string_view arg, bool quoted = true) {
@@ -96,6 +89,12 @@ struct Renderer {
     Renderer& ws(usize n = 1) { return this->chunk(std::string(n, ' ')); }
 
     static bool is_char_skippable(char ch);
+
+public: // High level interface
+    RDRendererParams create_render_params(const ListingItem& item);
+    Renderer& instr(const RDRendererParams& rp);
+    Renderer& rdil(const RDRendererParams& rp);
+    Renderer& ref(RDAddress address);
 
 public:
     usize columns{0};

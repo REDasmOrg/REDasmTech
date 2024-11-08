@@ -504,9 +504,9 @@ void Surface::render_range(LIndex start, usize n) {
                 m_renderer->new_row(*it);
 
                 if(this->has_rdil())
-                    m_renderer->create_rdil(rp);
+                    m_renderer->rdil(rp);
                 else
-                    m_renderer->create_instr(rp);
+                    m_renderer->instr(rp);
 
                 this->render_comment(*it);
                 break;
@@ -699,7 +699,7 @@ void Surface::render_type(const ListingItem& item) {
             auto v = mem->get_u64(item.index, pt->type->is_big());
             assume(v.has_value());
             if(v.has_value())
-                m_renderer->word("=").constant(state::context->to_hex(*v, 16));
+                m_renderer->word("=").constant(*v, 16);
             else
                 m_renderer->word("=").unknown();
             break;
@@ -715,7 +715,7 @@ void Surface::render_type(const ListingItem& item) {
                 v = state::context->memory->get_string(item.index);
 
             if(v.has_value())
-                m_renderer->ws().string(*v).chunk(",").constant("0");
+                m_renderer->ws().string(*v).chunk(",").constant(0);
             else
                 m_renderer->ws().unknown();
             break;

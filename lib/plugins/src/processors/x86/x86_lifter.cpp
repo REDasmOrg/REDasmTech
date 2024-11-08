@@ -16,7 +16,7 @@ bool needs_calcaddress(const X86Instruction& instr) {
 }
 
 const RDILExpr* lift_op(const X86Instruction& instr, usize idx,
-                              RDILPool* pool) {
+                        RDILPool* pool) {
     const ZydisDecodedOperand& op = instr.ops[idx];
     const RDILExpr* e = nullptr;
 
@@ -29,19 +29,21 @@ const RDILExpr* lift_op(const X86Instruction& instr, usize idx,
             u64 c = op.imm.value.u;
 
             if(x86_lifter::needs_calcaddress(instr)) {
-                auto addr = x86_common::calc_address(instr, idx, instr.address);
+                auto addr = x86_common::calc_address(instr, instr.address, idx);
                 if(addr)
                     c = static_cast<u64>(*addr);
-            }
 
-            e = rdil_cnst(pool, c);
+                e = rdil_var(pool, c);
+            }
+            else
+                e = rdil_cnst(pool, c);
             break;
         }
 
         case ZYDIS_OPERAND_TYPE_MEMORY: {
-            const RDILExpr *base = nullptr, *index = nullptr,
-                                 *scale = nullptr, *disp = nullptr;
-            auto addr = x86_common::calc_address(instr, idx, instr.address);
+            const RDILExpr *base = nullptr, *index = nullptr, *scale = nullptr,
+                           *disp = nullptr;
+            auto addr = x86_common::calc_address(instr, instr.address, idx);
 
             if(!addr) {
                 if(op.mem.base != ZYDIS_REGISTER_NONE)

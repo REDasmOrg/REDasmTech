@@ -5,6 +5,7 @@
 #include "../rdil/rdil.h"
 #include "../state.h"
 #include <cctype>
+#include <cstddef>
 
 namespace redasm {
 
@@ -134,7 +135,7 @@ RDRendererParams Renderer::create_render_params(const ListingItem& item) {
     return rp;
 }
 
-Renderer& Renderer::create_instr(const RDRendererParams& rp) {
+Renderer& Renderer::instr(const RDRendererParams& rp) {
     const RDProcessor* p = state::context->processor;
     assume(p);
 
@@ -148,7 +149,7 @@ Renderer& Renderer::create_instr(const RDRendererParams& rp) {
     return *this;
 }
 
-Renderer& Renderer::create_rdil(const RDRendererParams& rp) {
+Renderer& Renderer::rdil(const RDRendererParams& rp) {
     const RDProcessor* p = state::context->processor;
     assume(p);
 
@@ -171,6 +172,19 @@ Renderer& Renderer::create_rdil(const RDRendererParams& rp) {
     return *this;
 }
 
+Renderer& Renderer::ref(RDAddress address) {
+    state::context->address_to_index(address)
+        .map([&](usize idx) {
+            std::string name = state::context->get_name(idx);
+            this->chunk(name, THEME_ADDRESS);
+        })
+        .or_else([&]() {
+            this->chunk(state::context->to_hex(address, -1), THEME_CONSTANT);
+        });
+
+    return *this;
+}
+
 Renderer& Renderer::new_row(const ListingItem& item) {
     m_rows.emplace_back(SurfaceRow{
         m_listingidx,
@@ -188,6 +202,44 @@ Renderer& Renderer::new_row(const ListingItem& item) {
 
         if(item.indent)
             this->ws(item.indent);
+    }
+
+    return *this;
+}
+
+Renderer& Renderer::constant(usize c, int base) {
+    static constexpr std::string_view DIGITS = "0123456789ABCDEF";
+
+    if(c == 0) { // Simplified logic
+        this->chunk("0", THEME_CONSTANT);
+        return *this;
+    }
+
+    auto sc = static_cast<isize>(c);
+    bool isnegative = ((base == 0 || base == 10) && sc < 0);
+
+    if(base == 0)
+        base = 16;
+    else if(base > 16) {
+        this->chunk(fmt::format("INVALID BASE ({})", base), THEME_FAIL);
+        return *this;
+    }
+
+    if(c < 10) {
+        if(isnegative)
+            this->chunk(std::to_string(sc), THEME_CONSTANT);
+        else
+            this->chunk(std::to_string(c), THEME_CONSTANT);
+    }
+    else {
+        std::string val;
+
+        do {
+            val = DIGITS[c % base] + val;
+            c /= base;
+        } while(c > 0);
+
+        this->chunk(val, THEME_CONSTANT);
     }
 
     return *this;

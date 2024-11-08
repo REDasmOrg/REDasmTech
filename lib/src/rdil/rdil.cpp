@@ -389,56 +389,41 @@ void generate(const Function& f, ILExprList& res) {
 }
 
 void render(const ILExpr* e, const RDRendererParams& rp) {
-    rdil::to_string(e,
-                    [&](const ILExpr* expr, std::string_view s, WalkType wt) {
-                        Renderer* renderer = api::from_c(rp.renderer);
+    rdil::to_string(
+        e, [&](const ILExpr* expr, std::string_view s, WalkType wt) {
+            Renderer* renderer = api::from_c(rp.renderer);
 
-                        if(wt == WalkType::MNEMONIC) {
-                            switch(expr->op) {
-                                case RDIL_GOTO:
-                                    renderer->chunk(s, THEME_JUMP);
-                                    break;
-                                case RDIL_RET:
-                                    renderer->chunk(s, THEME_RET);
-                                    break;
-                                case RDIL_NOP:
-                                    renderer->chunk(s, THEME_NOP);
-                                    break;
+            if(wt == WalkType::MNEMONIC) {
+                switch(expr->op) {
+                    case RDIL_GOTO: renderer->chunk(s, THEME_JUMP); break;
+                    case RDIL_RET: renderer->chunk(s, THEME_RET); break;
+                    case RDIL_NOP: renderer->chunk(s, THEME_NOP); break;
 
-                                case RDIL_UNKNOWN: {
-                                    renderer->chunk(s, THEME_NOP)
-                                        .ws()
-                                        .chunk("{")
-                                        .create_instr(rp)
-                                        .chunk("}");
-                                    break;
-                                }
+                    case RDIL_UNKNOWN: {
+                        renderer->chunk(s, THEME_NOP)
+                            .ws()
+                            .chunk("{")
+                            .instr(rp)
+                            .chunk("}");
+                        break;
+                    }
 
-                                default:
-                                    renderer->chunk(s, THEME_DEFAULT);
-                                    break;
-                            }
+                    default: renderer->chunk(s, THEME_DEFAULT); break;
+                }
 
-                            return;
-                        }
+                return;
+            }
 
-                        switch(expr->op) {
-                            // case RDIL_CNST:
-                            // renderer->renderReference(expr->u_value); break;
-                            // case RDIL_VAR: renderer->renderText(expr->var,
-                            // Theme_Label); break;
-                            case RDIL_CNST:
-                                renderer->chunk("RDIL_CNST", THEME_CONSTANT);
-                                break;
-                            case RDIL_VAR:
-                                renderer->chunk("RDIL_VAR", THEME_LABEL);
-                                break;
-                            case RDIL_REG:
-                                renderer->chunk(expr->reg, THEME_REG);
-                                break;
-                            default: renderer->chunk(s); break;
-                        }
-                    });
+            switch(expr->op) {
+                case RDIL_CNST:
+                    renderer->constant(expr->u_value, THEME_CONSTANT);
+                    break;
+
+                case RDIL_VAR: renderer->ref(expr->address); break;
+                case RDIL_REG: renderer->chunk(expr->reg, THEME_REG); break;
+                default: renderer->chunk(s); break;
+            }
+        });
 }
 
 } // namespace redasm::rdil

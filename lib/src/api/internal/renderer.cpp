@@ -33,16 +33,7 @@ void renderer_text(RDRenderer* self, std::string_view s) {
 
 void renderer_reference(RDRenderer* self, RDAddress address) {
     spdlog::trace("renderer_reference({}, '{}')", fmt::ptr(self), address);
-
-    state::context->address_to_index(address)
-        .map([self](usize idx) {
-            std::string name = state::context->get_name(idx);
-            api::from_c(self)->chunk(name, THEME_ADDRESS);
-        })
-        .or_else([&]() {
-            api::from_c(self)->chunk(state::context->to_hex(address, -1),
-                                     THEME_CONSTANT);
-        });
+    api::from_c(self)->ref(address);
 }
 
 } // namespace redasm::api::internal
