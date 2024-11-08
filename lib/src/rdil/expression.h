@@ -6,77 +6,77 @@
 
 namespace redasm::rdil {
 
-struct ILExpression {
+struct ILExpr {
     RDILOp op{RDIL_INVALID};
 
     union {
-        const ILExpression *n1{nullptr}, *u, *cond;
+        const ILExpr *n1{nullptr}, *u, *cond;
     };
 
     union {
-        const ILExpression *n2{nullptr}, *dst, *l, *t;
+        const ILExpr *n2{nullptr}, *dst, *l, *t;
     };
 
     union {
-        const ILExpression *n3{nullptr}, *src, *r, *f;
+        const ILExpr *n3{nullptr}, *src, *r, *f;
     };
 
     RD_PRIVATE_RDIL_VALUE_FIELDS
 };
 
-class ILExpressionPool: public Object {
+class ILExprPool: public Object {
 private:
-    using Pool = std::forward_list<ILExpression>;
+    using Pool = std::forward_list<ILExpr>;
 
 public:
-    const ILExpression* expr_unknown();
-    const ILExpression* expr_nop();
-    const ILExpression* expr_pop(const ILExpression* e);
-    const ILExpression* expr_push(const ILExpression* e);
-    const ILExpression* expr_reg(const char* reg);
-    const ILExpression* expr_cnst(u64 value);
-    const ILExpression* expr_var(RDAddress address);
-    const ILExpression* expr_goto(const ILExpression* e);
-    const ILExpression* expr_call(const ILExpression* e);
-    const ILExpression* expr_ret(const ILExpression* e);
-    const ILExpression* expr_mem(const ILExpression* e);
-    const ILExpression* expr_not(const ILExpression* e);
-    const ILExpression* expr_add(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_sub(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_mul(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_div(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_mod(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_and(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_or(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_xor(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_lsl(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_lsr(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_asl(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_asr(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_rol(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_ror(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_copy(const ILExpression* dst,
-                                  const ILExpression* src);
-    const ILExpression* expr_if(const ILExpression* cond, const ILExpression* t,
-                                const ILExpression* f);
-    const ILExpression* expr_eq(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_ne(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_lt(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_le(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_gt(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_ge(const ILExpression* l, const ILExpression* r);
-    const ILExpression* expr_int(const ILExpression* e);
+    const ILExpr* expr_unknown();
+    const ILExpr* expr_nop();
+    const ILExpr* expr_pop(const ILExpr* e);
+    const ILExpr* expr_push(const ILExpr* e);
+    const ILExpr* expr_reg(const char* reg);
+    const ILExpr* expr_cnst(u64 value);
+    const ILExpr* expr_var(RDAddress address);
+    const ILExpr* expr_goto(const ILExpr* e);
+    const ILExpr* expr_call(const ILExpr* e);
+    const ILExpr* expr_ret(const ILExpr* e);
+    const ILExpr* expr_mem(const ILExpr* e);
+    const ILExpr* expr_not(const ILExpr* e);
+    const ILExpr* expr_add(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_sub(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_mul(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_div(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_mod(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_and(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_or(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_xor(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_lsl(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_lsr(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_asl(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_asr(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_rol(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_ror(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_copy(const ILExpr* dst,
+                                  const ILExpr* src);
+    const ILExpr* expr_if(const ILExpr* cond, const ILExpr* t,
+                                const ILExpr* f);
+    const ILExpr* expr_eq(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_ne(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_lt(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_le(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_gt(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_ge(const ILExpr* l, const ILExpr* r);
+    const ILExpr* expr_int(const ILExpr* e);
 
 protected:
-    const ILExpression* check(const ILExpression* e);
+    const ILExpr* check(const ILExpr* e);
 
 private:
-    ILExpression* expr_ds(RDILOp op, const ILExpression* dst,
-                          const ILExpression* src);
-    ILExpression* expr_lr(RDILOp op, const ILExpression* l,
-                          const ILExpression* r);
-    ILExpression* expr_u(RDILOp op, const ILExpression* u);
-    ILExpression* expr(RDILOp op);
+    ILExpr* expr_ds(RDILOp op, const ILExpr* dst,
+                          const ILExpr* src);
+    ILExpr* expr_lr(RDILOp op, const ILExpr* l,
+                          const ILExpr* r);
+    ILExpr* expr_u(RDILOp op, const ILExpr* u);
+    ILExpr* expr(RDILOp op);
 
 private:
     Pool m_pool;

@@ -15,10 +15,10 @@ bool needs_calcaddress(const X86Instruction& instr) {
     return false;
 }
 
-const RDILExpression* lift_op(const X86Instruction& instr, usize idx,
+const RDILExpr* lift_op(const X86Instruction& instr, usize idx,
                               RDILPool* pool) {
     const ZydisDecodedOperand& op = instr.ops[idx];
-    const RDILExpression* e = nullptr;
+    const RDILExpr* e = nullptr;
 
     switch(op.type) {
         case ZYDIS_OPERAND_TYPE_REGISTER:
@@ -39,7 +39,7 @@ const RDILExpression* lift_op(const X86Instruction& instr, usize idx,
         }
 
         case ZYDIS_OPERAND_TYPE_MEMORY: {
-            const RDILExpression *base = nullptr, *index = nullptr,
+            const RDILExpr *base = nullptr, *index = nullptr,
                                  *scale = nullptr, *disp = nullptr;
             auto addr = x86_common::calc_address(instr, idx, instr.address);
 
@@ -58,8 +58,8 @@ const RDILExpression* lift_op(const X86Instruction& instr, usize idx,
             else
                 disp = rdil_cnst(pool, *addr);
 
-            const RDILExpression* lhs = nullptr;
-            const RDILExpression* indexscale =
+            const RDILExpr* lhs = nullptr;
+            const RDILExpr* indexscale =
                 (scale && index) ? rdil_mul(pool, index, scale) : index;
 
             if(base && indexscale)
@@ -69,7 +69,7 @@ const RDILExpression* lift_op(const X86Instruction& instr, usize idx,
             else if(indexscale)
                 lhs = indexscale;
 
-            const RDILExpression* m = nullptr;
+            const RDILExpr* m = nullptr;
 
             if(disp) {
                 if(lhs)
@@ -103,15 +103,15 @@ bool lift(const X86Instruction& instr, RDILList* l) {
 
     switch(instr.d.mnemonic) {
         case ZYDIS_MNEMONIC_CALL: {
-            const RDILExpression* op = x86_lifter::lift_op(instr, 0, pool);
-            const RDILExpression* c = rdil_call(pool, op);
+            const RDILExpr* op = x86_lifter::lift_op(instr, 0, pool);
+            const RDILExpr* c = rdil_call(pool, op);
             rdillist_append(l, c);
             break;
         }
 
         case ZYDIS_MNEMONIC_JMP: {
-            const RDILExpression* op = x86_lifter::lift_op(instr, 0, pool);
-            const RDILExpression* c = rdil_goto(pool, op);
+            const RDILExpr* op = x86_lifter::lift_op(instr, 0, pool);
+            const RDILExpr* c = rdil_goto(pool, op);
             rdillist_append(l, c);
             break;
         }

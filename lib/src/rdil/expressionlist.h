@@ -5,15 +5,15 @@
 
 namespace redasm::rdil {
 
-class ILExpressionList: public ILExpressionPool {
+class ILExprList: public ILExprPool {
 public:
-    using Container = std::vector<std::pair<MIndex, const ILExpression*>>;
+    using Container = std::vector<std::pair<MIndex, const ILExpr*>>;
 
 public:
-    void append(const ILExpression* e);
-    const ILExpression* first() const;
-    const ILExpression* last() const;
-    const ILExpression* at(usize idx) const;
+    void append(const ILExpr* e);
+    const ILExpr* first() const;
+    const ILExpr* last() const;
+    const ILExpr* at(usize idx) const;
     bool empty() const { return m_expressions.empty(); }
     usize size() const { return m_expressions.size(); }
     void clear() { m_expressions.clear(); }

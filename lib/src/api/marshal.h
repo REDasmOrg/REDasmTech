@@ -9,9 +9,9 @@ namespace redasm {
 
 namespace rdil {
 
-struct ILExpression;
-class ILExpressionPool;
-class ILExpressionList;
+struct ILExpr;
+class ILExprPool;
+class ILExprList;
 
 } // namespace rdil
 
@@ -45,20 +45,20 @@ inline Function* from_c(RDFunction* arg) {
     return reinterpret_cast<Function*>(arg);
 }
 
-inline rdil::ILExpressionPool* from_c(RDILPool* arg) {
-    return reinterpret_cast<rdil::ILExpressionPool*>(arg);
+inline rdil::ILExprPool* from_c(RDILPool* arg) {
+    return reinterpret_cast<rdil::ILExprPool*>(arg);
 }
 
-inline const rdil::ILExpressionList* from_c(const RDILList* arg) {
-    return reinterpret_cast<const rdil::ILExpressionList*>(arg);
+inline const rdil::ILExprList* from_c(const RDILList* arg) {
+    return reinterpret_cast<const rdil::ILExprList*>(arg);
 }
 
-inline rdil::ILExpressionList* from_c(RDILList* arg) {
-    return reinterpret_cast<rdil::ILExpressionList*>(arg);
+inline rdil::ILExprList* from_c(RDILList* arg) {
+    return reinterpret_cast<rdil::ILExprList*>(arg);
 }
 
-inline const rdil::ILExpression* from_c(const RDILExpression* arg) {
-    return reinterpret_cast<const rdil::ILExpression*>(arg);
+inline const rdil::ILExpr* from_c(const RDILExpr* arg) {
+    return reinterpret_cast<const rdil::ILExpr*>(arg);
 }
 
 inline Emulator* from_c(RDEmulator* arg) {
@@ -139,16 +139,16 @@ inline const RDFunction* to_c(const Function* arg) {
     return reinterpret_cast<const RDFunction*>(arg);
 }
 
-inline RDILPool* to_c(rdil::ILExpressionPool* arg) {
+inline RDILPool* to_c(rdil::ILExprPool* arg) {
     return reinterpret_cast<RDILPool*>(arg);
 }
 
-inline RDILList* to_c(rdil::ILExpressionList* arg) {
+inline RDILList* to_c(rdil::ILExprList* arg) {
     return reinterpret_cast<RDILList*>(arg);
 }
 
-inline const RDILExpression* to_c(const rdil::ILExpression* arg) {
-    return reinterpret_cast<const RDILExpression*>(arg);
+inline const RDILExpr* to_c(const rdil::ILExpr* arg) {
+    return reinterpret_cast<const RDILExpr*>(arg);
 }
 
 RDSegment to_c(const Segment& arg);

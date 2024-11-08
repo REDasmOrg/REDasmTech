@@ -2,26 +2,26 @@
 
 namespace redasm::rdil {
 
-void ILExpressionList::append(const ILExpression* e) {
+void ILExprList::append(const ILExpr* e) {
     e = this->check(e);
     m_expressions.emplace_back(this->currentindex, e);
 }
 
-const ILExpression* ILExpressionList::first() const {
+const ILExpr* ILExprList::first() const {
     if(m_expressions.empty())
         return nullptr;
 
     return m_expressions.front().second;
 }
 
-const ILExpression* ILExpressionList::last() const {
+const ILExpr* ILExprList::last() const {
     if(m_expressions.empty())
         return nullptr;
 
     return m_expressions.back().second;
 }
 
-const ILExpression* ILExpressionList::at(usize idx) const {
+const ILExpr* ILExprList::at(usize idx) const {
     if(idx >= m_expressions.size())
         return nullptr;
 

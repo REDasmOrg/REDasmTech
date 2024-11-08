@@ -11,10 +11,10 @@ namespace redasm::rdil {
 
 std::string_view get_op_name(usize t);
 usize get_op_type(std::string_view id);
-std::string get_text(const ILExpression* e);
-std::string get_format(const ILExpression* e);
+std::string get_text(const ILExpr* e);
+std::string get_format(const ILExpr* e);
 
-void generate(const Function& f, ILExpressionList& res);
-void render(const ILExpression* e, const RDRendererParams& rp);
+void generate(const Function& f, ILExprList& res);
+void render(const ILExpr* e, const RDRendererParams& rp);
 
 } // namespace redasm::rdil

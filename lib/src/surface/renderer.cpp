@@ -153,7 +153,7 @@ Renderer& Renderer::create_rdil(const RDRendererParams& rp) {
     assume(p);
 
     RDAddress address = this->current_address();
-    rdil::ILExpressionList el;
+    rdil::ILExprList el;
 
     if(!p->lift || !p->lift(p, address, api::to_c(&el)))
         el.clear();
