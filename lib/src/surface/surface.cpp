@@ -698,8 +698,11 @@ void Surface::render_type(const ListingItem& item) {
         case typing::types::U64: {
             auto v = mem->get_u64(item.index, pt->type->is_big());
             assume(v.has_value());
-            if(v.has_value())
-                m_renderer->word("=").constant(*v, 16);
+            if(v.has_value()) {
+                auto [isptr, val] = surface_checkpointer(*pt, *v);
+                m_renderer->word("=").chunk(val, isptr ? THEME_ADDRESS
+                                                       : THEME_CONSTANT);
+            }
             else
                 m_renderer->word("=").unknown();
             break;
