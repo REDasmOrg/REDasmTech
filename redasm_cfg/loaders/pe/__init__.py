@@ -1,14 +1,18 @@
 import redasm
 from . import format as PE
 from . import header as PEH
+from .classifier import PEClassifier
+from .analyzers import register_analyzers
 
 
 class PEFormat:
-    bits = 0
-    imagebase = 0
-    dosheader = None
-    ntheaders = None
-    optionalheader = None
+    def __init__(self):
+        self.bits = 0
+        self.classifier = PEClassifier()
+        self.imagebase = 0
+        self.dosheader = None
+        self.ntheaders = None
+        self.optionalheader = None
 
 
 def check_header():
@@ -41,6 +45,20 @@ def check_header():
     pe.optionalheader = stream.collect_type("IMAGE_OPTIONAL_HEADER")
     pe.imagebase = pe.optionalheader.ImageBase
     return pe
+
+
+def check_dotnet(pe):
+    entry = pe.optionalheader.DataDirectory[PEH.IMAGE_DIRECTORY_ENTRY_DOTNET]
+    if entry.VirtualAddress == 0:
+        return None
+
+    va = PE.rva_to_va(pe, entry.VirtualAddress)
+    if not va:
+        return None
+
+    entry = redasm.get_type(va, "IMAGE_COR_HEADER")
+    # TODO: Dotnet parsing
+    return entry
 
 
 def read_sections(pe):
@@ -120,6 +138,8 @@ def read_imports(pe):
 
         if moduleva:
             modulename = redasm.set_type(moduleva, "str")
+            pe.classifier.classify_import(modulename)
+
             thunkstart = PE.rva_to_va(
                 pe, entry.FirstThunk or entry.OriginalFirstThunk)
 
@@ -198,6 +218,16 @@ def select_processor(pe):
             redasm.set_processor("arm32le")
 
 
+def load_default(pe):
+    read_exports(pe)
+    read_imports(pe)
+    read_exceptions(pe)
+    select_processor(pe)
+
+    ep = pe.optionalheader.ImageBase + pe.optionalheader.AddressOfEntryPoint
+    redasm.set_entry(ep, "__entry_point__")
+
+
 def init():
     PE.register_common_types()
     pe = check_header()
@@ -231,13 +261,14 @@ def init():
         redasm.map_segment_n(sect.Name, startva, asize,
                              startoff, osize, segtype)
 
-    read_exports(pe)
-    read_imports(pe)
-    read_exceptions(pe)
-    select_processor(pe)
+    corheader = check_dotnet(pe)
 
-    ep = imagebase + pe.optionalheader.AddressOfEntryPoint
-    redasm.set_entry(ep, "__entry_point__")
+    if corheader:
+        print("DOTNET WIP")
+    else:
+        load_default(pe)
+
+    register_analyzers(pe)
     return True
 
 

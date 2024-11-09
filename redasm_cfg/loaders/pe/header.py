@@ -215,6 +215,15 @@ IMAGE_IMPORT_DESCRIPTOR = (
     ("u32^", "FirstThunk"),
 )
 
+IMAGE_RESOURCE_DIRECTORY = (
+    ("u32", "Characteristics"),
+    ("u32", "TimeDateStamp"),
+    ("u16", "MajorVersion"),
+    ("u16", "MinorVersion"),
+    ("u16", "NumberOfNamedEntries"),
+    ("u16", "NumberOfIdEntries"),
+)
+
 IMAGE_RUNTIME_FUNCTION_ENTRY = (
     ("u32^", "BeginAddress"),
     ("u32", "EndAddress"),

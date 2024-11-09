@@ -1,5 +1,6 @@
 import redasm
 from . import header as PEH
+from .dotnet import header as DOTNET_HDR
 
 
 def image_first_section(pe):
@@ -50,6 +51,10 @@ def rva_to_offset(pe, rva):
     return None
 
 
+def register_dotnet_types():
+    redasm.create_struct("IMAGE_COR_HEADER", DOTNET_HDR.IMAGE_COR_HEADER)
+
+
 def register_common_types():
     redasm.create_struct("IMAGE_DOS_HEADER", PEH.IMAGE_DOS_HEADER)
     redasm.create_struct("IMAGE_FILE_HEADER", PEH.IMAGE_FILE_HEADER)
@@ -61,8 +66,13 @@ def register_common_types():
     redasm.create_struct("IMAGE_IMPORT_DESCRIPTOR",
                          PEH.IMAGE_IMPORT_DESCRIPTOR)
 
+    redasm.create_struct("IMAGE_RESOURCE_DIRECTORY",
+                         PEH.IMAGE_RESOURCE_DIRECTORY)
+
     redasm.create_struct("IMAGE_RUNTIME_FUNCTION_ENTRY",
                          PEH.IMAGE_RUNTIME_FUNCTION_ENTRY)
 
     redasm.create_struct("UNWIND_INFO",
                          PEH.UNWIND_INFO)
+
+    register_dotnet_types()
