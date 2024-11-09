@@ -18,4 +18,7 @@ namespace x86_common {
 [[nodiscard]] std::optional<RDAddress>
 calc_address(const X86Instruction& instr, RDAddress address, usize idx);
 
-}
+ZydisRegister get_sp();
+ZydisRegister get_bp();
+
+} // namespace x86_common

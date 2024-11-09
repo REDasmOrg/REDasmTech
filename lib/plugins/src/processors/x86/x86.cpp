@@ -18,26 +18,6 @@ X86Processor::X86Processor(usize bits) {
                               ZYAN_FALSE);
 }
 
-ZydisRegister X86Processor::get_sp() const {
-    switch(rd_getbits()) {
-        case 32: return ZYDIS_REGISTER_ESP;
-        case 64: return ZYDIS_REGISTER_RSP;
-        default: break;
-    }
-
-    return ZYDIS_REGISTER_SP;
-}
-
-ZydisRegister X86Processor::get_bp() const {
-    switch(rd_getbits()) {
-        case 32: return ZYDIS_REGISTER_EBP;
-        case 64: return ZYDIS_REGISTER_RBP;
-        default: break;
-    }
-
-    return ZYDIS_REGISTER_BP;
-}
-
 bool X86Processor::decode(RDAddress address) {
     usize n = rd_memoryread(address, m_dbuffer.data(), m_dbuffer.size());
     if(!n)

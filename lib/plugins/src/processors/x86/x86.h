@@ -16,8 +16,6 @@ public:
     usize emulate(RDAddress address, RDEmulator* e);
 
 private:
-    [[nodiscard]] ZydisRegister get_sp() const;
-    [[nodiscard]] ZydisRegister get_bp() const;
     void process_refs(RDAddress address, RDEmulator* e) const;
     void process_imm_op(const ZydisDecodedOperand& op, RDEmulator* e) const;
     void process_mem_op(const ZydisDecodedOperand& op, RDEmulator* e) const;

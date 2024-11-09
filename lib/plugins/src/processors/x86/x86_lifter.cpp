@@ -35,6 +35,8 @@ const RDILExpr* lift_op(const X86Instruction& instr, usize idx,
 
                 e = rdil_var(pool, c);
             }
+            else if(rd_isaddress(c))
+                e = rdil_var(pool, c);
             else
                 e = rdil_cnst(pool, c);
             break;
@@ -124,6 +126,11 @@ const RDILExpr* lift_jump(const X86Instruction& instr, RDILPool* pool) {
 bool lift(const X86Instruction& instr, RDILList* l) {
     RDILPool* pool = rdillist_getpool(l);
 
+    if(instr.address == 0x0040100E) {
+        int zzz = 0;
+        zzz++;
+    }
+
     switch(instr.d.mnemonic) {
         case ZYDIS_MNEMONIC_CALL: {
             const RDILExpr* op = x86_lifter::lift_op(instr, 0, pool);
@@ -168,6 +175,92 @@ bool lift(const X86Instruction& instr, RDILList* l) {
             const RDILExpr* v = rdil_sym(pool, "z");
             const RDILExpr* s = rdil_sub(pool, left, right);
             rdillist_append(l, rdil_copy(pool, v, s));
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_ENTER: {
+            const char* bpreg = ZydisRegisterGetString(x86_common::get_bp());
+            const char* spreg = ZydisRegisterGetString(x86_common::get_sp());
+            rdillist_append(l, rdil_push(pool, rdil_reg(pool, bpreg)));
+            rdillist_append(l, rdil_copy(pool, rdil_reg(pool, bpreg),
+                                         rdil_reg(pool, spreg)));
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_LEAVE: {
+            const RDILExpr* sp =
+                rdil_reg(pool, ZydisRegisterGetString(x86_common::get_sp()));
+            const RDILExpr* bp =
+                rdil_reg(pool, ZydisRegisterGetString(x86_common::get_bp()));
+            rdillist_append(l, rdil_copy(pool, sp, bp));
+
+            bp = rdil_reg(pool, ZydisRegisterGetString(x86_common::get_bp()));
+            rdillist_append(l, rdil_pop(pool, bp));
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_RET: {
+            rdillist_append(l, rdil_pop(pool, rdil_sym(pool, "result")));
+
+            if(instr.d.operand_count) {
+                const RDILExpr* sp = rdil_reg(
+                    pool, ZydisRegisterGetString(x86_common::get_sp()));
+
+                rdillist_append(
+                    l, rdil_add(pool, sp,
+                                rdil_cnst(pool, instr.ops[0].imm.value.u)));
+            }
+
+            rdillist_append(l, rdil_ret(pool, rdil_sym(pool, "result")));
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_ADD: {
+            const RDILExpr* op1 = x86_lifter::lift_op(instr, 0, pool);
+            const RDILExpr* op2 = x86_lifter::lift_op(instr, 1, pool);
+            rdillist_append(l, rdil_copy(pool, op1, rdil_add(pool, op1, op2)));
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_SUB: {
+            const RDILExpr* op1 = x86_lifter::lift_op(instr, 0, pool);
+            const RDILExpr* op2 = x86_lifter::lift_op(instr, 1, pool);
+            rdillist_append(l, rdil_copy(pool, op1, rdil_sub(pool, op1, op2)));
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_MUL: {
+            const RDILExpr* op1 = x86_lifter::lift_op(instr, 0, pool);
+            const RDILExpr* op2 = x86_lifter::lift_op(instr, 1, pool);
+            rdillist_append(l, rdil_copy(pool, op1, rdil_mul(pool, op1, op2)));
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_DIV: {
+            const RDILExpr* op1 = x86_lifter::lift_op(instr, 0, pool);
+            const RDILExpr* op2 = x86_lifter::lift_op(instr, 1, pool);
+            rdillist_append(l, rdil_copy(pool, op1, rdil_div(pool, op1, op2)));
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_AND: {
+            const RDILExpr* op1 = x86_lifter::lift_op(instr, 0, pool);
+            const RDILExpr* op2 = x86_lifter::lift_op(instr, 1, pool);
+            rdillist_append(l, rdil_copy(pool, op1, rdil_and(pool, op1, op2)));
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_OR: {
+            const RDILExpr* op1 = x86_lifter::lift_op(instr, 0, pool);
+            const RDILExpr* op2 = x86_lifter::lift_op(instr, 1, pool);
+            rdillist_append(l, rdil_copy(pool, op1, rdil_or(pool, op1, op2)));
+            break;
+        }
+
+        case ZYDIS_MNEMONIC_XOR: {
+            const RDILExpr* op1 = x86_lifter::lift_op(instr, 0, pool);
+            const RDILExpr* op2 = x86_lifter::lift_op(instr, 1, pool);
+            rdillist_append(l, rdil_copy(pool, op1, rdil_xor(pool, op1, op2)));
             break;
         }
 
