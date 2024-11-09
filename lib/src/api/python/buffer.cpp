@@ -380,8 +380,6 @@ PyMethodDef memory_methods[] = {
 };
 // clang-format on
 
-} // namespace
-
 PyTypeObject buffer_type = []() {
     PyTypeObject t{PyVarObject_HEAD_INIT(nullptr, 0)};
     t.tp_name = "redasm.Buffer";
@@ -392,6 +390,8 @@ PyTypeObject buffer_type = []() {
 
     return t;
 }();
+
+} // namespace
 
 PyTypeObject file_type = []() {
     PyTypeObject t{PyVarObject_HEAD_INIT(nullptr, 0)};
