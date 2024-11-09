@@ -261,8 +261,9 @@ void to_string(const ILExpr* e, ToStringCallback cb) {
 
         case RDIL_GOTO:
             cb(e, "goto", WalkType::MNEMONIC);
-            cb(e, " ", WalkType::WHITESPACE);
+            cb(e, "(", WalkType::NORMAL);
             rdil::to_string(e->u, cb);
+            cb(e, ")", WalkType::NORMAL);
             break;
 
         case RDIL_MEM:
