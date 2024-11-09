@@ -20,7 +20,6 @@ qt_add_resources(${PROJECT_NAME} "resources"
 )
 
 add_subdirectory(lib)
-add_subdirectory(QHexView)
 
 target_sources(${PROJECT_NAME} 
     PRIVATE
