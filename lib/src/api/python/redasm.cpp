@@ -536,15 +536,16 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args,
                             PyObject* kwargs) {
 
     static const char* const KW_LIST[] = {
-        "name", "description", "execute", "is_enabled", nullptr,
+        "name", "execute", "description", "flags", "is_enabled", nullptr,
     };
 
     const char *name = nullptr, *description = nullptr;
+    usize flags = ANALYZER_NONE;
     PyObject *execute = nullptr, *isenabled = nullptr;
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwargs, "ssO|O",
-                                    const_cast<char**>(KW_LIST), &name,
-                                    &description, &execute, &isenabled)) {
+    if(!PyArg_ParseTupleAndKeywords(
+           args, kwargs, "sO|sKO", const_cast<char**>(KW_LIST), &name, &execute,
+           &description, &flags, &isenabled)) {
         return nullptr;
     }
 
@@ -556,6 +557,7 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args,
 
     RDAnalyzer analyzer{};
     analyzer.name = userdata->name.c_str();
+    analyzer.flags = flags;
     analyzer.userdata = userdata;
 
     if(isenabled) {

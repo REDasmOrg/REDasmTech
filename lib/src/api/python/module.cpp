@@ -57,6 +57,15 @@ PyMODINIT_FUNC PyInit_redasm() { // NOLINT
            0);
     assume(PyModule_AddIntConstant(m, "SEGMENT_HASCODE", SEGMENTTYPE_HASCODE) ==
            0);
+
+    assume(PyModule_AddIntConstant(m, "ANALYZER_NONE", ANALYZER_NONE) == 0);
+    assume(PyModule_AddIntConstant(m, "ANALYZER_RUNONCE", ANALYZER_RUNONCE) ==
+           0);
+    assume(PyModule_AddIntConstant(m, "ANALYZER_SELECTED", ANALYZER_SELECTED) ==
+           0);
+    assume(PyModule_AddIntConstant(m, "ANALYZER_EXPERIMENTAL",
+                                   ANALYZER_EXPERIMENTAL) == 0);
+
     return m;
 }
 
