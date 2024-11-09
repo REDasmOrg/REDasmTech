@@ -126,11 +126,6 @@ const RDILExpr* lift_jump(const X86Instruction& instr, RDILPool* pool) {
 bool lift(const X86Instruction& instr, RDILList* l) {
     RDILPool* pool = rdillist_getpool(l);
 
-    if(instr.address == 0x0040100E) {
-        int zzz = 0;
-        zzz++;
-    }
-
     switch(instr.d.mnemonic) {
         case ZYDIS_MNEMONIC_CALL: {
             const RDILExpr* op = x86_lifter::lift_op(instr, 0, pool);
