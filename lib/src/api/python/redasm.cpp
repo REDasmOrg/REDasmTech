@@ -384,6 +384,8 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args,
         return nullptr;
     }
 
+    Py_INCREF(reinterpret_cast<PyObject*>(initfn));
+
     auto* userdata = new LoaderUserData{
         name,
         initfn,
@@ -430,17 +432,23 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
     };
 
     const char* name = nullptr;
-    PyObject *emulate = nullptr, *rendersegment = nullptr;
-    PyObject *renderfunction = nullptr, *renderinstruction = nullptr;
+    PyObject *emulatefn = nullptr, *rendersegmentfn = nullptr;
+    PyObject *renderfunctionfn = nullptr, *renderinstructionfn = nullptr;
 
-    if(!PyArg_ParseTupleAndKeywords(
-           args, kwargs, "sO|OOO", const_cast<char**>(KW_LIST), &name, &emulate,
-           &rendersegment, &renderfunction, &renderinstruction)) {
+    if(!PyArg_ParseTupleAndKeywords(args, kwargs, "sO|OOO",
+                                    const_cast<char**>(KW_LIST), &name,
+                                    &emulatefn, &rendersegmentfn,
+                                    &renderfunctionfn, &renderinstructionfn)) {
         return nullptr;
     }
 
+    Py_INCREF(emulatefn);
+    Py_XINCREF(rendersegmentfn);
+    Py_XINCREF(renderfunctionfn);
+    Py_XINCREF(renderinstructionfn);
+
     auto* userdata = new ProcessorUserData{
-        name, emulate, rendersegment, renderfunction, renderinstruction,
+        name, emulatefn, rendersegmentfn, renderfunctionfn, renderinstructionfn,
     };
 
     RDProcessor processor{};
@@ -465,7 +473,7 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
         return 0;
     };
 
-    if(rendersegment) {
+    if(rendersegmentfn) {
         processor.rendersegment = [](const RDProcessor* self,
                                      const RDRendererParams* rp) {
             auto* userdata =
@@ -483,7 +491,7 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
         };
     }
 
-    if(renderfunction) {
+    if(renderfunctionfn) {
         processor.renderfunction = [](const RDProcessor* self,
                                       const RDRendererParams* rp) {
             auto* userdata =
@@ -501,7 +509,7 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
         };
     }
 
-    if(renderinstruction) {
+    if(renderinstructionfn) {
         processor.renderinstruction = [](const RDProcessor* self,
                                          const RDRendererParams* rp) {
             auto* userdata =
@@ -541,21 +549,21 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args,
 
     const char *name = nullptr, *description = nullptr;
     usize flags = ANALYZER_NONE;
-    PyObject *execute = nullptr, *isenabled = nullptr;
+    PyObject *executefn = nullptr, *isenabledfn = nullptr;
 
     if(!PyArg_ParseTupleAndKeywords(
-           args, kwargs, "sO|sKO", const_cast<char**>(KW_LIST), &name, &execute,
-           &description, &flags, &isenabled)) {
+           args, kwargs, "sO|sKO", const_cast<char**>(KW_LIST), &name,
+           &executefn, &description, &flags, &isenabledfn)) {
         return nullptr;
     }
 
-    Py_INCREF(execute);
-    Py_XINCREF(isenabled);
+    Py_INCREF(executefn);
+    Py_XINCREF(isenabledfn);
 
     auto* userdata = new AnalyzerUserData{
         name,
-        isenabled,
-        execute,
+        isenabledfn,
+        executefn,
     };
 
     RDAnalyzer analyzer{};
@@ -563,7 +571,7 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args,
     analyzer.flags = flags;
     analyzer.userdata = userdata;
 
-    if(isenabled) {
+    if(isenabledfn) {
         analyzer.isenabled = [](const RDAnalyzer* self) {
             auto* userdata =
                 reinterpret_cast<AnalyzerUserData*>(self->userdata);
