@@ -152,9 +152,8 @@ std::vector<RDTestResult> test(RDBuffer* buffer) {
 
     for(RDLoader& ldr : state::loaders) {
         auto* ctx = new Context(b, &ldr);
-        state::context = ctx; // Set context as active
 
-        if(ldr.init && ldr.init(&ldr)) {
+        if(ctx->activate()) {
             state::contextlist.push_back(ctx);
 
             res.emplace_back(RDTestResult{

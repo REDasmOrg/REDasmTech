@@ -549,6 +549,9 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args,
         return nullptr;
     }
 
+    Py_INCREF(execute);
+    Py_XINCREF(isenabled);
+
     auto* userdata = new AnalyzerUserData{
         name,
         isenabled,

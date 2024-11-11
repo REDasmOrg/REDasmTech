@@ -43,18 +43,34 @@ int calculate_bits(RDAddress address) {
 
 } // namespace
 
-Context::Context(const std::shared_ptr<AbstractBuffer>& b, const RDLoader* l)
+Context::Context(const std::shared_ptr<AbstractBuffer>& b, RDLoader* l)
     : loader{l}, file{b} {
     assume(this->loader);
-    assume(!state::processors.empty());
+}
 
+bool Context::activate() {
+    state::context = this; // Set context as active
+
+    assume(!state::processors.empty());
     this->processor = &state::processors.front();
+
     this->availableprocessors.emplace_back(this->processor->name);
 
-    for(const RDAnalyzer& a : state::analyzers) {
-        if(a.flags & ANALYZER_SELECTED)
-            this->selectedanalyzers.insert(&a);
+    if(this->loader->init && this->loader->init(this->loader)) {
+        for(const RDAnalyzer& a : state::analyzers) {
+            // Assume true if 'isenabled' is not implemented
+            if(a.isenabled && !a.isenabled(&a))
+                continue;
+
+            this->analyzers.push_back(a); // Take a copy of the analyzer
+            if(a.flags & ANALYZER_SELECTED)
+                this->selectedanalyzers.insert(&a);
+        }
+
+        return true;
     }
+
+    return false;
 }
 
 void Context::set_export(usize idx) { // NOLINT

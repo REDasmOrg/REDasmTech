@@ -19,10 +19,13 @@ void register_analyzer(const RDAnalyzer& analyzer) {
 usize get_analyzers(const RDAnalyzer** analyzers) {
     spdlog::trace("get_analyzers({})", fmt::ptr(analyzers));
 
-    if(analyzers)
-        *analyzers = state::analyzers.data();
+    if(!state::context)
+        return 0;
 
-    return state::analyzers.size();
+    if(analyzers)
+        *analyzers = state::context->analyzers.data();
+
+    return state::context->analyzers.size();
 }
 
 bool analyzer_select(const RDAnalyzer* self, bool select) {

@@ -24,7 +24,8 @@ public:
     static constexpr usize DEFAULT_MIN_STRING = 4;
     static constexpr const char* EP_NAME = "__redasm_ep__";
 
-    Context(const std::shared_ptr<AbstractBuffer>& b, const RDLoader* loader);
+    Context(const std::shared_ptr<AbstractBuffer>& b, RDLoader* loader);
+    bool activate();
     void set_export(usize idx);
     void set_import(usize idx);
     bool set_function(usize idx, const std::string& name = {});
@@ -95,6 +96,7 @@ private:
 public:
     usize entrypoint{};
     int bits{}, minstring{DEFAULT_MIN_STRING};
+    std::vector<RDAnalyzer> analyzers;
     std::unordered_set<const RDAnalyzer*> selectedanalyzers;
     std::vector<std::string> availableprocessors;
     std::vector<std::pair<usize, std::string>> collectedtypes;
@@ -102,7 +104,7 @@ public:
     std::vector<Function> functions;
     Disassembler disassembler;
     RDAddress baseaddress{};
-    const RDLoader* loader;
+    RDLoader* loader;
     const RDProcessor* processor;
     Listing listing;
     Database database;
