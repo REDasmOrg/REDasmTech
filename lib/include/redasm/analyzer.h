@@ -29,4 +29,4 @@ typedef struct RDAnalyzer {
 
 REDASM_EXPORT usize rd_getanalyzers(const RDAnalyzer** analyzers);
 REDASM_EXPORT bool rdanalyzer_select(const RDAnalyzer* self, bool select);
-REDASM_EXPORT bool rdanalyzer_isselected(RDAnalyzer* self);
+REDASM_EXPORT bool rdanalyzer_isselected(const RDAnalyzer* self);
