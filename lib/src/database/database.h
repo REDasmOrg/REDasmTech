@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../utils/hash.h"
 #include <array>
 #include <redasm/processor.h>
 #include <redasm/types.h>
@@ -45,19 +46,25 @@ struct AddressDetail {
 };
 
 struct Database {
-    void set_name(usize idx, const std::string& name,
+private:
+    using IndexMap = std::unordered_map<MIndex, AddressDetail>;
+    using NamesMap = std::unordered_map<std::string, MIndex, hash::StringHash,
+                                        std::equal_to<>>;
+
+public:
+    void set_name(MIndex idx, const std::string& name,
                   usize ns = AddressDetail::LABEL);
 
-    [[nodiscard]] std::string get_name(usize idx,
+    [[nodiscard]] std::string get_name(MIndex idx,
                                        usize ns = AddressDetail::LABEL) const;
 
-    [[nodiscard]] tl::optional<usize> get_index(const std::string& name) const;
-    AddressDetail& get_detail(usize idx);
-    const AddressDetail& get_detail(usize idx) const;
+    [[nodiscard]] tl::optional<usize> get_index(std::string_view name) const;
+    AddressDetail& get_detail(MIndex idx);
+    const AddressDetail& get_detail(MIndex idx) const;
 
 private:
-    std::unordered_map<usize, AddressDetail> m_indexdb;
-    std::unordered_map<std::string, usize> m_names;
+    IndexMap m_indexdb;
+    NamesMap m_names;
 };
 
 } // namespace redasm

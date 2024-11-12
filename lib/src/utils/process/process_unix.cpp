@@ -29,7 +29,7 @@ Process::~Process() {
         except("Pipe close failed, error code: {}", errno);
 }
 
-void Process::start(const std::string_view& cmd,
+void Process::start(std::string_view cmd,
                     std::initializer_list<std::string_view> args) {
     if(m_pid)
         return;
@@ -75,9 +75,9 @@ void Process::start(const std::string_view& cmd,
 
             argv.push_back(nullptr);
 
-            res = ::execvp(cmd.data(), argv.data());
-            if(res == -1)
-                except("Cannot execute '{}', errocode: {}", errno);
+            // FIXME: res = ::execvp(cmd.data(), argv.data());
+            // FIXME: if(res == -1)
+            // FIXME:     except("Cannot execute '{}', errocode: {}", errno);
             unreachable;
         }
 

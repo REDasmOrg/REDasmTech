@@ -73,17 +73,17 @@ bool Context::activate() {
     return false;
 }
 
-void Context::set_export(usize idx) { // NOLINT
+void Context::set_export(MIndex idx) { // NOLINT
     assume(idx < this->memory->size());
     this->memory->at(idx).set(BF_EXPORT);
 }
 
-void Context::set_import(usize idx) { // NOLINT
+void Context::set_import(MIndex idx) { // NOLINT
     assume(idx < this->memory->size());
     this->memory->at(idx).set(BF_IMPORT);
 }
 
-bool Context::set_function(usize idx, const std::string& name) {
+bool Context::set_function(MIndex idx, const std::string& name) {
     const Segment* s = this->index_to_segment(idx);
 
     if(s && s->type & SEGMENTTYPE_HASCODE) {
@@ -98,7 +98,7 @@ bool Context::set_function(usize idx, const std::string& name) {
     return false;
 }
 
-bool Context::set_entry(usize idx, std::string name) {
+bool Context::set_entry(MIndex idx, std::string name) {
     if(name.empty())
         name = EP_NAME;
 
@@ -112,7 +112,7 @@ bool Context::set_entry(usize idx, std::string name) {
     return false;
 }
 
-bool Context::set_comment(usize idx, std::string_view comment) {
+bool Context::set_comment(MIndex idx, std::string_view comment) {
     if(idx >= this->memory->size())
         return false;
 
@@ -122,7 +122,7 @@ bool Context::set_comment(usize idx, std::string_view comment) {
     return true;
 }
 
-bool Context::set_type(usize idx, std::string_view tname,
+bool Context::set_type(MIndex idx, std::string_view tname,
                        const std::string& dbname) {
     if(idx >= this->memory->size() || !this->memory->at(idx).is_unknown())
         return false;
@@ -243,7 +243,7 @@ bool Context::is_address(RDAddress address) const {
            (address >= this->baseaddress && address < this->end_baseaddress());
 }
 
-RDAddress Context::memory_copy(usize idx, RDOffset start, RDOffset end) const {
+RDAddress Context::memory_copy(MIndex idx, RDOffset start, RDOffset end) const {
     assume(start < this->file->size());
     assume(end <= this->file->size());
 
@@ -260,7 +260,7 @@ RDAddress Context::memory_copy(usize idx, RDOffset start, RDOffset end) const {
     return this->baseaddress + endidx;
 }
 
-void Context::map_segment(const std::string& name, usize idx, usize endidx,
+void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
                           RDOffset offset, RDOffset endoffset, usize type) {
     if(offset && endoffset)
         this->memory_copy(idx, offset, endoffset);
@@ -268,19 +268,23 @@ void Context::map_segment(const std::string& name, usize idx, usize endidx,
     this->memory->at(idx).set(BF_SEGMENT);
 
     this->segments.emplace_back(Segment{
-        name,
-        type,
-        idx,
-        endidx,
-        offset,
-        endoffset,
+        .name = name,
+        .type = type,
+        .index = idx,
+        .endindex = endidx,
+        .offset = offset,
+        .endoffset = endoffset,
     });
 
     auto v = *this->index_to_address(endidx);
     this->bits = std::max(this->bits, calculate_bits(v));
 }
 
-std::string Context::get_name(usize idx) const {
+tl::optional<MIndex> Context::get_index(std::string_view name) const {
+    return this->database.get_index(name);
+}
+
+std::string Context::get_name(MIndex idx) const {
     Byte b = this->memory->at(idx);
     std::string name;
 
@@ -317,7 +321,7 @@ std::string Context::get_name(usize idx) const {
     return name;
 }
 
-void Context::set_name(usize idx, const std::string& name) {
+void Context::set_name(MIndex idx, const std::string& name) {
     if(idx >= this->memory->size())
         return;
 
@@ -403,11 +407,11 @@ void Context::process_memory() {
     spdlog::info("Listing completed ({} items)", this->listing.size());
 }
 
-void Context::process_listing_unknown(usize& idx) {
+void Context::process_listing_unknown(MIndex& idx) {
     this->process_hex_dump(idx, [](Byte b) { return b.is_unknown(); });
 }
 
-void Context::process_listing_data(usize& idx) {
+void Context::process_listing_data(MIndex& idx) {
     Byte b = this->memory->at(idx);
 
     if(b.has(BF_ARRAY)) {
@@ -435,7 +439,7 @@ void Context::process_listing_data(usize& idx) {
     }
 }
 
-void Context::process_listing_code(usize& idx) {
+void Context::process_listing_code(MIndex& idx) {
     Byte b = this->memory->at(idx);
 
     if(b.has(BF_FUNCTION)) {
@@ -465,7 +469,7 @@ void Context::process_listing_code(usize& idx) {
     }
 }
 
-void Context::process_listing_array(usize& idx, const typing::ParsedType& pt) {
+void Context::process_listing_array(MIndex& idx, const typing::ParsedType& pt) {
     assume(pt.n > 0);
 
     this->listing.array(idx, pt);
@@ -484,7 +488,7 @@ void Context::process_listing_array(usize& idx, const typing::ParsedType& pt) {
     this->listing.pop_indent();
 }
 
-usize Context::process_listing_type(usize& idx, const typing::ParsedType& pt) {
+usize Context::process_listing_type(MIndex& idx, const typing::ParsedType& pt) {
     usize listingidx = this->listing.size();
     this->listing.type(idx, pt);
 

@@ -14,6 +14,9 @@ class PEFormat:
         self.ntheaders = None
         self.optionalheader = None
 
+    def get_import_name(self, library, name):
+        return f"{library}.{name}"
+
 
 def check_header():
     pe = PEFormat()
@@ -152,14 +155,15 @@ def read_imports(pe):
 
                     if thunk & ORDINAL_FLAG:
                         ordinal = thunk ^ ORDINAL_FLAG
-                        importname = f"{modulename}_ordinal_{hex(ordinal)}"
+                        importname = pe.get_import_name(
+                            modulename, f"ordinal_{hex(ordinal)}")
                     else:
                         importbynameva = PE.rva_to_va(pe, thunk)
 
                         if importbynameva:
                             name = redasm.set_type(
                                 importbynameva + redasm.size_of("u16"), "str")
-                            importname = f"{modulename}.{name}"
+                            importname = pe.get_import_name(modulename, name)
                             redasm.set_type_as(
                                 importbynameva, "u16", f"{importname}_hint")
 

@@ -42,7 +42,7 @@ std::string to_hex(usize v);
 
 usize get_segments(const RDSegment** segments);
 bool find_segment(RDAddress address, RDSegment* segment);
-std::vector<RDRef> get_references(RDAddress address);
+std::vector<RDRef> get_refs(RDAddress address);
 usize get_bytes(const RDByte** bytes);
 usize get_bits();
 
@@ -52,6 +52,7 @@ bool map_segment(const std::string& name, RDAddress address,
 bool map_segment_n(const std::string& name, RDAddress address, usize asize,
                    RDOffset offset, usize osize, usize type);
 
+tl::optional<RDAddress> get_address(std::string_view name);
 std::string get_comment(RDAddress address);
 std::string get_name(RDAddress address);
 std::string render_text(RDAddress address);

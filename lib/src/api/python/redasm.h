@@ -36,6 +36,10 @@ PyObject* memory_info(PyObject* self, PyObject* args);
 PyObject* map_segment(PyObject* self, PyObject* args);
 PyObject* map_segment_n(PyObject* self, PyObject* args);
 
+PyObject* get_refs(PyObject* self, PyObject* args);
+PyObject* get_address(PyObject* self, PyObject* args);
+PyObject* get_name(PyObject* self, PyObject* args);
+
 PyObject* set_type(PyObject* self, PyObject* args);
 PyObject* set_type_as(PyObject* self, PyObject* args);
 PyObject* set_name(PyObject* self, PyObject* args);

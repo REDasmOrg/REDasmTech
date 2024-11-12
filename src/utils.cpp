@@ -98,7 +98,7 @@ QMenu* create_surface_menu(RDSurface* s, QWidget* w) {
         actcopy->setVisible(rdsurface_hasselection(s));
         actrename->setVisible(loc.cursoraddress.valid);
         actrefs->setVisible(loc.cursoraddress.valid &&
-                            rd_getreferences(loc.cursoraddress.value, nullptr));
+                            rd_getrefs(loc.cursoraddress.value, nullptr));
     });
 
     return menu;

@@ -58,14 +58,14 @@ void do_autorename(const RDAnalyzer*) {
                     if(jd.jumps.size() != 1 || jd.jumps.front() >= mem->size())
                         continue;
 
-                    n = "thunk_" + ctx->get_name(jd.jumps.front());
+                    n = "_" + ctx->get_name(jd.jumps.front());
                 }
                 else if(callb.has(BF_CALL)) {
                     const AddressDetail& cd = db.get_detail(callidx);
                     if(cd.calls.empty() != 1 || cd.calls.front() >= mem->size())
                         continue;
 
-                    n = "thunk_" + ctx->get_name(cd.calls.front());
+                    n = "_" + ctx->get_name(cd.calls.front());
                 }
 
                 if(!n.empty())

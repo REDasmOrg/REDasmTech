@@ -20,14 +20,14 @@ public:
 public:
     Process() = default;
     ~Process();
-    [[nodiscard]] inline Pid pid() const { return m_pid; }
+    [[nodiscard]] Pid pid() const { return m_pid; }
     [[nodiscard]] std::string read_stdout() const;
     [[nodiscard]] std::string read_stderr() const;
     void write(std::string_view arg);
     [[nodiscard]] int wait() const;
     void kill();
 
-    void start(const std::string_view& cmd,
+    void start(std::string_view cmd,
                std::initializer_list<std::string_view> args = {});
 
 private:

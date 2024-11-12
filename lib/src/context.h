@@ -26,36 +26,37 @@ public:
 
     Context(const std::shared_ptr<AbstractBuffer>& b, RDLoader* loader);
     bool activate();
-    void set_export(usize idx);
-    void set_import(usize idx);
-    bool set_function(usize idx, const std::string& name = {});
-    bool set_entry(usize idx, std::string name = EP_NAME);
+    void set_export(MIndex idx);
+    void set_import(MIndex idx);
+    bool set_function(MIndex idx, const std::string& name = {});
+    bool set_entry(MIndex idx, std::string name = EP_NAME);
     void memory_map(RDAddress base, usize size);
-    RDAddress memory_copy(usize idx, RDOffset start, RDOffset end) const;
+    RDAddress memory_copy(MIndex idx, RDOffset start, RDOffset end) const;
     tl::optional<MIndex> address_to_index(RDAddress address) const;
-    tl::optional<RDAddress> index_to_address(MIndex index) const;
-    tl::optional<RDOffset> index_to_offset(MIndex index) const;
-    const Segment* index_to_segment(MIndex index) const;
-    const Function* index_to_function(MIndex index) const;
+    tl::optional<RDAddress> index_to_address(MIndex idx) const;
+    tl::optional<RDOffset> index_to_offset(MIndex idx) const;
+    const Segment* index_to_segment(MIndex idx) const;
+    const Function* index_to_function(MIndex idx) const;
     bool is_address(RDAddress address) const;
 
-    void map_segment(const std::string& name, usize idx, usize endidx,
+    void map_segment(const std::string& name, MIndex idx, MIndex endidx,
                      RDOffset offset, RDOffset endoffset, usize type);
 
-    bool set_comment(usize idx, std::string_view comment = {});
+    bool set_comment(MIndex idx, std::string_view comment = {});
 
-    bool set_type(usize idx, std::string_view tname,
+    bool set_type(MIndex idx, std::string_view tname,
                   const std::string& dbname = {});
 
-    bool map_type(usize idx, std::string_view tname,
+    bool map_type(MIndex idx, std::string_view tname,
                   const std::string& dbname = {});
 
-    void set_name(usize idx, const std::string& name);
+    void set_name(MIndex idx, const std::string& name);
 
-    std::string get_name(usize idx) const;
+    tl::optional<MIndex> get_index(std::string_view name) const;
+    std::string get_name(MIndex idx) const;
     std::string get_comment(MIndex idx) const;
 
-    RDAddress memory_copy_n(usize idx, RDOffset start, usize size) const {
+    RDAddress memory_copy_n(MIndex idx, RDOffset start, usize size) const {
         return this->memory_copy(idx, start, start + size);
     }
 
@@ -67,15 +68,15 @@ public:
     void process_memory();
 
 private:
-    void process_listing_unknown(usize& idx);
-    void process_listing_data(usize& idx);
-    void process_listing_code(usize& idx);
-    void process_listing_array(usize& idx, const typing::ParsedType& pt);
-    usize process_listing_type(usize& idx, const typing::ParsedType& pt);
+    void process_listing_unknown(MIndex& idx);
+    void process_listing_data(MIndex& idx);
+    void process_listing_code(MIndex& idx);
+    void process_listing_array(MIndex& idx, const typing::ParsedType& pt);
+    usize process_listing_type(MIndex& idx, const typing::ParsedType& pt);
     void create_function_graph(MIndex idx);
 
     template<typename Function>
-    void process_hex_dump(usize& idx, Function f) {
+    void process_hex_dump(MIndex& idx, Function f) {
         usize l = 0, start = idx;
 
         for(; idx < this->memory->size() && f(this->memory->at(idx));

@@ -17,6 +17,22 @@ constexpr u32 get_u32(const char* p) {
 
 } // namespace impl
 
+struct StringHash {
+    using is_transparent = void;
+
+    [[nodiscard]] size_t operator()(const char* txt) const {
+        return std::hash<std::string_view>{}(txt);
+    }
+
+    [[nodiscard]] size_t operator()(std::string_view txt) const {
+        return std::hash<std::string_view>{}(txt);
+    }
+
+    [[nodiscard]] size_t operator()(const std::string& txt) const {
+        return std::hash<std::string>{}(txt);
+    }
+};
+
 // https://github.com/aappleby/smhasher/blob/master/src/MurmurHash2.cpp
 constexpr u32 murmur2(const char* key, usize len) {
     constexpr u32 M = 0x5bd1e995;

@@ -104,9 +104,10 @@ REDASM_EXPORT bool rd_setfunctionas(RDAddress address, const char* name);
 REDASM_EXPORT bool rd_setentry(RDAddress address, const char* name);
 
 REDASM_EXPORT bool rd_setname(RDAddress address, const char* name);
+REDASM_EXPORT bool rd_getaddress(const char* name, RDAddress* address);
 REDASM_EXPORT const char* rd_getname(RDAddress address);
 REDASM_EXPORT const char* rd_getcomment(RDAddress address);
-REDASM_EXPORT usize rd_getreferences(RDAddress address, const RDRef** refs);
+REDASM_EXPORT usize rd_getrefs(RDAddress address, const RDRef** refs);
 REDASM_EXPORT bool rd_addresstosegment(RDAddress address, RDSegment* s);
 REDASM_EXPORT bool rd_offsettosegment(RDOffset offset, RDSegment* s);
 REDASM_EXPORT bool rd_addresstoffset(RDAddress address, RDOffset* offset);

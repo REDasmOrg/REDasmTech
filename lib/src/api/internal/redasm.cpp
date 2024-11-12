@@ -296,7 +296,9 @@ bool find_segment(RDAddress address, RDSegment* segment) {
     return false;
 }
 
-std::vector<RDRef> get_references(RDAddress address) {
+std::vector<RDRef> get_refs(RDAddress address) {
+    spdlog::trace("get_refs({})", address);
+
     if(auto idx = state::context->address_to_index(address); idx) {
         if(!state::context->memory->at(*idx).has(BF_REFS))
             return {};
@@ -391,6 +393,14 @@ bool set_name(RDAddress address, const std::string& name) {
     }
 
     return false;
+}
+
+tl::optional<RDAddress> get_address(std::string_view name) {
+    if(!state::context)
+        return tl::nullopt;
+
+    return state::context->get_index(name).and_then(
+        [](MIndex idx) { return state::context->index_to_address(idx); });
 }
 
 std::string get_comment(RDAddress address) {

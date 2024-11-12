@@ -109,10 +109,18 @@ bool rd_setentry(RDAddress address, const char* name) {
 }
 
 bool rd_setname(RDAddress address, const char* name) {
-    if(name)
-        return redasm::api::internal::set_name(address, name);
+    return name && redasm::api::internal::set_name(address, name);
+}
 
-    return false;
+bool rd_getaddress(const char* name, RDAddress* address) {
+    return name && redasm::api::internal::get_address(name)
+                       .map([&](RDAddress x) {
+                           if(address)
+                               *address = x;
+
+                           return true;
+                       })
+                       .value_or(false);
 }
 
 const char* rd_getname(RDAddress address) {
@@ -135,9 +143,9 @@ const char* rd_getcomment(RDAddress address) {
     return res.c_str();
 }
 
-usize rd_getreferences(RDAddress address, const RDRef** refs) {
+usize rd_getrefs(RDAddress address, const RDRef** refs) {
     static std::vector<RDRef> r;
-    r = redasm::api::internal::get_references(address);
+    r = redasm::api::internal::get_refs(address);
 
     if(refs)
         *refs = r.data();

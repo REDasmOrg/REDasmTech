@@ -7,7 +7,7 @@
 
 namespace redasm {
 
-std::string Database::get_name(usize idx, usize ns) const {
+std::string Database::get_name(MIndex idx, usize ns) const {
     auto it = m_indexdb.find(idx);
     if(it == m_indexdb.end())
         return {};
@@ -15,7 +15,7 @@ std::string Database::get_name(usize idx, usize ns) const {
     return it->second.names[ns];
 }
 
-void Database::set_name(usize idx, const std::string& name, usize ns) {
+void Database::set_name(MIndex idx, const std::string& name, usize ns) {
     std::string oldname = m_indexdb[idx].names[ns];
     m_indexdb[idx].names[ns] = name;
     m_names[name] = idx;
@@ -24,7 +24,7 @@ void Database::set_name(usize idx, const std::string& name, usize ns) {
         m_names.erase(oldname);
 }
 
-tl::optional<usize> Database::get_index(const std::string& name) const {
+tl::optional<MIndex> Database::get_index(std::string_view name) const {
     if(name.empty())
         return tl::nullopt;
 
@@ -50,9 +50,9 @@ tl::optional<usize> Database::get_index(const std::string& name) const {
     return tl::nullopt;
 }
 
-AddressDetail& Database::get_detail(usize idx) { return m_indexdb[idx]; }
+AddressDetail& Database::get_detail(MIndex idx) { return m_indexdb[idx]; }
 
-const AddressDetail& Database::get_detail(usize idx) const {
+const AddressDetail& Database::get_detail(MIndex idx) const {
     auto it = m_indexdb.find(idx);
 
     if(it != m_indexdb.end())

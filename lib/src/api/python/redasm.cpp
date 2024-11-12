@@ -108,6 +108,38 @@ PyObject* symbolize(PyObject* /*self*/, PyObject* args) {
     return PyUnicode_FromString(internal::symbolize(s).c_str());
 }
 
+PyObject* get_refs(PyObject* /*self*/, PyObject* args) {
+    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    std::vector<RDRef> refs = internal::get_refs(address);
+    PyObject* res = PyTuple_New(refs.size());
+
+    for(usize i = 0; i < refs.size(); i++) {
+        PyObject* item = python::new_simplenamespace();
+        PyObject* itemaddr = PyLong_FromUnsignedLongLong(refs[i].address);
+        PyObject* itemtype = PyLong_FromUnsignedLongLong(refs[i].type);
+        PyObject_SetAttrString(item, "address", itemaddr);
+        PyObject_SetAttrString(item, "type", itemtype);
+        PyTuple_SET_ITEM(res, i, item);
+        Py_DECREF(itemtype);
+        Py_DECREF(itemaddr);
+    }
+
+    return res;
+}
+
+PyObject* get_address(PyObject* /*self*/, PyObject* args) {
+    const char* name = PyUnicode_AsUTF8(args);
+
+    return internal::get_address(name).map_or(
+        [](RDAddress address) { return PyLong_FromUnsignedLong(address); },
+        Py_None);
+}
+
+PyObject* get_name(PyObject* /*self*/, PyObject* args) {
+    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    return PyUnicode_FromString(internal::get_name(address).c_str());
+}
+
 PyObject* set_type(PyObject* /*self*/, PyObject* args) {
     RDAddress address{};
     const char* name = nullptr;
@@ -115,10 +147,7 @@ PyObject* set_type(PyObject* /*self*/, PyObject* args) {
     if(!PyArg_ParseTuple(args, "Kz", &address, &name))
         return nullptr;
 
-    if(auto v = internal::set_type(address, name); v)
-        return python::to_object(*v);
-
-    Py_RETURN_NONE;
+    return internal::set_type(address, name).map_or(python::to_object, Py_None);
 }
 
 PyObject* set_type_as(PyObject* /*self*/, PyObject* args) {
@@ -128,10 +157,8 @@ PyObject* set_type_as(PyObject* /*self*/, PyObject* args) {
     if(!PyArg_ParseTuple(args, "Kzz", &address, &name, &dbname))
         return nullptr;
 
-    if(auto v = internal::set_type_as(address, name, dbname); v)
-        return python::to_object(*v);
-
-    Py_RETURN_NONE;
+    return internal::set_type_as(address, name, dbname)
+        .map_or(python::to_object, Py_None);
 }
 
 PyObject* set_name(PyObject* /*self*/, PyObject* args) {

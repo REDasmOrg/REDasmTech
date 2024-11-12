@@ -19,15 +19,14 @@ namespace fs = std::filesystem;
 namespace {
 
 constexpr std::string_view CONFIG_ROOT = "redasm_cfg";
-constexpr std::string_view VENV_NAME = ".venv";
 constexpr std::string_view REPO_NAME = "deps";
 
 std::string g_rootpath;
-std::string g_venvrootpath;
 std::string g_repopath;
 std::string g_initfilepath;
 
-struct PyModuleDef moduledef = {
+// clang-format off
+struct PyModuleDef moduledef = { // NOLINT
     PyModuleDef_HEAD_INIT,
     "redasm",
     nullptr,
@@ -38,6 +37,7 @@ struct PyModuleDef moduledef = {
     nullptr,
     nullptr,
 };
+// clang-format on
 
 } // namespace
 
@@ -66,6 +66,14 @@ PyMODINIT_FUNC PyInit_redasm() { // NOLINT
     assume(PyModule_AddIntConstant(m, "ANALYZER_EXPERIMENTAL",
                                    ANALYZER_EXPERIMENTAL) == 0);
 
+    assume(PyModule_AddIntConstant(m, "REF_UNKNOWN", REF_UNKNOWN) == 0);
+    assume(PyModule_AddIntConstant(m, "DR_ADDRESS", DR_ADDRESS) == 0);
+    assume(PyModule_AddIntConstant(m, "DR_READ", DR_READ) == 0);
+    assume(PyModule_AddIntConstant(m, "DR_WRITE", DR_WRITE) == 0);
+    assume(PyModule_AddIntConstant(m, "CR_CALL", CR_CALL) == 0);
+    assume(PyModule_AddIntConstant(m, "CR_JUMP", CR_JUMP) == 0);
+    assume(PyModule_AddIntConstant(m, "CR_FLOW", CR_FLOW) == 0);
+
     return m;
 }
 
@@ -73,7 +81,6 @@ bool init() {
     spdlog::info("Initializing Python");
 
     g_rootpath = (fs::current_path() / CONFIG_ROOT).string();
-    g_venvrootpath = (fs::path{g_rootpath} / VENV_NAME).string();
     g_repopath = (fs::path{g_rootpath} / REPO_NAME).string();
 
     if(!fs::exists(g_rootpath)) {
