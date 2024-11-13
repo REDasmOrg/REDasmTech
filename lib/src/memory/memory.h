@@ -18,9 +18,6 @@ public:
     void set(MIndex idx, usize len, u32 flags);
     void unset(MIndex idx, usize len);
     void unset(MIndex idx);
-    void set_unknown(MIndex idx, usize len) { this->set(idx, len, BF_UNKNOWN); }
-    void set_data(MIndex idx, usize len) { this->set(idx, len, BF_DATA); }
-    void set_code(MIndex idx, usize len) { this->set(idx, len, BF_CODE); }
 };
 
 } // namespace redasm

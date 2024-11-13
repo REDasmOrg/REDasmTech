@@ -22,7 +22,7 @@ typedef enum RDSurfaceFlags {
 
     SURFACE_GRAPH = SURFACE_NOADDRESS | SURFACE_NOSEGMENT | SURFACE_NOFUNCTION |
                     SURFACE_NOCOMMENTS,
-    SURFACE_TEXT = ~0u,
+    SURFACE_TEXT = ~0u & ~SURFACE_RDIL,
 } RDSurfaceFlags;
 
 typedef struct RDSurfaceLocation {

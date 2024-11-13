@@ -73,17 +73,22 @@ void Disassembler::emulate_step() {
         m_status->address.valid = a.has_value();
         emulator.next();
     }
-    else
+    else {
+        state::context->process_functions();
         this->next_step();
+    }
 }
 
 void Disassembler::analyze_step() {
     for(const RDAnalyzer& a : state::analyzers) {
-        if(a.execute && state::context->selectedanalyzers.count(&a))
+        if(a.execute && state::context->selectedanalyzers.contains(&a))
             a.execute(&a);
     }
 
-    this->next_step();
+    if(emulator.has_next())
+        this->set_step(STEP_EMULATE);
+    else
+        this->next_step();
 }
 
 void Disassembler::cfg_step() { this->next_step(); }

@@ -25,38 +25,51 @@ void Memory::unset(MIndex idx) {
         return;
 
     for(MIndex i = idx; i < m_buffer.size(); i++) {
-        Byte& b = m_buffer[i];
+        Byte oldb = m_buffer[i];
 
-        if(b.category() != c || (i > idx && !b.is_cont()))
+        if(oldb.category() != c)
             break;
 
         m_buffer[i].value &= BF_MMASK; // Clear Specific Flags
+
+        if(!oldb.is_cont())
+            break;
     }
 }
 
 void Memory::set(MIndex idx, usize len, u32 flags) {
+    if(flags != BF_UNKNOWN)
+        flags |= BF_CONT; // Unknown doesn't need CONT bit
+
     MIndex endlen = std::min(idx + len, m_buffer.size());
 
     for(MIndex i = idx; i < endlen; i++) {
+        if(i == endlen - 1)
+            flags &= ~BF_CONT;
+
         m_buffer[i].set(flags);
-        flags |= BF_CONT;
     }
 }
 
-usize Memory::get_length(MIndex idx) const {
-    usize c = 0;
+usize Memory::get_length(MIndex startidx) const {
+    usize idx = startidx;
 
-    for(; idx < this->size() && this->at(idx).is_cont(); c++)
-        idx++;
+    while(idx < this->size()) {
+        if(!this->at(idx++).is_cont())
+            break;
+    }
 
-    return c;
+    return idx - startidx;
 }
 
 tl::optional<MIndex> Memory::get_next(MIndex idx) const {
     if(idx >= this->size())
         return tl::nullopt;
 
-    return idx + this->get_length(idx);
+    if(usize len = this->get_length(idx); len > 0)
+        return idx + len;
+
+    return tl::nullopt;
 }
 
 } // namespace redasm

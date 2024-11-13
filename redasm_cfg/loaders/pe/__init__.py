@@ -140,7 +140,7 @@ def read_imports(pe):
         moduleva = PE.rva_to_va(pe, entry.Name)
 
         if moduleva:
-            modulename = redasm.set_type(moduleva, "str")
+            modulename = redasm.set_type(moduleva, "str").lower()
             pe.classifier.classify_import(modulename)
 
             thunkstart = PE.rva_to_va(

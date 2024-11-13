@@ -65,6 +65,7 @@ public:
     }
 
     [[nodiscard]] std::string to_hex(usize v, int n = 0) const;
+    void process_functions();
     void process_memory();
 
 private:

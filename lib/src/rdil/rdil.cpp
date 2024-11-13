@@ -375,13 +375,13 @@ void generate(const Function& f, ILExprList& res) {
     assume(p);
 
     for(const Function::BasicBlock& bb : f.blocks) {
-        for(MIndex idx = bb.start; idx <= bb.end; idx++) {
+        for(MIndex idx = bb.start; idx <= bb.end;) {
             res.currentindex = idx;
 
             auto address = ctx->index_to_address(idx);
             assume(address.has_value());
 
-            if(!p->lift(p, *address, api::to_c(&res)))
+            if(!p->lift || !p->lift(p, *address, api::to_c(&res)))
                 res.append(res.expr_unknown());
 
             if(auto nextidx = mem->get_next(idx); nextidx) {

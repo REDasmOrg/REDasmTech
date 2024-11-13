@@ -5,7 +5,6 @@
 #include "../rdil/rdil.h"
 #include "../state.h"
 #include <cctype>
-#include <cstddef>
 
 namespace redasm {
 

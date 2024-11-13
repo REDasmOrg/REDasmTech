@@ -161,7 +161,7 @@ bool Context::set_type(MIndex idx, std::string_view tname,
         len = std::max<usize>(pt->n, 1) * pt->type->size;
 
     detail.type_name = tname;
-    this->memory->set_data(idx, len);
+    this->memory->set(idx, len, BF_DATA);
     this->memory->at(idx).set(isarray ? BF_ARRAY : BF_TYPE);
     this->set_name(idx, dbname);
     return true;
@@ -228,7 +228,7 @@ const Segment* Context::index_to_segment(MIndex index) const {
 
 const Function* Context::index_to_function(usize index) const {
     if(index >= state::context->memory->size())
-        return {};
+        return nullptr;
 
     for(const Function& f : this->functions) {
         if(f.contains(index))
@@ -371,6 +371,27 @@ std::string Context::to_hex(usize v, int n) const {
     return hexstr;
 }
 
+void Context::process_functions() {
+    spdlog::info("Processing functions...");
+    this->functions.clear();
+
+    if(!this->memory)
+        return;
+
+    for(const Segment& seg : this->segments) {
+        if(!(seg.type & SEGMENTTYPE_HASCODE))
+            continue;
+
+        for(usize idx = seg.index;
+            idx < seg.endindex && idx < this->memory->size(); idx++) {
+            Byte membyte = this->memory->at(idx);
+
+            if(membyte.has(BF_FUNCTION))
+                this->create_function_graph(idx);
+        }
+    }
+}
+
 void Context::process_memory() {
     spdlog::info("Processing memory...");
     this->listing.clear();
@@ -460,7 +481,7 @@ void Context::process_listing_code(MIndex& idx) {
     }
 
     if(b.has(BF_INSTR)) {
-        this->listing.instruction(idx++);
+        this->listing.instruction(idx);
         idx += this->memory->get_length(idx);
     }
     else {
@@ -547,10 +568,6 @@ usize Context::process_listing_type(MIndex& idx, const typing::ParsedType& pt) {
 }
 
 void Context::create_function_graph(MIndex idx) {
-    const Segment* seg = this->listing.current_segment();
-    assume(seg);
-    assume(seg->type & SEGMENTTYPE_HASCODE);
-
     auto address = this->index_to_address(idx);
     assume(address.has_value());
     spdlog::info("Creating function graph @ {}", this->to_hex(*address));
@@ -567,7 +584,7 @@ void Context::create_function_graph(MIndex idx) {
         pending.pop_front();
 
         // Ignore loops
-        if(done.count(startidx))
+        if(done.contains(startidx))
             continue;
 
         done.insert(startidx);
@@ -601,7 +618,7 @@ void Context::create_function_graph(MIndex idx) {
                 const AddressDetail& d = db.get_detail(curridx);
 
                 for(usize jidx : d.jumps) {
-                    seg = this->index_to_segment(jidx);
+                    const Segment* seg = this->index_to_segment(jidx);
 
                     if(seg && seg->type & SEGMENTTYPE_HASCODE) {
                         pending.push_back(jidx);
@@ -609,6 +626,9 @@ void Context::create_function_graph(MIndex idx) {
                     }
                 }
             }
+
+            Function::BasicBlock* bb = f.get_basic_block(n);
+            assume(bb);
 
             if(b.has(BF_FLOW)) {
                 const AddressDetail& d = db.get_detail(curridx);
@@ -619,14 +639,14 @@ void Context::create_function_graph(MIndex idx) {
                     break;
                 }
 
-                Function::BasicBlock* bb = f.get_basic_block(n);
-                assume(bb);
                 bb->end = curridx;
                 curridx = d.flow;
                 b = mem->at(curridx);
             }
-            else
+            else {
+                bb->end = curridx;
                 break;
+            }
         }
     }
 }

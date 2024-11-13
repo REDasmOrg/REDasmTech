@@ -9,7 +9,7 @@ typedef enum RDByteFlags {
     // Internal Use
     BF_MBYTE = 0x000000ff, // Mask for byte extraction
     BF_MUNKN = 0x60000000, // Mask for unknown flags
-    BF_MMASK = 0x0002ffff, // Mask for Byte and Common
+    BF_MMASK = 0x0003ffff, // Mask for Byte and Common
 
     // Common Flags
     BF_HASBYTE = 1U << 8,   // Indicates the presence of a byte

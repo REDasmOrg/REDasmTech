@@ -95,6 +95,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/c/rdil.cpp
 
     PRIVATE # Python
+        src/api/python/rdil.cpp
         src/api/python/buffer.cpp
         src/api/python/stream.cpp
         src/api/python/common.cpp

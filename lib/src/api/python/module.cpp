@@ -4,6 +4,7 @@
 #include "buffer.h"
 #include "common.h"
 #include "methods.h"
+#include "rdil.h"
 #include "stream.h"
 #include <Python.h>
 #include <cstdio>
@@ -39,18 +40,7 @@ struct PyModuleDef moduledef = { // NOLINT
 };
 // clang-format on
 
-} // namespace
-
-PyMODINIT_FUNC PyInit_redasm() { // NOLINT
-    assume(PyType_Ready(&python::memory_type) == 0);
-    assume(PyType_Ready(&python::file_type) == 0);
-
-    PyObject* m = PyModule_Create(&moduledef);
-    assume(PyModule_AddObject(m, "memory", pymemory_new()) == 0);
-    assume(PyModule_AddObject(m, "file", pyfile_new()) == 0);
-    assume(PyModule_AddType(m, &python::filestream_type) == 0);
-    assume(PyModule_AddType(m, &python::memorystream_type) == 0);
-
+void init_constants(PyObject* m) {
     assume(PyModule_AddIntConstant(m, "SEGMENT_UNKNOWN", SEGMENTTYPE_UNKNOWN) ==
            0);
     assume(PyModule_AddIntConstant(m, "SEGMENT_HASDATA", SEGMENTTYPE_HASDATA) ==
@@ -73,7 +63,23 @@ PyMODINIT_FUNC PyInit_redasm() { // NOLINT
     assume(PyModule_AddIntConstant(m, "CR_CALL", CR_CALL) == 0);
     assume(PyModule_AddIntConstant(m, "CR_JUMP", CR_JUMP) == 0);
     assume(PyModule_AddIntConstant(m, "CR_FLOW", CR_FLOW) == 0);
+}
 
+} // namespace
+
+PyMODINIT_FUNC PyInit_redasm() { // NOLINT
+    assume(PyType_Ready(&python::memory_type) == 0);
+    assume(PyType_Ready(&python::file_type) == 0);
+    assume(PyType_Ready(&python::rdil_type) == 0);
+
+    PyObject* m = PyModule_Create(&moduledef);
+    assume(PyModule_AddObject(m, "memory", pymemory_new()) == 0);
+    assume(PyModule_AddObject(m, "file", pyfile_new()) == 0);
+    assume(PyModule_AddObject(m, "rdil", pyrdil_new()) == 0);
+    assume(PyModule_AddType(m, &python::filestream_type) == 0);
+    assume(PyModule_AddType(m, &python::memorystream_type) == 0);
+
+    python::init_constants(m);
     return m;
 }
 

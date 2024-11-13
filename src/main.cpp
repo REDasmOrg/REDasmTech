@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
     QApplication app{argc, argv};
     app.setApplicationDisplayName("REDasm " + REDASM_VERSION);
 
-    rd_setloglevel(LOGLEVEL_INFO);
+    rd_setloglevel(LOGLEVEL_TRACE);
     themeprovider::apply_theme();
 
     MainWindow mw;

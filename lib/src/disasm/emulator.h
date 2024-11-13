@@ -9,18 +9,18 @@ namespace redasm {
 
 class Emulator {
 public:
-    void enqueue(usize idx);
-    void schedule(usize idx);
-    void add_coderef(usize idx, usize cr);
-    void add_dataref(usize idx, usize dr);
-    void set_type(usize idx, std::string_view tname);
+    void enqueue(MIndex idx);
+    void schedule(MIndex idx);
+    void add_coderef(MIndex idx, usize cr);
+    void add_dataref(MIndex idx, usize dr);
+    void set_type(MIndex idx, std::string_view tname);
     void next();
     tl::optional<RDAddress> get_next_address() const;
     [[nodiscard]] bool has_next() const;
 
 private:
-    void decode(RDAddress address);
-    const Segment* get_segment(usize idx);
+    void decode(MIndex address);
+    const Segment* get_segment(MIndex idx);
 
 private:
     std::deque<usize> m_pending;

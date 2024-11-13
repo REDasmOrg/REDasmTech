@@ -27,17 +27,25 @@ void sorted_unique_insert(std::vector<AddressDetail::Ref>& v,
 
 } // namespace
 
-void Emulator::enqueue(usize idx) {
-    if(idx < state::context->memory->size())
+void Emulator::enqueue(MIndex idx) {
+    if(idx < state::context->memory->size()) {
+        if(state::context->memory->at(idx).has(BF_INSTR))
+            return;
+
         m_pending.push_front(idx);
+    }
 }
 
-void Emulator::schedule(usize idx) {
-    if(idx < state::context->memory->size())
+void Emulator::schedule(MIndex idx) {
+    if(idx < state::context->memory->size()) {
+        if(state::context->memory->at(idx).has(BF_INSTR))
+            return;
+
         m_pending.push_back(idx);
+    }
 }
 
-void Emulator::decode(usize idx) {
+void Emulator::decode(MIndex idx) {
     const Segment* s = this->get_segment(idx);
     if(!s || !(s->type & SEGMENTTYPE_HASCODE))
         return;
@@ -65,7 +73,7 @@ void Emulator::decode(usize idx) {
         mem->set(idx, sz, BF_INSTR);
 }
 
-const Segment* Emulator::get_segment(usize idx) {
+const Segment* Emulator::get_segment(MIndex idx) {
     if(m_segment && (idx >= m_segment->index && idx < m_segment->endindex))
         return m_segment;
 
@@ -73,7 +81,7 @@ const Segment* Emulator::get_segment(usize idx) {
     return m_segment;
 }
 
-void Emulator::add_coderef(usize idx, usize cr) {
+void Emulator::add_coderef(MIndex idx, usize cr) {
     if(idx >= state::context->memory->size())
         return;
 
@@ -115,7 +123,7 @@ void Emulator::add_coderef(usize idx, usize cr) {
     ctx->memory->at(idx).set_flag(BF_REFS, !dby.refs.empty());
 }
 
-void Emulator::add_dataref(usize idx, usize dr) {
+void Emulator::add_dataref(MIndex idx, usize dr) {
     if(idx >= state::context->memory->size())
         return;
 
@@ -136,11 +144,11 @@ void Emulator::add_dataref(usize idx, usize dr) {
     ctx->memory->at(idx).set_flag(BF_REFS, !dby.refs.empty());
 }
 
-void Emulator::set_type(usize idx, std::string_view tname) {
-    if(idx >= state::context->memory->size())
-        return;
-
+void Emulator::set_type(MIndex idx, std::string_view tname) {
     Context* ctx = state::context;
+
+    if(idx >= ctx->memory->size())
+        return;
 
     if(ctx->set_type(idx, tname))
         ctx->memory->at(idx).set(BF_WEAK);

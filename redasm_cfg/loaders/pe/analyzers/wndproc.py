@@ -37,10 +37,28 @@ def wndproc_isenabled(pe):
 
 
 def find_wndproc(address, argidx):
-    pass
+    func = redasm.rdil.create_function(address)
+    vstack = []
+
+    for x in func:
+        if x.expr.op == redasm.rdil.PUSH:
+            vstack.insert(0, x.expr.u)
+        elif x.expr.op == redasm.rdil.CALL:
+            if x.address == address and argidx < len(vstack):
+                wndproc = vstack[argidx]
+
+                if wndproc.addr is not None:
+                    funcname = f"DialogProc_{redasm.to_hex(wndproc.addr)}"
+                    redasm.set_function_as(wndproc.addr, funcname)
+                    redasm.enqueue(wndproc.addr)
+
+                break
+            else:
+                vstack.clear()
 
 
 def wndproc_execute(pe):
     for api in WNDPROC_API:
         for ref in get_api_refs(pe, api["name"]):
             find_wndproc(ref.address, api["arg"])
+            return
