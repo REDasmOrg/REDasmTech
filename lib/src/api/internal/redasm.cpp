@@ -260,6 +260,14 @@ std::string to_hex(usize v) {
     return {};
 }
 
+tl::optional<RDAddress> get_ep() {
+    if(!state::context)
+        return tl::nullopt;
+
+    return state::context->entrypoint.and_then(
+        [&](MIndex ep) { return state::context->index_to_address(ep); });
+}
+
 usize get_segments(const RDSegment** segments) {
     static std::vector<RDSegment> res;
 
@@ -584,19 +592,10 @@ tl::optional<RDOffset> address_to_offset(RDAddress address) {
         return tl::nullopt;
 
     usize idx = address - state::context->baseaddress;
-    if(idx >= state::context->memory->size())
-        return {};
+    if(idx < state::context->memory->size())
+        return state::context->index_to_offset(idx);
 
-    RDOffset offset = idx;
-
-    for(const Segment& s : state::context->segments) {
-        if(idx >= s.index && idx < s.endindex) {
-            offset = (idx - s.index) + s.offset;
-            break;
-        }
-    }
-
-    return offset;
+    return tl::nullopt;
 }
 
 tl::optional<RDAddress> offset_to_address(RDOffset offset) {

@@ -144,7 +144,9 @@ def read_imports(pe):
             pe.classifier.classify_import(modulename)
 
             thunkstart = PE.rva_to_va(
-                pe, entry.FirstThunk or entry.OriginalFirstThunk)
+                pe, entry.OriginalFirstThunk or entry.FirstThunk)
+
+            iatstart = PE.rva_to_va(pe, entry.FirstThunk)
 
             if thunkstart:
                 nthunks, currva = 0, thunkstart
@@ -153,10 +155,14 @@ def read_imports(pe):
                 while thunk != 0:
                     importname = ""
 
+                    # Instructions refers to FT
+                    iatva = iatstart + \
+                        (nthunks * redasm.size_of(pe.integertype))
+
                     if thunk & ORDINAL_FLAG:
                         ordinal = thunk ^ ORDINAL_FLAG
                         importname = pe.get_import_name(
-                            modulename, f"ordinal_{hex(ordinal)}")
+                            modulename, f"ordinal_{ordinal}")
                     else:
                         importbynameva = PE.rva_to_va(pe, thunk)
 
@@ -167,8 +173,8 @@ def read_imports(pe):
                             redasm.set_type_as(
                                 importbynameva, "u16", f"{importname}_hint")
 
-                    redasm.set_type_as(currva, pe.integertype, importname)
-                    redasm.set_import(currva)
+                    redasm.set_type_as(iatva, pe.integertype, importname)
+                    redasm.set_import(iatva)
 
                     currva = currva + redasm.size_of(pe.integertype)
                     nthunks = nthunks + 1

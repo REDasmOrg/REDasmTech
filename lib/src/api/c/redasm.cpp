@@ -12,6 +12,17 @@ void rd_free(void* obj) {
 }
 
 void rd_setloglevel(RDLogLevel l) { redasm::api::internal::set_loglevel(l); }
+
+bool rd_getep(RDAddress* ep) {
+    return redasm::api::internal::get_ep().map_or(
+        [&](RDAddress addr) {
+            if(ep)
+                *ep = addr;
+            return true;
+        },
+        false);
+}
+
 bool rd_tick(const RDEngineStatus** s) {
     return redasm::api::internal::tick(s);
 }

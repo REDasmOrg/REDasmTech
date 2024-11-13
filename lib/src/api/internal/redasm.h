@@ -39,6 +39,7 @@ void disassemble();
 bool tick(const RDAnalysisStatus** s);
 std::string to_hex_n(usize v, usize n);
 std::string to_hex(usize v);
+tl::optional<RDAddress> get_ep();
 
 usize get_segments(const RDSegment** segments);
 bool find_segment(RDAddress address, RDSegment* segment);

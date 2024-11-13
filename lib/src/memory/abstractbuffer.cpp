@@ -213,7 +213,7 @@ AbstractBuffer::get_string_impl(usize& idx, usize n,
         auto v = this->get_type(i, tname);
 
         if(v)
-            s += static_cast<char>(v->ch_v);
+            s += v->ch_v;
         else
             break;
     }

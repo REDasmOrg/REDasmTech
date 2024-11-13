@@ -32,6 +32,7 @@ PyObject* to_hex(PyObject* self, PyObject* args, PyObject* kwargs);
 PyObject* enqueue(PyObject* self, PyObject* args);
 PyObject* schedule(PyObject* self, PyObject* args);
 
+PyObject* get_ep(PyObject* self, PyObject* args);
 PyObject* memory_info(PyObject* self, PyObject* args);
 PyObject* map_segment(PyObject* self, PyObject* args);
 PyObject* map_segment_n(PyObject* self, PyObject* args);

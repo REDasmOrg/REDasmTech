@@ -25,6 +25,7 @@ public:
     Emulator emulator;
 
 private:
+    std::unordered_map<std::string_view, usize> m_analyzerruns;
     std::unique_ptr<RDAnalysisStatus> m_status;
     usize m_currentstep{STEP_INIT};
 };

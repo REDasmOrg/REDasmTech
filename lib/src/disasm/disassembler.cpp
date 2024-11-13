@@ -80,8 +80,13 @@ void Disassembler::emulate_step() {
 }
 
 void Disassembler::analyze_step() {
-    for(const RDAnalyzer& a : state::analyzers) {
-        if(a.execute && state::context->selectedanalyzers.contains(&a))
+    for(const RDAnalyzer& a : state::context->analyzers) {
+        if((a.flags & ANALYZER_RUNONCE) && (m_analyzerruns[a.name] > 0))
+            continue;
+
+        m_analyzerruns[a.name]++;
+
+        if(a.execute && state::context->selectedanalyzers.contains(a.name))
             a.execute(&a);
     }
 

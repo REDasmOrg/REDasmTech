@@ -31,15 +31,17 @@ usize get_analyzers(const RDAnalyzer** analyzers) {
 bool analyzer_select(const RDAnalyzer* self, bool select) {
     spdlog::trace("analyzer_select('{}', {})", self->name, select);
 
-    return std::any_of(state::analyzers.begin(), state::analyzers.end(),
+    Context* ctx = state::context;
+
+    return std::any_of(ctx->analyzers.begin(), ctx->analyzers.end(),
                        [&](const RDAnalyzer& x) {
                            if(&x != self)
                                return false;
 
                            if(select)
-                               state::context->selectedanalyzers.insert(&x);
+                               state::context->selectedanalyzers.insert(x.name);
                            else
-                               state::context->selectedanalyzers.erase(&x);
+                               state::context->selectedanalyzers.erase(x.name);
 
                            return true;
                        });
@@ -51,8 +53,7 @@ bool analyzer_isselected(const RDAnalyzer* self) {
     if(!state::context)
         return false;
 
-    const auto& analyzers = state::context->selectedanalyzers;
-    return analyzers.find(self) != analyzers.end();
+    return state::context->selectedanalyzers.contains(self->name);
 }
 
 } // namespace redasm::api::internal

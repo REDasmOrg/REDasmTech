@@ -63,8 +63,9 @@ bool Context::activate() {
                 continue;
 
             this->analyzers.push_back(a); // Take a copy of the analyzer
+
             if(a.flags & ANALYZER_SELECTED)
-                this->selectedanalyzers.insert(&a);
+                this->selectedanalyzers.insert(a.name);
         }
 
         return true;
@@ -124,7 +125,10 @@ bool Context::set_comment(MIndex idx, std::string_view comment) {
 
 bool Context::set_type(MIndex idx, std::string_view tname,
                        const std::string& dbname) {
-    if(idx >= this->memory->size() || !this->memory->at(idx).is_unknown())
+    if(idx >= this->memory->size())
+        return false;
+
+    if(Byte b = this->memory->at(idx); !b.is_unknown() && !b.is_weak())
         return false;
 
     auto pt = this->types.parse(tname);
@@ -206,9 +210,11 @@ tl::optional<RDAddress> Context::index_to_address(MIndex index) const {
 }
 
 tl::optional<RDOffset> Context::index_to_offset(MIndex index) const {
-    for(const Segment& s : this->segments) {
-        if(index >= s.index && index < s.endindex)
-            return s.offset + index;
+    if(index < this->memory->size()) {
+        for(const Segment& s : this->segments) {
+            if(index >= s.index && index < s.endindex)
+                return (index - s.index) + s.offset;
+        }
     }
 
     return tl::nullopt;

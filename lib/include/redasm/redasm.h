@@ -88,6 +88,7 @@ REDASM_EXPORT bool rd_checkstring(RDAddress address, RDStringResult* r);
 REDASM_EXPORT void rd_memoryinfo(RDMemoryInfo* mi);
 REDASM_EXPORT const char* rd_rendertext(RDAddress address);
 
+REDASM_EXPORT bool rd_getep(RDAddress* ep);
 REDASM_EXPORT bool rd_tick(const RDEngineStatus** s);
 
 REDASM_EXPORT void rd_addsearchpath(const char* path);

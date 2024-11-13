@@ -99,9 +99,9 @@ tl::optional<ParsedType> Types::parse(std::string_view tname) const {
 
     if(t) {
         return ParsedType{
-            t,
-            n,
-            modifier,
+            .type = t,
+            .n = n,
+            .modifier = modifier,
         };
     }
 
@@ -109,8 +109,8 @@ tl::optional<ParsedType> Types::parse(std::string_view tname) const {
 }
 
 void Types::declare(const std::string& name, const Type& type) {
-    if(this->registered.count(name))
-        except("Type '{}' has already been declared");
+    if(this->registered.contains(name))
+        except("Type '{}' has already been declared", name);
 
     auto newtype = std::make_unique<Type>(type);
     newtype->name = name;

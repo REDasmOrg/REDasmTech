@@ -96,10 +96,10 @@ private:
     }
 
 public:
-    usize entrypoint{};
+    tl::optional<MIndex> entrypoint;
     int bits{}, minstring{DEFAULT_MIN_STRING};
     std::vector<RDAnalyzer> analyzers;
-    std::unordered_set<const RDAnalyzer*> selectedanalyzers;
+    std::unordered_set<std::string_view> selectedanalyzers;
     std::vector<std::string> availableprocessors;
     std::vector<std::pair<usize, std::string>> collectedtypes;
     std::vector<Segment> segments;

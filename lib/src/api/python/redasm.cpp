@@ -636,6 +636,11 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args,
     Py_RETURN_NONE;
 }
 
+PyObject* get_ep(PyObject* /*self*/, PyObject* /*args*/) {
+    return redasm::api::internal::get_ep().map_or(
+        [](RDAddress ep) { return PyLong_FromUnsignedLongLong(ep); }, Py_None);
+}
+
 PyObject* memory_info(PyObject* /*self*/, PyObject* /*args*/) {
     RDMemoryInfo mi;
     internal::memory_info(&mi);

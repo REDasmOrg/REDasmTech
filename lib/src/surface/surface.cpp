@@ -182,8 +182,11 @@ bool Surface::jump_to(MIndex index) {
 
 bool Surface::jump_to_ep() {
     bool res = false;
-    this->lock_history(
-        [&]() { res = this->jump_to(state::context->entrypoint); });
+    this->lock_history([&]() {
+        Context* ctx = state::context;
+        res = ctx->entrypoint.map_or(
+            [&](MIndex ep) { return this->jump_to(ep); }, false);
+    });
     return res;
 }
 
