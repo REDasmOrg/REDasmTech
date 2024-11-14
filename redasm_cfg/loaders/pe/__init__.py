@@ -7,7 +7,6 @@ from .analyzers import register_analyzers
 
 class PEFormat:
     def __init__(self):
-        self.bits = 0
         self.classifier = PEClassifier()
         self.imagebase = 0
         self.dosheader = None
@@ -19,6 +18,7 @@ class PEFormat:
 
 
 def check_header():
+    PE.register_types()
     pe = PEFormat()
 
     stream = redasm.FileStream()
@@ -34,17 +34,17 @@ def check_header():
     magic = stream.peek_u16()
 
     if magic == PEH.IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+        redasm.set_bits(32)
         redasm.create_struct("IMAGE_OPTIONAL_HEADER",
                              PEH.IMAGE_OPTIONAL_HEADER32)
-        pe.bits = 32
     elif magic == PEH.IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+        redasm.set_bits(64)
         redasm.create_struct("IMAGE_OPTIONAL_HEADER",
                              PEH.IMAGE_OPTIONAL_HEADER64)
-        pe.bits = 64
     else:
         raise "Invalid OptionalHeader Magic"
 
-    pe.integertype = "u32" if pe.bits == 32 else "u64"
+    pe.integertype = "u32" if redasm.get_bits() == 32 else "u64"
     pe.optionalheader = stream.collect_type("IMAGE_OPTIONAL_HEADER")
     pe.imagebase = pe.optionalheader.ImageBase
     return pe
@@ -133,7 +133,7 @@ def read_imports(pe):
     if not va:
         return
 
-    ORDINAL_FLAG = PEH.IMAGE_ORDINAL_FLAG32 if pe.bits == 32 else PEH.IMAGE_ORDINAL_FLAG64
+    ORDINAL_FLAG = PEH.IMAGE_ORDINAL_FLAG64 if redasm.get_bits() == 64 else PEH.IMAGE_ORDINAL_FLAG32
     entry = redasm.set_type(va, "IMAGE_IMPORT_DESCRIPTOR")
 
     while entry and (entry.FirstThunk != 0 or entry.OriginalFirstThunk != 0):
@@ -239,7 +239,6 @@ def load_default(pe):
 
 
 def init():
-    PE.register_common_types()
     pe = check_header()
     if not pe:
         return False

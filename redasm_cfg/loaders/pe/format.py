@@ -55,11 +55,11 @@ def register_dotnet_types():
     redasm.create_struct("IMAGE_COR_HEADER", DOTNET_HDR.IMAGE_COR_HEADER)
 
 
-def register_common_types():
+def register_types():
     redasm.create_struct("IMAGE_DOS_HEADER", PEH.IMAGE_DOS_HEADER)
     redasm.create_struct("IMAGE_FILE_HEADER", PEH.IMAGE_FILE_HEADER)
-    redasm.create_struct("IMAGE_DATA_DIRECTORY", PEH.IMAGE_DATA_DIRECTORY)
     redasm.create_struct("IMAGE_NT_HEADERS", PEH.IMAGE_NT_HEADERS)
+    redasm.create_struct("IMAGE_DATA_DIRECTORY", PEH.IMAGE_DATA_DIRECTORY)
     redasm.create_struct("IMAGE_SECTION_HEADER", PEH.IMAGE_SECTION_HEADER)
     redasm.create_struct("IMAGE_EXPORT_DIRECTORY", PEH.IMAGE_EXPORT_DIRECTORY)
 
