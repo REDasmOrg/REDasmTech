@@ -39,7 +39,8 @@ usize rd_memoryread(RDAddress address, char* data, usize n) {
     return redasm::api::internal::memory_read(address, data, n);
 }
 
-usize rd_getbits() { return redasm::api::internal::get_bits(); }
+int rd_getbits() { return redasm::api::internal::get_bits(); }
+void rd_setbits(int bits) { redasm::api::internal::set_bits(bits); }
 
 bool rd_checkstring(RDAddress address, RDStringResult* r) {
     return redasm::api::internal::check_string(address, r);

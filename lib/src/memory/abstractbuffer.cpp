@@ -186,7 +186,7 @@ AbstractBuffer::get_string_impl(usize& idx, std::string_view tname) const {
             if(!v->ch_v) // Stop at terminator
                 break;
 
-            s += static_cast<char>(v->ch_v);
+            s += v->ch_v;
         }
         else
             break;

@@ -59,7 +59,7 @@ void memory_info(RDMemoryInfo* mi) {
         {state::context->baseaddress},
         {state::context->end_baseaddress()},
         state::context->memory->size(),
-        state::context->bits,
+        state::context->bits.value_or(0),
     };
 }
 

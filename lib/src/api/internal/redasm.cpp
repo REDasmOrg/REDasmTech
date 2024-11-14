@@ -332,13 +332,20 @@ usize get_bytes(const RDByte** bytes) {
     return m->size();
 }
 
-usize get_bits() {
+void set_bits(int bits) {
+    spdlog::trace("set_bits({})", bits);
+
+    if(state::context)
+        state::context->bits = bits;
+}
+
+int get_bits() {
     spdlog::trace("get_bits()");
 
     if(!state::context)
         return 0;
 
-    return state::context->bits;
+    return state::context->bits.value_or(0);
 }
 
 bool map_segment(const std::string& name, RDAddress address,

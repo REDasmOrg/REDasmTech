@@ -36,6 +36,8 @@ inline PyMethodDef methods[] = {
     {"is_print", python::is_print, METH_O, nullptr},
     {"is_punct", python::is_punct, METH_O, nullptr},
     {"get_ep", python::get_ep, METH_NOARGS, nullptr},
+    {"get_bits", python::get_bits, METH_NOARGS, nullptr},
+    {"set_bits", python::set_bits, METH_O, nullptr},
     {"memory_info", python::memory_info, METH_NOARGS, nullptr},
     {"map_segment", python::map_segment, METH_VARARGS, nullptr},
     {"map_segment_n", python::map_segment_n, METH_VARARGS, nullptr},

@@ -67,22 +67,22 @@ struct Type {
 
     explicit Type(u8 t): tag{t} {}
     explicit Type(u8 t, usize s): tag{t}, size{s} {}
-    inline u8 id() const { return tag & types::TYPE_MASK; }
-    inline bool is_var() const { return tag & types::VAR; }
+    u8 id() const { return tag & types::TYPE_MASK; }
+    bool is_var() const { return tag & types::VAR; }
 
-    inline bool is_char() const {
+    bool is_char() const {
         return this->id() == types::CHAR || this->id() == types::WCHAR;
     }
 
-    inline bool is_str() const {
+    bool is_str() const {
         return this->id() == types::STR || this->id() == types::WSTR;
     }
 
-    inline bool is_wide() const {
+    bool is_wide() const {
         return this->id() == types::WCHAR || this->id() == types::WSTR;
     }
 
-    inline bool is_big() const {
+    bool is_big() const {
         return (this->id() >= types::U8 && this->id() <= types::I64) &&
                (tag & types::BIG);
     }
@@ -112,7 +112,7 @@ struct Value {
     Value() = default;
     explicit Value(std::string t, usize c): type{std::move(t)}, count{c} {}
     explicit Value(std::string t): type{std::move(t)} {}
-    inline bool is_list() const { return count > 0; }
+    bool is_list() const { return count > 0; }
 };
 // clang-format on
 

@@ -36,11 +36,10 @@ PyObject* to_object(const typing::Value& v) {
             res = PyList_New(v.list.size());
 
             for(usize i = 0; i < v.list.size(); i++)
-                PyList_SetItem(res, i, to_object(v.list[i]));
+                PyList_SetItem(res, i, python::to_object(v.list[i]));
         }
     }
     else {
-
         switch(t->id()) {
             case typing::types::BOOL: res = v.b_v ? Py_True : Py_False; break;
 
@@ -49,7 +48,9 @@ PyObject* to_object(const typing::Value& v) {
                 res = PyUnicode_FromStringAndSize(&v.ch_v, 1);
                 break;
 
-            case typing::types::U8: res = PyLong_FromUnsignedLong(v.u8_v); break;
+            case typing::types::U8:
+                res = PyLong_FromUnsignedLong(v.u8_v);
+                break;
 
             case typing::types::U16:
                 res = PyLong_FromUnsignedLong(v.u16_v);
@@ -77,7 +78,8 @@ PyObject* to_object(const typing::Value& v) {
                 res = python::new_simplenamespace();
 
                 for(const auto& [_, n] : t->dict) {
-                    PyObject* field = to_object(v.dict.at(n));
+                    PyObject* field = python::to_object(v.dict.at(n));
+                    assume(field);
                     PyObject_SetAttrString(res, n.data(), field);
                     Py_DECREF(field);
                 }

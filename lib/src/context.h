@@ -97,7 +97,8 @@ private:
 
 public:
     tl::optional<MIndex> entrypoint;
-    int bits{}, minstring{DEFAULT_MIN_STRING};
+    tl::optional<int> bits;
+    int minstring{DEFAULT_MIN_STRING};
     std::vector<RDAnalyzer> analyzers;
     std::unordered_set<std::string_view> selectedanalyzers;
     std::vector<std::string> availableprocessors;

@@ -45,7 +45,8 @@ usize get_segments(const RDSegment** segments);
 bool find_segment(RDAddress address, RDSegment* segment);
 std::vector<RDRef> get_refs(RDAddress address);
 usize get_bytes(const RDByte** bytes);
-usize get_bits();
+void set_bits(int bits);
+int get_bits();
 
 bool map_segment(const std::string& name, RDAddress address,
                  RDAddress endaddress, RDOffset offset, RDOffset endoffset,

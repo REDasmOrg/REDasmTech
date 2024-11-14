@@ -16,7 +16,7 @@
         {
             name: "Build",
             type: "shell",
-            command: "cmake --build . --config ${state.build_mode} -j${number_of_cores}",
+            command: "cmake --build . --config ${state.build_mode} -j16",
             cwd: "${ws.build_dir}",
             default: true,
             quickfix: true,

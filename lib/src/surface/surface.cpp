@@ -658,7 +658,6 @@ void Surface::render_type(const ListingItem& item) {
             auto v = mem->get_u8(item.index);
 
             if(v.has_value()) {
-
                 auto [isptr, val] = surface_checkpointer(*pt, *v);
                 m_renderer->word("=").chunk(val, isptr ? THEME_ADDRESS
                                                        : THEME_CONSTANT);

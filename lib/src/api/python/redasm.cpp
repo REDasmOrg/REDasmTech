@@ -641,6 +641,15 @@ PyObject* get_ep(PyObject* /*self*/, PyObject* /*args*/) {
         [](RDAddress ep) { return PyLong_FromUnsignedLongLong(ep); }, Py_None);
 }
 
+PyObject* get_bits(PyObject* /*self*/, PyObject* /*args*/) {
+    return PyLong_FromLong(redasm::api::internal::get_bits());
+}
+
+PyObject* set_bits(PyObject* /*self*/, PyObject* args) {
+    redasm::api::internal::set_bits(PyLong_AsLong(args));
+    Py_RETURN_NONE;
+}
+
 PyObject* memory_info(PyObject* /*self*/, PyObject* /*args*/) {
     RDMemoryInfo mi;
     internal::memory_info(&mi);

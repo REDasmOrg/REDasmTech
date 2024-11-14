@@ -283,7 +283,7 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
     });
 
     auto v = *this->index_to_address(endidx);
-    this->bits = std::max(this->bits, calculate_bits(v));
+    this->bits = std::max(this->bits.value_or(0), calculate_bits(v));
 }
 
 tl::optional<MIndex> Context::get_index(std::string_view name) const {
@@ -353,8 +353,8 @@ std::string Context::get_comment(MIndex idx) const {
 }
 
 std::string Context::to_hex(usize v, int n) const {
-    if(!m_nchars)
-        m_nchars = (this->bits / CHAR_BIT) * 2;
+    if(!m_nchars && this->bits)
+        m_nchars = (*this->bits / CHAR_BIT) * 2;
 
     if(n == -1)
         n = 0;
