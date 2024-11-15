@@ -4,6 +4,7 @@
 #include "../error.h"
 #include "../state.h"
 #include "../surface/renderer.h"
+#include <limits>
 #include <unordered_map>
 
 #define RDIL_N(x) {x, #x}
@@ -369,6 +370,10 @@ std::string get_format(const ILExpr* e) {
 }
 
 void generate(const Function& f, ILExprList& res) {
+    rdil::generate(f, res, std::numeric_limits<usize>::max());
+}
+
+void generate(const Function& f, ILExprList& res, usize maxn) {
     const Context* ctx = state::context;
     const auto& mem = state::context->memory;
     const RDProcessor* p = ctx->processor;
@@ -383,6 +388,9 @@ void generate(const Function& f, ILExprList& res) {
 
             if(!p->lift || !p->lift(p, *address, api::to_c(&res)))
                 res.append(res.expr_unknown());
+
+            if(res.size() >= maxn)
+                return;
 
             if(auto nextidx = mem->get_next(idx); nextidx) {
                 assume(*nextidx > idx);

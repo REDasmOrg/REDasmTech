@@ -15,6 +15,7 @@ std::string get_text(const ILExpr* e);
 std::string get_format(const ILExpr* e);
 
 void generate(const Function& f, ILExprList& res);
+void generate(const Function& f, ILExprList& res, usize maxn);
 void render(const ILExpr* e, const RDRendererParams& rp);
 
 } // namespace redasm::rdil
