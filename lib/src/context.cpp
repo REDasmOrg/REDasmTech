@@ -128,7 +128,13 @@ bool Context::set_type(MIndex idx, std::string_view tname,
     if(idx >= this->memory->size())
         return false;
 
-    if(Byte b = this->memory->at(idx); !b.is_unknown() && !b.is_weak())
+    Byte b = this->memory->at(idx);
+
+    if((b.has(BF_ARRAY) || b.has(BF_TYPE)) && !b.is_weak()) {
+        const AddressDetail& detail = this->database.get_detail(idx);
+        return detail.type_name == tname;
+    }
+    if(!b.is_unknown() && !b.is_weak())
         return false;
 
     auto pt = this->types.parse(tname);
