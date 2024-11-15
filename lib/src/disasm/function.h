@@ -40,7 +40,7 @@ struct Function {
         return const_cast<Function*>(this)->get_basic_block(n);
     }
 
-    MIndex entry;
+    MIndex index;
     StyledGraph graph;
     Blocks blocks;
 };

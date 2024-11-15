@@ -4,7 +4,7 @@
 
 namespace redasm {
 
-Function::Function(MIndex ep): entry{ep} {}
+Function::Function(MIndex ep): index{ep} {}
 
 bool Function::contains(MIndex idx) const {
     return std::any_of(

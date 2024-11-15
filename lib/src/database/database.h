@@ -35,7 +35,7 @@ struct AddressDetail {
 
     std::string type_name;
     std::array<std::string, NS::COUNT> names;
-    std::vector<usize> jumps, calls;
+    std::vector<MIndex> jumps, calls;
     std::vector<Ref> refsto, refs;
     std::string comment;
 

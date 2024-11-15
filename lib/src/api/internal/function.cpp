@@ -15,9 +15,9 @@ RDFunction* get_function(RDAddress address) {
     if(auto idx = ctx->address_to_index(address); idx) {
         auto it = std::lower_bound(
             ctx->functions.begin(), ctx->functions.end(), *idx,
-            [](const Function& f, usize ep) { return f.entry < ep; });
+            [](const Function& f, usize ep) { return f.index < ep; });
 
-        if(it != ctx->functions.end() && it->entry == *idx)
+        if(it != ctx->functions.end() && it->index == *idx)
             return api::to_c(std::addressof(*it));
     }
 
@@ -40,7 +40,7 @@ bool function_contains(const RDFunction* self, RDAddress address) {
 
 RDAddress function_getentry(const RDFunction* self) {
     spdlog::trace("function_getentry({})", fmt::ptr(self));
-    auto address = state::context->index_to_address(api::from_c(self)->entry);
+    auto address = state::context->index_to_address(api::from_c(self)->index);
     assume(address.has_value());
     return *address;
 }

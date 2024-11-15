@@ -119,7 +119,7 @@ void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
         const Function* func = s->current_function();
 
         if(func) {
-            auto ep = ctx->index_to_address(func->entry);
+            auto ep = ctx->index_to_address(func->index);
             ep.map([&](RDAddress ep) { loc->function.value = ep; });
             loc->function.valid = ep.has_value();
         }
