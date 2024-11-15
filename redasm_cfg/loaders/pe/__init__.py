@@ -246,6 +246,7 @@ def init():
     imagebase = pe.optionalheader.ImageBase
     sectionalign = pe.optionalheader.SectionAlignment
     filealign = pe.optionalheader.FileAlignment
+    ep = pe.optionalheader.AddressOfEntryPoint
 
     redasm.memory.map(imagebase, PE.aligned(
         pe.optionalheader.SizeOfImage, sectionalign))
@@ -262,6 +263,8 @@ def init():
         segtype = redasm.SEGMENT_UNKNOWN
 
         if (sect.Characteristics & PEH.IMAGE_SCN_CNT_CODE) or (sect.Characteristics & PEH.IMAGE_SCN_MEM_EXECUTE):
+            segtype |= redasm.SEGMENT_HASCODE
+        elif ep and (ep >= sect.VirtualAddress and ep < sect.VirtualAddress + asize):
             segtype |= redasm.SEGMENT_HASCODE
 
         if (sect.Characteristics & PEH.IMAGE_SCN_CNT_INITIALIZED_DATA) or (sect.Characteristics & PEH.IMAGE_SCN_CNT_UNINITIALIZED_DATA):
