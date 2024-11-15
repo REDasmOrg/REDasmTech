@@ -33,43 +33,24 @@ void strings_step(RDAddress& address, const RDMemoryInfo& mi) {
 
 void do_autorename(const RDAnalyzer*) {
     Context* ctx = state::context;
-    const Database& db = ctx->database;
 
-    for(const Segment& seg : ctx->segments) {
-        if(!(seg.type & SEGMENTTYPE_HASCODE))
+    for(const Function& f : ctx->functions) {
+        if(f.blocks.size() != 1)
             continue;
 
-        const auto& mem = ctx->memory;
+        if(Byte b = ctx->memory->at(f.index); !b.has(BF_FLOW)) {
+            if(b.has(BF_JUMP)) {
+                const AddressDetail& d = ctx->database.get_detail(f.index);
 
-        for(usize i = seg.index; i < seg.endindex; i++) {
-            if(Byte b = mem->at(i); !b.has(BF_CALL))
-                continue;
-
-            const AddressDetail& d = db.get_detail(i);
-            if(d.calls.size() != 1)
-                continue;
-
-            if(usize callidx = d.calls.front(); callidx < mem->size()) {
-                Byte callb = mem->at(callidx);
-                std::string n;
-
-                if(callb.has(BF_JUMP)) {
-                    const AddressDetail& jd = db.get_detail(callidx);
-                    if(jd.jumps.size() != 1 || jd.jumps.front() >= mem->size())
-                        continue;
-
-                    n = "_" + ctx->get_name(jd.jumps.front());
+                if(d.jumps.size() == 1) {
+                    ctx->set_function(f.index,
+                                      "_" + ctx->get_name(d.jumps.front()));
                 }
-                else if(callb.has(BF_CALL)) {
-                    const AddressDetail& cd = db.get_detail(callidx);
-                    if(cd.calls.empty() != 1 || cd.calls.front() >= mem->size())
-                        continue;
-
-                    n = "_" + ctx->get_name(cd.calls.front());
-                }
-
-                if(!n.empty())
-                    ctx->set_name(callidx, n);
+            }
+            else {
+                ctx->index_to_address(f.index).map([&](RDAddress x) {
+                    ctx->set_name(f.index, "nullsub_" + ctx->to_hex(x));
+                });
             }
         }
     }
