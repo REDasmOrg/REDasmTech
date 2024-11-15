@@ -95,7 +95,7 @@ bool Context::set_function(MIndex idx, const std::string& name) {
 
     auto address = this->index_to_address(idx);
     assume(address.has_value());
-    spdlog::warn("Address {} is not in code segment", *address);
+    spdlog::warn("Address {:x} is not in code segment", *address);
     return false;
 }
 
