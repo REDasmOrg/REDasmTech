@@ -70,7 +70,7 @@ void Emulator::decode(MIndex idx) {
     mem->unset(idx);
 
     if(usize sz = p->emulate(p, *address, api::to_c(this)); sz)
-        mem->set(idx, sz, BF_INSTR);
+        mem->set(idx, sz, BF_INSTR | BF_WEAK);
 }
 
 const Segment* Emulator::get_segment(MIndex idx) {
