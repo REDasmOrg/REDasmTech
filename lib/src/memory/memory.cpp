@@ -37,6 +37,11 @@ void Memory::unset(MIndex idx) {
     }
 }
 
+void Memory::set(MIndex idx, u32 flags) {
+    if(idx < m_buffer.size())
+        m_buffer[idx].set(flags);
+}
+
 void Memory::set(MIndex idx, usize len, u32 flags) {
     if(flags != BF_UNKNOWN)
         flags |= BF_CONT; // Unknown doesn't need CONT bit

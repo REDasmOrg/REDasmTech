@@ -4,49 +4,6 @@ from . import header as VBH
 from .controls import find_control
 
 
-# def decompile_object(vb, obj):
-#     objname = redasm.set_type(obj.lpszObjectName, "str")
-#
-#     if not obj.lpObjectInfo:
-#         return
-#
-#     objinfo = redasm.get_type(obj.lpObjectInfo, "VB_OBJECT_INFO_OPTIONAL")
-#     if not has_optional_info(obj, objinfo):
-#         redasm.set_type(obj.lpObjectInfo, "VB_OBJECT_INFO")
-#         return
-#
-#     objinfo = redasm.set_type(obj.lpObjectInfo, "VB_OBJECT_INFO_OPTIONAL")
-#     if not objinfo.lpControls:
-#         return
-#
-#     ctrlinfo = redasm.set_type(objinfo.lpControls, f"VB_CONTROL_INFO[{objinfo.dwControlCount}]")
-#
-#     for ctrl in ctrlinfo:
-#         ctrlname = redasm.set_type(ctrl.lpszName, "str")
-#         funcprefix = f"{objname}.{ctrlname}"
-#
-#         eventinfo = redasm.set_type(ctrl.lpEventInfo, "VB_EVENT_INFO")
-#         print(eventinfo)
-#         redasm.set_function_as(eventinfo.lpEVENT_SINK_QueryInterface, f"{funcprefix}.QueryInterface")
-#         redasm.enqueue(eventinfo.lpEVENT_SINK_QueryInterface)
-#         redasm.set_function_as(eventinfo.lpEVENT_SINK_AddRef, f"{funcprefix}.AddRef")
-#         redasm.enqueue(eventinfo.lpEVENT_SINK_AddRef)
-#         redasm.set_function_as(eventinfo.lpEVENT_SINK_Release, f"{funcprefix}.Release")
-#         redasm.enqueue(eventinfo.lpEVENT_SINK_Release)
-#
-#         c = find_component(redasm.set_type(ctrl.lpGuid, "GUID"))
-#
-#         if c:
-#             print(c["events"])
-#             events = redasm.get_type(ctrl.lpEventInfo + redasm.size_of("VB_EVENT_INFO"), f"u32[{len(c["events"])}]")
-#             print(events)
-#
-#             for i, e in enumerate(c["events"]):
-#                 if events[i]:
-#                     redasm.set_function_as(events[i], f"{funcprefix}.{e}")
-#                     redasm.enqueue(events[i])
-
-
 def has_optional_info(addr, objinfo):
     return (objinfo.lpConstants != (addr + redasm.size_of("VB_OBJECT_INFO")))
 
@@ -99,14 +56,12 @@ def create_ctrl_info(addr, n):
                 redasm.set_function(eventinfo.lpEVENT_SINK_Release)
                 redasm.enqueue(eventinfo.lpEVENT_SINK_Release)
 
-            print(ctrlname, ctrldef["name"], hex(ctrl.lpEventHandlerTable))
-
             events = redasm.set_type(ctrl.lpEventHandlerTable + redasm.size_of("VB_EVENT_INFO"),
                                      f"u32*[{ctrl.wEventHandlerCount}]")
 
-            for e in events:
+            for i, e in enumerate(events):
                 if e:
-                    redasm.set_function(e)
+                    redasm.set_function_as(e, f"{ctrlname}.{ctrldef["events"][i]}")
                     redasm.enqueue(e)
 
 
@@ -134,11 +89,11 @@ def create_proj_info2(objtable):
     if projinfo2.lpObjectList:
         compiledobjects = redasm.set_type(projinfo2.lpObjectList, f"u32*[{objtable.wCompiledObjects}]")
 
-        for i, objaddr in enumerate(compiledobjects):
-            privobjdescr = redasm.set_type(objaddr, "VB_PRIVATE_OBJECT_DESCRIPTOR")
+        for objaddr in compiledobjects:
+            redasm.set_type(objaddr, "VB_PRIVATE_OBJECT_DESCRIPTOR")
 
-            if privobjdescr.lpObjectInfo:
-                create_obj_info(privobjdescr.lpObjectInfo)
+            # if privobjdescr.lpObjectInfo:
+            #     create_obj_info(privobjdescr.lpObjectInfo)
 
 
 def create_obj_array(objtable):
@@ -225,14 +180,3 @@ def vb_execute(pe):
 
     if vbheader.lpProjectData:
         create_proj_info(vbheader)
-
-    # vb.guitable = redasm.set_type(vb.header.lpGuiTable, "VB_GUI_TABLE")
-    # vb.objtreeinfo = redasm.set_type(vb.objtable.lpObjectTreeInfo, "VB_OBJECT_TREE_INFO")
-    # vb.pubobjdescr = redasm.set_type(vb.objtable.lpPubObjArray, f"VB_PUBLIC_OBJECT_DESCRIPTOR[{vb.objtable.wTotalObjects}]")
-
-    # redasm.set_type_as(vb.objtable.lpszProjectName, "str", "objtableProjectName")
-    # redasm.set_type_as(vb.objtreeinfo.szProjectDescription, "str", "objtreeProjectDescr")
-    # redasm.set_type_as(vb.objtreeinfo.szProjectHelpFile, "str", "objtreeProjectHelp")
-    #
-    # for x in vb.pubobjdescr:
-    #     decompile_object(vb, x)

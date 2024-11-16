@@ -53,8 +53,7 @@ void Emulator::decode(MIndex idx) {
     Context* ctx = state::context;
     auto& mem = ctx->memory;
 
-    if(Byte b = mem->at(idx);
-       !b.has_byte() || (!b.is_unknown() && !b.is_weak()))
+    if(Byte b = mem->at(idx); !b.has_byte() || b.is_strong())
         return;
 
     const RDProcessor* p = ctx->processor;
@@ -82,10 +81,9 @@ const Segment* Emulator::get_segment(MIndex idx) {
 }
 
 void Emulator::add_coderef(MIndex idx, usize cr) {
-    if(idx >= state::context->memory->size())
-        return;
-
     Context* ctx = state::context;
+    if(idx >= ctx->memory->size())
+        return;
 
     const Segment* s = ctx->index_to_segment(idx);
     if(!s && !(s->type & SEGMENTTYPE_HASCODE))
@@ -95,21 +93,22 @@ void Emulator::add_coderef(MIndex idx, usize cr) {
 
     switch(cr) {
         case CR_CALL:
-            ctx->memory->at(m_currindex).set(BF_CALL);
-            ctx->memory->at(idx).set(BF_FUNCTION);
-            this->schedule(idx);
-            sorted_unique_insert(dto.calls, idx);
+            ctx->memory->set(m_currindex, BF_CALL);
+            if(ctx->set_function(idx)) {
+                this->schedule(idx);
+                sorted_unique_insert(dto.calls, idx);
+            }
             break;
 
         case CR_JUMP:
             ctx->memory->at(m_currindex).set(BF_JUMP);
-            ctx->memory->at(idx).set(BF_JUMPDST);
+            ctx->memory->set(idx, BF_JUMPDST);
             this->schedule(idx);
             sorted_unique_insert(dto.jumps, idx);
             break;
 
         case CR_FLOW: {
-            ctx->memory->at(m_currindex).set(BF_FLOW);
+            ctx->memory->set(m_currindex, BF_FLOW);
             this->enqueue(idx);
             dto.flow = idx;
             return;

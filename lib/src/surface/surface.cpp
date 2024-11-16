@@ -226,10 +226,10 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
         }
         else if(b.has(BF_JUMP)) {
             const AddressDetail& d = db.get_detail(item.index);
+            const auto& mem = state::context->memory;
 
             for(usize toidx : d.jumps) {
-                const Segment* seg = state::context->index_to_segment(toidx);
-                if(seg && seg->type & SEGMENTTYPE_HASCODE)
+                if(toidx < mem->size() && mem->at(toidx).has(BF_INSTR))
                     this->insert_path(b, i, this->calculate_index(toidx));
             }
         }

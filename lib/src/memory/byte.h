@@ -13,6 +13,10 @@ struct Byte {
         return (value & BF_MUNKN) == BF_UNKNOWN;
     }
 
+    [[nodiscard]] bool is_strong() const {
+        return !this->is_unknown() && !this->is_weak();
+    }
+
     [[nodiscard]] bool is_code() const { return (value & BF_CODE) == BF_CODE; }
     [[nodiscard]] bool is_data() const { return (value & BF_DATA) == BF_DATA; }
     [[nodiscard]] bool is_cont() const { return this->has(BF_CONT); }

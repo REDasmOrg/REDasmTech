@@ -13,7 +13,7 @@ VB_HEADER = (
     ("u16", "wRuntimeRevision"),            # Internal Runtime Revision
     ("u32", "dwLCID"),                      # LCID of Language DLL
     ("u32", "dwSecLCID"),                   # LCID of 2nd Language DLL
-    ("u32*", "lpSubMain"),                   # Pointer to Sub Main Code
+    ("u32*", "lpSubMain"),                  # Pointer to Sub Main Code
     ("u32*", "lpProjectData"),              # Pointer to Project Data
     ("u32", "fMdlIntCtls"),                 # VB Control Flags for IDs < 32
     ("u32", "fMdlIntCtls2"),                # VB Control Flags for IDs > 32

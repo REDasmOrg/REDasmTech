@@ -76,19 +76,22 @@ bool Context::activate() {
 
 void Context::set_export(MIndex idx) { // NOLINT
     assume(idx < this->memory->size());
-    this->memory->at(idx).set(BF_EXPORT);
+    this->memory->set(idx, BF_EXPORT);
 }
 
 void Context::set_import(MIndex idx) { // NOLINT
     assume(idx < this->memory->size());
-    this->memory->at(idx).set(BF_IMPORT);
+    this->memory->set(idx, BF_IMPORT);
 }
 
 bool Context::set_function(MIndex idx, const std::string& name) {
+    if(idx >= this->memory->size() || this->memory->at(idx).has(BF_IMPORT))
+        return false;
+
     const Segment* s = this->index_to_segment(idx);
 
     if(s && s->type & SEGMENTTYPE_HASCODE) {
-        this->memory->at(idx).set(BF_FUNCTION);
+        this->memory->set(idx, BF_FUNCTION);
         this->set_name(idx, name);
         return true;
     }
@@ -134,7 +137,7 @@ bool Context::set_type(MIndex idx, std::string_view tname,
         const AddressDetail& detail = this->database.get_detail(idx);
         return detail.type_name == tname;
     }
-    if(!b.is_unknown() && !b.is_weak())
+    if(b.is_strong())
         return false;
 
     auto pt = this->types.parse(tname);
@@ -633,6 +636,9 @@ void Context::create_function_graph(MIndex idx) {
                     const Segment* seg = this->index_to_segment(jidx);
 
                     if(seg && seg->type & SEGMENTTYPE_HASCODE) {
+                        if(!mem->at(jidx).has(BF_INSTR))
+                            continue;
+
                         pending.push_back(jidx);
                         f.jmp_true(n, f.try_add_block(jidx));
                     }
