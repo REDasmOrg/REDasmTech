@@ -27,29 +27,39 @@ void sorted_unique_insert(std::vector<AddressDetail::Ref>& v,
 
 } // namespace
 
-void Emulator::enqueue(MIndex idx) {
-    if(idx < state::context->memory->size()) {
-        if(state::context->memory->at(idx).has(BF_INSTR))
-            return;
+bool Emulator::enqueue(MIndex idx) {
+    if(idx >= state::context->memory->size())
+        return false;
 
-        m_pending.push_front(idx);
-    }
+    const Segment* s = this->get_segment(idx);
+    if(!s || !(s->type & SEGMENTTYPE_HASCODE))
+        return false;
+
+    // Already decoded
+    if(state::context->memory->at(idx).has(BF_INSTR))
+        return true;
+
+    m_pending.push_front(idx);
+    return true;
 }
 
-void Emulator::schedule(MIndex idx) {
-    if(idx < state::context->memory->size()) {
-        if(state::context->memory->at(idx).has(BF_INSTR))
-            return;
+bool Emulator::schedule(MIndex idx) {
+    if(idx >= state::context->memory->size())
+        return false;
 
-        m_pending.push_back(idx);
-    }
+    const Segment* s = this->get_segment(idx);
+    if(!s || !(s->type & SEGMENTTYPE_HASCODE))
+        return false;
+
+    // Already decoded
+    if(state::context->memory->at(idx).has(BF_INSTR))
+        return true;
+
+    m_pending.push_back(idx);
+    return true;
 }
 
 void Emulator::decode(MIndex idx) {
-    const Segment* s = this->get_segment(idx);
-    if(!s || !(s->type & SEGMENTTYPE_HASCODE))
-        return;
-
     Context* ctx = state::context;
     auto& mem = ctx->memory;
 
@@ -69,7 +79,7 @@ void Emulator::decode(MIndex idx) {
     mem->unset(idx);
 
     if(usize sz = p->emulate(p, *address, api::to_c(this)); sz)
-        mem->set(idx, sz, BF_INSTR | BF_WEAK);
+        mem->set_n(idx, sz, BF_INSTR | BF_WEAK);
 }
 
 const Segment* Emulator::get_segment(MIndex idx) {
@@ -85,32 +95,30 @@ void Emulator::add_coderef(MIndex idx, usize cr) {
     if(idx >= ctx->memory->size())
         return;
 
-    const Segment* s = ctx->index_to_segment(idx);
-    if(!s && !(s->type & SEGMENTTYPE_HASCODE))
-        return;
-
     AddressDetail& dto = ctx->database.get_detail(m_currindex);
 
     switch(cr) {
-        case CR_CALL:
+        case CR_CALL: {
             ctx->memory->set(m_currindex, BF_CALL);
-            if(ctx->set_function(idx)) {
-                this->schedule(idx);
+            if(ctx->set_function(idx) && this->schedule(idx))
                 sorted_unique_insert(dto.calls, idx);
+            break;
+        }
+
+        case CR_JUMP: {
+            ctx->memory->set(m_currindex, BF_JUMP);
+            if(this->schedule(idx)) {
+                ctx->memory->set(idx, BF_JUMPDST);
+                sorted_unique_insert(dto.jumps, idx);
             }
             break;
-
-        case CR_JUMP:
-            ctx->memory->at(m_currindex).set(BF_JUMP);
-            ctx->memory->set(idx, BF_JUMPDST);
-            this->schedule(idx);
-            sorted_unique_insert(dto.jumps, idx);
-            break;
+        }
 
         case CR_FLOW: {
-            ctx->memory->set(m_currindex, BF_FLOW);
-            this->enqueue(idx);
-            dto.flow = idx;
+            if(this->enqueue(idx)) {
+                ctx->memory->set(m_currindex, BF_FLOW);
+                dto.flow = idx;
+            }
             return;
         }
 
@@ -119,7 +127,7 @@ void Emulator::add_coderef(MIndex idx, usize cr) {
 
     AddressDetail& dby = ctx->database.get_detail(idx);
     sorted_unique_insert(dby.refs, {m_currindex, cr});
-    ctx->memory->at(idx).set_flag(BF_REFS, !dby.refs.empty());
+    ctx->memory->set_flags(idx, BF_REFS, !dby.refs.empty());
 }
 
 void Emulator::add_dataref(MIndex idx, usize dr) {
@@ -129,7 +137,7 @@ void Emulator::add_dataref(MIndex idx, usize dr) {
     Context* ctx = state::context;
 
     stringfinder::classify(idx).map([idx, ctx](const RDStringResult& x) {
-        ctx->memory->unset(idx, x.totalsize);
+        ctx->memory->unset_n(idx, x.totalsize);
         ctx->set_type(idx, x.type);
         ctx->memory->at(idx).set(BF_WEAK);
     });

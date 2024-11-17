@@ -47,11 +47,11 @@ void do_autorename(const RDAnalyzer*) {
                                       "_" + ctx->get_name(d.jumps.front()));
                 }
             }
-            else if(b.has(BF_INSTR)) {
-                ctx->index_to_address(f.index).map([&](RDAddress x) {
-                    ctx->set_name(f.index, "nullsub_" + ctx->to_hex(x));
-                });
-            }
+            // else if(b.has(BF_INSTR)) {
+            //     ctx->index_to_address(f.index).map([&](RDAddress x) {
+            //         ctx->set_name(f.index, "nullsub_" + ctx->to_hex(x));
+            //     });
+            // }
         }
     }
 }
@@ -64,7 +64,7 @@ void register_analyzers() {
     autorename.flags = ANALYZER_SELECTED;
     autorename.order = 0;
     autorename.isenabled = [](const RDAnalyzer*) { return true; };
-    autorename.execute = do_autorename; // TODO(davide): Nullsubs
+    autorename.execute = do_autorename;
     api::internal::register_analyzer(autorename);
 
     RDAnalyzer strings{};

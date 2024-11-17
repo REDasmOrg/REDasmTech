@@ -14,7 +14,7 @@ tl::optional<u8> Memory::get_byte(usize idx) const {
     return tl::nullopt;
 }
 
-void Memory::unset(MIndex idx, usize len) {
+void Memory::unset_n(MIndex idx, usize len) {
     for(MIndex i = idx; i < idx + len && i < m_buffer.size(); i++)
         m_buffer[i].value &= BF_MMASK; // Clear Specific Flags
 }
@@ -37,12 +37,17 @@ void Memory::unset(MIndex idx) {
     }
 }
 
-void Memory::set(MIndex idx, u32 flags) {
+void Memory::set_flags(MIndex idx, u32 flags, bool b) {
     if(idx < m_buffer.size())
-        m_buffer[idx].set(flags);
+        m_buffer.at(idx).set_flag(flags, b);
 }
 
-void Memory::set(MIndex idx, usize len, u32 flags) {
+void Memory::set(MIndex idx, u32 flags) {
+    if(idx < m_buffer.size())
+        m_buffer.at(idx).set(flags);
+}
+
+void Memory::set_n(MIndex idx, usize len, u32 flags) {
     if(flags != BF_UNKNOWN)
         flags |= BF_CONT; // Unknown doesn't need CONT bit
 

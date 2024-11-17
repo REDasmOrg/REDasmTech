@@ -16,7 +16,14 @@ struct X86Instruction {
 namespace x86_common {
 
 [[nodiscard]] std::optional<RDAddress>
-calc_address(const X86Instruction& instr, RDAddress address, usize idx);
+calc_address(const X86Instruction& instr, usize idx,
+             std::optional<RDAddress>& memaddr);
+
+[[nodiscard]] inline std::optional<RDAddress>
+calc_address(const X86Instruction& instr, usize idx) {
+    std::optional<RDAddress> memaddr;
+    return x86_common::calc_address(instr, idx, memaddr);
+}
 
 ZydisRegister get_sp();
 ZydisRegister get_bp();

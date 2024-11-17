@@ -61,4 +61,17 @@ RDFunctionBasicBlock to_c(const Function::BasicBlock* bb) {
     };
 }
 
+RDValue to_c(const typing::Value& v) {
+    return {
+        .type = v.type.c_str(),
+        .count = v.count,
+        .list = api::to_c(&v.list),
+        .listcount = v.list.size(),
+        .dict = api::to_c(&v.dict),
+        .dictcount = v.dict.size(),
+        .str = v.str.c_str(),
+        .u64_v = v.u64_v,
+    };
+}
+
 } // namespace redasm::api

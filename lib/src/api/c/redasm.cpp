@@ -2,6 +2,7 @@
 #include "../../utils/object.h"
 #include "../internal/graph.h"
 #include "../internal/memory.h"
+#include "../marshal.h"
 #include <redasm/redasm.h>
 
 bool rd_init(void) { return redasm::api::internal::init(); }
@@ -12,6 +13,24 @@ void rd_free(void* obj) {
 }
 
 void rd_setloglevel(RDLogLevel l) { redasm::api::internal::set_loglevel(l); }
+
+bool rd_gettype(RDAddress address, const char* tname, RDValue* v) {
+    static redasm::typing::Value res;
+
+    if(tname) {
+        return redasm::api::internal::get_type(address, tname)
+            .map_or(
+                [&](const redasm::typing::Value& x) {
+                    res = x;
+                    if(v)
+                        *v = redasm::api::to_c(res);
+                    return true;
+                },
+                false);
+    }
+
+    return false;
+}
 
 bool rd_getep(RDAddress* ep) {
     return redasm::api::internal::get_ep().map_or(

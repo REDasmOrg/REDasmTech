@@ -16,9 +16,10 @@ public:
     usize get_length(MIndex idx) const;
     tl::optional<MIndex> get_next(MIndex idx) const;
     void set(MIndex idx, u32 flags);
-    void set(MIndex idx, usize len, u32 flags);
-    void unset(MIndex idx, usize len);
     void unset(MIndex idx);
+    void set_n(MIndex idx, usize len, u32 flags);
+    void unset_n(MIndex idx, usize len);
+    void set_flags(MIndex idx, u32 flags, bool b);
 };
 
 } // namespace redasm

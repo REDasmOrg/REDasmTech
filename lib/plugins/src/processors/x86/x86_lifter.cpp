@@ -29,7 +29,7 @@ const RDILExpr* lift_op(const X86Instruction& instr, usize idx,
             u64 c = op.imm.value.u;
 
             if(x86_lifter::needs_calcaddress(instr)) {
-                auto addr = x86_common::calc_address(instr, instr.address, idx);
+                auto addr = x86_common::calc_address(instr, idx);
                 if(addr)
                     c = static_cast<u64>(*addr);
 
@@ -45,7 +45,7 @@ const RDILExpr* lift_op(const X86Instruction& instr, usize idx,
         case ZYDIS_OPERAND_TYPE_MEMORY: {
             const RDILExpr *base = nullptr, *index = nullptr, *scale = nullptr,
                            *disp = nullptr;
-            auto addr = x86_common::calc_address(instr, instr.address, idx);
+            auto addr = x86_common::calc_address(instr, idx);
 
             if(!addr) {
                 if(op.mem.base != ZYDIS_REGISTER_NONE)
@@ -115,7 +115,7 @@ const RDILExpr* lift_jump(const X86Instruction& instr, RDILPool* pool) {
         default: return rdil_unknown(pool);
     }
 
-    auto addr = x86_common::calc_address(instr, instr.address, 0);
+    auto addr = x86_common::calc_address(instr, 0);
     const RDILExpr* t = rdil_var(pool, addr.value_or(instr.ops[0].imm.value.u));
     const RDILExpr* f = rdil_var(pool, instr.address + instr.d.length);
     return rdil_if(pool, cond, rdil_goto(pool, t), rdil_goto(pool, f));

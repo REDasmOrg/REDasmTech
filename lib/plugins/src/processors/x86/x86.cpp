@@ -90,14 +90,23 @@ bool X86Processor::render_instruction(const RDRendererParams* r) {
 }
 
 usize X86Processor::emulate(RDAddress address, RDEmulator* e) {
+    if(address == 0x401058) {
+        int zzz = 0;
+        zzz++;
+    }
+
     if(!this->decode(address))
         return 0;
 
     bool flow = true;
+    std::optional<RDAddress> memaddr;
 
     switch(m_instr.d.meta.category) {
         case ZYDIS_CATEGORY_CALL: {
-            auto addr = x86_common::calc_address(m_instr, address, 0);
+            auto addr = x86_common::calc_address(m_instr, 0, memaddr);
+
+            if(memaddr)
+                rdemulator_adddataref(e, *memaddr, DR_READ);
 
             if(addr)
                 rdemulator_addcoderef(e, *addr, CR_CALL);
@@ -105,8 +114,12 @@ usize X86Processor::emulate(RDAddress address, RDEmulator* e) {
         }
 
         case ZYDIS_CATEGORY_UNCOND_BR: {
+            std::optional<RDAddress> memaddr;
             flow = false;
-            auto addr = x86_common::calc_address(m_instr, address, 0);
+            auto addr = x86_common::calc_address(m_instr, 0, memaddr);
+
+            if(memaddr)
+                rdemulator_adddataref(e, *memaddr, DR_READ);
 
             if(addr)
                 rdemulator_addcoderef(e, *addr, CR_JUMP);
@@ -115,7 +128,10 @@ usize X86Processor::emulate(RDAddress address, RDEmulator* e) {
         }
 
         case ZYDIS_CATEGORY_COND_BR: {
-            auto addr = x86_common::calc_address(m_instr, address, 0);
+            auto addr = x86_common::calc_address(m_instr, 0, memaddr);
+            if(memaddr)
+                rdemulator_adddataref(e, *memaddr, DR_READ);
+
             if(addr)
                 rdemulator_addcoderef(e, *addr, CR_JUMP);
             break;

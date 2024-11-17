@@ -91,8 +91,10 @@ usize memory_read(RDAddress address, char* data, usize n) {
         if(!b.has_byte() || c == n)
             break;
 
-        if(data)
-            data[c++] = static_cast<char>(b.byte());
+        if(data) {
+            char ch = static_cast<char>(b.byte());
+            data[c++] = ch; // static_cast<char>(b.byte());
+        }
         else
             c++;
     }

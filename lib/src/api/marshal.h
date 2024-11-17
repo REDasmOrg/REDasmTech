@@ -3,6 +3,7 @@
 #include "../database/database.h"
 #include "../disasm/function.h"
 #include "../memory/byte.h"
+#include "../typing/typing.h"
 #include <redasm/redasm.h>
 
 namespace redasm {
@@ -97,6 +98,14 @@ inline AbstractBuffer* from_c(RDBuffer* arg) {
     return reinterpret_cast<AbstractBuffer*>(arg);
 }
 
+inline const typing::ValueList* from_c(const RDValueList* arg) {
+    return reinterpret_cast<const typing::ValueList*>(arg);
+}
+
+inline const typing::ValueDict* from_c(const RDValueDict* arg) {
+    return reinterpret_cast<const typing::ValueDict*>(arg);
+}
+
 inline RDByte to_c(Byte arg) { return arg.value; }
 
 inline const RDGraph* to_c(const StyledGraph* arg) {
@@ -151,10 +160,19 @@ inline const RDILExpr* to_c(const rdil::ILExpr* arg) {
     return reinterpret_cast<const RDILExpr*>(arg);
 }
 
+inline const RDValueList* to_c(const typing::ValueList* arg) {
+    return reinterpret_cast<const RDValueList*>(arg);
+}
+
+inline const RDValueDict* to_c(const typing::ValueDict* arg) {
+    return reinterpret_cast<const RDValueDict*>(arg);
+}
+
 RDSegment to_c(const Segment& arg);
 RDRef to_c(const AddressDetail::Ref& arg);
 std::vector<RDRef> to_c(const std::vector<AddressDetail::Ref>& arg);
 RDFunctionBasicBlock to_c(const Function::BasicBlock* bb);
+RDValue to_c(const typing::Value& v);
 
 } // namespace api
 

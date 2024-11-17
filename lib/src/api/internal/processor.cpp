@@ -33,7 +33,7 @@ void emulator_settype(RDEmulator* self, RDAddress address,
 }
 
 usize get_processors(const RDProcessor** processors) {
-    spdlog::trace("get_processors('{}')", fmt::ptr(processors));
+    spdlog::trace("get_processors({})", fmt::ptr(processors));
 
     if(processors)
         *processors = state::processors.data();

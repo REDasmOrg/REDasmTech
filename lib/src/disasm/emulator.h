@@ -9,8 +9,8 @@ namespace redasm {
 
 class Emulator {
 public:
-    void enqueue(MIndex idx);
-    void schedule(MIndex idx);
+    bool enqueue(MIndex idx);
+    bool schedule(MIndex idx);
     void add_coderef(MIndex idx, usize cr);
     void add_dataref(MIndex idx, usize dr);
     void set_type(MIndex idx, std::string_view tname);

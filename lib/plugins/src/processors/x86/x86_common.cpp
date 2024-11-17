@@ -2,8 +2,30 @@
 
 namespace x86_common {
 
-std::optional<RDAddress> calc_address(const X86Instruction& instr,
-                                      RDAddress address, usize idx) {
+namespace {
+
+std::optional<RDAddress> read_address(RDAddress address) {
+    RDValue val;
+
+    if(rd_getbits() == 64) {
+        if(rd_gettype(address, "u64", &val))
+            return val.u64_v;
+
+        return std::nullopt;
+    }
+
+    if(rd_gettype(address, "u32", &val))
+        return val.u32_v;
+
+    return std::nullopt;
+}
+
+} // namespace
+
+std::optional<RDAddress> calc_address(const X86Instruction& instr, usize idx,
+                                      std::optional<RDAddress>& memaddr) {
+    memaddr = std::nullopt;
+
     if(idx >= instr.d.operand_count)
         return std::nullopt;
 
@@ -12,8 +34,8 @@ std::optional<RDAddress> calc_address(const X86Instruction& instr,
 
     switch(zop.type) {
         case ZYDIS_OPERAND_TYPE_IMMEDIATE: {
-            if(!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(&instr.d, &zop, address,
-                                                      &resaddr))) {
+            if(!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(
+                   &instr.d, &zop, instr.address, &resaddr))) {
                 return zop.imm.value.u;
             }
 
@@ -21,17 +43,21 @@ std::optional<RDAddress> calc_address(const X86Instruction& instr,
         }
 
         case ZYDIS_OPERAND_TYPE_MEMORY: {
-            if(!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(&instr.d, &zop, address,
-                                                      &resaddr))) {
+            if(!ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(
+                   &instr.d, &zop, instr.address, &resaddr))) {
                 if((zop.mem.index != ZYDIS_REGISTER_NONE) &&
                    zop.mem.disp.has_displacement) {
                     // if(istable)
                     //     *istable = true;
-                    return zop.mem.disp.value;
+
+                    memaddr = zop.mem.disp.value;
+                    return x86_common::read_address(zop.mem.disp.value);
                 }
             }
-            else
-                return resaddr;
+            else {
+                memaddr = resaddr;
+                return x86_common::read_address(resaddr);
+            }
 
             break;
         }
@@ -41,6 +67,7 @@ std::optional<RDAddress> calc_address(const X86Instruction& instr,
 
     return std::nullopt;
 }
+
 ZydisRegister get_sp() {
     switch(rd_getbits()) {
         case 32: return ZYDIS_REGISTER_ESP;

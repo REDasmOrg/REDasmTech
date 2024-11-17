@@ -174,8 +174,8 @@ bool Context::set_type(MIndex idx, std::string_view tname,
         len = std::max<usize>(pt->n, 1) * pt->type->size;
 
     detail.type_name = tname;
-    this->memory->set(idx, len, BF_DATA);
-    this->memory->at(idx).set(isarray ? BF_ARRAY : BF_TYPE);
+    this->memory->set_n(idx, len, BF_DATA);
+    this->memory->set(idx, isarray ? BF_ARRAY : BF_TYPE);
     this->set_name(idx, dbname);
     return true;
 }
