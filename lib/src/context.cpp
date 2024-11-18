@@ -173,6 +173,8 @@ bool Context::set_type(MIndex idx, std::string_view tname,
     else
         len = std::max<usize>(pt->n, 1) * pt->type->size;
 
+    this->memory->unset_n(idx, len); // TODO(davide): Handle unset transparently
+
     detail.type_name = tname;
     this->memory->set_n(idx, len, BF_DATA);
     this->memory->set(idx, isarray ? BF_ARRAY : BF_TYPE);
