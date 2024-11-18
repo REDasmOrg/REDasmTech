@@ -65,6 +65,8 @@ void memory_info(RDMemoryInfo* mi) {
 
 tl::optional<typing::Value> map_type(RDAddress address,
                                      std::string_view tname) {
+    spdlog::trace("map_type({}, '{}')", address, tname);
+
     auto idx = state::context->address_to_index(address);
     if(!idx)
         return tl::nullopt;
@@ -79,6 +81,8 @@ tl::optional<typing::Value> map_type(RDAddress address,
 }
 
 usize memory_read(RDAddress address, char* data, usize n) {
+    spdlog::trace("memory_read({}, {}, {})", address, fmt::ptr(data), n);
+
     auto idx = state::context->address_to_index(address);
     if(!idx)
         return 0;
@@ -102,6 +106,22 @@ usize memory_read(RDAddress address, char* data, usize n) {
     return c;
 }
 
-usize memory_size() { return state::context->memory->size(); }
+usize memory_size() {
+    spdlog::trace("memory_size()");
+    return state::context->memory->size();
+}
+
+bool memory_setflags(RDAddress address, u32 flags) {
+    spdlog::trace("memory_setflags({:x}, {:x})", address, flags);
+
+    Context* ctx = state::context;
+
+    return ctx->address_to_index(address).map_or(
+        [&](MIndex idx) {
+            ctx->memory->at(idx).set(flags);
+            return true;
+        },
+        false);
+}
 
 } // namespace redasm::api::internal

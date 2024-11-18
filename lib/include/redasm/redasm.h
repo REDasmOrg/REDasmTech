@@ -83,6 +83,7 @@ REDASM_EXPORT bool rd_destroy();
 REDASM_EXPORT usize rd_getsegments(const RDSegment** segments);
 REDASM_EXPORT usize rd_getbytes(const RDByte** bytes);
 REDASM_EXPORT usize rd_memoryread(RDAddress address, char* data, usize n);
+REDASM_EXPORT bool rd_setflags(RDAddress address, u32 flags);
 REDASM_EXPORT int rd_getbits();
 REDASM_EXPORT void rd_setbits(int bits);
 REDASM_EXPORT bool rd_checkstring(RDAddress address, RDStringResult* r);

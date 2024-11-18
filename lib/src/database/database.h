@@ -35,7 +35,7 @@ struct AddressDetail {
 
     std::string type_name;
     std::array<std::string, NS::COUNT> names;
-    std::vector<MIndex> jumps, calls;
+    std::vector<Ref> jumps, calls;
     std::vector<Ref> refsto, refs;
     std::string comment;
 
@@ -59,8 +59,8 @@ public:
                                        usize ns = AddressDetail::LABEL) const;
 
     [[nodiscard]] tl::optional<usize> get_index(std::string_view name) const;
-    AddressDetail& get_detail(MIndex idx);
     const AddressDetail& get_detail(MIndex idx) const;
+    AddressDetail& check_detail(MIndex idx);
 
 private:
     IndexMap m_indexdb;

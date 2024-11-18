@@ -43,15 +43,15 @@ void do_autorename(const RDAnalyzer*) {
                 const AddressDetail& d = ctx->database.get_detail(f.index);
 
                 if(d.jumps.size() == 1) {
-                    ctx->set_function(f.index,
-                                      "_" + ctx->get_name(d.jumps.front()));
+                    ctx->set_function(
+                        f.index, "_" + ctx->get_name(d.jumps.front().index));
                 }
             }
-            // else if(b.has(BF_INSTR)) {
-            //     ctx->index_to_address(f.index).map([&](RDAddress x) {
-            //         ctx->set_name(f.index, "nullsub_" + ctx->to_hex(x));
-            //     });
-            // }
+            else if(b.has(BF_INSTR)) {
+                ctx->index_to_address(f.index).map([&](RDAddress x) {
+                    ctx->set_name(f.index, "nullsub_" + ctx->to_hex(x));
+                });
+            }
         }
     }
 }

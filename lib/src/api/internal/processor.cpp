@@ -7,20 +7,11 @@
 
 namespace redasm::api::internal {
 
-void emulator_addcoderef(RDEmulator* self, RDAddress address, usize cr) {
-    spdlog::trace("emulator_addcoderef({}, {:x}, {})", fmt::ptr(self), address,
-                  cr);
+void emulator_addref(RDEmulator* self, RDAddress address, usize cr) {
+    spdlog::trace("emulator_addref({}, {:x}, {})", fmt::ptr(self), address, cr);
 
-    if(auto idx = state::context->address_to_index(address); idx)
-        api::from_c(self)->add_coderef(*idx, cr);
-}
-
-void emulator_adddataref(RDEmulator* self, RDAddress address, usize dr) {
-    spdlog::trace("emulator_adddataref({}, {:x}, {})", fmt::ptr(self), address,
-                  dr);
-
-    if(auto idx = state::context->address_to_index(address); idx)
-        api::from_c(self)->add_dataref(*idx, dr);
+    state::context->address_to_index(address).map(
+        [&](MIndex idx) { api::from_c(self)->add_ref(idx, cr); });
 }
 
 void emulator_settype(RDEmulator* self, RDAddress address,
@@ -28,8 +19,8 @@ void emulator_settype(RDEmulator* self, RDAddress address,
     spdlog::trace("emulator_settype({}, {:x}, '{}')", fmt::ptr(self), address,
                   tname);
 
-    if(auto idx = state::context->address_to_index(address); idx)
-        api::from_c(self)->set_type(*idx, tname);
+    state::context->address_to_index(address).map(
+        [&](MIndex idx) { api::from_c(self)->set_type(idx, tname); });
 }
 
 usize get_processors(const RDProcessor** processors) {

@@ -3,7 +3,6 @@
 #include "x86_common.h"
 #include <Zydis/Zydis.h>
 #include <array>
-#include <optional>
 #include <redasm/redasm.h>
 
 class X86Processor {
@@ -13,7 +12,7 @@ public:
     explicit X86Processor(usize bits);
     bool render_instruction(const RDRendererParams* r);
     bool lift(RDAddress address, RDILList* l);
-    usize emulate(RDAddress address, RDEmulator* e);
+    void emulate(RDEmulator* e, RDInstructionDetail* detail);
 
 private:
     void process_refs(RDAddress address, RDEmulator* e) const;

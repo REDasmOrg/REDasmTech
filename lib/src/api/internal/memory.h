@@ -16,5 +16,6 @@ usize memory_bytes(const Byte** b);
 void memory_info(RDMemoryInfo* mi);
 usize memory_read(RDAddress address, char* data, usize n);
 usize memory_size();
+bool memory_setflags(RDAddress address, u32 flags);
 
 } // namespace redasm::api::internal

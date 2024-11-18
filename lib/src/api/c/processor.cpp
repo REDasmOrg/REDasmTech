@@ -1,10 +1,7 @@
 #include "../internal/processor.h"
 
-void rdemulator_addcoderef(RDEmulator* self, RDAddress address, usize cr) {
-    redasm::api::internal::emulator_addcoderef(self, address, cr);
-}
-void rdemulator_adddataref(RDEmulator* self, RDAddress address, usize dr) {
-    redasm::api::internal::emulator_adddataref(self, address, dr);
+void rdemulator_addref(RDEmulator* self, RDAddress address, usize cr) {
+    redasm::api::internal::emulator_addref(self, address, cr);
 }
 
 void rdemulator_settype(RDEmulator* self, RDAddress address,

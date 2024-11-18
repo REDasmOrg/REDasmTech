@@ -120,7 +120,7 @@ bool Context::set_comment(MIndex idx, std::string_view comment) {
     if(idx >= this->memory->size())
         return false;
 
-    AddressDetail& detail = this->database.get_detail(idx);
+    AddressDetail& detail = this->database.check_detail(idx);
     detail.comment.assign(comment.begin(), comment.end());
     this->memory->at(idx).set_flag(BF_COMMENT, !comment.empty());
     return true;
@@ -134,8 +134,8 @@ bool Context::set_type(MIndex idx, std::string_view tname,
     Byte b = this->memory->at(idx);
 
     if((b.has(BF_ARRAY) || b.has(BF_TYPE)) && !b.is_weak()) {
-        const AddressDetail& detail = this->database.get_detail(idx);
-        return detail.type_name == tname;
+        const AddressDetail& d = this->database.get_detail(idx);
+        return d.type_name == tname;
     }
     if(b.is_strong())
         return false;
@@ -148,7 +148,7 @@ bool Context::set_type(MIndex idx, std::string_view tname,
     }
 
     bool isarray = pt->n > 0;
-    AddressDetail& detail = this->database.get_detail(idx);
+    AddressDetail& detail = this->database.check_detail(idx);
 
     usize len;
 
@@ -318,10 +318,10 @@ std::string Context::get_name(MIndex idx) const {
         std::string prefix = "loc";
 
         if(b.has(BF_ARRAY) || b.has(BF_TYPE)) {
-            const AddressDetail& detail = this->database.get_detail(idx);
-            assume(!detail.type_name.empty());
+            const AddressDetail& d = this->database.get_detail(idx);
+            assume(!d.type_name.empty());
 
-            auto pt = this->types.parse(detail.type_name);
+            auto pt = this->types.parse(d.type_name);
             assume(pt);
             prefix = utils::to_lower(pt->type->name);
         }
@@ -357,8 +357,8 @@ std::string Context::get_comment(MIndex idx) const {
     if(idx >= this->memory->size() || !this->memory->at(idx).has(BF_COMMENT))
         return {};
 
-    const AddressDetail& detail = this->database.get_detail(idx);
-    return detail.comment;
+    const AddressDetail& d = this->database.get_detail(idx);
+    return d.comment;
 }
 
 std::string Context::to_hex(usize v, int n) const {
@@ -632,15 +632,18 @@ void Context::create_function_graph(MIndex idx) {
 
                 const AddressDetail& d = db.get_detail(curridx);
 
-                for(usize jidx : d.jumps) {
-                    const Segment* seg = this->index_to_segment(jidx);
+                for(const AddressDetail::Ref& jidx : d.jumps) {
+                    if(jidx.type & REF_INDIRECT)
+                        continue;
+
+                    const Segment* seg = this->index_to_segment(jidx.index);
 
                     if(seg && seg->type & SEGMENTTYPE_HASCODE) {
-                        if(!mem->at(jidx).has(BF_INSTR))
+                        if(!mem->at(jidx.index).has(BF_INSTR))
                             continue;
 
-                        pending.push_back(jidx);
-                        f.jmp_true(n, f.try_add_block(jidx));
+                        pending.push_back(jidx.index);
+                        f.jmp_true(n, f.try_add_block(jidx.index));
                     }
                 }
             }

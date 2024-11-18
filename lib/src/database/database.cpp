@@ -50,7 +50,7 @@ tl::optional<MIndex> Database::get_index(std::string_view name) const {
     return tl::nullopt;
 }
 
-AddressDetail& Database::get_detail(MIndex idx) { return m_indexdb[idx]; }
+AddressDetail& Database::check_detail(MIndex idx) { return m_indexdb[idx]; }
 
 const AddressDetail& Database::get_detail(MIndex idx) const {
     auto it = m_indexdb.find(idx);
@@ -58,7 +58,7 @@ const AddressDetail& Database::get_detail(MIndex idx) const {
     if(it != m_indexdb.end())
         return it->second;
 
-    except("Cannot find index {}", idx);
+    except("Cannot find index {:x}", idx);
 }
 
 } // namespace redasm

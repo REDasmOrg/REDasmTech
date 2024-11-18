@@ -23,8 +23,8 @@ std::optional<RDAddress> read_address(RDAddress address) {
 } // namespace
 
 std::optional<RDAddress> calc_address(const X86Instruction& instr, usize idx,
-                                      std::optional<RDAddress>& memaddr) {
-    memaddr = std::nullopt;
+                                      std::optional<RDAddress>& dstaddr) {
+    dstaddr = std::nullopt;
 
     if(idx >= instr.d.operand_count)
         return std::nullopt;
@@ -50,13 +50,13 @@ std::optional<RDAddress> calc_address(const X86Instruction& instr, usize idx,
                     // if(istable)
                     //     *istable = true;
 
-                    memaddr = zop.mem.disp.value;
-                    return x86_common::read_address(zop.mem.disp.value);
+                    dstaddr = x86_common::read_address(zop.mem.disp.value);
+                    return zop.mem.disp.value;
                 }
             }
             else {
-                memaddr = resaddr;
-                return x86_common::read_address(resaddr);
+                dstaddr = x86_common::read_address(resaddr);
+                return resaddr;
             }
 
             break;

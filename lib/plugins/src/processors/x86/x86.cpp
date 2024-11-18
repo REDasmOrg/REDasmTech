@@ -89,74 +89,62 @@ bool X86Processor::render_instruction(const RDRendererParams* r) {
     return true;
 }
 
-usize X86Processor::emulate(RDAddress address, RDEmulator* e) {
-    if(address == 0x401058) {
-        int zzz = 0;
-        zzz++;
-    }
+void X86Processor::emulate(RDEmulator* e, RDInstructionDetail* detail) {
+    if(!this->decode(detail->address))
+        return;
 
-    if(!this->decode(address))
-        return 0;
-
-    bool flow = true;
-    std::optional<RDAddress> memaddr;
+    detail->size = m_instr.d.length;
+    std::optional<RDAddress> dstaddr;
 
     switch(m_instr.d.meta.category) {
         case ZYDIS_CATEGORY_CALL: {
-            auto addr = x86_common::calc_address(m_instr, 0, memaddr);
+            detail->type |= IT_CALL;
+            auto addr = x86_common::calc_address(m_instr, 0, dstaddr);
 
-            if(memaddr)
-                rdemulator_adddataref(e, *memaddr, DR_READ);
+            if(addr && dstaddr) {
+                rdemulator_addref(e, *addr, REF_READ | REF_CALL | REF_INDIRECT);
+                rd_enqueue(*dstaddr);
+            }
+            else if(addr)
+                rdemulator_addref(e, *addr, REF_CALL);
 
-            if(addr)
-                rdemulator_addcoderef(e, *addr, CR_CALL);
             break;
         }
 
+        case ZYDIS_CATEGORY_COND_BR:
         case ZYDIS_CATEGORY_UNCOND_BR: {
-            std::optional<RDAddress> memaddr;
-            flow = false;
-            auto addr = x86_common::calc_address(m_instr, 0, memaddr);
+            detail->type |= IT_JUMP;
 
-            if(memaddr)
-                rdemulator_adddataref(e, *memaddr, DR_READ);
+            if(m_instr.d.meta.category == ZYDIS_CATEGORY_UNCOND_BR)
+                detail->type |= IT_STOP;
 
-            if(addr)
-                rdemulator_addcoderef(e, *addr, CR_JUMP);
+            auto addr = x86_common::calc_address(m_instr, 0, dstaddr);
 
-            break;
-        }
+            if(addr && dstaddr) {
+                rdemulator_addref(e, *addr, REF_READ | REF_JUMP | REF_INDIRECT);
+                rd_enqueue(*dstaddr);
+            }
+            else if(addr)
+                rdemulator_addref(e, *addr, REF_JUMP);
 
-        case ZYDIS_CATEGORY_COND_BR: {
-            auto addr = x86_common::calc_address(m_instr, 0, memaddr);
-            if(memaddr)
-                rdemulator_adddataref(e, *memaddr, DR_READ);
-
-            if(addr)
-                rdemulator_addcoderef(e, *addr, CR_JUMP);
             break;
         }
 
         case ZYDIS_CATEGORY_SYSTEM: {
             if(m_instr.d.mnemonic == ZYDIS_MNEMONIC_HLT)
-                flow = false;
+                detail->type |= IT_STOP;
             break;
         }
 
         case ZYDIS_CATEGORY_INTERRUPT: {
             if(m_instr.d.mnemonic == ZYDIS_MNEMONIC_INT3)
-                flow = false;
+                detail->type |= IT_STOP;
             break;
         }
 
-        case ZYDIS_CATEGORY_RET: flow = false; break;
-        default: this->process_refs(address, e); break;
+        case ZYDIS_CATEGORY_RET: detail->type |= IT_STOP; break;
+        default: this->process_refs(detail->address, e); break;
     }
-
-    if(flow)
-        rdemulator_addcoderef(e, address + m_instr.d.length, CR_FLOW);
-
-    return m_instr.d.length;
 }
 
 bool X86Processor::lift(RDAddress address, RDILList* l) {
@@ -191,12 +179,12 @@ void X86Processor::process_refs(RDAddress address, RDEmulator* e) const {
 
 void X86Processor::process_imm_op(const ZydisDecodedOperand& op,
                                   RDEmulator* e) const {
-    usize r = op.actions == ZYDIS_OPERAND_ACTION_WRITE ? DR_WRITE : DR_READ;
+    usize r = op.actions == ZYDIS_OPERAND_ACTION_WRITE ? REF_WRITE : REF_READ;
 
     switch(op.encoding) {
         case ZYDIS_OPERAND_ENCODING_SIMM16_32_32: {
             this->set_type(op.imm.value.s, op, e);
-            rdemulator_adddataref(e, op.imm.value.s, r);
+            rdemulator_addref(e, op.imm.value.s, r);
             break;
         }
 
@@ -206,16 +194,15 @@ void X86Processor::process_imm_op(const ZydisDecodedOperand& op,
 
 void X86Processor::process_mem_op(const ZydisDecodedOperand& op,
                                   RDEmulator* e) const {
-
     if(op.element_count > 1)
         return;
 
-    usize r = op.actions == ZYDIS_OPERAND_ACTION_WRITE ? DR_WRITE : DR_READ;
+    usize r = op.actions == ZYDIS_OPERAND_ACTION_WRITE ? REF_WRITE : REF_READ;
 
     switch(op.encoding) {
         case ZYDIS_OPERAND_ENCODING_DISP16_32_64: {
             this->set_type(op.mem.disp.value, op, e);
-            rdemulator_adddataref(e, op.mem.disp.value, r);
+            rdemulator_addref(e, op.mem.disp.value, r);
             break;
         }
 
@@ -225,7 +212,7 @@ void X86Processor::process_mem_op(const ZydisDecodedOperand& op,
                rd_isaddress(op.mem.disp.value)) {
 
                 this->set_type(op.mem.disp.value, op, e);
-                rdemulator_adddataref(e, op.mem.disp.value, r);
+                rdemulator_addref(e, op.mem.disp.value, r);
             }
 
             break;
@@ -262,8 +249,9 @@ bool render_instruction(const RDProcessor* self, const RDRendererParams* r) {
         ->render_instruction(r);
 }
 
-usize emulate(const RDProcessor* self, RDAddress address, RDEmulator* e) {
-    return reinterpret_cast<X86Processor*>(self->userdata)->emulate(address, e);
+void emulate(const RDProcessor* self, RDEmulator* e,
+             RDInstructionDetail* detail) {
+    reinterpret_cast<X86Processor*>(self->userdata)->emulate(e, detail);
 }
 
 bool lift(const RDProcessor* self, RDAddress address, RDILList* l) {

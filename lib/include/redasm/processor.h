@@ -9,30 +9,44 @@ RD_HANDLE(RDEmulator);
 typedef enum RDRefType {
     REF_UNKNOWN = 0,
 
-    DR_ADDRESS,
-    DR_READ,
-    DR_WRITE,
+    REF_READ = (1 << 0),
+    REF_WRITE = (1 << 1),
 
-    CR_CALL,
-    CR_JUMP,
-    CR_FLOW,
+    // Code specific
+    REF_CALL = (1 << 2),
+    REF_JUMP = (1 << 3),
+
+    REF_INDIRECT = (1 << 4),
 } RDRefType;
 
-struct RDRef {
+typedef enum RDInstructionType {
+    IT_NONE = 0,
+    IT_STOP = (1 << 0),
+    IT_JUMP = (1 << 1),
+    IT_CALL = (1 << 2),
+
+} RDInstructionType;
+
+typedef struct RDRef {
     RDAddress address;
+    usize type;
+} RDRef;
+
+struct RDInstructionDetail {
+    RDAddress address;
+    usize size;
     usize type;
 };
 
-REDASM_EXPORT void rdemulator_addcoderef(RDEmulator* self, RDAddress address,
-                                         usize cr);
-REDASM_EXPORT void rdemulator_adddataref(RDEmulator* self, RDAddress address,
-                                         usize dr);
+REDASM_EXPORT void rdemulator_addref(RDEmulator* self, RDAddress address,
+                                     usize type);
 REDASM_EXPORT void rdemulator_settype(RDEmulator* self, RDAddress address,
                                       const char* tname);
 
 struct RDProcessor;
 
-typedef usize (*RDProcessorEmulate)(const RDProcessor*, RDAddress, RDEmulator*);
+typedef void (*RDProcessorEmulate)(const RDProcessor*, RDEmulator*,
+                                   RDInstructionDetail*);
 typedef bool (*RDProcessorLift)(const RDProcessor*, RDAddress, RDILList*);
 typedef bool (*RDProcessorRenderSegment)(const RDProcessor*,
                                          const RDRendererParams*);

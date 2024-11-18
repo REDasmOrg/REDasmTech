@@ -58,6 +58,10 @@ usize rd_memoryread(RDAddress address, char* data, usize n) {
     return redasm::api::internal::memory_read(address, data, n);
 }
 
+bool rd_setflags(RDAddress address, u32 flags) {
+    return redasm::api::internal::memory_setflags(address, flags);
+}
+
 int rd_getbits() { return redasm::api::internal::get_bits(); }
 void rd_setbits(int bits) { redasm::api::internal::set_bits(bits); }
 

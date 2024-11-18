@@ -212,8 +212,8 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
         if(b.has(BF_JUMPDST)) {
             const AddressDetail& d = db.get_detail(item.index);
 
-            for(const auto& [fromidx, cr] : d.refs) {
-                if(cr != CR_JUMP)
+            for(const auto& [fromidx, type] : d.refs) {
+                if(!(type & REF_JUMP) || (type & REF_INDIRECT))
                     continue;
 
                 const Segment* seg = state::context->index_to_segment(fromidx);
@@ -226,9 +226,13 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
         }
         else if(b.has(BF_JUMP)) {
             const AddressDetail& d = db.get_detail(item.index);
+
             const auto& mem = state::context->memory;
 
-            for(usize toidx : d.jumps) {
+            for(const auto& [toidx, type] : d.jumps) {
+                if(type & REF_INDIRECT)
+                    continue;
+
                 if(toidx < mem->size() && mem->at(toidx).has(BF_INSTR))
                     this->insert_path(b, i, this->calculate_index(toidx));
             }
@@ -766,7 +770,7 @@ void Surface::render_refs(const ListingItem& item) {
 
     const Context* ctx = state::context;
     const auto& mem = ctx->memory;
-    const AddressDetail& d = state::context->database.get_detail(item.index);
+    const AddressDetail& d = state::context->database.check_detail(item.index);
 
     m_renderer->ws(COLUMN_PADDING);
 
@@ -775,6 +779,7 @@ void Surface::render_refs(const ListingItem& item) {
             continue;
 
         const AddressDetail& d = ctx->database.get_detail(index);
+
         auto pt = ctx->types.parse(d.type_name);
         assume(pt.has_value());
 

@@ -17,7 +17,7 @@ namespace x86_common {
 
 [[nodiscard]] std::optional<RDAddress>
 calc_address(const X86Instruction& instr, usize idx,
-             std::optional<RDAddress>& memaddr);
+             std::optional<RDAddress>& dstaddr);
 
 [[nodiscard]] inline std::optional<RDAddress>
 calc_address(const X86Instruction& instr, usize idx) {
