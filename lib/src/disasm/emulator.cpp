@@ -132,7 +132,8 @@ void Emulator::add_ref(MIndex idx, usize type) {
     }
 
     if(type & REF_JUMP) {
-        this->schedule(idx);
+        if(this->schedule(idx))
+            ctx->memory->set(idx, BF_JUMPDST);
         sorted_unique_insert(dto.jumps, {.index = idx, .type = type});
     }
 
