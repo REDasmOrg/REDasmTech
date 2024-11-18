@@ -9,8 +9,8 @@ class SymbolsModel: public QAbstractListModel {
 public:
     explicit SymbolsModel(QObject* parent = nullptr);
     [[nodiscard]] RDAddress address(const QModelIndex& index) const;
-    inline void set_highlight_address(bool b) { m_highlightaddress = b; }
-    inline void set_highlight_symbol(bool b) { m_highlightsymbol = b; }
+    void set_highlight_address(bool b) { m_highlightaddress = b; }
+    void set_highlight_symbol(bool b) { m_highlightsymbol = b; }
     void resync();
 
 public:

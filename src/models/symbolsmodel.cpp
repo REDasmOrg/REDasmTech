@@ -31,7 +31,13 @@ QVariant SymbolsModel::data(const QModelIndex& index, int role) const {
         switch(index.column()) {
             case 0: return rd_tohex(symbol.address);
             case 1: return this->get_symbol_type(symbol.type);
-            case 2: return symbol.value;
+
+            case 2: {
+                if(symbol.type == SYMBOL_STRING)
+                    return QString::fromUtf8(symbol.value).simplified();
+                return symbol.value;
+            }
+
             default: break;
         }
     }
