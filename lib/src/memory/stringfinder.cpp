@@ -1,16 +1,19 @@
 #include "stringfinder.h"
 #include "../context.h"
 #include "../state.h"
-#include <algorithm>
+#include <cmath>
 #include <string_view>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace redasm::stringfinder {
 
 namespace {
 
-constexpr float ALPHA_THRESHOLD = 0.5;
-constexpr usize DS_MINLENGTH = 4;
-constexpr usize CS_MINLENGTH = 16;
+constexpr float CHARS_FREQ = 0.7;
+constexpr float ENTROPY_TRESHOLD = 3.5;
+constexpr usize STR_MINUNIQUE = 2;
+constexpr usize STR_MINLENGTH = 4;
 
 std::string g_temptype;
 std::string g_tempstr;
@@ -30,55 +33,48 @@ bool check_formats(std::string_view s) {
     return FORMATS.find(s) != FORMATS.end();
 }
 
-bool check_heuristic(std::string_view s, bool gibberish) {
-    if(s.empty())
-        return false;
+double entropy(std::string_view str) {
+    std::unordered_map<char, int> frequency;
+    for(char ch : str)
+        frequency[ch]++;
 
-    switch(s.front()) {
-        case '\'':
-            if(s.size() < 2 || s.back() != '\'')
-                break;
-            [[fallthrough]];
+    double e = 0.0;
+    auto len = static_cast<double>(str.size());
 
-        case '\"':
-            if(s.size() < 2 || s.back() != '\"')
-                break;
-            [[fallthrough]];
-
-        case '<':
-            if(s.size() < 2 || s.back() != '>')
-                break;
-            [[fallthrough]];
-
-        case '(':
-            if(s.size() < 2 || s.back() != ')')
-                break;
-            [[fallthrough]];
-
-        case '[':
-            if(s.size() < 2 || s.back() != ']')
-                break;
-            [[fallthrough]];
-
-        case '{':
-            if(s.size() < 2 || s.back() != '}')
-                break;
-            [[fallthrough]];
-
-        case '%': return stringfinder::check_formats(s);
-        default: return gibberish; // TODO(davide): Add Gibberish analyzer
+    for(const auto& [ch, c] : frequency) {
+        double prob = c / len;
+        e -= prob * std::log2(prob);
     }
 
-    return false;
+    return e;
 }
 
 bool validate_string(std::string_view s) {
-    if(!stringfinder::check_heuristic(s, true))
+    if(s.empty())
         return false;
 
-    auto alnumcount =
-        static_cast<double>(std::count_if(s.begin(), s.end(), ::isalnum));
-    return (alnumcount / static_cast<double>(s.size())) > ALPHA_THRESHOLD;
+    auto match_delimiters = [](char open, char close, std::string_view str) {
+        return str.size() > 2 && str.front() == open && str.back() == close;
+    };
+
+    switch(s.front()) {
+        case '\'': return match_delimiters('\'', '\'', s);
+        case '\"': return match_delimiters('\"', '\"', s);
+        case '<': return match_delimiters('<', '>', s);
+        case '(': return match_delimiters('(', ')', s);
+        case '[': return match_delimiters('[', ']', s);
+        case '{': return match_delimiters('{', '}', s);
+        case '%': return stringfinder::check_formats(s);
+        default: break;
+    }
+
+    // Count letters and digits only
+    // usize c = std::count_if(s.begin(), s.end(), ::isalnum);
+
+    if(s.size() >= STR_MINLENGTH)
+        return true;
+
+    return !stringfinder::is_gibberish(s);
 }
 
 template<typename ToAsciiCallback>
@@ -114,16 +110,7 @@ std::pair<bool, RDStringResult> categorize_as(usize idx, std::string_view tname,
         terminated,
     };
 
-    const Segment* seg = state::context->index_to_segment(idx);
-
-    if(seg) {
-        if(seg->type & SEGMENTTYPE_HASDATA && g_tempstr.size() > DS_MINLENGTH)
-            return {stringfinder::validate_string(g_tempstr), r};
-        if(seg->type & SEGMENTTYPE_HASCODE && g_tempstr.size() > CS_MINLENGTH)
-            return {stringfinder::validate_string(g_tempstr), r};
-    }
-
-    return {stringfinder::check_heuristic(g_tempstr, false), r};
+    return {stringfinder::validate_string(g_tempstr), r};
 }
 
 } // namespace
@@ -184,6 +171,33 @@ tl::optional<RDStringResult> classify(usize idx) {
 
     c.type = g_temptype.c_str();
     return c;
+}
+
+bool is_gibberish(std::string_view s) {
+    // Step 1: Check for excessive repetition
+    std::unordered_set<char> uniquechars{s.begin(), s.end()};
+    if(uniquechars.size() <= STR_MINUNIQUE) // Too few unique characters
+        return true;
+
+    // Check if one character dominates the string (e.g., "aaaaaa")
+    for(char c : uniquechars) {
+        double freq =
+            std::count(s.begin(), s.end(), c) / static_cast<double>(s.size());
+        if(freq > CHARS_FREQ) // More than 70% of one character
+            return true;
+    }
+
+    // Step 2: Calculate entropy
+    double e = stringfinder::entropy(s);
+    if(e < ENTROPY_TRESHOLD) // Low entropy indicates repetition
+        return true;
+
+    // Step 3: Check structure (no spaces in a long string)
+    if(s.find(' ') == std::string_view::npos && s.size() > 10)
+        return true;
+
+    // If none of the conditions for gibberish are met, it's valid
+    return false;
 }
 
 } // namespace redasm::stringfinder

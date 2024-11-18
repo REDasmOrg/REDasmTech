@@ -137,19 +137,17 @@ void Emulator::add_ref(MIndex idx, usize type) {
     }
 
     // Data reference
-    if((type & (REF_CALL | REF_JUMP)) == 0) {
-        if((type & REF_INDIRECT) == 0) {
-            stringfinder::classify(idx).map(
-                [idx, ctx](const RDStringResult& x) {
-                    ctx->memory->unset_n(idx, x.totalsize);
-                    ctx->set_type(idx, x.type);
-                    ctx->memory->set(idx, BF_WEAK);
-                });
+    if(!(type & (REF_CALL | REF_JUMP))) {
+        if(!(type & REF_INDIRECT) && !ctx->memory->at(idx).is_strong()) {
+            stringfinder::classify(idx).map([&](const RDStringResult& x) {
+                ctx->memory->unset_n(idx, x.totalsize);
+                ctx->set_type(idx, x.type);
+                ctx->memory->set(idx, BF_WEAK);
+            });
         }
 
-        AddressDetail& dto = ctx->database.check_detail(m_currindex);
         sorted_unique_insert(dto.refsto, {.index = idx, .type = type});
-        ctx->memory->at(m_currindex).set(BF_REFSTO);
+        ctx->memory->set(m_currindex, BF_REFSTO);
     }
 
     AddressDetail& dby = ctx->database.check_detail(idx);
