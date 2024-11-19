@@ -4,7 +4,7 @@
 SymbolsFilterModel::SymbolsFilterModel(QObject* parent)
     : QSortFilterProxyModel{parent} {
     this->setSourceModel(new SymbolsModel(this));
-    this->setFilterKeyColumn(1);
+    this->setFilterKeyColumn(2);
 }
 
 SymbolsFilterModel::SymbolsFilterModel(usize filter, QObject* parent)
@@ -23,7 +23,7 @@ void SymbolsFilterModel::resync() {
 
 bool SymbolsFilterModel::filterAcceptsRow(int source_row,
                                           const QModelIndex&) const {
-    QModelIndex index = this->sourceModel()->index(source_row, 1);
+    QModelIndex index = this->sourceModel()->index(source_row, 2);
     QString s = index.data().toString();
 
     if(!s.contains(this->filterRegularExpression()))
