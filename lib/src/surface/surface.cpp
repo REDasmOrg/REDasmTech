@@ -516,24 +516,30 @@ void Surface::render_range(LIndex start, usize n) {
                     m_renderer->instr(rp);
 
                 this->render_comment(*it);
+
+                if(state::context->memory->at(it->index).has(BF_REFSTO))
+                    this->render_refs(*it);
                 break;
             }
 
             case LISTINGITEM_TYPE:
                 this->render_type(*it);
                 this->render_comment(*it);
+
+                if(state::context->memory->at(it->index).has(BF_REFSTO))
+                    this->render_refs(*it);
                 break;
 
             case LISTINGITEM_ARRAY:
                 this->render_array(*it);
                 this->render_comment(*it);
+
+                if(state::context->memory->at(it->index).has(BF_REFSTO))
+                    this->render_refs(*it);
                 break;
 
             default: break;
         }
-
-        if(state::context->memory->at(it->index).has(BF_REFSTO))
-            this->render_refs(*it);
     }
 }
 
