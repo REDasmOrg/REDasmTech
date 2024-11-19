@@ -2,6 +2,7 @@ import redasm
 from . import format as PE
 from . import header as PEH
 from .classifier import PEClassifier
+from .resources import PEResources
 from .analyzers import register_analyzers
 
 
@@ -214,6 +215,16 @@ def read_exceptions(pe):
             redasm.enqueue(va)
 
 
+def read_resources(pe):
+    entry = pe.optionalheader.DataDirectory[PEH.IMAGE_DIRECTORY_ENTRY_RESOURCE]
+    if entry.VirtualAddress == 0:
+        return
+
+    va = PE.rva_to_va(pe, entry.VirtualAddress)
+    if va:
+        pe.resources = PEResources(va)
+
+
 def select_processor(pe):
     machine = pe.ntheaders.FileHeader.Machine
 
@@ -232,6 +243,7 @@ def load_default(pe):
     read_exports(pe)
     read_imports(pe)
     read_exceptions(pe)
+    read_resources(pe)
     select_processor(pe)
 
     ep = pe.optionalheader.ImageBase + pe.optionalheader.AddressOfEntryPoint

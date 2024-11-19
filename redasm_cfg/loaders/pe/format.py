@@ -62,17 +62,10 @@ def register_types():
     redasm.create_struct("IMAGE_DATA_DIRECTORY", PEH.IMAGE_DATA_DIRECTORY)
     redasm.create_struct("IMAGE_SECTION_HEADER", PEH.IMAGE_SECTION_HEADER)
     redasm.create_struct("IMAGE_EXPORT_DIRECTORY", PEH.IMAGE_EXPORT_DIRECTORY)
-
-    redasm.create_struct("IMAGE_IMPORT_DESCRIPTOR",
-                         PEH.IMAGE_IMPORT_DESCRIPTOR)
-
-    redasm.create_struct("IMAGE_RESOURCE_DIRECTORY",
-                         PEH.IMAGE_RESOURCE_DIRECTORY)
-
-    redasm.create_struct("IMAGE_RUNTIME_FUNCTION_ENTRY",
-                         PEH.IMAGE_RUNTIME_FUNCTION_ENTRY)
-
-    redasm.create_struct("UNWIND_INFO",
-                         PEH.UNWIND_INFO)
+    redasm.create_struct("IMAGE_IMPORT_DESCRIPTOR", PEH.IMAGE_IMPORT_DESCRIPTOR)
+    redasm.create_struct("IMAGE_RESOURCE_DIRECTORY", PEH.IMAGE_RESOURCE_DIRECTORY)
+    redasm.create_struct("IMAGE_RESOURCE_DIRECTORY_ENTRY", PEH.IMAGE_RESOURCE_DIRECTORY_ENTRY)
+    redasm.create_struct("IMAGE_RUNTIME_FUNCTION_ENTRY", PEH.IMAGE_RUNTIME_FUNCTION_ENTRY)
+    redasm.create_struct("UNWIND_INFO", PEH.UNWIND_INFO)
 
     register_dotnet_types()
