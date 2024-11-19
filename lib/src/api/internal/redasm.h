@@ -21,9 +21,11 @@ bool is_blank(u8 b);
 bool is_print(u8 b);
 bool is_punct(u8 b);
 
-bool init();
+bool init(const RDInitParams* params);
 void deinit();
 void set_loglevel(RDLogLevel l);
+void log(std::string_view s);
+void status(std::string_view s);
 std::string symbolize(std::string s);
 
 void add_search_path(const std::string& p);

@@ -35,16 +35,29 @@ bool is_blank(u8 b) { return std::isblank(b); }
 bool is_print(u8 b) { return std::isprint(b); }
 bool is_punct(u8 b) { return std::ispunct(b); }
 
-bool init() {
-    spdlog::trace("init()");
+bool init(const RDInitParams* params) {
+    spdlog::trace("init({})", fmt::ptr(params));
 
     if(initialized)
         return true;
 
     initialized = true;
 
-    if(!state::onerror)
-        state::onerror = [](std::string_view arg) { spdlog::error("{}", arg); };
+    // clang-format off
+    state::params = {
+        .onlog    = [](const char* arg, void*) { spdlog::info("LOG: {}", arg); },
+        .onstatus = [](const char* arg, void*) { spdlog::info("STATUS: {}", arg); },
+        .onerror  = [](const char* arg, void*) { spdlog::error("ERROR: {}", arg); },
+        .userdata = nullptr,
+    };
+
+    if(params) {
+        if(params->onlog) state::params.onlog = params->onlog;
+        if(params->onstatus) state::params.onstatus = params->onstatus;
+        if(params->onerror) state::params.onerror = params->onerror;
+        state::params.userdata = params->userdata;
+    }
+    // clang-format on
 
     builtins::register_loaders();
     builtins::register_processors();
@@ -107,6 +120,9 @@ void set_loglevel(RDLogLevel l) {
     }
     // clang-format on
 }
+
+void log(std::string_view s) { state::log(s); }
+void status(std::string_view s) { state::log(s); }
 
 std::string symbolize(std::string s) {
     for(char& ch : s) {

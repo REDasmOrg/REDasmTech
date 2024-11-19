@@ -88,7 +88,7 @@ PyObject* is_punct(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* init(PyObject* /*self*/, PyObject* /*args*/) {
-    internal::init();
+    internal::init(nullptr); // TODO(davide): Handle RDInitParams
     Py_RETURN_NONE;
 }
 
@@ -100,6 +100,16 @@ PyObject* deinit(PyObject* /*self*/, PyObject* /*args*/) {
 PyObject* set_loglevel(PyObject* /*self*/, PyObject* args) {
     auto level = static_cast<RDLogLevel>(PyLong_AsUnsignedLong(args));
     internal::set_loglevel(level);
+    Py_RETURN_NONE;
+}
+
+PyObject* log(PyObject* /*self*/, PyObject* args) {
+    internal::log(PyUnicode_AsUTF8(args));
+    Py_RETURN_NONE;
+}
+
+PyObject* status(PyObject* /*self*/, PyObject* args) {
+    internal::status(PyUnicode_AsUTF8(args));
     Py_RETURN_NONE;
 }
 

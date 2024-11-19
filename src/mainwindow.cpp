@@ -57,7 +57,25 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
 
     QString searchpath = qApp->applicationDirPath() + "/lib/plugins/src";
     rd_addsearchpath(qUtf8Printable(searchpath));
-    rd_init();
+
+    RDInitParams params = {
+        [](const char* arg, void* userdata) { // onlog
+            // auto* self = reinterpret_cast<MainWindow*>(userdata);
+            (void)arg;
+            // TODO(davide): Add Log Widget
+        },
+        [](const char* arg, void*) { // onstatus
+            statusbar::set_status_text(arg);
+        },
+        [](const char* arg, void* userdata) { // onerror
+            // auto* self = reinterpret_cast<MainWindow*>(userdata);
+            // TODO(davide): Add Log Widget
+            (void)arg;
+        },
+        this,
+    };
+
+    rd_init(&params);
 
     connect(m_ui.actfileexit, &QAction::triggered, this, &MainWindow::close);
     connect(m_ui.actfileopen, &QAction::triggered, this,

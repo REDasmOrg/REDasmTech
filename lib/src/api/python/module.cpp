@@ -130,7 +130,7 @@ void main() {
     spdlog::info("Executing '{}'", g_initfilepath);
 
     if(PyRun_SimpleFileEx(fp, g_initfilepath.c_str(), true)) {
-        state::onerror(fmt::format("Error Executing '{}'", g_initfilepath));
+        state::error(fmt::format("Error Executing '{}'", g_initfilepath));
         python::on_error();
     }
 }

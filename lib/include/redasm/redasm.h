@@ -73,10 +73,23 @@ typedef struct RDStringResult {
     bool terminated;
 } RDStringResult;
 
-REDASM_EXPORT bool rd_init(void);
+typedef void (*RDLogCallback)(const char*, void*);
+typedef void (*RDStatusCallback)(const char*, void*);
+typedef void (*RDErrorCallback)(const char*, void*);
+
+typedef struct RDInitParams {
+    RDLogCallback onlog;
+    RDStatusCallback onstatus;
+    RDErrorCallback onerror;
+    void* userdata;
+} RDInitParams;
+
+REDASM_EXPORT bool rd_init(const RDInitParams* params);
 REDASM_EXPORT void rd_deinit(void);
 REDASM_EXPORT void rd_free(void* obj);
 REDASM_EXPORT void rd_setloglevel(RDLogLevel l);
+REDASM_EXPORT void rd_log(const char* s);
+REDASM_EXPORT void rd_status(const char* s);
 REDASM_EXPORT void rd_select(RDContext* context);
 REDASM_EXPORT void rd_discard(void);
 REDASM_EXPORT bool rd_destroy();

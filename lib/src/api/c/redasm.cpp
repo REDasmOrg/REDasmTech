@@ -5,7 +5,9 @@
 #include "../marshal.h"
 #include <redasm/redasm.h>
 
-bool rd_init(void) { return redasm::api::internal::init(); }
+bool rd_init(const RDInitParams* params) {
+    return redasm::api::internal::init(params);
+}
 void rd_deinit(void) { redasm::api::internal::deinit(); }
 
 void rd_free(void* obj) {
@@ -13,6 +15,16 @@ void rd_free(void* obj) {
 }
 
 void rd_setloglevel(RDLogLevel l) { redasm::api::internal::set_loglevel(l); }
+
+void rd_log(const char* s) {
+    if(s)
+        redasm::api::internal::log(s);
+}
+
+void rd_status(const char* s) {
+    if(s)
+        redasm::api::internal::status(s);
+}
 
 bool rd_gettype(RDAddress address, const char* tname, RDValue* v) {
     static redasm::typing::Value res;

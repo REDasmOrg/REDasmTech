@@ -137,7 +137,7 @@ void on_error() {
         Py_DECREF(strace);
     }
 
-    state::onerror(s);
+    state::error(s);
     Py_DECREF(exc);
 }
 

@@ -12,6 +12,8 @@ inline PyMethodDef methods[] = {
     // redasm.h
     {"init", python::init, METH_NOARGS, nullptr},
     {"deinit", python::deinit, METH_NOARGS, nullptr},
+    {"log", python::log, METH_O, nullptr},
+    {"status", python::status, METH_O, nullptr},
     {"set_loglevel", python::set_loglevel, METH_O, nullptr},
     {"symbolize", python::symbolize, METH_O, nullptr},
     {"is_address", python::is_address, METH_O, nullptr},
