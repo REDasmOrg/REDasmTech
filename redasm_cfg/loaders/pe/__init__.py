@@ -223,6 +223,7 @@ def read_resources(pe):
     va = PE.rva_to_va(pe, entry.VirtualAddress)
     if va:
         pe.resources = PEResources(pe, va)
+        pe.classifier.classify_borland(pe)
 
 
 def select_processor(pe):

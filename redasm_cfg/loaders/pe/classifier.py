@@ -1,4 +1,7 @@
+import redasm
 from enum import IntEnum, auto
+from .resources import PEResourceId
+from . import borland as Borland
 
 
 class PEClassification(IntEnum):
@@ -125,3 +128,35 @@ class PEClassifier:
             self._classification = PEClassification.VISUALSTUDIO_2013
         elif library.startswith("msvcp140") or library.startswith("vcruntime140"):
             self._classification = PEClassification.VISUALSTUDIO_2015
+
+    def classify_borland(self, pe):
+        rcdata = pe.resources.find(PEResourceId.RCDATA)
+        if not rcdata:
+            return
+
+        pkginfodir = rcdata.find("PACKAGEINFO")
+        if not pkginfodir:
+            return
+
+        Borland.register_types()
+
+        entries = pkginfodir.get_entries()
+        if entries:
+            address, size = pe.resources.entry_dataaddress(entries[0])
+            if address:
+                packageinfo = redasm.set_type(address, "PACKAGEINFO")
+
+                if Borland.is_delphi(packageinfo):
+                    SIGNATURES = {
+                        "delphi3": PEClassification.BORLAND_DELPHI_3,
+                        "delphiXE2_6": PEClassification.BORLAND_DELPHI_XE2_6,
+                        "delphiXE": PEClassification.BORLAND_DELPHI_XE,
+                        "delphi9_10": PEClassification.BORLAND_DELPHI_9_10,
+                        "delphi6": PEClassification.BORLAND_DELPHI_6,
+                        "delphi7": PEClassification.BORLAND_DELPHI_7,
+                    }
+
+                    self._classification = SIGNATURES.get(Borland.get_signature(address, size),
+                                                          PEClassification.BORLAND_DELPHI)
+                elif Borland.is_cpp(packageinfo):
+                    self._classification = PEClassification.BORLAND_CPP
