@@ -1,4 +1,5 @@
 import redasm
+from . import format as PE
 
 PE_RESOURCE_TYPES = {
     1: "CURSORS",
@@ -21,21 +22,32 @@ PE_RESOURCE_TYPES = {
 
 
 class PEResources:
-    def __init__(self, address):
-        self._rsrcaddr = address
-        self.root = redasm.set_type(address, "IMAGE_RESOURCE_DIRECTORY")
+    def __init__(self, pe, address):
+        self.pe = pe
+        self.rootaddress = address
+        self.read_resource_dir(address)
 
-        c = (self.root.NumberOfIdEntries +
-             self.root.NumberOfNamedEntries)
+    def read_resource_dir(self, address):
+        resdir = redasm.set_type(address, "IMAGE_RESOURCE_DIRECTORY")
+        c = resdir.NumberOfIdEntries + resdir.NumberOfNamedEntries
+        if c == 0:
+            return
 
-        self.entries = redasm.set_type(address + redasm.size_of("IMAGE_RESOURCE_DIRECTORY"),
-                                       f"IMAGE_RESOURCE_DIRECTORY_ENTRY[{c}]")
-
-        for e in self.entries:
+        entries = redasm.set_type(address + redasm.size_of("IMAGE_RESOURCE_DIRECTORY"),
+                                  f"IMAGE_RESOURCE_DIRECTORY_ENTRY[{c}]")
+        for e in entries:
             if self.entry_nameisstring(e):
-                address = self._rsrcaddr + self.entry_nameoffset(e)
-                namelen = redasm.set_type(address, "u16")
-                redasm.set_type(address + redasm.size_of("u16"), f"wchar[{namelen}]")
+                eaddr = self.rootaddress + self.entry_nameoffset(e)
+                namelen = redasm.set_type(eaddr, "u16")
+                redasm.set_type(eaddr + redasm.size_of("u16"), f"wchar[{namelen}]")
+
+            if self.entry_isdirectory(e):
+                self.read_resource_dir(self.rootaddress + self.entry_directoryoffset(e))
+            else:
+                data = redasm.set_type(self.rootaddress + e.Offset, "IMAGE_RESOURCE_DATA_ENTRY")
+                dataaddr = PE.rva_to_va(self.pe, data.OffsetToData)
+                if dataaddr and data.Size:  # TODO: Handle resource types
+                    redasm.set_type(dataaddr, f"u8[{data.Size}]")
 
     def find_id(self, id, parent=None):
         if not parent:
@@ -67,5 +79,5 @@ class PEResources:
     def entry_nameoffset(self, e):
         return e.Id & ~0x80000000
 
-    def entry_offset(self, e):
+    def entry_directoryoffset(self, e):
         return e.Offset & ~0x80000000

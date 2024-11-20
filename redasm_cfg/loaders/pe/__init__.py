@@ -222,7 +222,7 @@ def read_resources(pe):
 
     va = PE.rva_to_va(pe, entry.VirtualAddress)
     if va:
-        pe.resources = PEResources(va)
+        pe.resources = PEResources(pe, va)
 
 
 def select_processor(pe):

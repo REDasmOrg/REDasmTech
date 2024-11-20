@@ -229,12 +229,18 @@ IMAGE_RESOURCE_DIRECTORY_ENTRY = (
     ("u32", "Offset"),
 )
 
+IMAGE_RESOURCE_DATA_ENTRY = (
+    ("u32^", "OffsetToData"),
+    ("u32", "Size"),
+    ("u32", "CodePage"),
+    ("u32", "Reserved"),
+)
+
 IMAGE_RUNTIME_FUNCTION_ENTRY = (
     ("u32^", "BeginAddress"),
     ("u32", "EndAddress"),
     ("u32", "UnwindInfoAddress"),
 )
-
 
 UNWIND_INFO = (
     ("u8", "VersionAndFlags"),
