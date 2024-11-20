@@ -17,6 +17,9 @@ from . import header as BH
 
 
 def _packageinfo_contains(pkginfoaddr, size, q):
+    if size == 0:
+        return False
+
     data = redasm.get_type(pkginfoaddr, f"u8[{size}]")
     if not data:
         return False
