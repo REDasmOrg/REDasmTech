@@ -70,7 +70,7 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
         [](const char* arg, void* userdata) { // onerror
             // auto* self = reinterpret_cast<MainWindow*>(userdata);
             // TODO(davide): Add Log Widget
-            (void)arg;
+            qFatal() << arg;
         },
         this,
     };
