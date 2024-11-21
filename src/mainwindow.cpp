@@ -60,9 +60,8 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
 
     RDInitParams params = {
         [](const char* arg, void* userdata) { // onlog
-            // auto* self = reinterpret_cast<MainWindow*>(userdata);
-            (void)arg;
-            // TODO(davide): Add Log Widget
+            auto* self = reinterpret_cast<MainWindow*>(userdata);
+            self->m_ui.logview->log(arg);
         },
         [](const char* arg, void*) { // onstatus
             statusbar::set_status_text(arg);

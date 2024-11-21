@@ -50,6 +50,7 @@ target_sources(${PROJECT_NAME}
         src/dialogs/analyzerdialog.cpp
         src/dialogs/memorymapdialog.cpp
 
+        src/views/logview.cpp
         src/views/contextview.cpp
         src/views/dashboardview.cpp
         src/views/welcomeview.cpp

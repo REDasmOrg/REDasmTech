@@ -1,8 +1,10 @@
 #pragma once
 
 #include "../fontawesome.h"
+#include "../views/logview.h"
 #include <QMainWindow>
 #include <QMenuBar>
+#include <QSplitter>
 #include <QStackedWidget>
 #include <QStatusBar>
 #include <QToolBar>
@@ -21,6 +23,7 @@ struct MainWindow {
     QAction *actviewmemorymap, *actviewsegments, *actviewstrings,
         *actviewimports, *actviewexports;
     QAction* acttbseparator;
+    LogView* logview;
 
     explicit MainWindow(QMainWindow* self) {
         self->setAcceptDrops(true);
@@ -96,7 +99,15 @@ struct MainWindow {
         self->setStatusBar(this->statusbar);
 
         this->stackwidget = new QStackedWidget();
-        self->setCentralWidget(this->stackwidget);
+        this->logview = new LogView();
+
+        auto* vsplit = new QSplitter(Qt::Vertical);
+        vsplit->addWidget(this->stackwidget);
+        vsplit->addWidget(this->logview);
+        vsplit->setStretchFactor(0, 10);
+        vsplit->setStretchFactor(1, 1);
+
+        self->setCentralWidget(vsplit);
     }
 };
 
