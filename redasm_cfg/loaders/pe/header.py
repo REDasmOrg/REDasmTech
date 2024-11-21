@@ -71,6 +71,33 @@ IMAGE_FILE_MACHINE_CEE = 0xC0EE
 IMAGE_FILE_MACHINE_TRICORE = 0x0520
 IMAGE_FILE_MACHINE_CEF = 0x0CEF
 
+# Debug Info
+IMAGE_DEBUG_TYPE_UNKNOWN = 0
+IMAGE_DEBUG_TYPE_COFF = 1
+IMAGE_DEBUG_TYPE_CODEVIEW = 2
+IMAGE_DEBUG_TYPE_FPO = 3
+IMAGE_DEBUG_TYPE_MISC = 4
+IMAGE_DEBUG_TYPE_EXCEPTION = 5
+IMAGE_DEBUG_TYPE_FIXUP = 6
+IMAGE_DEBUG_TYPE_OMAP_TO_SRC = 7
+IMAGE_DEBUG_TYPE_OMAP_FROM_SRC = 8
+IMAGE_DEBUG_TYPE_BORLAND = 9
+IMAGE_DEBUG_TYPE_RESERVED10 = 10
+IMAGE_DEBUG_TYPE_CLSID = 11
+IMAGE_DEBUG_TYPE_VC_FEATURE = 12
+IMAGE_DEBUG_TYPE_POGO = 13
+IMAGE_DEBUG_TYPE_ILTCG = 14
+IMAGE_DEBUG_TYPE_MPX = 15
+IMAGE_DEBUG_TYPE_REPRO = 16
+
+GUID = (
+    ("u32", "data1"),
+    ("u16", "data2"),
+    ("u16", "data3"),
+    ("u8[8]", "data4"),
+)
+
+
 IMAGE_DOS_HEADER = (
     ("u16", "e_magic"),
     ("u16", "e_cblp"),
@@ -213,6 +240,17 @@ IMAGE_IMPORT_DESCRIPTOR = (
     ("u32", "ForwarderChain"),
     ("u32^", "Name"),
     ("u32^", "FirstThunk"),
+)
+
+IMAGE_DEBUG_DIRECTORY = (
+    ("u32", "Characteristics"),
+    ("u32", "TimeDateStamp"),
+    ("u16", "MajorVersion"),
+    ("u16", "MinorVersion"),
+    ("u32", "Type"),
+    ("u32", "SizeOfData"),
+    ("u32^", "AddressOfRawData"),
+    ("u32", "PointerToRawData"),
 )
 
 IMAGE_RESOURCE_DIRECTORY = (

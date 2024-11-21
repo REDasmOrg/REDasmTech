@@ -1,10 +1,3 @@
-GUID = (
-    ("u32", "data1"),
-    ("u16", "data2"),
-    ("u16", "data3"),
-    ("u8[8]", "data4"),
-)
-
 VB_HEADER = (
     ("char[4]", "szVbMagic"),               # "VB5!"
     ("u16", "wRuntimeBuild"),               # Build of the VB6 Runtime

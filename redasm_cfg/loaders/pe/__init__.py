@@ -1,6 +1,7 @@
 import redasm
 from . import format as PE
 from . import header as PEH
+from . import debug as Debug
 from .classifier import PEClassifier
 from .resources import PEResources
 from .analyzers import register_analyzers
@@ -194,7 +195,7 @@ def read_exceptions(pe):
     if not va:
         return
 
-    n = int(entry.Size / redasm.size_of("IMAGE_RUNTIME_FUNCTION_ENTRY"))
+    n = entry.Size // redasm.size_of("IMAGE_RUNTIME_FUNCTION_ENTRY")
     entries = redasm.set_type(va, f"IMAGE_RUNTIME_FUNCTION_ENTRY[{n}]")
 
     for e in entries:
@@ -213,6 +214,88 @@ def read_exceptions(pe):
         if unwindinfo and not (flags & PEH.UNW_FLAG_CHAININFO):
             redasm.set_function(va)
             redasm.enqueue(va)
+
+
+def read_debuginfo(pe):
+    entry = pe.optionalheader.DataDirectory[PEH.IMAGE_DIRECTORY_ENTRY_DEBUG]
+    if entry.VirtualAddress == 0:
+        return
+
+    va = PE.rva_to_va(pe, entry.VirtualAddress)
+    if not va:
+        return
+
+    n = entry.Size // redasm.size_of("IMAGE_DEBUG_DIRECTORY")
+    if n == 0:
+        return
+
+    Debug.register_debug_types()
+
+    dbgdirs = redasm.set_type(va, f"IMAGE_DEBUG_DIRECTORY[{n}]")
+    if not dbgdirs:
+        return
+
+    for dbgdir in dbgdirs:
+        dbgva = 0
+
+        if dbgdir.AddressOfRawData:
+            dbgva = PE.rva_to_va(pe, dbgdir.AddressOfRawData)
+
+        if not dbgva and dbgdir.PointerToRawData:
+            dbgva = redasm.offset_to_address(dbgdir.PointerToRawData)
+
+        if not dbgva:
+            continue
+
+        if dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_CODEVIEW:
+            redasm.log("Debug info type: CODEVIEW")
+            pe.classifier.check_visualstudio()
+
+            cvheader = redasm.get_type(dbgva, "CV_HEADER")
+
+            if cvheader.Signature == Debug.PE_CVINFO_PDB20_SIGNATURE:
+                redasm.set_type(dbgva, "CV_INFO_PDB20")
+                pdbfilename = redasm.set_type(dbgva + redasm.size_of("CV_INFO_PDB20"), "str")
+                redasm.log(f"PDB 2.0 @ '{pdbfilename}'")
+            elif cvheader.Signature == Debug.PE_CVINFO_PDB70_SIGNATURE:
+                redasm.set_type(dbgva, "CV_INFO_PDB70")
+                pdbfilename = redasm.set_type(dbgva + redasm.size_of("CV_INFO_PDB70"), "str")
+                redasm.log(f"PDB 7.0 @ '{pdbfilename}'")
+            else:
+                redasm.log(f"Unknown signature '{cvheader.Signature}'")
+
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_UNKNOWN:
+            redasm.log("Debug info type: UNKNOWN")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_COFF:
+            redasm.log("Debug info type: COFF")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_FPO:
+            redasm.log("Debug info type: FPO")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_MISC:
+            redasm.log("Debug info type: Misc")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_EXCEPTION:
+            redasm.log("Debug info type: Exception")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_FIXUP:
+            redasm.log("Debug info type: FixUp")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_OMAP_TO_SRC:
+            redasm.log("Debug info type: OMAP to Src")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_OMAP_FROM_SRC:
+            redasm.log("Debug info type: OMAP from Src")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_BORLAND:
+            redasm.log("Debug info type: Borland")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_RESERVED10:
+            redasm.log("Debug info type: Reserved10")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_CLSID:
+            redasm.log("Debug info type: CLSID")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_VC_FEATURE:
+            redasm.log("Debug info type: VC Feature")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_POGO:
+            redasm.log("Debug info type: POGO")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_ILTCG:
+            redasm.log("Debug info type: ILTCG")
+        elif dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_REPRO:
+            redasm.log("Debug info type: REPRO")
+        else:
+            redasm.log(f"Unknown Debug info type (value {redasm.to_hex(dbgdir.Type)})")
 
 
 def read_resources(pe):
@@ -244,6 +327,7 @@ def load_default(pe):
     read_exports(pe)
     read_imports(pe)
     read_exceptions(pe)
+    read_debuginfo(pe)
     read_resources(pe)
     select_processor(pe)
 

@@ -136,7 +136,6 @@ def vb_isenabled(pe):
 
 
 def vb_execute(pe):
-    redasm.create_struct("GUID", VBH.GUID)
     redasm.create_struct("VB_HEADER", VBH.VB_HEADER)
     redasm.create_struct("COM_REGISTRATION_DATA", VBH.COM_REGISTRATION_DATA)
     redasm.create_struct("COM_REGISTRATION_INFO", VBH.COM_REGISTRATION_INFO)
