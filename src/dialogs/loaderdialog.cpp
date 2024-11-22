@@ -1,4 +1,5 @@
 #include "loaderdialog.h"
+#include "../utils.h"
 
 LoaderDialog::LoaderDialog(RDBuffer* buffer, QWidget* parent)
     : QDialog{parent}, m_ui{this} {
@@ -33,12 +34,19 @@ void LoaderDialog::on_loader_changed(int currentrow) {
 }
 
 void LoaderDialog::accept() {
-    RDContext* ctx = m_testresult[m_ui.lwloaders->currentRow()].context;
-    this->context = ctx;
-    rd_select(ctx);
+    const RDTestResult& tr = m_testresult[m_ui.lwloaders->currentRow()];
+    const RDProcessor* p = tr.processor;
+    this->context = tr.context;
+    rd_select(tr.context);
 
-    if(usize idx = m_ui.cbprocessors->currentIndex(); idx < m_nprocessors)
+    if(usize idx = m_ui.cbprocessors->currentIndex(); idx < m_nprocessors) {
         rd_setprocessor(m_processors[idx].name);
+        p = &m_processors[idx];
+    }
+
+    utils::log(QString{"Selected loader '%1' with '%2' processor"}
+                   .arg(tr.loader->name)
+                   .arg(p->name));
 
     auto l = static_cast<RDLogLevel>(m_ui.cbloglevel->currentData().toUInt());
     rd_setloglevel(l);

@@ -49,6 +49,7 @@ target_sources(${PROJECT_NAME}
         src/dialogs/loaderdialog.cpp
         src/dialogs/analyzerdialog.cpp
         src/dialogs/memorymapdialog.cpp
+        src/dialogs/errordialog.cpp
 
         src/views/logview.cpp
         src/views/contextview.cpp

@@ -23,7 +23,7 @@ struct MainWindow {
     QAction *actviewmemorymap, *actviewsegments, *actviewstrings,
         *actviewimports, *actviewexports;
     QAction* acttbseparator;
-    LogView* logview;
+    ::LogView* logview;
 
     explicit MainWindow(QMainWindow* self) {
         self->setAcceptDrops(true);
@@ -99,7 +99,7 @@ struct MainWindow {
         self->setStatusBar(this->statusbar);
 
         this->stackwidget = new QStackedWidget();
-        this->logview = new LogView();
+        this->logview = new ::LogView();
 
         auto* vsplit = new QSplitter(Qt::Vertical);
         vsplit->addWidget(this->stackwidget);

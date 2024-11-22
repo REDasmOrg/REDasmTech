@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "actions.h"
 #include "dialogs/analyzerdialog.h"
+#include "dialogs/errordialog.h"
 #include "dialogs/flcdialog.h"
 #include "dialogs/loaderdialog.h"
 #include "dialogs/memorymapdialog.h"
@@ -66,10 +67,8 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
         [](const char* arg, void*) { // onstatus
             statusbar::set_status_text(arg);
         },
-        [](const char* arg, void* userdata) { // onerror
-            // auto* self = reinterpret_cast<MainWindow*>(userdata);
-            // TODO(davide): Add Log Widget
-            qFatal() << arg;
+        [](const char* arg, void*) { // onerror
+            ErrorDialog::show_error("An error occurred", arg);
         },
         this,
     };

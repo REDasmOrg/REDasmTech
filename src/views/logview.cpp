@@ -1,19 +1,12 @@
 #include "logview.h"
 #include <QVBoxLayout>
 
-LogView::LogView(QWidget* parent): QWidget{parent} {
+LogView::LogView(QWidget* parent): QWidget{parent}, m_ui{this} {
     this->setVisible(false);
-    m_ptelogs = new QPlainTextEdit(this);
-    m_ptelogs->setUndoRedoEnabled(false);
-    m_ptelogs->setReadOnly(true);
-
-    auto* vbox = new QVBoxLayout(this);
-    vbox->addWidget(m_ptelogs);
-    vbox->setContentsMargins(0, 0, 0, 0);
 }
 
 void LogView::log(const QString& s) {
-    m_ptelogs->insertPlainText(s);
-    m_ptelogs->insertPlainText("\n");
+    m_ui.ptelogs->insertPlainText(s);
+    m_ui.ptelogs->insertPlainText("\n");
     this->setVisible(true);
 }

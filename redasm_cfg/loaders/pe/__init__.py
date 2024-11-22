@@ -340,6 +340,8 @@ def init():
     if not pe:
         return False
 
+    asd
+
     imagebase = pe.optionalheader.ImageBase
     sectionalign = pe.optionalheader.SectionAlignment
     filealign = pe.optionalheader.FileAlignment

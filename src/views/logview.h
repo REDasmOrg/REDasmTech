@@ -1,7 +1,6 @@
 #pragma once
 
-#include <QPlainTextEdit>
-#include <QWidget>
+#include "../ui/logview.h"
 
 class LogView: public QWidget {
     Q_OBJECT
@@ -13,5 +12,5 @@ public Q_SLOTS:
     void log(const QString& s);
 
 private:
-    QPlainTextEdit* m_ptelogs;
+    ui::LogView m_ui;
 };
