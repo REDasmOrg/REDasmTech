@@ -60,7 +60,7 @@ std::string Graph::generate_dot() const {
     return s;
 }
 
-u32 Graph::hash() const { return hash::murmur2(this->generate_dot()); }
+u32 Graph::hash() const { return hash::murmur3(this->generate_dot()); }
 
 const RDGraphEdge* Graph::edge(RDGraphNode src, RDGraphNode dst) const {
     for(const RDGraphEdge& e : m_edges) {

@@ -4,6 +4,7 @@
 #include <array>
 #include <redasm/processor.h>
 #include <redasm/types.h>
+#include <redasm/typing.h>
 #include <string>
 #include <tl/optional.hpp>
 #include <unordered_map>
@@ -24,7 +25,7 @@ struct AddressDetail {
     };
 
     struct Ref {
-        usize index;
+        MIndex index;
         usize type;
     };
 
@@ -33,7 +34,7 @@ struct AddressDetail {
     // AddressDetail& operator=(const AddressDetail&) = delete;
     // AddressDetail& operator=(AddressDetail&&) = delete;
 
-    std::string type_name;
+    RDType type;
     std::array<std::string, NS::COUNT> names;
     std::vector<Ref> jumps, calls;
     std::vector<Ref> refsto, refs;

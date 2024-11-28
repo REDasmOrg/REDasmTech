@@ -1,9 +1,8 @@
 #pragma once
 
+#include "../utils/hash.h"
 #include <fmt/core.h>
-#include <map>
-#include <memory>
-#include <redasm/types.h>
+#include <redasm/typing.h>
 #include <string>
 #include <string_view>
 #include <tl/optional.hpp>
@@ -11,28 +10,6 @@
 #include <vector>
 
 namespace redasm::typing {
-
-namespace types {
-
-using Tag = u8;
-
-// clang-format off
-enum: Tag {
-    NIL      = 0b00000000,
-
-    BOOL, CHAR, WCHAR,
-    U8, U16, U32, U64,
-    I8, I16, I32, I64,
-    STR, WSTR,
-    STRUCT,
-
-    BIG       = 0b10000000,
-    VAR       = 0b01000000,
-    TYPE_MASK = 0b00111111,
-};
-// clang-format on
-
-} // namespace types
 
 namespace names {
 
@@ -58,103 +35,108 @@ inline constexpr const char* WSTR = "wstr";
 
 } // namespace names
 
-struct Type {
-    u8 tag{types::NIL};
-    usize size{};
+namespace ids {
+
+inline constexpr u32 BOOL = hash::static_murmur3(typing::names::BOOL);
+inline constexpr u32 CHAR = hash::static_murmur3(typing::names::CHAR);
+inline constexpr u32 WCHAR = hash::static_murmur3(typing::names::WCHAR);
+inline constexpr u32 U8 = hash::static_murmur3(typing::names::U8);
+inline constexpr u32 U16 = hash::static_murmur3(typing::names::U16);
+inline constexpr u32 U32 = hash::static_murmur3(typing::names::U32);
+inline constexpr u32 U64 = hash::static_murmur3(typing::names::U64);
+inline constexpr u32 I8 = hash::static_murmur3(typing::names::I8);
+inline constexpr u32 I16 = hash::static_murmur3(typing::names::I16);
+inline constexpr u32 I32 = hash::static_murmur3(typing::names::I32);
+inline constexpr u32 I64 = hash::static_murmur3(typing::names::I64);
+inline constexpr u32 U16BE = hash::static_murmur3(typing::names::U16BE);
+inline constexpr u32 U32BE = hash::static_murmur3(typing::names::U32BE);
+inline constexpr u32 U64BE = hash::static_murmur3(typing::names::U64BE);
+inline constexpr u32 I16BE = hash::static_murmur3(typing::names::I16BE);
+inline constexpr u32 I32BE = hash::static_murmur3(typing::names::I32BE);
+inline constexpr u32 I64BE = hash::static_murmur3(typing::names::I64BE);
+inline constexpr u32 STR = hash::static_murmur3(typing::names::STR);
+inline constexpr u32 WSTR = hash::static_murmur3(typing::names::WSTR);
+
+} // namespace ids
+
+using FullTypeName = std::string_view;
+using TypeName = std::string_view;
+
+struct TypeDef {
     std::string name;
+    usize size{};
+    bool isbig{false};
+    bool isvar{false};
+    std::vector<std::pair<RDType, std::string>> dict;
 
-    std::vector<std::pair<std::string, std::string>> dict;
-
-    explicit Type(u8 t): tag{t} {}
-    explicit Type(u8 t, usize s): tag{t}, size{s} {}
-    u8 id() const { return tag & types::TYPE_MASK; }
-    bool is_var() const { return tag & types::VAR; }
-
-    bool is_char() const {
-        return this->id() == types::CHAR || this->id() == types::WCHAR;
-    }
-
-    bool is_str() const {
-        return this->id() == types::STR || this->id() == types::WSTR;
-    }
-
-    bool is_wide() const {
-        return this->id() == types::WCHAR || this->id() == types::WSTR;
-    }
-
-    bool is_big() const {
-        return (this->id() >= types::U8 && this->id() <= types::I64) &&
-               (tag & types::BIG);
-    }
+    TypeId get_id() const { return hash::murmur3(name); }
+    bool is_struct() const { return !dict.empty(); }
+    RDType to_type(usize n = 0) const { return {.id = this->get_id(), .n = n}; }
 };
-
-// clang-format off
 
 struct Value;
 using ValueList = std::vector<Value>;
 using ValueDict = std::unordered_map<std::string, Value>;
+using StructField = std::pair<std::string, std::string>;
+using StructBody = std::vector<typing::StructField>;
 
 struct Value {
-    std::string type;
-    usize count{0};
+    RDType type;
 
     ValueList list;
     ValueDict dict;
     std::string str;
 
+    // clang-format off
     union {
         bool b_v; char ch_v;
         u8 u8_v; u16 u16_v; u32 u32_v; u64 u64_v;
         i8 i8_v; i16 i16_v; i32 i32_v; i64 i64_v;
     };
+    // clang-format on
 
-    Value() = default;
-    explicit Value(std::string t, usize c): type{std::move(t)}, count{c} {}
-    explicit Value(std::string t): type{std::move(t)} {}
-    bool is_list() const { return count > 0; }
-};
-// clang-format on
-
-enum ParsedTypeModifier {
-    TYPEMODIFIER_NORMAL = 0,
-    TYPEMODIFIER_POINTER,
-    TYPEMODIFIER_RELPOINTER
+    bool is_list() const { return type.n && !list.empty(); }
+    bool is_struct() const { return !dict.empty(); }
 };
 
 struct ParsedType {
-    const Type* type;
+    const TypeDef* type; // Cannot be null
     usize n;
-    usize modifier;
+
+    [[nodiscard]] RDType to_type() const { return type->to_type(n); }
+    [[nodiscard]] bool is_list() const { return n > 0; }
 };
 
 struct Types {
-    using StructFields = std::pair<std::string, std::string>;
 
     Types();
-    void declare(const std::string& name, const Type& type);
-    [[nodiscard]] const Type* get_type(std::string_view type) const;
-    [[nodiscard]] tl::optional<ParsedType> parse(std::string_view tname) const;
-    [[nodiscard]] std::string_view type_name(types::Tag tag) const;
-    [[nodiscard]] std::string to_string(const ParsedType& pt);
+    const TypeDef* declare(const std::string& name, const StructBody& arg);
+    [[nodiscard]] const TypeDef* get_typedef(RDType t, TypeName h = {}) const;
+    [[nodiscard]] ParsedType parse(FullTypeName tn) const;
+    [[nodiscard]] TypeName type_name(RDType t) const;
+    [[nodiscard]] std::string to_string(ParsedType pt) const;
+    [[nodiscard]] std::string to_string(RDType t) const;
 
-    [[nodiscard]] Type
-    create_struct(const std::vector<StructFields>& arg) const;
-
-    [[nodiscard]] usize size_of(std::string_view tname,
+    [[nodiscard]] usize size_of(FullTypeName tn,
                                 ParsedType* res = nullptr) const;
 
-    [[nodiscard]] inline std::string as_array(std::string_view tname,
-                                              usize n) const {
-        return fmt::format("{}[{}]", tname, n);
+    [[nodiscard]] TypeId type_id(TypeName tn) const {
+        return hash::murmur3(tn);
     }
 
-    [[nodiscard]] inline std::string as_array(types::Tag t, usize n) const {
+    [[nodiscard]] std::string as_array(TypeName tn, usize n) const {
+        return fmt::format("{}[{}]", tn, n);
+    }
+
+    [[nodiscard]] std::string as_array(RDType t, usize n) const {
         return this->as_array(this->type_name(t), n);
     }
 
-    std::map<std::string, std::unique_ptr<Type>, std::less<>> registered;
-};
+    [[nodiscard]] const TypeDef* get_typedef(TypeName tn) const {
+        return this->get_typedef({.id = this->type_id(tn)}, tn);
+    }
 
-using StructBody = std::vector<typing::Types::StructFields>;
+    std::unordered_map<TypeId, typing::TypeDef> registered;
+};
 
 } // namespace redasm::typing

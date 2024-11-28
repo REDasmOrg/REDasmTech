@@ -6,10 +6,10 @@ namespace {
 QString get_segment_type(const RDSegment& seg) {
     QString s;
 
-    if(seg.type & SEGMENTTYPE_HASCODE)
+    if(seg.type & SEG_HASCODE)
         s.append("CODE");
 
-    if(seg.type & SEGMENTTYPE_HASDATA) {
+    if(seg.type & SEG_HASDATA) {
         if(!s.isEmpty())
             s.append(" | ");
 

@@ -8,6 +8,13 @@ usize rd_sizeof(const char* tname) {
     return redasm::api::internal::size_of(tname);
 }
 
+bool rd_createtype(const char* tname, RDType* t) {
+    if(!tname)
+        return false;
+
+    return redasm::api::internal::create_type(tname, t);
+}
+
 const char* rd_createstruct(const char* name, const RDStructField* fields,
                             usize n) {
     if(!name || !fields || !n)

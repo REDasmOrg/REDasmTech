@@ -6,10 +6,10 @@
 struct RDAnalyzer;
 
 typedef enum RDAnalyzerFlags {
-    ANALYZER_NONE = 0,
-    ANALYZER_SELECTED = (1 << 0),
-    ANALYZER_RUNONCE = (1 << 1),
-    ANALYZER_EXPERIMENTAL = (1 << 2),
+    ANA_NONE = 0,
+    ANA_SELECTED = (1 << 0),
+    ANA_RUNONCE = (1 << 1),
+    ANA_EXPERIMENTAL = (1 << 2),
 } RDAnalyzerFlags;
 
 typedef bool (*RDAnalyzerIsEnabled)(const RDAnalyzer*);

@@ -1,4 +1,5 @@
 #include "context.h"
+#include "api/marshal.h"
 #include "error.h"
 #include "state.h"
 #include "utils/utils.h"
@@ -64,7 +65,7 @@ bool Context::activate() {
 
             this->analyzers.push_back(a); // Take a copy of the analyzer
 
-            if(a.flags & ANALYZER_SELECTED)
+            if(a.flags & ANA_SELECTED)
                 this->selectedanalyzers.insert(a.name);
         }
 
@@ -74,42 +75,31 @@ bool Context::activate() {
     return false;
 }
 
-void Context::set_export(MIndex idx) { // NOLINT
-    assume(idx < this->memory->size());
-    this->memory->set(idx, BF_EXPORT);
-}
-
-void Context::set_import(MIndex idx) { // NOLINT
-    assume(idx < this->memory->size());
-    this->memory->set(idx, BF_IMPORT);
-}
-
-bool Context::set_function(MIndex idx, const std::string& name) {
-    if(idx >= this->memory->size() || this->memory->at(idx).has(BF_IMPORT))
+bool Context::set_function(MIndex idx) { // NOLINT
+    if(idx >= this->memory->size())
         return false;
 
     const Segment* s = this->index_to_segment(idx);
 
-    if(s && s->type & SEGMENTTYPE_HASCODE) {
+    if(s && s->type & SEG_HASCODE) {
         this->memory->set(idx, BF_FUNCTION);
-        this->set_name(idx, name);
         return true;
     }
 
-    auto address = this->index_to_address(idx);
-    assume(address.has_value());
-    spdlog::warn("Address {:x} is not in code segment", *address);
     return false;
 }
 
-bool Context::set_entry(MIndex idx, std::string name) {
-    if(name.empty())
-        name = EP_NAME;
+bool Context::set_entry(MIndex idx, const std::string& name) {
+    if(const Segment* s = this->index_to_segment(idx); s) {
+        this->memory->set(idx, BF_EXPORT);
 
-    if(this->set_function(idx, name)) {
-        this->set_export(idx);
-        this->disassembler.emulator.enqueue(idx);
-        this->entrypoint = idx;
+        if(s->type & SEG_HASCODE) {
+            this->memory->set(idx, BF_FUNCTION);
+            this->disassembler.emulator.qcall.emplace_back(tl::nullopt, idx);
+        }
+
+        this->set_name(idx, name, SN_DEFAULT);
+        this->entrypoints.push_back(idx);
         return true;
     }
 
@@ -126,59 +116,44 @@ bool Context::set_comment(MIndex idx, std::string_view comment) {
     return true;
 }
 
-bool Context::set_type(MIndex idx, std::string_view tname,
-                       const std::string& dbname) {
+bool Context::set_type(MIndex idx, typing::FullTypeName tname) {
     if(idx >= this->memory->size())
         return false;
 
-    Byte b = this->memory->at(idx);
+    typing::ParsedType pt = this->types.parse(tname);
+    return this->set_type(idx, pt.to_type());
+}
 
-    if((b.has(BF_ARRAY) || b.has(BF_TYPE)) && !b.is_weak()) {
-        const AddressDetail& d = this->database.get_detail(idx);
-        return d.type_name == tname;
-    }
-    if(b.is_strong())
-        return false;
-
-    auto pt = this->types.parse(tname);
-
-    if(!pt) {
-        spdlog::warn("Type '{}' not found", tname);
-        return false;
-    }
-
-    bool isarray = pt->n > 0;
+bool Context::set_type(MIndex idx, RDType t) {
+    const typing::TypeDef* td = this->types.get_typedef(t);
     AddressDetail& detail = this->database.check_detail(idx);
-
     usize len;
 
-    if(pt->type->is_str()) {
-        tl::optional<std::string> s;
+    switch(t.id) {
+        case typing::ids::STR:
+        case typing::ids::WSTR: {
+            tl::optional<std::string> s;
+            if(t.id == typing::ids::WSTR)
+                s = this->memory->get_wstring(idx);
+            else
+                s = this->memory->get_string(idx);
 
-        if(pt->type->id() == typing::types::WSTR)
-            s = this->memory->get_wstring(idx);
-        else
-            s = this->memory->get_string(idx);
+            if(!s)
+                return false;
 
-        if(!s)
-            return false;
+            detail.string_bytes =
+                (s->size() * td->size) + td->size; // Null terminator included
+            len = detail.string_bytes;
+            break;
+        }
 
-        pt->n = s->size();
-        detail.string_bytes = (pt->n * pt->type->size) +
-                              pt->type->size; // Null terminator included
-        isarray = false;
-
-        len = detail.string_bytes;
+        default: len = std::max<usize>(t.n, 1) * td->size; break;
     }
-    else
-        len = std::max<usize>(pt->n, 1) * pt->type->size;
 
+    detail.type = t;
     this->memory->unset_n(idx, len); // TODO(davide): Handle unset transparently
-
-    detail.type_name = tname;
     this->memory->set_n(idx, len, BF_DATA);
-    this->memory->set(idx, isarray ? BF_ARRAY : BF_TYPE);
-    this->set_name(idx, dbname);
+    this->memory->set(idx, t.n > 0 ? BF_ARRAY : BF_TYPE);
     return true;
 }
 
@@ -321,11 +296,11 @@ std::string Context::get_name(MIndex idx) const {
 
         if(b.has(BF_ARRAY) || b.has(BF_TYPE)) {
             const AddressDetail& d = this->database.get_detail(idx);
-            assume(!d.type_name.empty());
+            assume(d.type.id);
 
-            auto pt = this->types.parse(d.type_name);
-            assume(pt);
-            prefix = utils::to_lower(pt->type->name);
+            const typing::TypeDef* td = this->types.get_typedef(d.type);
+            assume(td);
+            prefix = utils::to_lower(td->name);
         }
         else if(b.has(BF_FUNCTION))
             prefix = "sub";
@@ -338,21 +313,49 @@ std::string Context::get_name(MIndex idx) const {
     return name;
 }
 
-void Context::set_name(MIndex idx, const std::string& name) {
-    if(idx >= this->memory->size())
-        return;
+bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
+    if(idx >= this->memory->size()) {
+        if(!(flags & SN_NOWARN))
+            spdlog::warn("set_name: Invalid address");
+
+        return false;
+    }
+
+    std::string dbname = name;
+
+    if(!name.empty()) {
+        auto nameidx = this->database.get_index(dbname);
+
+        if(nameidx && (flags & SN_FORCE)) {
+            usize n = 0;
+
+            while(nameidx) {
+                dbname = fmt::format("{}_{}", name, ++n);
+                nameidx = this->database.get_index(dbname);
+            }
+        }
+        else if(nameidx) {
+            if(!(flags & SN_NOWARN))
+                spdlog::warn("set_name: name '{}' already exists", name);
+            return false;
+        }
+    }
 
     Byte& b = this->memory->at(idx);
-    b.set_flag(BF_NAME, !name.empty());
+    b.set_flag(BF_NAME, !dbname.empty());
+    b.set_flag(BF_WEAK, flags & SN_WEAK);
+    b.set_flag(BF_IMPORT, flags & SN_IMPORT);
 
     if(b.has(BF_ARRAY))
-        this->database.set_name(idx, name, AddressDetail::ARRAY);
+        this->database.set_name(idx, dbname, AddressDetail::ARRAY);
     else if(b.has(BF_TYPE))
-        this->database.set_name(idx, name, AddressDetail::TYPE);
+        this->database.set_name(idx, dbname, AddressDetail::TYPE);
     else if(b.has(BF_FUNCTION))
-        this->database.set_name(idx, name, AddressDetail::FUNCTION);
+        this->database.set_name(idx, dbname, AddressDetail::FUNCTION);
     else
-        this->database.set_name(idx, name, AddressDetail::LABEL);
+        this->database.set_name(idx, dbname, AddressDetail::LABEL);
+
+    return true;
 }
 
 std::string Context::get_comment(MIndex idx) const {
@@ -388,29 +391,26 @@ std::string Context::to_hex(usize v, int n) const {
     return hexstr;
 }
 
-void Context::process_functions() {
-    spdlog::info("Processing functions...");
+void Context::process_segments() {
+    spdlog::info("Processing segments...");
     this->functions.clear();
 
     if(!this->memory)
         return;
 
     for(const Segment& seg : this->segments) {
-        if(!(seg.type & SEGMENTTYPE_HASCODE))
-            continue;
-
         for(usize idx = seg.index;
             idx < seg.endindex && idx < this->memory->size(); idx++) {
-            Byte membyte = this->memory->at(idx);
+            Byte b = this->memory->at(idx);
 
-            if(membyte.has(BF_FUNCTION))
-                this->create_function_graph(idx);
+            if(b.has(BF_FUNCTION))
+                this->process_function_graph(idx);
         }
     }
 }
 
-void Context::process_memory() {
-    spdlog::info("Processing memory...");
+void Context::process_listing() {
+    spdlog::info("Processing listing...");
     this->listing.clear();
     this->functions.clear();
 
@@ -454,21 +454,13 @@ void Context::process_listing_data(MIndex& idx) {
 
     if(b.has(BF_ARRAY)) {
         const AddressDetail& d = this->database.get_detail(idx);
-        assume(!d.type_name.empty());
-
-        auto pt = this->types.parse(d.type_name);
-        assume(pt);
-        assume(pt->n > 0);
-        this->process_listing_array(idx, *pt);
+        assume(d.type.id);
+        this->process_listing_array(idx, d.type);
     }
     else if(b.has(BF_TYPE)) {
         const AddressDetail& d = this->database.get_detail(idx);
-        assume(!d.type_name.empty());
-
-        auto pt = this->types.parse(d.type_name);
-        assume(pt);
-        assume(pt->n == 0);
-        this->process_listing_type(idx, *pt);
+        assume(d.type.id);
+        this->process_listing_type(idx, d.type);
     }
     else {
         this->process_hex_dump(idx, [](Byte b) {
@@ -487,8 +479,8 @@ void Context::process_listing_code(MIndex& idx) {
 
         const Segment* s = this->listing.current_segment();
 
-        if(s && (s->type & SEGMENTTYPE_HASCODE))
-            this->create_function_graph(idx);
+        if(s && (s->type & SEG_HASCODE))
+            this->process_function_graph(idx);
     }
 
     if(b.has(BF_JUMPDST)) {
@@ -507,84 +499,92 @@ void Context::process_listing_code(MIndex& idx) {
     }
 }
 
-void Context::process_listing_array(MIndex& idx, const typing::ParsedType& pt) {
-    assume(pt.n > 0);
+void Context::process_listing_array(MIndex& idx, RDType t) {
+    assume(t.n > 0);
 
-    this->listing.array(idx, pt);
+    this->listing.array(idx, t);
     this->listing.push_indent();
 
-    // Array of chars are different
-    if(!pt.type->is_char()) {
-        for(usize i = 0; i < std::max<usize>(pt.n, 1); i++) {
-            usize lidx = this->process_listing_type(idx, pt);
-            this->listing[lidx].array_index = i;
+    const typing::TypeDef* td = state::context->types.get_typedef(t);
+    assume(td);
+
+    switch(td->get_id()) {
+        // Array of chars are handled differently
+        case typing::ids::CHAR:
+        case typing::ids::WCHAR: idx += td->size * t.n; break;
+
+        default: {
+            for(usize i = 0; i < std::max<usize>(t.n, 1); i++) {
+                LIndex lidx = this->process_listing_type(idx, t);
+                this->listing[lidx].array_index = i;
+            }
+            break;
         }
     }
-    else
-        idx += pt.type->size * pt.n;
 
     this->listing.pop_indent();
 }
 
-usize Context::process_listing_type(MIndex& idx, const typing::ParsedType& pt) {
-    usize listingidx = this->listing.size();
-    this->listing.type(idx, pt);
+LIndex Context::process_listing_type(MIndex& idx, RDType t) {
+    LIndex listingidx = this->listing.size();
+    this->listing.type(idx, t);
 
-    if(pt.type->id() == typing::types::STRUCT) // Struct creates a new context
-        this->listing.push_type(pt);
+    const typing::TypeDef* td = state::context->types.get_typedef(t);
+    assume(td);
 
-    switch(pt.type->id()) {
-        case typing::types::CHAR:
-        case typing::types::WCHAR:
-        case typing::types::I8:
-        case typing::types::U8:
-        case typing::types::I16:
-        case typing::types::U16:
-        case typing::types::I32:
-        case typing::types::U32:
-        case typing::types::I64:
-        case typing::types::U64: idx += pt.type->size; break;
+    if(td->is_struct()) { // Struct creates a new scope
+        this->listing.push_type(t);
+        this->listing.push_indent();
 
-        case typing::types::STR:
-        case typing::types::WSTR: {
-            const AddressDetail& d = this->database.get_detail(idx);
-            assume(d.string_bytes > 0);
-            idx += d.string_bytes;
-            break;
+        for(usize j = 0; j < td->dict.size(); j++) {
+            const auto& [fieldtype, _] = td->dict[j];
+
+            const typing::TypeDef* ftd =
+                state::context->types.get_typedef(fieldtype);
+            assume(ftd);
+
+            this->listing.push_fieldindex(j);
+
+            if(fieldtype.n > 0)
+                this->process_listing_array(idx, ftd->to_type(fieldtype.n));
+            else
+                this->process_listing_type(idx, ftd->to_type());
+
+            this->listing.pop_fieldindex();
         }
 
-        case typing::types::STRUCT: {
-            this->listing.push_indent();
+        this->listing.pop_indent();
+        this->listing.pop_type();
+    }
+    else {
+        switch(td->get_id()) {
+            case typing::ids::CHAR:
+            case typing::ids::WCHAR:
+            case typing::ids::I8:
+            case typing::ids::U8:
+            case typing::ids::I16:
+            case typing::ids::U16:
+            case typing::ids::I32:
+            case typing::ids::U32:
+            case typing::ids::I64:
+            case typing::ids::U64: idx += td->size; break;
 
-            for(usize j = 0; j < pt.type->dict.size(); j++) {
-                const auto& item = pt.type->dict[j];
-                auto fpt = this->types.parse(item.first);
-                assume(fpt);
-
-                this->listing.push_fieldindex(j);
-
-                if(fpt->n > 0)
-                    this->process_listing_array(idx, *fpt);
-                else
-                    this->process_listing_type(idx, *fpt);
-
-                this->listing.pop_fieldindex();
+            case typing::ids::STR:
+            case typing::ids::WSTR: {
+                const AddressDetail& d = this->database.get_detail(idx);
+                assume(d.string_bytes > 0);
+                idx += d.string_bytes;
+                break;
             }
 
-            this->listing.pop_indent();
-            break;
+            default: unreachable;
         }
-
-        default: unreachable;
     }
-
-    if(pt.type->id() == typing::types::STRUCT)
-        this->listing.pop_type();
 
     return listingidx;
 }
 
-void Context::create_function_graph(MIndex idx) {
+void Context::process_function_graph(MIndex idx) {
     auto address = this->index_to_address(idx);
     assume(address.has_value());
     spdlog::info("Creating function graph @ {}", this->to_hex(*address));
@@ -635,12 +635,9 @@ void Context::create_function_graph(MIndex idx) {
                 const AddressDetail& d = db.get_detail(curridx);
 
                 for(const AddressDetail::Ref& jidx : d.jumps) {
-                    if(jidx.type & REF_INDIRECT)
-                        continue;
-
                     const Segment* seg = this->index_to_segment(jidx.index);
 
-                    if(seg && seg->type & SEGMENTTYPE_HASCODE) {
+                    if(seg && seg->type & SEG_HASCODE) {
                         if(!mem->at(jidx.index).has(BF_INSTR))
                             continue;
 

@@ -149,11 +149,11 @@ def vb_execute(pe):
     redasm.create_struct("VB_CONTROL_INFO", VBH.VB_CONTROL_INFO)
     redasm.create_struct("VB_EVENT_INFO", VBH.VB_EVENT_INFO)
 
-    ep = redasm.get_ep()
-    if ep is None:
+    ep = redasm.get_entries()
+    if len(ep) != 1:
         return
 
-    func = redasm.rdil.create_function(ep)
+    func = redasm.rdil.create_function(ep[0])
     if (len(func) < 2 or (func[0].expr.op != redasm.rdil.PUSH and
                           func[1].expr.op != redasm.rdil.CALL)):
         return

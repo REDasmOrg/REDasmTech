@@ -21,7 +21,7 @@ void strings_step(RDAddress& address, const RDMemoryInfo& mi) {
                 Byte b = state::context->memory->at(*index);
 
                 if(b.is_unknown())
-                    api::internal::set_type(address, sr.type);
+                    api::internal::set_typename(address, sr.type);
             }
 
             address += sr.totalsize;
@@ -43,13 +43,15 @@ void do_autorename(const RDAnalyzer*) {
                 const AddressDetail& d = ctx->database.get_detail(f.index);
 
                 if(d.jumps.size() == 1) {
-                    ctx->set_function(
-                        f.index, "_" + ctx->get_name(d.jumps.front().index));
+                    ctx->set_name(f.index,
+                                  "_" + ctx->get_name(d.jumps.front().index),
+                                  SN_DEFAULT);
                 }
             }
             else if(b.has(BF_INSTR)) {
                 ctx->index_to_address(f.index).map([&](RDAddress x) {
-                    ctx->set_name(f.index, "nullsub_" + ctx->to_hex(x));
+                    ctx->set_name(f.index, "nullsub_" + ctx->to_hex(x),
+                                  SN_DEFAULT);
                 });
             }
         }
@@ -61,7 +63,7 @@ void do_autorename(const RDAnalyzer*) {
 void register_analyzers() {
     RDAnalyzer autorename{};
     autorename.name = "Autorename Nullsubs and Thunks";
-    autorename.flags = ANALYZER_SELECTED;
+    autorename.flags = ANA_SELECTED;
     autorename.order = 0;
     autorename.isenabled = [](const RDAnalyzer*) { return true; };
     autorename.execute = do_autorename;

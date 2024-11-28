@@ -6,7 +6,7 @@
 typedef enum RDAnalysisStep {
     STEP_INIT = 0,
     STEP_EMULATE,
-    STEP_CFG,
+    STEP_PROCESS,
     STEP_ANALYZE,
     STEP_DONE,
     STEP_LAST

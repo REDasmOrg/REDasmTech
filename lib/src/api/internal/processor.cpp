@@ -1,26 +1,17 @@
 #include "processor.h"
 #include "../../context.h"
-#include "../../disasm/emulator.h"
 #include "../../state.h"
 #include "../marshal.h"
 #include <spdlog/spdlog.h>
 
 namespace redasm::api::internal {
 
-void emulator_addref(RDEmulator* self, RDAddress address, usize cr) {
-    spdlog::trace("emulator_addref({}, {:x}, {})", fmt::ptr(self), address, cr);
+void emulator_addref(RDEmulator* e, RDAddress toaddr, usize type) {
+    spdlog::trace("emulator_addref({}, {:x}, {})", fmt::ptr(e), toaddr, type);
 
-    state::context->address_to_index(address).map(
-        [&](MIndex idx) { api::from_c(self)->add_ref(idx, cr); });
-}
-
-void emulator_settype(RDEmulator* self, RDAddress address,
-                      std::string_view tname) {
-    spdlog::trace("emulator_settype({}, {:x}, '{}')", fmt::ptr(self), address,
-                  tname);
-
-    state::context->address_to_index(address).map(
-        [&](MIndex idx) { api::from_c(self)->set_type(idx, tname); });
+    state::context->address_to_index(toaddr).map([&](MIndex idx) {
+        state::context->disassembler.emulator.add_ref(idx, type);
+    });
 }
 
 usize get_processors(const RDProcessor** processors) {

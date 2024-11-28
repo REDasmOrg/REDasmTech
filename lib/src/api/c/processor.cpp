@@ -1,13 +1,7 @@
 #include "../internal/processor.h"
 
-void rdemulator_addref(RDEmulator* self, RDAddress address, usize cr) {
-    redasm::api::internal::emulator_addref(self, address, cr);
-}
-
-void rdemulator_settype(RDEmulator* self, RDAddress address,
-                        const char* tname) {
-    if(tname)
-        redasm::api::internal::emulator_settype(self, address, tname);
+void rdemulator_addref(RDEmulator* e, RDAddress toaddr, usize type) {
+    redasm::api::internal::emulator_addref(e, toaddr, type);
 }
 
 usize rd_getprocessors(const RDProcessor** processors) {

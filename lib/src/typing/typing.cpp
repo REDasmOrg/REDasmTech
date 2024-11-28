@@ -8,185 +8,174 @@ namespace redasm::typing {
 
 namespace {
 
-void parse(std::string_view tname, std::string_view& name, usize& n,
-           usize& modifier) {
-    if(tname.empty())
-        except("typing::parse('{}'): type is empty", tname);
-
-    modifier = TYPEMODIFIER_NORMAL;
+void parse(FullTypeName tn, std::string_view& name, usize& n) {
+    if(tn.empty())
+        except("typing::parse('{}'): type is empty", tn);
 
     usize idx = 0;
     std::string_view strn;
 
     // Ignore leading whitespaces
-    while(idx < tname.size() && std::isspace(tname[idx]))
+    while(idx < tn.size() && std::isspace(tn[idx]))
         idx++;
 
-    if(std::isalpha(tname.front()) || tname.front() == '_') {
-        while(idx < tname.size() &&
-              (std::isalnum(tname[idx]) || tname[idx] == '_'))
+    if(std::isalpha(tn.front()) || tn.front() == '_') {
+        while(idx < tn.size() && (std::isalnum(tn[idx]) || tn[idx] == '_'))
             idx++;
-        name = tname.substr(0, idx);
+        name = tn.substr(0, idx);
     }
 
     if(name.empty())
-        except("typing::parse('{}'): type is empty", tname);
+        except("typing::parse('{}'): type is empty", tn);
 
-    if(idx < tname.size() && tname[idx] == '*') {
-        modifier = TYPEMODIFIER_POINTER;
-        idx++;
-    }
-    else if(idx < tname.size() && tname[idx] == '^') {
-        modifier = TYPEMODIFIER_RELPOINTER;
-        idx++;
-    }
-
-    if(idx < tname.size() && tname[idx] == '[') {
+    if(idx < tn.size() && tn[idx] == '[') {
         usize startidx = idx + 1;
-        while(idx < tname.size() && tname[idx] != ']')
+        while(idx < tn.size() && tn[idx] != ']')
             idx++;
 
-        if(idx >= tname.size())
-            except("typing::parse('{}'): index out of bounds", tname);
+        if(idx >= tn.size())
+            except("typing::parse('{}'): index out of bounds", tn);
 
-        strn = tname.substr(startidx, idx - startidx);
+        strn = tn.substr(startidx, idx - startidx);
         idx++; // Skip ']'
     }
 
     if(!strn.empty()) {
         auto nval = utils::to_integer(strn);
         if(!nval || !nval.value())
-            except("typing::parse('{}'): invalid size", tname);
+            except("typing::parse('{}'): invalid size", tn);
 
         n = *nval;
     }
 
     // Ignore trailing whitespaces and check for junk
-    while(idx < tname.size()) {
+    while(idx < tn.size()) {
         if(std::isspace(idx++))
             continue;
-        except("typing::parse('{}'): invalid type", tname);
+        except("typing::parse('{}'): invalid type", tn);
     }
 }
 
 } // namespace
 
-usize Types::size_of(std::string_view tname, ParsedType* res) const {
-    auto pt = this->parse(tname);
-
-    if(!pt)
-        except("Cannot get size of type '{}'", pt->type->name);
+usize Types::size_of(FullTypeName tname, ParsedType* res) const {
+    ParsedType pt = this->parse(tname);
 
     if(res)
-        *res = *pt;
+        *res = pt;
 
-    return pt->n ? pt->type->size * pt->n : pt->type->size;
+    return pt.n ? pt.type->size * pt.n : pt.type->size;
 }
 
-const Type* Types::get_type(std::string_view type) const {
-    auto it = this->registered.find(type);
-    if(it == this->registered.end())
-        except("Type '{}' not found", type);
-    return it->second.get();
-}
+const TypeDef* Types::get_typedef(RDType t, std::string_view namehint) const {
+    auto it = this->registered.find(t.id);
 
-tl::optional<ParsedType> Types::parse(std::string_view tname) const {
-    std::string_view name;
-    usize n{}, modifier{};
-    typing::parse(tname, name, n, modifier);
-
-    const Type* t = this->get_type(name);
-
-    if(t) {
-        return ParsedType{
-            .type = t,
-            .n = n,
-            .modifier = modifier,
-        };
+    if(it == this->registered.end()) {
+        if(!namehint.empty())
+            except("Type '{}' not found", namehint);
+        else
+            except("Type if '{:x}' not found", t.id);
     }
 
-    return tl::nullopt;
+    return &it->second;
 }
 
-void Types::declare(const std::string& name, const Type& type) {
-    if(this->registered.contains(name))
-        except("Type '{}' has already been declared", name);
+ParsedType Types::parse(FullTypeName tname) const {
+    std::string_view name;
+    usize n{};
+    typing::parse(tname, name, n);
 
-    auto newtype = std::make_unique<Type>(type);
-    newtype->name = name;
-    this->registered[name] = std::move(newtype);
+    const TypeDef* td = this->get_typedef(name);
+
+    if(td->isvar && n)
+        except("Cannot create an array of variable sized type '{}'", tname);
+
+    return ParsedType{
+        .type = td,
+        .n = n,
+    };
 }
 
 Types::Types() {
     // clang-format off
-    this->registered[names::BOOL]  = std::make_unique<Type>(types::BOOL,  sizeof(bool));
-    this->registered[names::CHAR]  = std::make_unique<Type>(types::CHAR,  sizeof(char));
-    this->registered[names::WCHAR] = std::make_unique<Type>(types::WCHAR, sizeof(char16_t));
-    this->registered[names::U8]    = std::make_unique<Type>(types::U8,    sizeof(u8));
-    this->registered[names::U16]   = std::make_unique<Type>(types::U16,   sizeof(u16));
-    this->registered[names::U32]   = std::make_unique<Type>(types::U32,   sizeof(u32));
-    this->registered[names::U64]   = std::make_unique<Type>(types::U64,   sizeof(u64));
-    this->registered[names::I8]    = std::make_unique<Type>(types::I8,    sizeof(i8));
-    this->registered[names::I16]   = std::make_unique<Type>(types::I16,   sizeof(i16));
-    this->registered[names::I32]   = std::make_unique<Type>(types::I32,   sizeof(i32));
-    this->registered[names::I64]   = std::make_unique<Type>(types::I64,   sizeof(i64));
-    this->registered[names::U16BE] = std::make_unique<Type>(types::U16  | types::BIG, sizeof(u16));
-    this->registered[names::U32BE] = std::make_unique<Type>(types::U32  | types::BIG, sizeof(u32));
-    this->registered[names::U64BE] = std::make_unique<Type>(types::U64  | types::BIG, sizeof(u64));
-    this->registered[names::I16BE] = std::make_unique<Type>(types::I16  | types::BIG, sizeof(i16));
-    this->registered[names::I32BE] = std::make_unique<Type>(types::I32  | types::BIG, sizeof(i32));
-    this->registered[names::I64BE] = std::make_unique<Type>(types::I64  | types::BIG, sizeof(i64));
-    this->registered[names::STR]   = std::make_unique<Type>(types::STR  | types::VAR, sizeof(char));
-    this->registered[names::WSTR]  = std::make_unique<Type>(types::WSTR | types::VAR, sizeof(char16_t));
+    this->registered[ids::BOOL]  = {.name = names::BOOL,  .size = sizeof(bool)};
+    this->registered[ids::CHAR]  = {.name = names::CHAR,  .size = sizeof(char)};
+    this->registered[ids::WCHAR] = {.name = names::WCHAR, .size = sizeof(char16_t)};
+    this->registered[ids::U8]    = {.name = names::U8,    .size = sizeof(u8)};
+    this->registered[ids::U16]   = {.name = names::U16,   .size = sizeof(u16)};
+    this->registered[ids::U32]   = {.name = names::U32,   .size = sizeof(u32)};
+    this->registered[ids::U64]   = {.name = names::U64,   .size = sizeof(u64)};
+    this->registered[ids::I8]    = {.name = names::I8,    .size = sizeof(i8)};
+    this->registered[ids::I16]   = {.name = names::I16,   .size = sizeof(i16)};
+    this->registered[ids::I32]   = {.name = names::I32,   .size = sizeof(i32)};
+    this->registered[ids::I64]   = {.name = names::I64,   .size = sizeof(i64)};
+    this->registered[ids::U16BE] = {.name = names::U16,   .size = sizeof(u16),      .isbig = true};
+    this->registered[ids::U32BE] = {.name = names::U32,   .size = sizeof(u32),      .isbig = true};
+    this->registered[ids::U64BE] = {.name = names::U64,   .size = sizeof(u64),      .isbig = true};
+    this->registered[ids::I16BE] = {.name = names::I16,   .size = sizeof(i16),      .isbig = true};
+    this->registered[ids::I32BE] = {.name = names::I32,   .size = sizeof(i32),      .isbig = true};
+    this->registered[ids::I64BE] = {.name = names::I64,   .size = sizeof(i64),      .isbig = true};
+    this->registered[ids::STR]   = {.name = names::STR,   .size = sizeof(char),     .isvar = true};
+    this->registered[ids::WSTR]  = {.name = names::WSTR,  .size = sizeof(char16_t), .isvar = true};
     // clang-format on
-
-    for(auto& [tname, t] : this->registered)
-        t->name = tname;
 }
 
-std::string Types::to_string(const ParsedType& pt) {
+std::string Types::to_string(ParsedType pt) const {
     assume(pt.type);
 
-    std::string_view mod;
-
-    switch(pt.modifier) {
-        case TYPEMODIFIER_RELPOINTER: mod = "^"; break;
-        case TYPEMODIFIER_POINTER: mod = "*"; break;
-        case TYPEMODIFIER_NORMAL: break;
-        default: unreachable;
-    }
-
     if(pt.n > 0)
-        return fmt::format("{}{}[{}]", pt.type->name, mod, pt.n);
+        return fmt::format("{}[{}]", pt.type->name, pt.n);
 
-    return fmt::format("{}{}", pt.type->name, mod);
+    return pt.type->name;
 }
 
-Type Types::create_struct(const std::vector<StructFields>& arg) const {
-    Type type{types::STRUCT};
+std::string Types::to_string(RDType t) const {
+    const TypeDef* td = this->get_typedef(t);
+
+    if(t.n > 0)
+        return fmt::format("{}[{}]", td->name, t.n);
+
+    return td->name;
+}
+
+const TypeDef* Types::declare(const std::string& name, const StructBody& arg) {
+    if(name.empty())
+        except("Struct name is empty");
+
+    if(arg.empty())
+        except("Struct cannot be empty");
+
+    TypeDef type;
+    type.name = name;
+
+    if(this->registered.contains(type.get_id()))
+        except("Struct '{}' already exists", name);
 
     for(const auto& [tname, name] : arg) {
         ParsedType pt;
         type.size += this->size_of(tname, &pt);
 
-        if(pt.type->is_var()) {
+        if(pt.type->isvar) {
             except("Type '{}' size is variable and is not supported in structs",
                    tname);
         }
 
-        type.dict.emplace_back(tname, name);
+        type.dict.emplace_back(RDType{.id = pt.type->get_id(), .n = pt.n},
+                               name);
     }
 
-    return type;
+    auto it = this->registered.try_emplace(type.get_id(), type);
+    assume(it.second);
+    return &it.first->second;
 }
 
-std::string_view Types::type_name(typing::types::Tag tag) const {
-    for(const auto& [tname, t] : this->registered) {
-        if(t->id() == tag)
-            return tname;
-    }
+TypeName Types::type_name(RDType t) const {
+    auto it = this->registered.find(t.id);
 
-    unreachable;
+    if(it == this->registered.end())
+        except("Type id {:x} not found", t.id);
+
+    return it->second.name;
 }
 
 } // namespace redasm::typing

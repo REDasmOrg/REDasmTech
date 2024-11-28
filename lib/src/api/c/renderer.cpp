@@ -30,6 +30,10 @@ void rdrenderer_text(RDRenderer* self, const char* s) {
         spdlog::error("rdrenderer_text: invalid string");
 }
 
+void rdrenderer_ws(RDRenderer* self) {
+    redasm::api::internal::renderer_ws(self);
+}
+
 void rdrenderer_reference(RDRenderer* self, RDAddress address) {
     redasm::api::internal::renderer_reference(self, address);
 }

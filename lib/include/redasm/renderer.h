@@ -23,5 +23,6 @@ REDASM_EXPORT void rdrenderer_mnemonic(RDRenderer* self, const char* s,
 
 REDASM_EXPORT void rdrenderer_register(RDRenderer* self, const char* s);
 REDASM_EXPORT void rdrenderer_text(RDRenderer* self, const char* s);
+REDASM_EXPORT void rdrenderer_ws(RDRenderer* self);
 REDASM_EXPORT void rdrenderer_reference(RDRenderer* self, RDAddress address);
 REDASM_EXPORT void rdrenderer_constant(RDRenderer* self, usize value, int base);

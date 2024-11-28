@@ -4,10 +4,11 @@ namespace {
 
 QString reftype_tostring(const RDRef& r) {
     switch(r.type) {
-        case REF_READ: return "Read";
-        case REF_WRITE: return "Write";
-        case REF_CALL: return "Call";
-        case REF_JUMP: return "Jump";
+        case DR_READ: return "Read";
+        case DR_WRITE: return "Write";
+        case DR_ADDRESS: return "Address";
+        case CR_CALL: return "Call";
+        case CR_JUMP: return "Jump";
         default: break;
     }
 

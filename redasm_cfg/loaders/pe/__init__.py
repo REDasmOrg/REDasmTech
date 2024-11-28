@@ -57,7 +57,7 @@ def check_dotnet(pe):
     if entry.VirtualAddress == 0:
         return None
 
-    va = PE.rva_to_va(pe, entry.VirtualAddress)
+    va = redasm.from_reladdress(entry.VirtualAddress)
     if not va:
         return None
 
@@ -76,7 +76,7 @@ def read_exports(pe):
     if entry.VirtualAddress == 0:
         return
 
-    va = PE.rva_to_va(pe, entry.VirtualAddress)
+    va = redasm.from_reladdress(entry.VirtualAddress)
     if not va:
         return
 
@@ -84,15 +84,15 @@ def read_exports(pe):
     if not exporttable:
         return
 
-    functionsva = PE.rva_to_va(pe, exporttable.AddressOfFunctions)
-    namesva = PE.rva_to_va(pe, exporttable.AddressOfNames)
-    ordinalsva = PE.rva_to_va(pe, exporttable.AddressOfNameOrdinals)
+    functionsva = redasm.from_reladdress(exporttable.AddressOfFunctions)
+    namesva = redasm.from_reladdress(exporttable.AddressOfNames)
+    ordinalsva = redasm.from_reladdress(exporttable.AddressOfNameOrdinals)
 
     if not functionsva or not namesva or not ordinalsva:
         print("Corrupted Export Table")
         return
 
-    nameva = PE.rva_to_va(pe, exporttable.Name)
+    nameva = redasm.from_reladdress(exporttable.Name)
 
     if nameva:
         redasm.set_type(nameva, "str")
@@ -111,7 +111,7 @@ def read_exports(pe):
 
         for j, ord in enumerate(ordinals):
             if ord == i:
-                nameaddr = PE.rva_to_va(pe, names[j])
+                nameaddr = redasm.from_reladdress(names[j])
                 ordinal = exporttable.Base + ord
                 break
 
@@ -120,10 +120,7 @@ def read_exports(pe):
         else:
             name = f"Ordinal__{redasm.to_hex(ordinal, 4)}"
 
-        ep = pe.optionalheader.ImageBase + f
-        redasm.set_function_as(ep, name)
-        redasm.set_export(ep)
-        redasm.enqueue(ep)
+        redasm.set_entry(redasm.from_reladdress(f), name)
 
 
 def read_imports(pe):
@@ -131,7 +128,7 @@ def read_imports(pe):
     if entry.VirtualAddress == 0:
         return
 
-    va = PE.rva_to_va(pe, entry.VirtualAddress)
+    va = redasm.from_reladdress(entry.VirtualAddress)
     if not va:
         return
 
@@ -139,16 +136,14 @@ def read_imports(pe):
     entry = redasm.set_type(va, "IMAGE_IMPORT_DESCRIPTOR")
 
     while entry and (entry.FirstThunk != 0 or entry.OriginalFirstThunk != 0):
-        moduleva = PE.rva_to_va(pe, entry.Name)
+        moduleva = redasm.from_reladdress(entry.Name)
 
         if moduleva:
             modulename = redasm.set_type(moduleva, "str").lower()
             pe.classifier.classify_import(modulename)
 
-            thunkstart = PE.rva_to_va(
-                pe, entry.OriginalFirstThunk or entry.FirstThunk)
-
-            iatstart = PE.rva_to_va(pe, entry.FirstThunk)
+            thunkstart = redasm.from_reladdress(entry.OriginalFirstThunk or entry.FirstThunk)
+            iatstart = redasm.from_reladdress(entry.FirstThunk)
 
             if thunkstart:
                 nthunks, currva = 0, thunkstart
@@ -158,25 +153,22 @@ def read_imports(pe):
                     importname = ""
 
                     # Instructions refers to FT
-                    iatva = iatstart + \
-                        (nthunks * redasm.size_of(pe.integertype))
+                    iatva = iatstart + (nthunks * redasm.size_of(pe.integertype))
 
                     if thunk & ORDINAL_FLAG:
                         ordinal = thunk ^ ORDINAL_FLAG
-                        importname = pe.get_import_name(
-                            modulename, f"ordinal_{ordinal}")
+                        importname = pe.get_import_name(modulename, f"ordinal_{ordinal}")
                     else:
-                        importbynameva = PE.rva_to_va(pe, thunk)
+                        importbynameva = redasm.from_reladdress(thunk)
 
                         if importbynameva:
-                            name = redasm.set_type(
-                                importbynameva + redasm.size_of("u16"), "str")
+                            name = redasm.set_type(importbynameva + redasm.size_of("u16"), "str")
                             importname = pe.get_import_name(modulename, name)
-                            redasm.set_type_as(
-                                importbynameva, "u16", f"{importname}_hint")
+                            redasm.set_type(importbynameva, "u16")
+                            redasm.set_name(importbynameva, f"{importname}_hint", redasm.SN_DEFAULT)
 
-                    redasm.set_type_as(iatva, pe.integertype, importname)
-                    redasm.set_import(iatva)
+                    redasm.set_type(iatva, pe.integertype)
+                    redasm.set_name(iatva, importname, redasm.SN_IMPORT)
 
                     currva = currva + redasm.size_of(pe.integertype)
                     nthunks = nthunks + 1
@@ -191,7 +183,7 @@ def read_exceptions(pe):
     if entry.VirtualAddress == 0:
         return
 
-    va = PE.rva_to_va(pe, entry.VirtualAddress)
+    va = redasm.from_reladdress(entry.VirtualAddress)
     if not va:
         return
 
@@ -204,7 +196,7 @@ def read_exceptions(pe):
 
         va = pe.optionalheader.ImageBase + e.BeginAddress
 
-        unwindva = PE.rva_to_va(pe, e.UnwindInfoAddress)
+        unwindva = redasm.from_reladdress(e.UnwindInfoAddress)
         if not unwindva:
             continue
 
@@ -221,7 +213,7 @@ def read_debuginfo(pe):
     if entry.VirtualAddress == 0:
         return
 
-    va = PE.rva_to_va(pe, entry.VirtualAddress)
+    va = redasm.from_reladdress(entry.VirtualAddress)
     if not va:
         return
 
@@ -239,10 +231,10 @@ def read_debuginfo(pe):
         dbgva = 0
 
         if dbgdir.AddressOfRawData:
-            dbgva = PE.rva_to_va(pe, dbgdir.AddressOfRawData)
+            dbgva = PE.redasm.from_reladdress(dir.AddressOfRawData)
 
         if not dbgva and dbgdir.PointerToRawData:
-            dbgva = redasm.offset_to_address(dbgdir.PointerToRawData)
+            dbgva = redasm.to_address(dbgdir.PointerToRawData)
 
         if not dbgva:
             continue
@@ -303,7 +295,7 @@ def read_resources(pe):
     if entry.VirtualAddress == 0:
         return
 
-    va = PE.rva_to_va(pe, entry.VirtualAddress)
+    va = redasm.from_reladdress(entry.VirtualAddress)
     if va:
         pe.resources = PEResources(pe, va)
         pe.classifier.classify_borland(pe)
@@ -326,13 +318,13 @@ def select_processor(pe):
 def load_default(pe):
     read_exports(pe)
     read_imports(pe)
-    read_exceptions(pe)
-    read_debuginfo(pe)
-    read_resources(pe)
+    # read_exceptions(pe)
+    # read_debuginfo(pe)
+    # read_resources(pe)
     select_processor(pe)
 
-    ep = pe.optionalheader.ImageBase + pe.optionalheader.AddressOfEntryPoint
-    redasm.set_entry(ep, "__entry_point__")
+    redasm.set_entry(redasm.from_reladdress(pe.optionalheader.AddressOfEntryPoint),
+                     "PE_EntryPoint")
 
 
 def init():
@@ -357,15 +349,15 @@ def init():
         osize = PE.aligned(
             sect.SizeOfRawData, filealign) if startoff > 0 else 0
 
-        segtype = redasm.SEGMENT_UNKNOWN
+        segtype = redasm.SEG_UNKNOWN
 
         if (sect.Characteristics & PEH.IMAGE_SCN_CNT_CODE) or (sect.Characteristics & PEH.IMAGE_SCN_MEM_EXECUTE):
-            segtype |= redasm.SEGMENT_HASCODE
+            segtype |= redasm.SEG_HASCODE
         elif ep and (ep >= sect.VirtualAddress and ep < sect.VirtualAddress + asize):
-            segtype |= redasm.SEGMENT_HASCODE
+            segtype |= redasm.SE_HASCODE
 
         if (sect.Characteristics & PEH.IMAGE_SCN_CNT_INITIALIZED_DATA) or (sect.Characteristics & PEH.IMAGE_SCN_CNT_UNINITIALIZED_DATA):
-            segtype |= redasm.SEGMENT_HASDATA
+            segtype |= redasm.SEG_HASDATA
 
         redasm.map_segment_n(sect.Name, startva, asize,
                              startoff, osize, segtype)

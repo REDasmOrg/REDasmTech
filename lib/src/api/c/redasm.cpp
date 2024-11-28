@@ -44,14 +44,14 @@ bool rd_gettype(RDAddress address, const char* tname, RDValue* v) {
     return false;
 }
 
-bool rd_getep(RDAddress* ep) {
-    return redasm::api::internal::get_ep().map_or(
-        [&](RDAddress addr) {
-            if(ep)
-                *ep = addr;
-            return true;
-        },
-        false);
+usize rd_getentries(RDAddress** entries) {
+    static std::vector<RDAddress> res;
+    res = redasm::api::internal::get_entries();
+
+    if(entries)
+        *entries = res.data();
+
+    return res.size();
 }
 
 bool rd_tick(const RDEngineStatus** s) {
@@ -111,12 +111,6 @@ usize rd_test(RDBuffer* buffer, const RDTestResult** result) {
     return res.size();
 }
 
-void rd_enqueue(RDAddress address) { redasm::api::internal::enqueue(address); }
-
-void rd_schedule(RDAddress address) {
-    redasm::api::internal::schedule(address);
-}
-
 void rd_disassemble() { redasm::api::internal::disassemble(); }
 void rd_select(RDContext* context) { redasm::api::internal::select(context); }
 bool rd_destroy(void) { return redasm::api::internal::destroy(); }
@@ -129,22 +123,19 @@ bool rd_setcomment(RDAddress address, const char* comment) {
     return false;
 }
 
-bool rd_settype(RDAddress address, const char* tname) {
+bool rd_settype(RDAddress address, const RDType* type) {
+    return redasm::api::internal::set_type(address, type).has_value();
+}
+
+bool rd_settypename(RDAddress address, const char* tname) {
     if(tname)
-        return redasm::api::internal::set_type(address, tname).has_value();
+        return redasm::api::internal::set_typename(address, tname).has_value();
 
     return false;
 }
 
 bool rd_setfunction(RDAddress address) {
     return redasm::api::internal::set_function(address);
-}
-
-bool rd_setfunctionas(RDAddress address, const char* name) {
-    if(name)
-        return redasm::api::internal::set_function_as(address, name);
-
-    return false;
 }
 
 bool rd_setentry(RDAddress address, const char* name) {
@@ -155,8 +146,12 @@ bool rd_setentry(RDAddress address, const char* name) {
     return redasm::api::internal::set_entry(address, name);
 }
 
-bool rd_setname(RDAddress address, const char* name) {
-    return name && redasm::api::internal::set_name(address, name);
+bool rd_setname(RDAddress address, const char* name, usize flags) {
+    return name && redasm::api::internal::set_name(address, name, flags);
+}
+
+void rd_addref(RDAddress fromaddr, RDAddress toaddr, usize type) {
+    redasm::api::internal::add_ref(fromaddr, toaddr, type);
 }
 
 bool rd_getaddress(const char* name, RDAddress* address) {
@@ -209,7 +204,7 @@ bool rd_offsettosegment(RDOffset offset, RDSegment* s) {
 }
 
 bool rd_addresstoffset(RDAddress address, RDOffset* offset) {
-    auto v = redasm::api::internal::address_to_offset(address);
+    auto v = redasm::api::internal::to_offset(address);
     if(!v)
         return false;
 
@@ -219,7 +214,7 @@ bool rd_addresstoffset(RDAddress address, RDOffset* offset) {
 }
 
 bool rd_offsettoaddress(RDOffset offset, RDAddress* address) {
-    auto v = redasm::api::internal::offset_to_address(offset);
+    auto v = redasm::api::internal::to_address(offset);
     if(!v)
         return false;
 

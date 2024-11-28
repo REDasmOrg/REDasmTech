@@ -14,25 +14,25 @@ namespace {
 constexpr usize COLUMN_PADDING = 6;
 
 template<typename T>
-std::pair<bool, std::string> surface_checkpointer(const typing::ParsedType& pt,
+std::pair<bool, std::string> surface_checkpointer(const typing::TypeDef* td,
                                                   T v) {
     Context* ctx = state::context;
 
-    if(v) {
-        if(pt.modifier == typing::TYPEMODIFIER_POINTER) {
-            auto idx = ctx->address_to_index(static_cast<RDAddress>(v));
-            if(idx)
-                return {true, ctx->get_name(*idx)};
-        }
-        else if(pt.modifier == typing::TYPEMODIFIER_RELPOINTER) {
-            RDAddress address = ctx->baseaddress + static_cast<RDAddress>(v);
-            auto idx = ctx->address_to_index(address);
-            if(idx)
-                return {true, ctx->get_name(*idx)};
-        }
-    }
+    // if(v) {
+    //     if(pt.modifier == typing::TYPEMODIFIER_POINTER) {
+    //         auto idx = ctx->address_to_index(static_cast<RDAddress>(v));
+    //         if(idx)
+    //             return {true, ctx->get_name(*idx)};
+    //     }
+    //     else if(pt.modifier == typing::TYPEMODIFIER_RELPOINTER) {
+    //         RDAddress address = ctx->baseaddress + static_cast<RDAddress>(v);
+    //         auto idx = ctx->address_to_index(address);
+    //         if(idx)
+    //             return {true, ctx->get_name(*idx)};
+    //     }
+    // }
 
-    return {false, ctx->to_hex(v, pt.type->size * 2)};
+    return {false, ctx->to_hex(v, td->size * 2)};
 }
 
 } // namespace
@@ -184,8 +184,9 @@ bool Surface::jump_to_ep() {
     bool res = false;
     this->lock_history([&]() {
         Context* ctx = state::context;
-        res = ctx->entrypoint.map_or(
-            [&](MIndex ep) { return this->jump_to(ep); }, false);
+
+        if(!ctx->entrypoints.empty())
+            res = this->jump_to(ctx->entrypoints.front());
     });
     return res;
 }
@@ -213,12 +214,12 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
             const AddressDetail& d = db.get_detail(item.index);
 
             for(const auto& [fromidx, type] : d.refs) {
-                if(!(type & REF_JUMP) || (type & REF_INDIRECT))
+                if(!(type == CR_JUMP))
                     continue;
 
                 const Segment* seg = state::context->index_to_segment(fromidx);
 
-                if(seg && seg->type & SEGMENTTYPE_HASCODE) {
+                if(seg && (seg->type & SEG_HASCODE)) {
                     this->insert_path(mem->at(fromidx),
                                       this->calculate_index(fromidx), i);
                 }
@@ -226,15 +227,15 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
         }
         else if(b.has(BF_JUMP)) {
             const AddressDetail& d = db.get_detail(item.index);
-
             const auto& mem = state::context->memory;
 
             for(const auto& [toidx, type] : d.jumps) {
-                if(type & REF_INDIRECT)
-                    continue;
+                const Segment* seg = state::context->index_to_segment(toidx);
 
-                if(toidx < mem->size() && mem->at(toidx).has(BF_INSTR))
+                if(seg && (seg->type & SEG_HASCODE) &&
+                   mem->at(toidx).has(BF_INSTR)) {
                     this->insert_path(b, i, this->calculate_index(toidx));
+                }
             }
         }
     }
@@ -439,9 +440,9 @@ void Surface::update_history(History& history) const {
     RDSurfacePosition pos = this->end_selection();
 
     HistoryItem hitem = {
-        *this->start,
-        pos.row,
-        pos.col,
+        .start = *this->start,
+        .row = pos.row,
+        .col = pos.col,
     };
 
     if(history.empty() || history.front() != hitem)
@@ -618,39 +619,53 @@ void Surface::render_function(const ListingItem& item) {
 }
 
 void Surface::render_type(const ListingItem& item) {
-    assume(item.parsed_type_context);
-    assume(item.parsed_type);
+    assume(item.dtype_context);
+    assume(item.dtype);
 
-    tl::optional<typing::ParsedType> pt = item.parsed_type_context;
+    auto type = item.dtype_context;
+    assume(type);
+    const typing::TypeDef* td = state::context->types.get_typedef(*type);
     const auto& mem = state::context->memory;
     std::string fname;
 
     if(item.field_index) {
-        assume(*item.field_index < pt->type->dict.size());
-
-        auto f = pt->type->dict.at(*item.field_index);
+        assume(*item.field_index < td->dict.size());
+        auto f = td->dict.at(*item.field_index);
         fname = f.second;
-        pt = item.parsed_type;
+        type = item.dtype;
+        td = state::context->types.get_typedef(*type);
     }
     else
         fname = state::context->get_name(item.index);
 
-    assume(pt);
-    std::string t = state::context->types.to_string(*pt);
+    assume(type);
+    std::string t = state::context->types.to_string(*type);
 
     m_renderer->new_row(item);
 
     if(item.array_index)
         m_renderer->arr_index(*item.array_index);
-    else if(pt->type->id() != typing::types::STRUCT)
+
+    if(td->is_struct()) {
+        if(!item.array_index) {
+            std::string label = state::context->get_name(item.index);
+            m_renderer->function("struct").ws().type(td->name).ws().chunk(
+                label);
+        }
+
+        m_renderer->word("=");
+        return;
+    }
+
+    if(!item.array_index)
         m_renderer->type(t).ws().chunk(fname);
 
-    switch(pt->type->id()) {
-        case typing::types::CHAR:
-        case typing::types::WCHAR: {
+    switch(td->get_id()) {
+        case typing::ids::CHAR:
+        case typing::ids::WCHAR: {
             tl::optional<char> ch;
 
-            if(pt->type->is_wide())
+            if(td->get_id() == typing::ids::WCHAR)
                 ch = mem->get_wchar(item.index);
             else
                 ch = mem->get_char(item.index);
@@ -663,12 +678,12 @@ void Surface::render_type(const ListingItem& item) {
             break;
         }
 
-        case typing::types::I8:
-        case typing::types::U8: {
+        case typing::ids::I8:
+        case typing::ids::U8: {
             auto v = mem->get_u8(item.index);
 
             if(v.has_value()) {
-                auto [isptr, val] = surface_checkpointer(*pt, *v);
+                auto [isptr, val] = surface_checkpointer(td, *v);
                 m_renderer->word("=").chunk(val, isptr ? THEME_ADDRESS
                                                        : THEME_CONSTANT);
             }
@@ -677,12 +692,12 @@ void Surface::render_type(const ListingItem& item) {
             break;
         }
 
-        case typing::types::I16:
-        case typing::types::U16: {
-            auto v = mem->get_u16(item.index, pt->type->is_big());
+        case typing::ids::I16:
+        case typing::ids::U16: {
+            auto v = mem->get_u16(item.index, td->isbig);
 
             if(v.has_value()) {
-                auto [isptr, val] = surface_checkpointer(*pt, *v);
+                auto [isptr, val] = surface_checkpointer(td, *v);
 
                 m_renderer->word("=").chunk(val, isptr ? THEME_ADDRESS
                                                        : THEME_CONSTANT);
@@ -692,12 +707,12 @@ void Surface::render_type(const ListingItem& item) {
             break;
         }
 
-        case typing::types::I32:
-        case typing::types::U32: {
-            auto v = mem->get_u32(item.index, pt->type->is_big());
+        case typing::ids::I32:
+        case typing::ids::U32: {
+            auto v = mem->get_u32(item.index, td->isbig);
 
             if(v.has_value()) {
-                auto [isptr, val] = surface_checkpointer(*pt, *v);
+                auto [isptr, val] = surface_checkpointer(td, *v);
                 m_renderer->word("=").chunk(val, isptr ? THEME_ADDRESS
                                                        : THEME_CONSTANT);
             }
@@ -706,12 +721,12 @@ void Surface::render_type(const ListingItem& item) {
             break;
         }
 
-        case typing::types::I64:
-        case typing::types::U64: {
-            auto v = mem->get_u64(item.index, pt->type->is_big());
+        case typing::ids::I64:
+        case typing::ids::U64: {
+            auto v = mem->get_u64(item.index, td->isbig);
             assume(v.has_value());
             if(v.has_value()) {
-                auto [isptr, val] = surface_checkpointer(*pt, *v);
+                auto [isptr, val] = surface_checkpointer(td, *v);
                 m_renderer->word("=").chunk(val, isptr ? THEME_ADDRESS
                                                        : THEME_CONSTANT);
             }
@@ -720,11 +735,11 @@ void Surface::render_type(const ListingItem& item) {
             break;
         }
 
-        case typing::types::STR:
-        case typing::types::WSTR: {
+        case typing::ids::STR:
+        case typing::ids::WSTR: {
             tl::optional<std::string> v;
 
-            if(pt->type->is_wide())
+            if(td->get_id() == typing::ids::WSTR)
                 v = state::context->memory->get_wstring(item.index);
             else
                 v = state::context->memory->get_string(item.index);
@@ -733,20 +748,6 @@ void Surface::render_type(const ListingItem& item) {
                 m_renderer->ws().string(*v).chunk(",").constant(0);
             else
                 m_renderer->ws().unknown();
-            break;
-        }
-
-        case typing::types::STRUCT: {
-            if(!item.array_index) {
-                std::string label = state::context->get_name(item.index);
-                m_renderer->function("struct")
-                    .ws()
-                    .type(pt->type->name)
-                    .ws()
-                    .chunk(label);
-            }
-
-            m_renderer->word("=");
             break;
         }
 
@@ -785,37 +786,55 @@ void Surface::render_refs(const ListingItem& item) {
             continue;
 
         const AddressDetail& d = ctx->database.get_detail(index);
+        const typing::TypeDef* td = ctx->types.get_typedef(d.type);
+        assume(td);
 
-        auto pt = ctx->types.parse(d.type_name);
-        assume(pt.has_value());
+        switch(td->get_id()) {
+            case typing::ids::CHAR: {
+                mem->get_string(index, 1).map(
+                    [&](const std::string& x) { m_renderer->string(x); });
+                break;
+            }
 
-        if(!pt->type->is_str() && !pt->type->is_char())
-            continue;
+            case typing::ids::STR: {
+                mem->get_string(index).map(
+                    [&](const std::string& x) { m_renderer->string(x); });
+                break;
+            }
 
-        if(pt->type->is_wide()) {
-            mem->get_wstring(index).map(
-                [&](const std::string& x) { m_renderer->string(x); });
-        }
-        else {
-            mem->get_string(index).map(
-                [&](const std::string& x) { m_renderer->string(x); });
+            case typing::ids::WCHAR: {
+                mem->get_wstring(index, 1).map(
+                    [&](const std::string& x) { m_renderer->string(x); });
+                break;
+            }
+
+            case typing::ids::WSTR: {
+                mem->get_wstring(index).map(
+                    [&](const std::string& x) { m_renderer->string(x); });
+                break;
+            }
+
+            default: break;
         }
     }
 }
 
 void Surface::render_array(const ListingItem& item) {
-    assume(item.parsed_type);
-
-    auto pt = *item.parsed_type;
+    auto type = item.dtype;
+    assume(type);
     std::string chars;
 
-    if(pt.type->is_char()) {
+    const typing::TypeDef* td = state::context->types.get_typedef(*type);
+    assume(td);
+
+    if(td->get_id() == typing::ids::CHAR ||
+       td->get_id() == typing::ids::WCHAR) {
         const auto& mem = state::context->memory;
         usize idx = item.index;
 
-        for(usize i = 0; i < pt.n && idx < mem->size();
-            i++, idx += pt.type->size) {
-            auto b = mem->get_type(idx, pt.type->name);
+        for(usize i = 0; i < type->n && idx < mem->size();
+            i++, idx += td->size) {
+            auto b = mem->get_type(idx, td->to_type());
 
             if(!b) {
                 chars += "\",?\"";
@@ -830,16 +849,19 @@ void Surface::render_array(const ListingItem& item) {
     }
 
     if(item.field_index) {
-        auto ptc = *item.parsed_type_context;
-        assume(*item.field_index < ptc.type->dict.size());
-        auto field = ptc.type->dict[*item.field_index];
+        auto ptc = item.dtype_context;
+        assume(ptc);
+        const typing::TypeDef* ptd = state::context->types.get_typedef(*ptc);
+
+        assume(*item.field_index < ptd->dict.size());
+        auto field = ptd->dict[*item.field_index];
 
         m_renderer->new_row(item);
 
-        if(pt.type->id() == typing::types::STRUCT)
+        if(td->is_struct())
             m_renderer->function("struct ");
 
-        m_renderer->type(state::context->types.to_string(pt))
+        m_renderer->type(state::context->types.to_string(*type))
             .ws()
             .chunk(field.second)
             .word("=");
@@ -850,11 +872,13 @@ void Surface::render_array(const ListingItem& item) {
     else {
         m_renderer->new_row(item);
 
-        if(pt.type->id() == typing::types::STRUCT)
+        if(td->is_struct())
             m_renderer->function("struct ");
 
         std::string name = state::context->get_name(item.index);
-        m_renderer->type(state::context->types.to_string(pt)).ws().chunk(name);
+        m_renderer->type(state::context->types.to_string(*type))
+            .ws()
+            .chunk(name);
 
         if(item.array_index)
             m_renderer->arr_index(*item.array_index);

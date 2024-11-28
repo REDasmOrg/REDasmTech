@@ -1,7 +1,6 @@
 #include "emulator.h"
 #include "../api/marshal.h"
 #include "../context.h"
-#include "../memory/stringfinder.h"
 #include "../state.h"
 #include <algorithm>
 
@@ -21,166 +20,186 @@ void sorted_unique_insert(std::vector<AddressDetail::Ref>& v,
 
 } // namespace
 
-bool Emulator::enqueue(MIndex idx) {
-    if(idx >= state::context->memory->size())
+const Segment* Emulator::get_segment(MIndex idx) const {
+    if(m_currsegment &&
+       (idx >= m_currsegment->index && idx < m_currsegment->endindex))
+        return m_currsegment;
+
+    m_currsegment = state::context->index_to_segment(idx);
+    return m_currsegment;
+}
+
+void Emulator::add_ref(MIndex fromidx, MIndex toidx, usize type) {
+    Context* ctx = state::context;
+    if(toidx >= ctx->memory->size())
+        return;
+
+    // stringfinder::classify(toidx).map([&](const RDStringResult& x) {
+    //     ctx->memory->unset_n(toidx, x.totalsize);
+    //     ctx->set_type(toidx, x.type);
+    //     ctx->memory->set(toidx, BF_WEAK);
+    // });
+
+    switch(type) {
+        case DR_READ:
+        case DR_WRITE:
+        case DR_ADDRESS: break;
+
+        case CR_FLOW: {
+            this->qflow.push_back({
+                .from = AddressDetail::Ref{.index = fromidx, .type = type},
+                .index = toidx,
+            });
+            break;
+        }
+
+        case CR_JUMP: {
+            this->qjump.push_back({
+                .from = AddressDetail::Ref{.index = fromidx, .type = type},
+                .index = toidx,
+            });
+            break;
+        }
+
+        case CR_CALL: {
+            this->qcall.push_back({
+                .from = AddressDetail::Ref{.index = fromidx, .type = type},
+                .index = toidx,
+            });
+            break;
+        }
+
+        default: unreachable;
+    }
+}
+
+bool Emulator::check_qitem(const Emulator::QueueItem& item,
+                           const std::string& errmsg) const {
+    const Segment* s = this->get_segment(item.index);
+
+    if(!s) {
+        state::context->add_problem(item.index, errmsg);
         return false;
+    }
 
-    const Segment* s = this->get_segment(idx);
-    if(!s || !(s->type & SEGMENTTYPE_HASCODE))
-        return false;
-
-    // Already decoded
-    if(state::context->memory->at(idx).has(BF_INSTR))
-        return true;
-
-    // Don't enqueue duplicates
-    if(!m_pending.empty() && m_pending.front() == idx)
-        return true;
-
-    m_pending.push_front(idx);
     return true;
 }
 
-bool Emulator::schedule(MIndex idx) {
-    if(idx >= state::context->memory->size())
-        return false;
-
-    const Segment* s = this->get_segment(idx);
-    if(!s || !(s->type & SEGMENTTYPE_HASCODE))
-        return false;
-
-    // Already decoded
-    if(state::context->memory->at(idx).has(BF_INSTR))
-        return true;
-
-    // Don't schedule duplicates
-    if(!m_pending.empty() && m_pending.back() == idx)
-        return true;
-
-    m_pending.push_back(idx);
-    return true;
-}
-
-void Emulator::decode(MIndex idx) {
+void Emulator::tick() {
+    QueueItem curr;
     Context* ctx = state::context;
     auto& mem = ctx->memory;
 
-    if(Byte b = mem->at(idx); !b.has_byte() || b.is_strong())
+    if(!this->qflow.empty()) {
+        curr = this->qflow.front();
+        this->qflow.pop_front();
+
+        if(!this->check_qitem(curr, fmt::format("Invalid FLOW address")))
+            return;
+
+        if(curr.from) {
+            AddressDetail& dfrom = ctx->database.check_detail(curr.from->index);
+            dfrom.flow = curr.index;
+
+            // Apply 'flow' to previous instruction
+            ctx->memory->set(curr.from->index, BF_FLOW);
+        }
+    }
+    else if(!this->qjump.empty()) {
+        curr = this->qjump.front();
+        this->qjump.pop_front();
+
+        if(!this->check_qitem(curr, fmt::format("Invalid JUMP address")))
+            return;
+
+        AddressDetail& dto = ctx->database.check_detail(curr.index);
+
+        if(curr.from) {
+            AddressDetail& dfrom = ctx->database.check_detail(curr.from->index);
+            sorted_unique_insert(
+                dfrom.jumps, {.index = curr.index, .type = curr.from->type});
+            sorted_unique_insert(dto.refs, *curr.from);
+            mem->set(curr.from->index, BF_JUMP);
+        }
+
+        mem->set_flags(curr.index, BF_REFS, !dto.refs.empty());
+        mem->set(curr.index, BF_JUMPDST);
+    }
+    else if(!qcall.empty()) {
+        curr = qcall.front();
+        qcall.pop_front();
+
+        if(!this->check_qitem(curr, fmt::format("Invalid CALL address")))
+            return;
+
+        if(!ctx->set_function(curr.index)) {
+            ctx->add_problem(curr.index,
+                             fmt::format("Function creation failed"));
+            return;
+        }
+
+        AddressDetail& dto = ctx->database.check_detail(curr.index);
+
+        if(curr.from) {
+            AddressDetail& dfrom = ctx->database.check_detail(curr.from->index);
+            sorted_unique_insert(
+                dfrom.jumps, {.index = curr.index, .type = curr.from->type});
+            sorted_unique_insert(dto.refs, *curr.from);
+            mem->set(curr.from->index, BF_CALL);
+        }
+
+        mem->set_flags(curr.index, BF_REFS, !dto.refs.empty());
+        mem->set(curr.index, BF_FUNCTION);
+    }
+    else
         return;
+
+    assume(m_currsegment);
+    assume(curr.index < ctx->memory->size());
+
+    if(!(m_currsegment->type & SEG_HASCODE)) {
+        ctx->add_problem(
+            curr.index,
+            fmt::format("Trying to execute in non-code segment '{}'",
+                        m_currsegment->name));
+        return;
+    }
 
     const RDProcessor* p = ctx->processor;
     assume(p);
+    assume(p->emulate);
 
-    if(!p->emulate)
-        return;
+    if(ctx->memory->at(curr.index).is_unknown()) {
+        this->pc = curr.index;
 
-    m_currindex = idx;
+        auto address = ctx->index_to_address(curr.index);
+        assume(address.has_value());
 
-    auto address = ctx->index_to_address(idx);
-    assume(address.has_value());
-    mem->unset(idx);
+        RDInstruction instr = {
+            .address = *address,
+        };
 
-    RDInstructionDetail d = {
-        .address = *address,
-        .size = 0,
-        .type = IT_NONE,
-    };
-
-    p->emulate(p, api::to_c(this), &d);
-
-    if(!d.size)
-        return;
-
-    mem->set_n(idx, d.size, BF_INSTR | BF_WEAK);
-
-    if(d.type & IT_JUMP) {
-        ctx->database.check_detail(idx); // Initialize DB Entry
-        ctx->memory->set(idx, BF_JUMP);
-    }
-
-    if(d.type & IT_CALL) {
-        ctx->database.check_detail(idx); // Initialize DB Entry
-        ctx->memory->set(idx, BF_CALL);
-    }
-
-    if(!(d.type & IT_STOP) && this->enqueue(idx + d.size)) {
-        AddressDetail& ad = ctx->database.check_detail(idx);
-        ad.flow = idx + d.size;
-        ctx->memory->set(idx, BF_FLOW);
-    }
-}
-
-const Segment* Emulator::get_segment(MIndex idx) {
-    if(m_segment && (idx >= m_segment->index && idx < m_segment->endindex))
-        return m_segment;
-
-    m_segment = state::context->index_to_segment(idx);
-    return m_segment;
-}
-
-void Emulator::add_ref(MIndex idx, usize type) {
-    Context* ctx = state::context;
-    if(idx >= ctx->memory->size())
-        return;
-
-    AddressDetail& dto = ctx->database.check_detail(m_currindex);
-
-    if(type & REF_CALL) {
-        if(ctx->set_function(idx))
-            this->schedule(idx);
-        sorted_unique_insert(dto.calls, {.index = idx, .type = type});
-    }
-
-    if(type & REF_JUMP) {
-        if(this->schedule(idx))
-            ctx->memory->set(idx, BF_JUMPDST);
-        sorted_unique_insert(dto.jumps, {.index = idx, .type = type});
-    }
-
-    // Data reference
-    if(!(type & (REF_CALL | REF_JUMP))) {
-        if(!(type & REF_INDIRECT) && !ctx->memory->at(idx).is_strong()) {
-            stringfinder::classify(idx).map([&](const RDStringResult& x) {
-                ctx->memory->unset_n(idx, x.totalsize);
-                ctx->set_type(idx, x.type);
-                ctx->memory->set(idx, BF_WEAK);
-            });
+        if(p->decode)
+            p->decode(p, &instr);
+        else {
+            ctx->add_problem(
+                curr.index,
+                fmt::format("decode() not implemented for processor '{}'",
+                            p->name));
+            return;
         }
 
-        sorted_unique_insert(dto.refsto, {.index = idx, .type = type});
-        ctx->memory->set(m_currindex, BF_REFSTO);
+        if(instr.length) {
+            p->emulate(p, api::to_c(this), &instr);
+            mem->set_n(curr.index, instr.length, BF_INSTR);
+        }
     }
-
-    AddressDetail& dby = ctx->database.check_detail(idx);
-    sorted_unique_insert(dby.refs, {.index = m_currindex, .type = type});
-    ctx->memory->set_flags(idx, BF_REFS, !dby.refs.empty());
 }
 
-void Emulator::set_type(MIndex idx, std::string_view tname) {
-    Context* ctx = state::context;
-
-    if(idx < ctx->memory->size() && ctx->set_type(idx, tname))
-        ctx->memory->set(idx, BF_WEAK);
-}
-
-void Emulator::next() {
-    if(m_pending.empty())
-        return;
-
-    usize idx = m_pending.front();
-    m_pending.pop_front();
-    this->decode(idx);
-}
-
-tl::optional<RDAddress> Emulator::get_next_address() const {
-    if(m_pending.empty())
-        return tl::nullopt;
-
-    return state::context->index_to_address(m_pending.front());
-}
-
-bool Emulator::has_next() const {
-    return state::context->processor->emulate && !m_pending.empty();
+bool Emulator::has_pending() const {
+    return state::context->processor->emulate &&
+           (!this->qflow.empty() || !this->qjump.empty() ||
+            !this->qcall.empty());
 }
 
 } // namespace redasm

@@ -20,7 +20,7 @@ public:
 
     [[nodiscard]] tl::optional<std::string> peek_string(usize n) const;
     [[nodiscard]] tl::optional<std::string> peek_string() const;
-    tl::optional<typing::Value> read_type(std::string_view tname);
+    tl::optional<typing::Value> read_type(typing::FullTypeName tname);
     tl::optional<std::string> read_string(usize n);
     tl::optional<std::string> read_string();
 

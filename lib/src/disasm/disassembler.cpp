@@ -18,13 +18,13 @@ bool Disassembler::execute(const RDAnalysisStatus** s) {
         switch(m_currentstep) {
             case STEP_INIT: this->init_step(); break;
             case STEP_EMULATE: this->emulate_step(); break;
-            case STEP_CFG: this->cfg_step(); break;
+            case STEP_PROCESS: this->process_step(); break;
             case STEP_ANALYZE: this->analyze_step(); break;
             default: unreachable;
         }
     }
     else
-        state::context->process_memory();
+        state::context->process_listing();
 
     if(s)
         *s = m_status.get();
@@ -36,14 +36,15 @@ void Disassembler::execute(usize step) {
     if(step == m_currentstep)
         return;
 
-    this->set_step(step);
+    m_currentstep = step;
     this->execute(nullptr);
 }
 
-void Disassembler::set_step(usize s) { m_currentstep = s; }
-
 void Disassembler::next_step() {
-    m_currentstep = std::min<usize>(m_currentstep + 1, STEP_DONE);
+    if(emulator.has_pending())
+        m_currentstep = STEP_EMULATE; // Repeat emulation
+    else
+        m_currentstep = std::min<usize>(m_currentstep + 1, STEP_DONE);
 }
 
 void Disassembler::init_step() {
@@ -62,26 +63,24 @@ void Disassembler::init_step() {
     m_status->stepslist = STEPS_LIST.data();
     m_status->stepscount = STEPS_LIST.size();
 
-    state::context->process_memory();
+    state::context->process_listing();
     this->next_step();
 }
 
 void Disassembler::emulate_step() {
-    if(emulator.has_next()) {
-        auto a = emulator.get_next_address();
+    if(emulator.has_pending()) {
+        emulator.tick();
+        auto a = state::context->index_to_address(emulator.pc);
         a.map([&](RDAddress address) { m_status->address.value = address; });
         m_status->address.valid = a.has_value();
-        emulator.next();
     }
-    else {
-        state::context->process_functions();
-        this->next_step();
-    }
+    else
+        m_currentstep = STEP_PROCESS;
 }
 
 void Disassembler::analyze_step() {
     for(const RDAnalyzer& a : state::context->analyzers) {
-        if((a.flags & ANALYZER_RUNONCE) && (m_analyzerruns[a.name] > 0))
+        if((a.flags & ANA_RUNONCE) && (m_analyzerruns[a.name] > 0))
             continue;
 
         m_analyzerruns[a.name]++;
@@ -90,12 +89,12 @@ void Disassembler::analyze_step() {
             a.execute(&a);
     }
 
-    if(emulator.has_next())
-        this->set_step(STEP_EMULATE);
-    else
-        this->next_step();
+    this->next_step();
 }
 
-void Disassembler::cfg_step() { this->next_step(); }
+void Disassembler::process_step() {
+    state::context->process_segments();
+    this->next_step();
+}
 
 } // namespace redasm

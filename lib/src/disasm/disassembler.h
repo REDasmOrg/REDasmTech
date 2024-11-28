@@ -14,12 +14,11 @@ public:
     void reset() { m_currentstep = STEP_INIT; }
 
 private:
-    void set_step(usize s);
     void next_step();
     void init_step();
     void emulate_step();
     void analyze_step();
-    void cfg_step();
+    void process_step();
 
 public:
     Emulator emulator;

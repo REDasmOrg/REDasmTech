@@ -100,7 +100,7 @@ void rename() {
         g_mainwindow, QString("Rename @ %1").arg(rd_tohex(address)), "New Name",
         QLineEdit::Normal, name, &ok);
 
-    if(ok && rd_setname(address, qUtf8Printable(s)))
+    if(ok && rd_setname(address, qUtf8Printable(s), SN_DEFAULT))
         cv->invalidate();
 }
 

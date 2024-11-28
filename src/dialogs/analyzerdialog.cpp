@@ -52,7 +52,7 @@ void AnalyzerDialog::get_analyzers() {
 
         nameitem->setCheckable(true);
 
-        nameitem->setCheckState(m_analyzers[i].flags & ANALYZER_SELECTED
+        nameitem->setCheckState(m_analyzers[i].flags & ANA_SELECTED
                                     ? Qt::Checked
                                     : Qt::Unchecked);
 

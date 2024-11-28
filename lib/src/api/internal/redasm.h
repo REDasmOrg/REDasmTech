@@ -41,7 +41,7 @@ void disassemble();
 bool tick(const RDAnalysisStatus** s);
 std::string to_hex_n(usize v, usize n);
 std::string to_hex(usize v);
-tl::optional<RDAddress> get_ep();
+std::vector<RDAddress> get_entries();
 
 usize get_segments(const RDSegment** segments);
 bool find_segment(RDAddress address, RDSegment* segment);
@@ -61,24 +61,23 @@ std::string get_comment(RDAddress address);
 std::string get_name(RDAddress address);
 std::string render_text(RDAddress address);
 
-tl::optional<typing::Value> set_type(RDAddress address, std::string_view tname);
-tl::optional<typing::Value> set_type_as(RDAddress address,
-                                        std::string_view tname,
-                                        const std::string& dbname);
+tl::optional<typing::Value> set_type(RDAddress address, const RDType* t);
 
+tl::optional<typing::Value> set_typename(RDAddress address,
+                                         typing::FullTypeName tname);
 bool set_comment(RDAddress address, std::string_view comment);
-bool set_name(RDAddress address, const std::string& name);
-bool set_export(RDAddress address);
-bool set_import(RDAddress address);
-bool set_function_as(RDAddress address, const std::string& name);
+bool set_name(RDAddress address, const std::string& name, usize flags);
 bool set_function(RDAddress address);
 bool set_entry(RDAddress address, const std::string& name);
+void add_ref(RDAddress fromaddr, RDAddress toaddr, usize type);
+void add_ref(RDAddress toaddr, usize type);
 
 bool is_address(RDAddress address);
 bool address_to_segment(RDAddress address, RDSegment* res);
 bool offset_to_segment(RDOffset offset, RDSegment* res);
-tl::optional<RDOffset> address_to_offset(RDAddress address);
-tl::optional<RDAddress> offset_to_address(RDOffset offset);
+tl::optional<RDOffset> to_offset(RDAddress address);
+tl::optional<RDAddress> to_address(RDOffset offset);
+tl::optional<RDAddress> from_reladdress(RDAddress reladdress);
 tl::optional<usize> address_to_index(RDAddress address);
 tl::optional<RDAddress> index_to_address(usize idx);
 

@@ -157,53 +157,24 @@ PyObject* set_type(PyObject* /*self*/, PyObject* args) {
     if(!PyArg_ParseTuple(args, "Kz", &address, &name))
         return nullptr;
 
-    return internal::set_type(address, name).map_or(python::to_object, Py_None);
-}
-
-PyObject* set_type_as(PyObject* /*self*/, PyObject* args) {
-    RDAddress address{};
-    const char *name = nullptr, *dbname = nullptr;
-
-    if(!PyArg_ParseTuple(args, "Kzz", &address, &name, &dbname))
-        return nullptr;
-
-    return internal::set_type_as(address, name, dbname)
+    return internal::set_typename(address, name)
         .map_or(python::to_object, Py_None);
 }
 
 PyObject* set_name(PyObject* /*self*/, PyObject* args) {
     RDAddress address{};
     const char* name = nullptr;
+    usize flags = 0;
 
-    if(!PyArg_ParseTuple(args, "Kz", &address, &name))
+    if(!PyArg_ParseTuple(args, "KzK", &address, &name, &flags))
         return nullptr;
 
-    return internal::set_name(address, name) ? Py_True : Py_False;
-}
-
-PyObject* set_export(PyObject* /*self*/, PyObject* args) {
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
-    return internal::set_export(address) ? Py_True : Py_False;
-}
-
-PyObject* set_import(PyObject* /*self*/, PyObject* args) {
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
-    return internal::set_import(address) ? Py_True : Py_False;
+    return PyBool_FromLong(internal::set_name(address, name, flags));
 }
 
 PyObject* set_function(PyObject* /*self*/, PyObject* args) {
     RDAddress address = PyLong_AsUnsignedLongLong(args);
-    return internal::set_function(address) ? Py_True : Py_False;
-}
-
-PyObject* set_function_as(PyObject* /*self*/, PyObject* args) {
-    RDAddress address{};
-    const char* name = nullptr;
-
-    if(!PyArg_ParseTuple(args, "Kz", &address, &name))
-        return nullptr;
-
-    return internal::set_function_as(address, name) ? Py_True : Py_False;
+    return PyBool_FromLong(internal::set_function(address));
 }
 
 PyObject* set_entry(PyObject* /*self*/, PyObject* args) {
@@ -217,7 +188,18 @@ PyObject* set_entry(PyObject* /*self*/, PyObject* args) {
     if(name)
         n = name;
 
-    return internal::set_entry(address, n) ? Py_True : Py_False;
+    return PyBool_FromLong(internal::set_entry(address, n));
+}
+
+PyObject* add_ref(PyObject* /*self*/, PyObject* args) {
+    RDAddress fromaddr{}, toaddr{};
+    usize type = {};
+
+    if(!PyArg_ParseTuple(args, "KKK", &fromaddr, &toaddr, &type))
+        return nullptr;
+
+    internal::add_ref(fromaddr, toaddr, type);
+    Py_RETURN_NONE;
 }
 
 PyObject* get_bool(PyObject* /*self*/, PyObject* args) {
@@ -492,8 +474,8 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
     processor.name = userdata->name.c_str();
     processor.userdata = userdata;
 
-    processor.emulate = [](const RDProcessor* self, RDEmulator* r,
-                           RDInstructionDetail* detail) {
+    processor.emulate = [](const RDProcessor* self, RDEmulator* e,
+                           const RDInstruction* instr) {
         auto* userdata = reinterpret_cast<ProcessorUserData*>(self->userdata);
         PyObject* ret = PyObject_CallNoArgs(userdata->emulate);
         Py_XDECREF(ret);
@@ -539,7 +521,8 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
 
     if(renderinstructionfn) {
         processor.renderinstruction = [](const RDProcessor* self,
-                                         const RDRendererParams* rp) {
+                                         const RDRendererParams* rp,
+                                         const RDInstruction* instr) {
             auto* userdata =
                 reinterpret_cast<ProcessorUserData*>(self->userdata);
             PyObject* ret = PyObject_CallNoArgs(userdata->renderinstruction);
@@ -576,7 +559,7 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args,
     };
 
     const char *name = nullptr, *description = nullptr;
-    usize flags = ANALYZER_NONE;
+    usize flags = ANA_NONE;
     PyObject *executefn = nullptr, *isenabledfn = nullptr;
 
     if(!PyArg_ParseTupleAndKeywords(
@@ -637,9 +620,16 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args,
     Py_RETURN_NONE;
 }
 
-PyObject* get_ep(PyObject* /*self*/, PyObject* /*args*/) {
-    return redasm::api::internal::get_ep().map_or(
-        [](RDAddress ep) { return PyLong_FromUnsignedLongLong(ep); }, Py_None);
+PyObject* get_entries(PyObject* /*self*/, PyObject* /*args*/) {
+    auto entries = redasm::api::internal::get_entries();
+    PyObject* tuple = PyTuple_New(entries.size());
+
+    for(auto it = entries.begin(); it != entries.end(); it++) {
+        usize idx = std::distance(entries.begin(), it);
+        PyTuple_SET_ITEM(tuple, idx, PyLong_FromUnsignedLongLong(*it));
+    }
+
+    return tuple;
 }
 
 PyObject* get_bits(PyObject* /*self*/, PyObject* /*args*/) {
@@ -720,19 +710,28 @@ PyObject* is_address(PyObject* /*self*/, PyObject* args) {
     Py_RETURN_FALSE;
 }
 
-PyObject* address_to_offset(PyObject* /*self*/, PyObject* args) {
+PyObject* to_offset(PyObject* /*self*/, PyObject* args) {
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
-    if(auto v = internal::address_to_offset(address); v)
+    if(auto v = internal::to_offset(address); v)
         return PyLong_FromUnsignedLongLong(*v);
 
     Py_RETURN_NONE;
 }
 
-PyObject* offset_to_address(PyObject* /*self*/, PyObject* args) {
+PyObject* to_address(PyObject* /*self*/, PyObject* args) {
     RDAddress offset = PyLong_AsUnsignedLongLong(args);
 
-    if(auto v = internal::offset_to_address(offset); v)
+    if(auto v = internal::to_address(offset); v)
+        return PyLong_FromUnsignedLongLong(*v);
+
+    Py_RETURN_NONE;
+}
+
+PyObject* from_reladdress(PyObject* /*self*/, PyObject* args) {
+    RDAddress offset = PyLong_AsUnsignedLongLong(args);
+
+    if(auto v = internal::from_reladdress(offset); v)
         return PyLong_FromUnsignedLongLong(*v);
 
     Py_RETURN_NONE;
@@ -799,16 +798,6 @@ PyObject* to_hex(PyObject* /*self*/, PyObject* args, PyObject* kwargs) {
         return PyUnicode_FromString(internal::to_hex_n(v, n).c_str());
 
     return PyUnicode_FromString(internal::to_hex(v).c_str());
-}
-
-PyObject* enqueue(PyObject* self, PyObject* args) {
-    internal::enqueue(PyLong_AsUnsignedLongLong(args));
-    Py_RETURN_NONE;
-}
-
-PyObject* schedule(PyObject* self, PyObject* args) {
-    internal::schedule(PyLong_AsUnsignedLongLong(args));
-    Py_RETURN_NONE;
 }
 
 } // namespace redasm::api::python

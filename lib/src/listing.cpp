@@ -55,7 +55,7 @@ tl::optional<usize> Listing::field_index() const {
     return m_fieldindex.back();
 }
 
-tl::optional<typing::ParsedType> Listing::current_type() const {
+tl::optional<RDType> Listing::current_type() const {
     if(m_currtype.empty())
         return tl::nullopt;
     return m_currtype.back();
@@ -68,21 +68,19 @@ void Listing::pop_fieldindex() {
     m_fieldindex.pop_back();
 }
 
-void Listing::push_type(const typing::ParsedType& pt) {
-    m_currtype.push_back(pt);
-}
+void Listing::push_type(RDType t) { m_currtype.push_back(t); }
 
 void Listing::pop_type() {
     assume(!m_currtype.empty());
     m_currtype.pop_back();
 }
 
-usize Listing::type(MIndex index, const typing::ParsedType& pt) {
+usize Listing::type(MIndex index, RDType t) {
     usize lidx = this->push_item(LISTINGITEM_TYPE, index);
-    m_items[lidx].parsed_type = pt;
+    m_items[lidx].dtype = t;
 
-    if(!m_items[lidx].parsed_type_context)
-        m_items[lidx].parsed_type_context = m_items[lidx].parsed_type;
+    if(!m_items[lidx].dtype_context)
+        m_items[lidx].dtype_context = m_items[lidx].dtype;
 
     if(!this->field_index() && !this->current_type())
         m_symbols.push_back(lidx);
@@ -91,12 +89,12 @@ usize Listing::type(MIndex index, const typing::ParsedType& pt) {
     return lidx;
 }
 
-usize Listing::array(MIndex index, const typing::ParsedType& pt) {
+usize Listing::array(MIndex index, RDType t) {
     usize lidx = this->push_item(LISTINGITEM_ARRAY, index);
-    m_items[lidx].parsed_type = pt;
+    m_items[lidx].dtype = t;
 
-    if(!m_items[lidx].parsed_type_context)
-        m_items[lidx].parsed_type_context = m_items[lidx].parsed_type;
+    if(!m_items[lidx].dtype_context)
+        m_items[lidx].dtype_context = m_items[lidx].dtype;
 
     if(!this->field_index() && !this->current_type())
         m_symbols.push_back(lidx);
@@ -139,7 +137,7 @@ usize Listing::push_item(RDListingItemType type, MIndex index) {
     li.index = index;
     li.indent = m_indent;
     li.field_index = this->field_index();
-    li.parsed_type_context = this->current_type();
+    li.dtype_context = this->current_type();
 
     m_items.push_back(li);
     return idx;

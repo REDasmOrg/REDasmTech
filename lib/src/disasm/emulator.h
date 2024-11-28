@@ -1,30 +1,42 @@
 #pragma once
 
+#include "../database/database.h"
 #include "../segment.h"
 #include <deque>
+#include <redasm/instruction.h>
 #include <redasm/types.h>
 #include <tl/optional.hpp>
 
 namespace redasm {
 
 class Emulator {
+    struct QueueItem {
+        tl::optional<AddressDetail::Ref> from;
+        MIndex index;
+    };
+
 public:
-    bool enqueue(MIndex idx);
-    bool schedule(MIndex idx);
-    void add_ref(MIndex idx, usize type);
-    void set_type(MIndex idx, std::string_view tname);
-    void next();
-    tl::optional<RDAddress> get_next_address() const;
-    [[nodiscard]] bool has_next() const;
+    [[nodiscard]] bool has_pending() const;
+    void add_ref(MIndex fromidx, MIndex toidx, usize type);
+    void tick();
+
+    void add_ref(MIndex toidx, usize type) {
+        this->add_ref(this->pc, toidx, type);
+    }
 
 private:
-    void decode(MIndex address);
-    const Segment* get_segment(MIndex idx);
+    bool check_qitem(const QueueItem& item, const std::string& errmsg) const;
+    const Segment* get_segment(MIndex idx) const;
+
+public:
+    std::deque<QueueItem> qflow;
+    std::deque<QueueItem> qjump;
+    std::deque<QueueItem> qcall;
+    MIndex pc{};
 
 private:
-    std::deque<usize> m_pending;
-    usize m_currindex{};
-    const Segment* m_segment{nullptr};
+    std::deque<MIndex> m_pending; // Obsolete?
+    mutable const Segment* m_currsegment{nullptr};
 };
 
 } // namespace redasm

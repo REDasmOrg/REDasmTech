@@ -6,6 +6,7 @@
 #include <redasm/engine.h>
 #include <redasm/function.h>
 #include <redasm/graph.h>
+#include <redasm/instruction.h>
 #include <redasm/listing.h>
 #include <redasm/loader.h>
 #include <redasm/processor.h>
@@ -26,6 +27,14 @@ typedef enum RDLogLevel {
     LOGLEVEL_CRITICAL,
     LOGLEVEL_OFF,
 } RDLogLevel;
+
+typedef enum RDSetName {
+    SN_DEFAULT = 0,
+    SN_NOWARN = (1 << 0),
+    SN_IMPORT = (1 << 1),
+    SN_WEAK = (1 << 2),
+    SN_FORCE = (1 << 3),
+} RDSetName;
 
 RD_HANDLE(RDContext);
 RD_HANDLE(RDBuffer);
@@ -52,9 +61,9 @@ struct RDMemoryInfo {
 };
 
 typedef enum RDSegmentType {
-    SEGMENTTYPE_UNKNOWN = 0,
-    SEGMENTTYPE_HASDATA = 1 << 0,
-    SEGMENTTYPE_HASCODE = 1 << 1,
+    SEG_UNKNOWN = 0,
+    SEG_HASDATA = 1 << 0,
+    SEG_HASCODE = 1 << 1,
 } RDSegmentType;
 
 typedef struct RDSegment {
@@ -104,23 +113,22 @@ REDASM_EXPORT void rd_memoryinfo(RDMemoryInfo* mi);
 REDASM_EXPORT const char* rd_rendertext(RDAddress address);
 
 REDASM_EXPORT bool rd_gettype(RDAddress address, const char* tname, RDValue* v);
-REDASM_EXPORT bool rd_getep(RDAddress* ep);
+REDASM_EXPORT usize rd_getentries(RDAddress** entries);
 REDASM_EXPORT bool rd_tick(const RDEngineStatus** s);
 
 REDASM_EXPORT void rd_addsearchpath(const char* path);
 REDASM_EXPORT RDBuffer* rd_loadfile(const char* filepath);
 REDASM_EXPORT usize rd_test(RDBuffer* buffer, const RDTestResult** result);
 REDASM_EXPORT void rd_disassemble();
-REDASM_EXPORT void rd_enqueue(RDAddress address);
-REDASM_EXPORT void rd_schedule(RDAddress address);
 
 REDASM_EXPORT bool rd_setcomment(RDAddress address, const char* comment);
-REDASM_EXPORT bool rd_settype(RDAddress address, const char* tname);
+REDASM_EXPORT bool rd_settype(RDAddress address, const RDType* type);
+REDASM_EXPORT bool rd_settypename(RDAddress address, const char* tname);
 REDASM_EXPORT bool rd_setfunction(RDAddress address);
-REDASM_EXPORT bool rd_setfunctionas(RDAddress address, const char* name);
 REDASM_EXPORT bool rd_setentry(RDAddress address, const char* name);
+REDASM_EXPORT void rd_addref(RDAddress fromaddr, RDAddress toaddr, usize type);
 
-REDASM_EXPORT bool rd_setname(RDAddress address, const char* name);
+REDASM_EXPORT bool rd_setname(RDAddress address, const char* name, usize flags);
 REDASM_EXPORT bool rd_getaddress(const char* name, RDAddress* address);
 REDASM_EXPORT const char* rd_getname(RDAddress address);
 REDASM_EXPORT const char* rd_getcomment(RDAddress address);

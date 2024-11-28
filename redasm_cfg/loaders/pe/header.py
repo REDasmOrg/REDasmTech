@@ -136,7 +136,7 @@ IMAGE_NT_HEADERS = (
 )
 
 IMAGE_DATA_DIRECTORY = (
-    ("u32^", "VirtualAddress"),
+    ("u32", "VirtualAddress"),
     ("u32", "Size"),
 )
 
@@ -147,7 +147,7 @@ IMAGE_OPTIONAL_HEADER32 = (
     ("u32", "SizeOfCode"),
     ("u32", "SizeOfInitializedData"),
     ("u32", "SizeOfUninitializedData"),
-    ("u32^", "AddressOfEntryPoint"),
+    ("u32", "AddressOfEntryPoint"),
     ("u32", "BaseOfCode"),
     ("u32", "BaseOfData"),
     ("u32", "ImageBase"),
@@ -181,7 +181,7 @@ IMAGE_OPTIONAL_HEADER64 = (
     ("u32", "SizeOfCode"),
     ("u32", "SizeOfInitializedData"),
     ("u32", "SizeOfUninitializedData"),
-    ("u32^", "AddressOfEntryPoint"),
+    ("u32", "AddressOfEntryPoint"),
     ("u32", "BaseOfCode"),
     ("u64", "ImageBase"),
     ("u32", "SectionAlignment"),
@@ -225,21 +225,21 @@ IMAGE_EXPORT_DIRECTORY = (
     ("u32", "TimeDateStamp"),
     ("u16", "MajorVersion"),
     ("u16", "MinorVersion"),
-    ("u32^", "Name"),
+    ("u32", "Name"),
     ("u32", "Base"),
     ("u32", "NumberOfFunctions"),
     ("u32", "NumberOfNames"),
-    ("u32^", "AddressOfFunctions"),
-    ("u32^", "AddressOfNames"),
-    ("u32^", "AddressOfNameOrdinals"),
+    ("u32", "AddressOfFunctions"),
+    ("u32", "AddressOfNames"),
+    ("u32", "AddressOfNameOrdinals"),
 )
 
 IMAGE_IMPORT_DESCRIPTOR = (
-    ("u32^", "OriginalFirstThunk"),
+    ("u32", "OriginalFirstThunk"),
     ("u32", "TimeDateStamp"),
     ("u32", "ForwarderChain"),
-    ("u32^", "Name"),
-    ("u32^", "FirstThunk"),
+    ("u32", "Name"),
+    ("u32", "FirstThunk"),
 )
 
 IMAGE_DEBUG_DIRECTORY = (
@@ -249,7 +249,7 @@ IMAGE_DEBUG_DIRECTORY = (
     ("u16", "MinorVersion"),
     ("u32", "Type"),
     ("u32", "SizeOfData"),
-    ("u32^", "AddressOfRawData"),
+    ("u32", "AddressOfRawData"),
     ("u32", "PointerToRawData"),
 )
 
@@ -268,14 +268,14 @@ IMAGE_RESOURCE_DIRECTORY_ENTRY = (
 )
 
 IMAGE_RESOURCE_DATA_ENTRY = (
-    ("u32^", "OffsetToData"),
+    ("u32", "OffsetToData"),
     ("u32", "Size"),
     ("u32", "CodePage"),
     ("u32", "Reserved"),
 )
 
 IMAGE_RUNTIME_FUNCTION_ENTRY = (
-    ("u32^", "BeginAddress"),
+    ("u32", "BeginAddress"),
     ("u32", "EndAddress"),
     ("u32", "UnwindInfoAddress"),
 )

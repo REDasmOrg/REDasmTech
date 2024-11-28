@@ -21,8 +21,8 @@ struct ListingItem {
     MIndex end_index;
     usize indent;
 
-    tl::optional<typing::ParsedType> parsed_type_context;
-    tl::optional<typing::ParsedType> parsed_type;
+    tl::optional<RDType> dtype_context;
+    tl::optional<RDType> dtype;
 
     tl::optional<usize> array_index;
     tl::optional<usize> field_index;
@@ -66,8 +66,8 @@ public:
     ConstIterator lower_bound(MIndex idx) const;
     ConstIterator upper_bound(MIndex idx, ConstIterator begin) const;
     void hex_dump(MIndex startindex, MIndex endindex);
-    usize type(MIndex index, const typing::ParsedType& pt);
-    usize array(MIndex index, const typing::ParsedType& pt);
+    usize type(MIndex index, RDType t);
+    usize array(MIndex index, RDType t);
     usize instruction(MIndex index);
     usize jump(MIndex index);
     usize function(MIndex index);
@@ -75,14 +75,14 @@ public:
 
 public: // State management functions
     tl::optional<usize> field_index() const;
-    tl::optional<typing::ParsedType> current_type() const;
+    tl::optional<RDType> current_type() const;
     const Segment* current_segment() const { return m_currentsegment; }
     void clear();
     void push_indent(int c = 1);
     void pop_indent(int c = 1);
     void push_fieldindex(usize arg);
     void pop_fieldindex();
-    void push_type(const typing::ParsedType& pt);
+    void push_type(RDType t);
     void pop_type();
 
 private:
@@ -91,7 +91,7 @@ private:
 
 private:
     std::deque<usize> m_fieldindex;
-    std::deque<typing::ParsedType> m_currtype;
+    std::deque<RDType> m_currtype;
     const Segment* m_currentsegment{nullptr};
     IndexList m_symbols, m_exports, m_imports;
     usize m_indent{0};

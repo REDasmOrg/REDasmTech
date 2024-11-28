@@ -386,8 +386,14 @@ void generate(const Function& f, ILExprList& res, usize maxn) {
             auto address = ctx->index_to_address(idx);
             assume(address.has_value());
 
-            if(!p->lift || !p->lift(p, *address, api::to_c(&res)))
+            RDInstruction instr{.address = *address};
+            if(p->decode)
+                p->decode(p, &instr);
+
+            if(!instr.length || !p->lift ||
+               !p->lift(p, &instr, api::to_c(&res))) {
                 res.append(res.expr_unknown());
+            }
 
             if(res.size() >= maxn)
                 return;

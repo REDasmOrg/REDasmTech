@@ -1,5 +1,5 @@
 #include "common.h"
-#include "../../context.h"
+#include "../../error.h"
 #include "../../state.h"
 
 namespace redasm::api::python {
@@ -15,21 +15,23 @@ PyObject* new_simplenamespace() {
 }
 
 PyObject* to_object(const typing::Value& v) {
-    const typing::Type* t = state::context->types.get_type(v.type);
     PyObject* res = nullptr;
 
     if(v.is_list()) {
-        assume(v.count == v.list.size());
+        assume(v.type.n == v.list.size());
 
-        if(t->is_char()) { // (w)char[N]: convert to string
-            assume(v.count == v.list.size());
-            res = PyUnicode_New(v.count, 127);
+        if(v.type.id == typing::ids::CHAR ||
+           v.type.id == typing::ids::WCHAR) { // (w)char[N]: convert to string
+            assume(v.type.n == v.list.size());
+            res = PyUnicode_New(v.type.n, 127);
 
             for(usize i = 0; i < v.list.size(); i++) {
                 if(v.list[i].ch_v) // Check for '\0'
                     assume(PyUnicode_WriteChar(res, i, v.list[i].ch_v) == 0);
-                else
+                else {
+                    PyUnicode_Resize(&res, i); // Resize to null-terminator
                     break;
+                }
             }
         }
         else {
@@ -39,53 +41,48 @@ PyObject* to_object(const typing::Value& v) {
                 PyList_SetItem(res, i, python::to_object(v.list[i]));
         }
     }
-    else {
-        switch(t->id()) {
-            case typing::types::BOOL: res = v.b_v ? Py_True : Py_False; break;
+    else if(v.is_struct()) {
+        res = python::new_simplenamespace();
 
-            case typing::types::WCHAR:
-            case typing::types::CHAR:
+        for(const auto& [name, field] : v.dict) {
+            PyObject* f = python::to_object(field);
+            assume(f);
+            PyObject_SetAttrString(res, name.data(), f);
+            Py_DECREF(f);
+        }
+    }
+    else {
+        switch(v.type.id) {
+            case typing::ids::BOOL: res = PyBool_FromLong(v.b_v); break;
+
+            case typing::ids::WCHAR:
+            case typing::ids::CHAR:
                 res = PyUnicode_FromStringAndSize(&v.ch_v, 1);
                 break;
 
-            case typing::types::U8:
-                res = PyLong_FromUnsignedLong(v.u8_v);
-                break;
+            case typing::ids::U8: res = PyLong_FromUnsignedLong(v.u8_v); break;
 
-            case typing::types::U16:
+            case typing::ids::U16:
                 res = PyLong_FromUnsignedLong(v.u16_v);
                 break;
 
-            case typing::types::U32:
+            case typing::ids::U32:
                 res = PyLong_FromUnsignedLong(v.u32_v);
                 break;
 
-            case typing::types::U64:
+            case typing::ids::U64:
                 res = PyLong_FromUnsignedLongLong(v.u64_v);
                 break;
 
-            case typing::types::I8: res = PyLong_FromLong(v.i8_v); break;
-            case typing::types::I16: res = PyLong_FromLong(v.i16_v); break;
-            case typing::types::I32: res = PyLong_FromLong(v.i32_v); break;
-            case typing::types::I64: res = PyLong_FromLongLong(v.i64_v); break;
+            case typing::ids::I8: res = PyLong_FromLong(v.i8_v); break;
+            case typing::ids::I16: res = PyLong_FromLong(v.i16_v); break;
+            case typing::ids::I32: res = PyLong_FromLong(v.i32_v); break;
+            case typing::ids::I64: res = PyLong_FromLongLong(v.i64_v); break;
 
-            case typing::types::STR:
-            case typing::types::WSTR:
+            case typing::ids::STR:
+            case typing::ids::WSTR:
                 res = PyUnicode_FromStringAndSize(v.str.data(), v.str.size());
                 break;
-
-            case typing::types::STRUCT: {
-                res = python::new_simplenamespace();
-
-                for(const auto& [_, n] : t->dict) {
-                    PyObject* field = python::to_object(v.dict.at(n));
-                    assume(field);
-                    PyObject_SetAttrString(res, n.data(), field);
-                    Py_DECREF(field);
-                }
-
-                break;
-            }
 
             default: unreachable;
         }

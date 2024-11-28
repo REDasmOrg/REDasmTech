@@ -22,14 +22,11 @@ namespace redasm {
 class Context: public Object {
 public:
     static constexpr usize DEFAULT_MIN_STRING = 4;
-    static constexpr const char* EP_NAME = "__redasm_ep__";
 
     Context(const std::shared_ptr<AbstractBuffer>& b, RDLoader* loader);
     bool activate();
-    void set_export(MIndex idx);
-    void set_import(MIndex idx);
-    bool set_function(MIndex idx, const std::string& name = {});
-    bool set_entry(MIndex idx, std::string name = EP_NAME);
+    bool set_function(MIndex idx);
+    bool set_entry(MIndex idx, const std::string& name = {});
     void memory_map(RDAddress base, usize size);
     RDAddress memory_copy(MIndex idx, RDOffset start, RDOffset end) const;
     tl::optional<MIndex> address_to_index(RDAddress address) const;
@@ -43,14 +40,9 @@ public:
                      RDOffset offset, RDOffset endoffset, usize type);
 
     bool set_comment(MIndex idx, std::string_view comment = {});
-
-    bool set_type(MIndex idx, std::string_view tname,
-                  const std::string& dbname = {});
-
-    bool map_type(MIndex idx, std::string_view tname,
-                  const std::string& dbname = {});
-
-    void set_name(MIndex idx, const std::string& name);
+    bool set_type(MIndex idx, typing::FullTypeName tname);
+    bool set_type(MIndex idx, RDType t);
+    bool set_name(MIndex idx, const std::string& name, usize flags);
 
     tl::optional<MIndex> get_index(std::string_view name) const;
     std::string get_name(MIndex idx) const;
@@ -64,17 +56,23 @@ public:
         return this->baseaddress + memory->size();
     }
 
+    void add_problem(MIndex idx, const std::string& s) {
+        RDAddress address = this->baseaddress + idx;
+        spdlog::warn("{:x}: {}", address, s);
+        this->problems.emplace_back(idx, s);
+    }
+
     [[nodiscard]] std::string to_hex(usize v, int n = 0) const;
-    void process_functions();
-    void process_memory();
+    void process_segments();
+    void process_listing();
 
 private:
     void process_listing_unknown(MIndex& idx);
     void process_listing_data(MIndex& idx);
     void process_listing_code(MIndex& idx);
-    void process_listing_array(MIndex& idx, const typing::ParsedType& pt);
-    usize process_listing_type(MIndex& idx, const typing::ParsedType& pt);
-    void create_function_graph(MIndex idx);
+    void process_listing_array(MIndex& idx, RDType t);
+    LIndex process_listing_type(MIndex& idx, RDType t);
+    void process_function_graph(MIndex idx);
 
     template<typename Function>
     void process_hex_dump(MIndex& idx, Function f) {
@@ -96,15 +94,16 @@ private:
     }
 
 public:
-    tl::optional<MIndex> entrypoint;
     tl::optional<int> bits;
     int minstring{DEFAULT_MIN_STRING};
+    std::vector<std::pair<MIndex, std::string>> problems;
     std::vector<RDAnalyzer> analyzers;
     std::unordered_set<std::string_view> selectedanalyzers;
     std::vector<std::string> availableprocessors;
     std::vector<std::pair<usize, std::string>> collectedtypes;
     std::vector<Segment> segments;
     std::vector<Function> functions;
+    std::vector<MIndex> entrypoints;
     Disassembler disassembler;
     RDAddress baseaddress{};
     RDLoader* loader;

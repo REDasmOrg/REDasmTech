@@ -11,10 +11,16 @@ typedef struct RDStructField {
 RD_HANDLE(RDValueDict);
 RD_HANDLE(RDValueList);
 
+typedef u32 TypeId;
+
+typedef struct RDType {
+    TypeId id;
+    usize n; // > 0 = array
+} RDType;
+
 // clang-format off
 typedef struct RDValue {
-    const char* type;
-    usize count;
+    RDType type;
 
     const RDValueList* list;
     usize listcount;
@@ -33,5 +39,8 @@ typedef struct RDValue {
 // clang-format on
 
 REDASM_EXPORT usize rd_sizeof(const char* tname);
+REDASM_EXPORT bool rd_createtype(const char* tname, RDType* t);
 REDASM_EXPORT const char* rd_createstruct(const char* name,
                                           const RDStructField* fields, usize n);
+
+inline bool rd_istypenull(const RDType* t) { return !t->id; }

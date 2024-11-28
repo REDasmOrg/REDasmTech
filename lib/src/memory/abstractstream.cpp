@@ -16,7 +16,8 @@ AbstractStream::peek_type(std::string_view tname) const {
     return this->buffer().get_type(idx, tname);
 }
 
-tl::optional<typing::Value> AbstractStream::read_type(std::string_view tname) {
+tl::optional<typing::Value>
+AbstractStream::read_type(typing::FullTypeName tname) {
     usize pos = this->index_base() + this->position;
     auto v = this->buffer().get_type(pos, tname, pos);
     if(v)

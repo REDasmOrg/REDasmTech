@@ -88,10 +88,16 @@ public:
     }
 
     [[nodiscard]] tl::optional<typing::Value>
-    get_type(usize idx, std::string_view tname) const;
+    get_type(usize idx, typing::FullTypeName tn) const;
+
+    [[nodiscard]]
+    tl::optional<typing::Value> get_type(usize idx, RDType t) const;
 
     [[nodiscard]] tl::optional<typing::Value>
-    get_type(usize idx, std::string_view tname, usize& lastidx) const;
+    get_type(usize idx, typing::FullTypeName tn, usize& lastidx) const;
+
+    [[nodiscard]] tl::optional<typing::Value> get_type(usize idx, RDType t,
+                                                       usize& lastidx) const;
 
 private:
     template<typename U>
@@ -125,13 +131,12 @@ private:
                                               std::string_view tname) const;
 
     tl::optional<std::string> get_string_impl(usize& idx, usize n,
-                                              std::string_view tname) const;
+                                              typing::TypeName tname) const;
+
+    tl::optional<typing::Value> get_type_impl(usize& idx, RDType t) const;
 
     tl::optional<typing::Value> get_type_impl(usize& idx,
-                                              std::string_view tname) const;
-
-    tl::optional<typing::Value> get_type_impl(usize& idx,
-                                              const typing::Type* t) const;
+                                              const typing::TypeDef* t) const;
 
 public:
     std::string source;

@@ -41,27 +41,28 @@ struct PyModuleDef moduledef = { // NOLINT
 // clang-format on
 
 void init_constants(PyObject* m) {
-    assume(PyModule_AddIntConstant(m, "SEGMENT_UNKNOWN", SEGMENTTYPE_UNKNOWN) ==
-           0);
-    assume(PyModule_AddIntConstant(m, "SEGMENT_HASDATA", SEGMENTTYPE_HASDATA) ==
-           0);
-    assume(PyModule_AddIntConstant(m, "SEGMENT_HASCODE", SEGMENTTYPE_HASCODE) ==
-           0);
+    // clang-format off
+    assume(PyModule_AddIntConstant(m, "SEG_UNKNOWN", SEG_UNKNOWN) == 0);
+    assume(PyModule_AddIntConstant(m, "SEG_HASDATA", SEG_HASDATA) == 0);
+    assume(PyModule_AddIntConstant(m, "SEG_HASCODE", SEG_HASCODE) == 0);
+    assume(PyModule_AddIntConstant(m, "ANA_NONE", ANA_NONE) == 0);
+    assume(PyModule_AddIntConstant(m, "ANA_RUNONCE", ANA_RUNONCE) == 0);
+    assume(PyModule_AddIntConstant(m, "ANA_SELECTED", ANA_SELECTED) == 0);
+    assume(PyModule_AddIntConstant(m, "ANA_EXPERIMENTAL", ANA_EXPERIMENTAL) == 0);
 
-    assume(PyModule_AddIntConstant(m, "ANALYZER_NONE", ANALYZER_NONE) == 0);
-    assume(PyModule_AddIntConstant(m, "ANALYZER_RUNONCE", ANALYZER_RUNONCE) ==
-           0);
-    assume(PyModule_AddIntConstant(m, "ANALYZER_SELECTED", ANALYZER_SELECTED) ==
-           0);
-    assume(PyModule_AddIntConstant(m, "ANALYZER_EXPERIMENTAL",
-                                   ANALYZER_EXPERIMENTAL) == 0);
+    assume(PyModule_AddIntConstant(m, "DR_READ", DR_READ) == 0);
+    assume(PyModule_AddIntConstant(m, "DR_WRITE", DR_WRITE) == 0);
+    assume(PyModule_AddIntConstant(m, "DR_ADDRESS", DR_ADDRESS) == 0);
+    assume(PyModule_AddIntConstant(m, "CR_FLOW", CR_FLOW) == 0);
+    assume(PyModule_AddIntConstant(m, "CR_CALL", CR_CALL) == 0);
+    assume(PyModule_AddIntConstant(m, "CR_JUMP", CR_JUMP) == 0);
 
-    assume(PyModule_AddIntConstant(m, "REF_UNKNOWN", REF_UNKNOWN) == 0);
-    assume(PyModule_AddIntConstant(m, "REF_READ", REF_READ) == 0);
-    assume(PyModule_AddIntConstant(m, "REF_WRITE", REF_WRITE) == 0);
-    assume(PyModule_AddIntConstant(m, "REF_CALL", REF_CALL) == 0);
-    assume(PyModule_AddIntConstant(m, "REF_JUMP", REF_JUMP) == 0);
-    assume(PyModule_AddIntConstant(m, "REF_INDIRECT", REF_INDIRECT) == 0);
+    assume(PyModule_AddIntConstant(m, "SN_DEFAULT", SN_DEFAULT) == 0);
+    assume(PyModule_AddIntConstant(m, "SN_NOWARN", SN_NOWARN) == 0);
+    assume(PyModule_AddIntConstant(m, "SN_IMPORT", SN_IMPORT) == 0);
+    assume(PyModule_AddIntConstant(m, "SN_WEAK", SN_WEAK) == 0);
+    assume(PyModule_AddIntConstant(m, "SN_FORCE", SN_FORCE) == 0);
+    // clang-format on
 }
 
 } // namespace

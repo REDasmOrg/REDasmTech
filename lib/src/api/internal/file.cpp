@@ -11,7 +11,7 @@ usize file_size() {
 }
 
 tl::optional<typing::Value> file_map_type(RDOffset offset,
-                                          std::string_view tname) {
+                                          typing::FullTypeName tname) {
     spdlog::trace("file_map_type({:x}, '{}')", offset, tname);
     if(!state::context->set_type(offset, tname))
         return tl::nullopt;
@@ -22,12 +22,9 @@ tl::optional<typing::Value> file_map_type(RDOffset offset,
 }
 
 tl::optional<typing::Value> file_map_type_as(RDOffset offset,
-                                             std::string_view tname,
+                                             typing::FullTypeName tname,
                                              const std::string& dbname) {
     spdlog::trace("file_map_type_as({:x}, '{}', '{}')", offset, tname, dbname);
-
-    if(!state::context->set_type(offset, tname, dbname))
-        return tl::nullopt;
 
     usize sz = state::context->types.size_of(tname);
     state::context->memory_copy(offset, offset, offset + sz);

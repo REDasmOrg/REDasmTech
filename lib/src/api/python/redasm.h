@@ -24,17 +24,15 @@ PyObject* status(PyObject* self, PyObject* args);
 PyObject* set_loglevel(PyObject* self, PyObject* args);
 PyObject* symbolize(PyObject* self, PyObject* args);
 PyObject* is_address(PyObject* self, PyObject* args);
-PyObject* address_to_offset(PyObject* self, PyObject* args);
-PyObject* offset_to_address(PyObject* self, PyObject* args);
+PyObject* to_offset(PyObject* self, PyObject* args);
+PyObject* to_address(PyObject* self, PyObject* args);
+PyObject* from_reladdress(PyObject* self, PyObject* args);
 PyObject* address_to_index(PyObject* self, PyObject* args);
 PyObject* index_to_address(PyObject* self, PyObject* args);
 PyObject* check_string(PyObject* self, PyObject* args);
 PyObject* to_hex(PyObject* self, PyObject* args, PyObject* kwargs);
 
-PyObject* enqueue(PyObject* self, PyObject* args);
-PyObject* schedule(PyObject* self, PyObject* args);
-
-PyObject* get_ep(PyObject* self, PyObject* args);
+PyObject* get_entries(PyObject* self, PyObject* args);
 PyObject* get_bits(PyObject* self, PyObject* args);
 PyObject* set_bits(PyObject* self, PyObject* args);
 PyObject* memory_info(PyObject* self, PyObject* args);
@@ -48,11 +46,10 @@ PyObject* get_name(PyObject* self, PyObject* args);
 PyObject* set_type(PyObject* self, PyObject* args);
 PyObject* set_type_as(PyObject* self, PyObject* args);
 PyObject* set_name(PyObject* self, PyObject* args);
-PyObject* set_export(PyObject* self, PyObject* args);
-PyObject* set_import(PyObject* self, PyObject* args);
 PyObject* set_function(PyObject* self, PyObject* args);
 PyObject* set_function_as(PyObject* self, PyObject* args);
 PyObject* set_entry(PyObject* self, PyObject* args);
+PyObject* add_ref(PyObject* self, PyObject* args);
 
 PyObject* get_bool(PyObject* self, PyObject* args);
 PyObject* get_char(PyObject* self, PyObject* args);

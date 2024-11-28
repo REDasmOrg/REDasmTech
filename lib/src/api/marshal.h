@@ -62,12 +62,12 @@ inline const rdil::ILExpr* from_c(const RDILExpr* arg) {
     return reinterpret_cast<const rdil::ILExpr*>(arg);
 }
 
-inline Emulator* from_c(RDEmulator* arg) {
-    return reinterpret_cast<Emulator*>(arg);
-}
-
 inline Renderer* from_c(RDRenderer* arg) {
     return reinterpret_cast<Renderer*>(arg);
+}
+
+inline Emulator* from_c(RDEmulator* arg) {
+    return reinterpret_cast<Emulator*>(arg);
 }
 
 inline const AbstractStream* from_c(const RDStream* arg) {
@@ -116,12 +116,12 @@ inline RDGraph* to_c(StyledGraph* arg) {
     return reinterpret_cast<RDGraph*>(arg);
 }
 
-inline RDEmulator* to_c(Emulator* arg) {
-    return reinterpret_cast<RDEmulator*>(arg);
-}
-
 inline RDRenderer* to_c(Renderer* arg) {
     return reinterpret_cast<RDRenderer*>(arg);
+}
+
+inline RDEmulator* to_c(Emulator* arg) {
+    return reinterpret_cast<RDEmulator*>(arg);
 }
 
 inline RDStream* to_c(AbstractStream* arg) {

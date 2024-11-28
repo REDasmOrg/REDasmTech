@@ -31,6 +31,11 @@ void renderer_text(RDRenderer* self, std::string_view s) {
     api::from_c(self)->chunk(s);
 }
 
+void renderer_ws(RDRenderer* self) {
+    spdlog::trace("renderer_ws({})", fmt::ptr(self));
+    api::from_c(self)->ws();
+}
+
 void renderer_reference(RDRenderer* self, RDAddress address) {
     spdlog::trace("renderer_reference({}, {})", fmt::ptr(self), address);
     api::from_c(self)->ref(address);

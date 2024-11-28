@@ -1,7 +1,28 @@
 #include "x86.h"
+#include "x86_common.h"
 #include "x86_lifter.h"
-#include <redasm/redasm.h>
 #include <string>
+
+namespace {
+
+void apply_optype(const ZydisDecodedOperand& zop, RDOperand& op) {
+    std::string tname;
+
+    switch(zop.element_type) {
+        case ZYDIS_ELEMENT_TYPE_UINT: tname = "u"; break;
+        case ZYDIS_ELEMENT_TYPE_INT: tname = "i"; break;
+        default: op.dtype = {}; return;
+    }
+
+    tname += std::to_string(zop.element_size);
+
+    if(zop.element_count > 1)
+        tname += '[' + std::to_string(zop.element_count) + ']';
+
+    rd_createtype(tname.c_str(), &op.dtype);
+}
+
+} // namespace
 
 X86Processor::X86Processor(usize bits) {
     if(bits == 32) {
@@ -12,250 +33,263 @@ X86Processor::X86Processor(usize bits) {
         ZydisDecoderInit(&m_decoder, ZYDIS_MACHINE_MODE_LONG_64,
                          ZYDIS_STACK_WIDTH_64);
     }
-
-    ZydisFormatterInit(&m_formatter, ZYDIS_FORMATTER_STYLE_INTEL);
-    ZydisFormatterSetProperty(&m_formatter, ZYDIS_FORMATTER_PROP_HEX_PREFIX,
-                              ZYAN_FALSE);
 }
 
-bool X86Processor::decode(RDAddress address) {
-    usize n = rd_memoryread(address, m_dbuffer.data(), m_dbuffer.size());
-    if(!n)
-        return false;
+void X86Processor::decode(RDInstruction* instr) {
+    usize n = rd_memoryread(instr->address, m_dbuffer.data(), m_dbuffer.size());
 
-    m_instr.address = address;
+    ZydisDecodedInstruction zinstr;
+    std::array<ZydisDecodedOperand, ZYDIS_MAX_OPERAND_COUNT> zops;
 
-    ZyanStatus s = ZydisDecoderDecodeFull(&m_decoder, m_dbuffer.data(), n,
-                                          &m_instr.d, m_instr.ops.data());
-    return ZYAN_SUCCESS(s);
-}
-
-bool X86Processor::render_instruction(const RDRendererParams* r) {
-    if(!this->decode(r->address))
-        return false;
-
-    ZydisFormatterTokenConst* token = nullptr;
-
-    ZyanStatus s = ZydisFormatterTokenizeInstruction(
-        &m_formatter, &m_instr.d, m_instr.ops.data(), m_instr.d.operand_count,
-        m_rbuffer.data(), m_rbuffer.size(), r->address, &token, nullptr);
-
-    if(!ZYAN_SUCCESS(s))
-        return false;
-
-    ZydisTokenType tokentype;
-    ZyanConstCharPointer tokenvalue = nullptr;
-
-    while(token) {
-        ZydisFormatterTokenGetValue(token, &tokentype, &tokenvalue);
-
-        switch(tokentype) {
-            case ZYDIS_TOKEN_ADDRESS_ABS:
-            case ZYDIS_TOKEN_ADDRESS_REL:
-            case ZYDIS_TOKEN_IMMEDIATE:
-            case ZYDIS_TOKEN_DISPLACEMENT: {
-                usize v = std::stoull(tokenvalue, nullptr, 16);
-                rdrenderer_reference(r->renderer, v);
-                break;
-            }
-
-            case ZYDIS_TOKEN_MNEMONIC: {
-                if(m_instr.d.meta.category == ZYDIS_CATEGORY_COND_BR)
-                    rdrenderer_themed(r->renderer, tokenvalue, THEME_JUMPCOND);
-                else if(m_instr.d.meta.category == ZYDIS_CATEGORY_UNCOND_BR)
-                    rdrenderer_themed(r->renderer, tokenvalue, THEME_JUMP);
-                else if(m_instr.d.meta.category == ZYDIS_CATEGORY_CALL)
-                    rdrenderer_themed(r->renderer, tokenvalue, THEME_CALL);
-                else if(m_instr.d.meta.category == ZYDIS_CATEGORY_RET)
-                    rdrenderer_themed(r->renderer, tokenvalue, THEME_RET);
-                else if(m_instr.d.meta.category == ZYDIS_CATEGORY_NOP)
-                    rdrenderer_themed(r->renderer, tokenvalue, THEME_NOP);
-                else
-                    rdrenderer_themed(r->renderer, tokenvalue, THEME_DEFAULT);
-                break;
-            }
-
-            case ZYDIS_TOKEN_REGISTER:
-                rdrenderer_register(r->renderer, tokenvalue);
-                break;
-
-            default: rdrenderer_text(r->renderer, tokenvalue); break;
-        }
-
-        if(!ZYAN_SUCCESS(ZydisFormatterTokenNext(&token)))
-            token = nullptr;
+    if(!n || !ZYAN_SUCCESS(ZydisDecoderDecodeFull(&m_decoder, m_dbuffer.data(),
+                                                  n, &zinstr, zops.data()))) {
+        return;
     }
 
-    return true;
-}
+    instr->id = zinstr.mnemonic;
+    instr->length = zinstr.length;
+    instr->uservalue = zinstr.meta.category;
 
-void X86Processor::emulate(RDEmulator* e, RDInstructionDetail* detail) {
-    if(!this->decode(detail->address))
-        return;
-
-    detail->size = m_instr.d.length;
-    std::optional<RDAddress> dstaddr;
-
-    switch(m_instr.d.meta.category) {
-        case ZYDIS_CATEGORY_CALL: {
-            detail->type |= IT_CALL;
-            auto addr = x86_common::calc_address(m_instr, 0, dstaddr);
-
-            if(addr && dstaddr) {
-                rdemulator_addref(e, *addr, REF_READ | REF_CALL | REF_INDIRECT);
-                rd_enqueue(*dstaddr);
-            }
-            else if(addr)
-                rdemulator_addref(e, *addr, REF_CALL);
-
-            break;
-        }
+    switch(zinstr.meta.category) {
+        case ZYDIS_CATEGORY_CALL: instr->features |= INSTR_CALL; break;
 
         case ZYDIS_CATEGORY_COND_BR:
-        case ZYDIS_CATEGORY_UNCOND_BR: {
-            detail->type |= IT_JUMP;
-
-            if(m_instr.d.meta.category == ZYDIS_CATEGORY_UNCOND_BR)
-                detail->type |= IT_STOP;
-
-            auto addr = x86_common::calc_address(m_instr, 0, dstaddr);
-
-            if(addr && dstaddr) {
-                rdemulator_addref(e, *addr, REF_READ | REF_JUMP | REF_INDIRECT);
-                rd_enqueue(*dstaddr);
-            }
-            else if(addr)
-                rdemulator_addref(e, *addr, REF_JUMP);
-
+        case ZYDIS_CATEGORY_UNCOND_BR:
+            instr->features |= INSTR_JUMP | INSTR_STOP;
             break;
-        }
 
-        case ZYDIS_CATEGORY_SYSTEM: {
-            if(m_instr.d.mnemonic == ZYDIS_MNEMONIC_HLT)
-                detail->type |= IT_STOP;
-            break;
-        }
+        default: break;
+    };
 
-        case ZYDIS_CATEGORY_INTERRUPT: {
-            if(m_instr.d.mnemonic == ZYDIS_MNEMONIC_INT3)
-                detail->type |= IT_STOP;
-            break;
-        }
-
-        case ZYDIS_CATEGORY_RET: detail->type |= IT_STOP; break;
-        default: this->process_refs(detail->address, e); break;
-    }
-}
-
-bool X86Processor::lift(RDAddress address, RDILList* l) {
-    if(this->decode(address))
-        return x86_lifter::lift(m_instr, l);
-    return false;
-}
-
-void X86Processor::process_refs(RDAddress address, RDEmulator* e) const {
-    if(m_instr.d.mnemonic == ZYDIS_MNEMONIC_LEA) {
-        return;
+    switch(zinstr.mnemonic) {
+        case ZYDIS_MNEMONIC_HLT:
+        case ZYDIS_MNEMONIC_INT3:
+        case ZYDIS_MNEMONIC_RET: instr->features |= INSTR_STOP; break;
+        default: break;
     }
 
-    for(auto i = 0; i < m_instr.d.operand_count; i++) {
-        const ZydisDecodedOperand& op = m_instr.ops[i];
-        if(op.element_count != 1)
+    for(auto i = 0, j = 0; i < zinstr.operand_count; i++) {
+        const ZydisDecodedOperand& zop = zops[i];
+        if(zop.visibility == ZYDIS_OPERAND_VISIBILITY_HIDDEN)
             continue;
 
-        switch(op.type) {
-            case ZYDIS_OPERAND_TYPE_MEMORY: this->process_mem_op(op, e); break;
+        RDOperand& op = instr->operands[j++];
+        apply_optype(zop, op);
 
-            case ZYDIS_OPERAND_TYPE_IMMEDIATE:
-                this->process_imm_op(op, e);
+        switch(zop.type) {
+            case ZYDIS_OPERAND_TYPE_REGISTER:
+                op.type = OP_REG;
+                op.reg = zop.reg.value;
                 break;
 
-            case ZYDIS_OPERAND_TYPE_REGISTER: break;
+            case ZYDIS_OPERAND_TYPE_IMMEDIATE: {
+                op.type = OP_IMM;
+
+                ZyanU64 addr = 0;
+
+                if((instr->features & INSTR_JUMP ||
+                    instr->features & INSTR_CALL) &&
+                   ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(
+                       &zinstr, &zop, instr->address, &addr))) {
+                    op.imm = addr;
+                }
+                else
+                    op.imm = zop.imm.value.u;
+                break;
+            }
+
+            case ZYDIS_OPERAND_TYPE_MEMORY: {
+                if(zop.mem.base != ZYDIS_REGISTER_NONE &&
+                   zop.mem.index != ZYDIS_REGISTER_NONE &&
+                   !zop.mem.disp.has_displacement) {
+                    op.type = OP_PHRASE;
+                    op.phrase.base = zop.mem.base;
+                    op.phrase.index = zop.mem.index;
+                }
+                else if(zop.mem.base == ZYDIS_REGISTER_NONE &&
+                        zop.mem.index == ZYDIS_REGISTER_NONE) {
+                    op.type = OP_MEM;
+
+                    ZyanU64 addr;
+
+                    if((instr->features & INSTR_JUMP ||
+                        instr->features & INSTR_CALL) &&
+                       ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(
+                           &zinstr, &zop, instr->address, &addr))) {
+                        op.mem = addr;
+                    }
+                    op.mem = zop.mem.disp.value;
+                }
+                else {
+                    op.type = OP_DISPL;
+                    op.displ.base = zop.mem.base;
+                    op.displ.index = zop.mem.index;
+                    op.displ.scale = zop.mem.scale;
+                    op.displ.displ = zop.mem.disp.value;
+                }
+                break;
+            }
 
             default: break;
         }
     }
 }
 
-void X86Processor::process_imm_op(const ZydisDecodedOperand& op,
-                                  RDEmulator* e) const {
-    usize r = op.actions == ZYDIS_OPERAND_ACTION_WRITE ? REF_WRITE : REF_READ;
-
-    switch(op.encoding) {
-        case ZYDIS_OPERAND_ENCODING_SIMM16_32_32: {
-            this->set_type(op.imm.value.s, op, e);
-            rdemulator_addref(e, op.imm.value.s, r);
-            break;
-        }
-
-        default: break;
-    }
-}
-
-void X86Processor::process_mem_op(const ZydisDecodedOperand& op,
-                                  RDEmulator* e) const {
-    if(op.element_count > 1)
-        return;
-
-    usize r = op.actions == ZYDIS_OPERAND_ACTION_WRITE ? REF_WRITE : REF_READ;
-
-    switch(op.encoding) {
-        case ZYDIS_OPERAND_ENCODING_DISP16_32_64: {
-            this->set_type(op.mem.disp.value, op, e);
-            rdemulator_addref(e, op.mem.disp.value, r);
-            break;
-        }
-
-        case ZYDIS_OPERAND_ENCODING_MODRM_RM: {
-            if(op.mem.segment == ZYDIS_REGISTER_DS &&
-               op.mem.disp.has_displacement &&
-               rd_isaddress(op.mem.disp.value)) {
-
-                this->set_type(op.mem.disp.value, op, e);
-                rdemulator_addref(e, op.mem.disp.value, r);
-            }
-
-            break;
-        }
-
-        default: break;
-    }
-}
-
-void X86Processor::set_type(RDAddress address, const ZydisDecodedOperand& op,
-                            RDEmulator* e) const {
-
-    switch(op.element_type) {
-        case ZYDIS_ELEMENT_TYPE_INT: {
-            std::string tname = "i" + std::to_string(op.element_size);
-            rdemulator_settype(e, address, tname.c_str());
-            break;
-        }
-
-        case ZYDIS_ELEMENT_TYPE_UINT: {
-            std::string tname = "u" + std::to_string(op.element_size);
-            rdemulator_settype(e, address, tname.c_str());
-            break;
-        }
-
-        default: break;
-    }
-}
-
 namespace {
 
-bool render_instruction(const RDProcessor* self, const RDRendererParams* r) {
-    return reinterpret_cast<X86Processor*>(self->userdata)
-        ->render_instruction(r);
+bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
+                        const RDInstruction* instr) {
+    const char* mnemonic =
+        ZydisMnemonicGetString(static_cast<ZydisMnemonic>(instr->id));
+
+    switch(instr->uservalue) {
+        case ZYDIS_CATEGORY_COND_BR:
+            rdrenderer_mnemonic(r->renderer, mnemonic, THEME_JUMPCOND);
+            break;
+        case ZYDIS_CATEGORY_UNCOND_BR:
+            rdrenderer_mnemonic(r->renderer, mnemonic, THEME_JUMP);
+            break;
+        case ZYDIS_CATEGORY_CALL:
+            rdrenderer_mnemonic(r->renderer, mnemonic, THEME_CALL);
+            break;
+        case ZYDIS_CATEGORY_RET:
+            rdrenderer_mnemonic(r->renderer, mnemonic, THEME_RET);
+            break;
+        case ZYDIS_CATEGORY_NOP:
+            rdrenderer_mnemonic(r->renderer, mnemonic, THEME_NOP);
+            break;
+        default:
+            rdrenderer_mnemonic(r->renderer, mnemonic, THEME_DEFAULT);
+            break;
+    }
+
+    foreach_operand(i, op, instr) {
+        if(i > 0)
+            rdrenderer_text(r->renderer, ", ");
+
+        switch(op->type) {
+            case OP_IMM: {
+                if(rd_isaddress(op->imm))
+                    rdrenderer_reference(r->renderer, op->imm);
+                else
+                    rdrenderer_constant(r->renderer, op->imm, 16);
+                break;
+            }
+
+            case OP_MEM: {
+                rdrenderer_text(r->renderer, "[");
+                rdrenderer_reference(r->renderer, op->mem);
+                rdrenderer_text(r->renderer, "]");
+                break;
+            }
+
+            case OP_REG: {
+                const char* reg =
+                    ZydisRegisterGetString(static_cast<ZydisRegister>(op->reg));
+                rdrenderer_register(r->renderer, reg);
+                break;
+            }
+
+            case OP_PHRASE: {
+                rdrenderer_text(r->renderer, "[");
+
+                const char* base = ZydisRegisterGetString(
+                    static_cast<ZydisRegister>(op->phrase.base));
+                rdrenderer_register(r->renderer, base);
+
+                rdrenderer_text(r->renderer, " + ");
+
+                const char* index = ZydisRegisterGetString(
+                    static_cast<ZydisRegister>(op->phrase.index));
+                rdrenderer_register(r->renderer, index);
+
+                rdrenderer_text(r->renderer, "]");
+                break;
+            }
+
+            case OP_DISPL: {
+                rdrenderer_text(r->renderer, "[");
+
+                const char* base = ZydisRegisterGetString(
+                    static_cast<ZydisRegister>(op->displ.base));
+                rdrenderer_register(r->renderer, base);
+
+                if(op->displ.index != ZYDIS_REGISTER_NONE) {
+                    rdrenderer_text(r->renderer, " + ");
+
+                    const char* index = ZydisRegisterGetString(
+                        static_cast<ZydisRegister>(op->displ.index));
+                    rdrenderer_register(r->renderer, index);
+
+                    if(op->displ.scale > 1) {
+                        rdrenderer_text(r->renderer, " * ");
+                        rdrenderer_constant(r->renderer, op->displ.scale, 16);
+                    }
+                }
+
+                if(op->displ.displ > 0) {
+                    rdrenderer_text(r->renderer, " + ");
+                    rdrenderer_reference(r->renderer, op->displ.displ);
+                }
+
+                rdrenderer_text(r->renderer, "]");
+                break;
+            }
+
+            default: break;
+        }
+    }
+
+    return true;
 }
 
-void emulate(const RDProcessor* self, RDEmulator* e,
-             RDInstructionDetail* detail) {
-    reinterpret_cast<X86Processor*>(self->userdata)->emulate(e, detail);
+void decode(const RDProcessor* self, RDInstruction* instr) {
+    reinterpret_cast<X86Processor*>(self->userdata)->decode(instr);
 }
 
-bool lift(const RDProcessor* self, RDAddress address, RDILList* l) {
-    return reinterpret_cast<X86Processor*>(self->userdata)->lift(address, l);
+void emulate(const RDProcessor* /*self*/, RDEmulator* e,
+             const RDInstruction* instr) {
+    foreach_operand(i, op, instr) {
+        switch(op->type) {
+            case OP_IMM: {
+                if(instr->features & INSTR_JUMP)
+                    rdemulator_addref(e, op->imm, CR_JUMP);
+                else if(instr->features & INSTR_CALL)
+                    rdemulator_addref(e, op->imm, CR_CALL);
+                else
+                    rdemulator_addref(e, op->imm, DR_READ);
+
+                break;
+            }
+            case OP_MEM: {
+                if(instr->features & INSTR_JUMP) {
+                    auto addr = x86_common::read_address(op->mem);
+                    if(addr)
+                        rdemulator_addref(e, op->imm, CR_JUMP);
+                }
+                else if(instr->features & INSTR_CALL) {
+                    auto addr = x86_common::read_address(op->mem);
+                    if(addr)
+                        rdemulator_addref(e, op->imm, CR_CALL);
+                }
+                else if(!rd_istypenull(&op->dtype))
+                    rd_settype(op->mem, &op->dtype);
+
+                rdemulator_addref(e, op->mem, DR_READ);
+                break;
+            }
+
+            default: break;
+        }
+    }
+
+    bool flow = !(instr->features & INSTR_STOP);
+
+    if(instr->features & INSTR_JUMP)
+        flow = instr->uservalue != ZYDIS_CATEGORY_UNCOND_BR;
+
+    if(flow)
+        rdemulator_addref(e, instr->address + instr->length, CR_FLOW);
 }
 
 RDProcessor x86_32{};
@@ -267,15 +301,17 @@ void rdplugin_init() {
     x86_32.name = "x86_32";
     x86_32.userdata = new X86Processor(32);
     x86_32.renderinstruction = render_instruction;
+    x86_32.decode = decode;
     x86_32.emulate = emulate;
-    x86_32.lift = lift;
+    x86_32.lift = x86_lifter::lift;
     rd_registerprocessor(&x86_32);
 
     x86_64.name = "x86_64";
     x86_64.userdata = new X86Processor(64);
     x86_64.renderinstruction = render_instruction;
+    x86_64.decode = decode;
     x86_64.emulate = emulate;
-    x86_64.lift = lift;
+    x86_64.lift = x86_lifter::lift;
     rd_registerprocessor(&x86_64);
 }
 

@@ -39,22 +39,22 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
 
         case LISTINGITEM_TYPE: {
             tl::optional<std::string> s;
-            assume(item.parsed_type);
+            assume(item.dtype);
 
-            switch(item.parsed_type->type->id()) {
-                case typing::types::STR:
+            switch(item.dtype->id) {
+                case typing::ids::STR:
                     s = state::context->memory->get_string(item.index);
                     break;
 
-                case typing::types::WSTR:
+                case typing::ids::WSTR:
                     s = state::context->memory->get_wstring(item.index);
                     break;
 
-                case typing::types::CHAR:
+                case typing::ids::CHAR:
                     spdlog::critical("UNHANDLED CHAR");
                     break;
 
-                case typing::types::WCHAR:
+                case typing::ids::WCHAR:
                     spdlog::critical("UNHANDLED WCHAR");
                     break;
 
