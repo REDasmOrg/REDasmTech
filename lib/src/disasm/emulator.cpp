@@ -83,6 +83,7 @@ void Emulator::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         case DR_WRITE:
         case DR_ADDRESS: {
             sortedunique_insert(dto.refs, {.index = fromidx, .type = type});
+            mem->set_flags(toidx, BF_REFS, !dto.refs.empty());
             break;
         }
 

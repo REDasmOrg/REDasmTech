@@ -22,6 +22,25 @@ void apply_optype(const ZydisDecodedOperand& zop, RDOperand& op) {
     rd_createtype(tname.c_str(), &op.dtype);
 }
 
+bool is_addr_instruction(const RDInstruction* instr) {
+    switch(instr->uservalue) {
+        case ZYDIS_CATEGORY_UNCOND_BR:
+        case ZYDIS_CATEGORY_COND_BR:
+        case ZYDIS_CATEGORY_CALL: return true;
+
+        default: break;
+    }
+
+    switch(instr->id) {
+        case ZYDIS_MNEMONIC_PUSH:
+        case ZYDIS_MNEMONIC_MOV: return true;
+
+        default: break;
+    }
+
+    return false;
+}
+
 } // namespace
 
 X86Processor::X86Processor(usize bits) {
@@ -144,23 +163,21 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
 
     switch(instr->uservalue) {
         case ZYDIS_CATEGORY_COND_BR:
-            rdrenderer_mnemonic(r->renderer, mnemonic, THEME_JUMPCOND);
+            rdrenderer_mnem(r->renderer, mnemonic, THEME_JUMPCOND);
             break;
         case ZYDIS_CATEGORY_UNCOND_BR:
-            rdrenderer_mnemonic(r->renderer, mnemonic, THEME_JUMP);
+            rdrenderer_mnem(r->renderer, mnemonic, THEME_JUMP);
             break;
         case ZYDIS_CATEGORY_CALL:
-            rdrenderer_mnemonic(r->renderer, mnemonic, THEME_CALL);
+            rdrenderer_mnem(r->renderer, mnemonic, THEME_CALL);
             break;
         case ZYDIS_CATEGORY_RET:
-            rdrenderer_mnemonic(r->renderer, mnemonic, THEME_RET);
+            rdrenderer_mnem(r->renderer, mnemonic, THEME_RET);
             break;
         case ZYDIS_CATEGORY_NOP:
-            rdrenderer_mnemonic(r->renderer, mnemonic, THEME_NOP);
+            rdrenderer_mnem(r->renderer, mnemonic, THEME_NOP);
             break;
-        default:
-            rdrenderer_mnemonic(r->renderer, mnemonic, THEME_DEFAULT);
-            break;
+        default: rdrenderer_mnem(r->renderer, mnemonic, THEME_DEFAULT); break;
     }
 
     foreach_operand(i, op, instr) {
@@ -169,8 +186,8 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
 
         switch(op->type) {
             case OP_IMM: {
-                if(rd_isaddress(op->imm))
-                    rdrenderer_ref(r->renderer, op->imm);
+                if(is_addr_instruction(instr) && rd_isaddress(op->imm))
+                    rdrenderer_addr(r->renderer, op->imm);
                 else
                     rdrenderer_cnst(r->renderer, op->imm, 16);
                 break;
@@ -178,7 +195,7 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
 
             case OP_MEM: {
                 rdrenderer_text(r->renderer, "[");
-                rdrenderer_ref(r->renderer, op->mem);
+                rdrenderer_addr(r->renderer, op->mem);
                 rdrenderer_text(r->renderer, "]");
                 break;
             }
@@ -229,7 +246,7 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
 
                 if(op->displ.displ > 0) {
                     rdrenderer_text(r->renderer, " + ");
-                    rdrenderer_ref(r->renderer, op->displ.displ);
+                    rdrenderer_addr(r->renderer, op->displ.displ);
                 }
 
                 rdrenderer_text(r->renderer, "]");
@@ -256,6 +273,8 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
                     rdemulator_addref(e, op->imm, CR_JUMP);
                 else if(instr->features & INSTR_CALL)
                     rdemulator_addref(e, op->imm, CR_CALL);
+                else if(is_addr_instruction(instr) && rd_isaddress(op->imm))
+                    rdemulator_addref(e, op->imm, DR_ADDRESS);
                 else
                     rdemulator_addref(e, op->imm, DR_READ);
 
@@ -265,12 +284,12 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
                 if(instr->features & INSTR_JUMP) {
                     auto addr = x86_common::read_address(op->mem);
                     if(addr)
-                        rdemulator_addref(e, op->imm, CR_JUMP);
+                        rdemulator_addref(e, *addr, CR_JUMP);
                 }
                 else if(instr->features & INSTR_CALL) {
                     auto addr = x86_common::read_address(op->mem);
                     if(addr)
-                        rdemulator_addref(e, op->imm, CR_CALL);
+                        rdemulator_addref(e, *addr, CR_CALL);
                 }
                 else if(!rd_istypenull(&op->dtype))
                     rd_settype(op->mem, &op->dtype);

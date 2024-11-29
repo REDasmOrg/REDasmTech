@@ -439,7 +439,7 @@ void render(const ILExpr* e, const RDRendererParams& rp) {
                     renderer->constant(expr->u_value, THEME_CONSTANT);
                     break;
 
-                case RDIL_VAR: renderer->ref(expr->address); break;
+                case RDIL_VAR: renderer->addr(expr->address); break;
                 case RDIL_REG: renderer->chunk(expr->reg, THEME_REG); break;
                 case RDIL_SYM: renderer->chunk(expr->sym, THEME_ADDRESS); break;
                 default: renderer->chunk(s); break;

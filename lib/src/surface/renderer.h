@@ -94,7 +94,7 @@ public: // High level interface
     RDRendererParams create_render_params(const ListingItem& item);
     Renderer& instr(const RDRendererParams& rp);
     Renderer& rdil(const RDRendererParams& rp);
-    Renderer& ref(RDAddress address);
+    Renderer& addr(RDAddress address);
 
 public:
     usize columns{0};

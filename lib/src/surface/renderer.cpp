@@ -182,21 +182,18 @@ Renderer& Renderer::rdil(const RDRendererParams& rp) {
     return *this;
 }
 
-Renderer& Renderer::ref(RDAddress address) {
-    state::context->address_to_index(address)
-        .map([&](MIndex idx) {
-            if(state::context->memory->at(idx).has(BF_REFS)) {
-                std::string name = state::context->get_name(idx);
-                this->chunk(name, THEME_ADDRESS);
+Renderer& Renderer::addr(RDAddress address) {
+    Context* ctx = state::context;
+
+    ctx->address_to_index(address)
+        .and_then([&](MIndex idx) -> tl::optional<MIndex> {
+            if(ctx->memory->at(idx).has(BF_REFS)) {
+                this->chunk(ctx->get_name(idx), THEME_ADDRESS);
+                return idx;
             }
-            else {
-                this->chunk(state::context->to_hex(address, -1),
-                            THEME_CONSTANT);
-            }
+            return tl::nullopt;
         })
-        .or_else([&]() {
-            this->chunk(state::context->to_hex(address, -1), THEME_CONSTANT);
-        });
+        .or_else([&]() { this->chunk(ctx->to_hex(address), THEME_ADDRESS); });
 
     return *this;
 }

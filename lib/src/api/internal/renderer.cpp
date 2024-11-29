@@ -14,15 +14,15 @@ void renderer_themed(RDRenderer* self, std::string_view s, RDThemeKind kind) {
     api::from_c(self)->chunk(s, kind);
 }
 
-void renderer_mnemonic(RDRenderer* self, std::string_view s, RDThemeKind kind) {
-    spdlog::trace("renderer_mnemonic({}, '{}', {})", fmt::ptr(self), s,
+void renderer_mnem(RDRenderer* self, std::string_view s, RDThemeKind kind) {
+    spdlog::trace("renderer_mnem({}, '{}', {})", fmt::ptr(self), s,
                   static_cast<int>(kind));
 
     api::from_c(self)->chunk(s, kind).ws();
 }
 
 void renderer_reg(RDRenderer* self, std::string_view s) {
-    spdlog::trace("renderer_register({}, '{}')", fmt::ptr(self), s);
+    spdlog::trace("renderer_reg({}, '{}')", fmt::ptr(self), s);
     api::from_c(self)->chunk(s, THEME_REG);
 }
 
@@ -36,13 +36,13 @@ void renderer_ws(RDRenderer* self) {
     api::from_c(self)->ws();
 }
 
-void renderer_ref(RDRenderer* self, RDAddress address) {
-    spdlog::trace("renderer_reference({}, {})", fmt::ptr(self), address);
-    api::from_c(self)->ref(address);
+void renderer_addr(RDRenderer* self, RDAddress address) {
+    spdlog::trace("renderer_addr({}, {})", fmt::ptr(self), address);
+    api::from_c(self)->addr(address);
 }
 
 void renderer_cnst(RDRenderer* self, usize value, int base) {
-    spdlog::trace("renderer_constant({}, {}, {})", fmt::ptr(self), value, base);
+    spdlog::trace("renderer_cnst({}, {}, {})", fmt::ptr(self), value, base);
     api::from_c(self)->constant(value, base);
 }
 

@@ -43,4 +43,4 @@ REDASM_EXPORT bool rd_createtype(const char* tname, RDType* t);
 REDASM_EXPORT const char* rd_createstruct(const char* name,
                                           const RDStructField* fields, usize n);
 
-inline bool rd_istypenull(const RDType* t) { return !t->id; }
+inline bool rd_istypenull(const RDType* t) { return t && !t->id; }
