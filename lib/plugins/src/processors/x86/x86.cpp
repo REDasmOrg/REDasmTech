@@ -71,8 +71,8 @@ void X86Processor::decode(RDInstruction* instr) {
 
     switch(zinstr.meta.category) {
         case ZYDIS_CATEGORY_CALL: instr->features |= INSTR_CALL; break;
+        case ZYDIS_CATEGORY_COND_BR: instr->features |= INSTR_JUMP; break;
 
-        case ZYDIS_CATEGORY_COND_BR:
         case ZYDIS_CATEGORY_UNCOND_BR:
             instr->features |= INSTR_JUMP | INSTR_STOP;
             break;
@@ -266,6 +266,7 @@ void decode(const RDProcessor* self, RDInstruction* instr) {
 
 void emulate(const RDProcessor* /*self*/, RDEmulator* e,
              const RDInstruction* instr) {
+
     foreach_operand(i, op, instr) {
         switch(op->type) {
             case OP_IMM: {
@@ -302,12 +303,7 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
         }
     }
 
-    bool flow = !(instr->features & INSTR_STOP);
-
-    if(instr->features & INSTR_JUMP)
-        flow = instr->uservalue != ZYDIS_CATEGORY_UNCOND_BR;
-
-    if(flow)
+    if(!(instr->features & INSTR_STOP))
         rdemulator_addref(e, instr->address + instr->length, CR_FLOW);
 }
 

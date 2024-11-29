@@ -1,6 +1,7 @@
 #include "emulator.h"
 #include "../api/marshal.h"
 #include "../context.h"
+#include "../memory/stringfinder.h"
 #include "../state.h"
 #include <algorithm>
 
@@ -68,19 +69,23 @@ void Emulator::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         return;
     }
 
-    // stringfinder::classify(toidx).map([&](const RDStringResult& x) {
-    //     ctx->memory->unset_n(toidx, x.totalsize);
-    //     ctx->set_type(toidx, x.type);
-    //     ctx->memory->set(toidx, BF_WEAK);
-    // });
-
     auto& mem = ctx->memory;
     AddressDetail& dfrom = ctx->database.check_detail(fromidx);
     AddressDetail& dto = ctx->database.check_detail(toidx);
 
     switch(type) {
         case DR_READ:
-        case DR_WRITE:
+        case DR_WRITE: {
+            stringfinder::classify(toidx).map([&](const RDStringResult& x) {
+                ctx->memory->unset_n(toidx, x.totalsize);
+                ctx->set_type(toidx, x.type);
+            });
+
+            sortedunique_insert(dto.refs, {.index = fromidx, .type = type});
+            mem->set_flags(toidx, BF_REFS, !dto.refs.empty());
+            break;
+        }
+
         case DR_ADDRESS: {
             sortedunique_insert(dto.refs, {.index = fromidx, .type = type});
             mem->set_flags(toidx, BF_REFS, !dto.refs.empty());
@@ -99,28 +104,28 @@ void Emulator::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         }
 
         case CR_JUMP: {
-            if(s->type & SEG_HASCODE) {
+            sortedunique_insert(dfrom.jumps, toidx);
+            sortedunique_insert(dto.refs, {.index = fromidx, .type = type});
+            mem->set(fromidx, BF_JUMP);
+            mem->set(toidx, BF_JUMPDST);
+            mem->set_flags(toidx, BF_REFS, !dto.refs.empty());
+
+            if(s->type & SEG_HASCODE)
                 this->qjump.push_back(toidx);
-                sortedunique_insert(dfrom.jumps, toidx);
-                sortedunique_insert(dto.refs, {.index = fromidx, .type = type});
-                mem->set(fromidx, BF_JUMP);
-                mem->set(toidx, BF_JUMPDST);
-                mem->set_flags(toidx, BF_REFS, !dto.refs.empty());
-            }
             else
                 add_noncodeproblem(s, toidx, type);
             break;
         }
 
         case CR_CALL: {
-            if(s->type & SEG_HASCODE) {
+            sortedunique_insert(dfrom.calls, toidx);
+            sortedunique_insert(dto.refs, {.index = fromidx, .type = type});
+            mem->set(fromidx, BF_CALL);
+            mem->set(toidx, BF_FUNCTION);
+            mem->set_flags(toidx, BF_REFS, !dto.refs.empty());
+
+            if(s->type & SEG_HASCODE)
                 this->qcall.push_back(toidx);
-                sortedunique_insert(dfrom.calls, toidx);
-                sortedunique_insert(dto.refs, {.index = fromidx, .type = type});
-                mem->set(fromidx, BF_CALL);
-                mem->set(toidx, BF_FUNCTION);
-                mem->set_flags(toidx, BF_REFS, !dto.refs.empty());
-            }
             else
                 add_noncodeproblem(s, toidx, type);
             break;
