@@ -8,10 +8,10 @@ namespace redasm::api::internal {
 
 void renderer_themed(RDRenderer* self, std::string_view s, RDThemeKind kind);
 void renderer_mnemonic(RDRenderer* self, std::string_view s, RDThemeKind kind);
-void renderer_register(RDRenderer* self, std::string_view s);
+void renderer_reg(RDRenderer* self, std::string_view s);
 void renderer_text(RDRenderer* self, std::string_view s);
 void renderer_ws(RDRenderer* self);
-void renderer_reference(RDRenderer* self, RDAddress address);
-void renderer_constant(RDRenderer* self, usize value, int base);
+void renderer_ref(RDRenderer* self, RDAddress address);
+void renderer_cnst(RDRenderer* self, usize value, int base);
 
 } // namespace redasm::api::internal

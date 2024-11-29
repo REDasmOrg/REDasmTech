@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../database/database.h"
 #include "../segment.h"
 #include <deque>
 #include <redasm/instruction.h>
@@ -10,11 +9,6 @@
 namespace redasm {
 
 class Emulator {
-    struct QueueItem {
-        tl::optional<AddressDetail::Ref> from;
-        MIndex index;
-    };
-
 public:
     [[nodiscard]] bool has_pending() const;
     void add_ref(MIndex fromidx, MIndex toidx, usize type);
@@ -25,13 +19,12 @@ public:
     }
 
 private:
-    bool check_qitem(const QueueItem& item, const std::string& errmsg) const;
     const Segment* get_segment(MIndex idx) const;
 
 public:
-    std::deque<QueueItem> qflow;
-    std::deque<QueueItem> qjump;
-    std::deque<QueueItem> qcall;
+    std::deque<MIndex> qflow;
+    std::deque<MIndex> qjump;
+    std::deque<MIndex> qcall;
     MIndex pc{};
 
 private:

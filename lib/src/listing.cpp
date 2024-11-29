@@ -106,8 +106,8 @@ usize Listing::instruction(MIndex index) {
     return this->push_item(LISTINGITEM_INSTRUCTION, index);
 }
 
-usize Listing::jump(MIndex index) {
-    return this->push_item(LISTINGITEM_JUMP, index);
+usize Listing::label(MIndex index) {
+    return this->push_item(LISTINGITEM_LABEL, index);
 }
 
 usize Listing::function(MIndex index) {

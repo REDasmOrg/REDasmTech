@@ -94,8 +94,8 @@ bool Context::set_entry(MIndex idx, const std::string& name) {
         this->memory->set(idx, BF_EXPORT);
 
         if(s->type & SEG_HASCODE) {
-            this->memory->set(idx, BF_FUNCTION);
-            this->disassembler.emulator.qcall.emplace_back(tl::nullopt, idx);
+            this->memory->set(idx, BF_FUNCTION); // Name belongs to a function
+            this->disassembler.emulator.qcall.push_back(idx);
         }
 
         this->set_name(idx, name, SN_DEFAULT);
@@ -482,10 +482,9 @@ void Context::process_listing_code(MIndex& idx) {
         if(s && (s->type & SEG_HASCODE))
             this->process_function_graph(idx);
     }
-
-    if(b.has(BF_JUMPDST)) {
+    else if(b.has(BF_REFS)) {
         this->listing.pop_indent();
-        this->listing.jump(idx);
+        this->listing.label(idx);
         this->listing.push_indent();
     }
 
@@ -634,15 +633,15 @@ void Context::process_function_graph(MIndex idx) {
 
                 const AddressDetail& d = db.get_detail(curridx);
 
-                for(const AddressDetail::Ref& jidx : d.jumps) {
-                    const Segment* seg = this->index_to_segment(jidx.index);
+                for(MIndex toidx : d.jumps) {
+                    const Segment* seg = this->index_to_segment(toidx);
 
                     if(seg && seg->type & SEG_HASCODE) {
-                        if(!mem->at(jidx.index).has(BF_INSTR))
+                        if(!mem->at(toidx).has(BF_INSTR))
                             continue;
 
-                        pending.push_back(jidx.index);
-                        f.jmp_true(n, f.try_add_block(jidx.index));
+                        pending.push_back(toidx);
+                        f.jmp_true(n, f.try_add_block(toidx));
                     }
                 }
             }

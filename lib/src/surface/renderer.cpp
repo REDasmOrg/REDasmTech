@@ -184,9 +184,15 @@ Renderer& Renderer::rdil(const RDRendererParams& rp) {
 
 Renderer& Renderer::ref(RDAddress address) {
     state::context->address_to_index(address)
-        .map([&](usize idx) {
-            std::string name = state::context->get_name(idx);
-            this->chunk(name, THEME_ADDRESS);
+        .map([&](MIndex idx) {
+            if(state::context->memory->at(idx).has(BF_REFS)) {
+                std::string name = state::context->get_name(idx);
+                this->chunk(name, THEME_ADDRESS);
+            }
+            else {
+                this->chunk(state::context->to_hex(address, -1),
+                            THEME_CONSTANT);
+            }
         })
         .or_else([&]() {
             this->chunk(state::context->to_hex(address, -1), THEME_CONSTANT);
@@ -197,8 +203,8 @@ Renderer& Renderer::ref(RDAddress address) {
 
 Renderer& Renderer::new_row(const ListingItem& item) {
     m_rows.emplace_back(SurfaceRow{
-        m_listingidx,
-        {},
+        .listingindex = m_listingidx,
+        .cells = {},
     });
 
     if(this->columns)

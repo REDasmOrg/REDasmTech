@@ -170,15 +170,15 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
         switch(op->type) {
             case OP_IMM: {
                 if(rd_isaddress(op->imm))
-                    rdrenderer_reference(r->renderer, op->imm);
+                    rdrenderer_ref(r->renderer, op->imm);
                 else
-                    rdrenderer_constant(r->renderer, op->imm, 16);
+                    rdrenderer_cnst(r->renderer, op->imm, 16);
                 break;
             }
 
             case OP_MEM: {
                 rdrenderer_text(r->renderer, "[");
-                rdrenderer_reference(r->renderer, op->mem);
+                rdrenderer_ref(r->renderer, op->mem);
                 rdrenderer_text(r->renderer, "]");
                 break;
             }
@@ -186,7 +186,7 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
             case OP_REG: {
                 const char* reg =
                     ZydisRegisterGetString(static_cast<ZydisRegister>(op->reg));
-                rdrenderer_register(r->renderer, reg);
+                rdrenderer_reg(r->renderer, reg);
                 break;
             }
 
@@ -195,13 +195,13 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
 
                 const char* base = ZydisRegisterGetString(
                     static_cast<ZydisRegister>(op->phrase.base));
-                rdrenderer_register(r->renderer, base);
+                rdrenderer_reg(r->renderer, base);
 
                 rdrenderer_text(r->renderer, " + ");
 
                 const char* index = ZydisRegisterGetString(
                     static_cast<ZydisRegister>(op->phrase.index));
-                rdrenderer_register(r->renderer, index);
+                rdrenderer_reg(r->renderer, index);
 
                 rdrenderer_text(r->renderer, "]");
                 break;
@@ -212,24 +212,24 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
 
                 const char* base = ZydisRegisterGetString(
                     static_cast<ZydisRegister>(op->displ.base));
-                rdrenderer_register(r->renderer, base);
+                rdrenderer_reg(r->renderer, base);
 
                 if(op->displ.index != ZYDIS_REGISTER_NONE) {
                     rdrenderer_text(r->renderer, " + ");
 
                     const char* index = ZydisRegisterGetString(
                         static_cast<ZydisRegister>(op->displ.index));
-                    rdrenderer_register(r->renderer, index);
+                    rdrenderer_reg(r->renderer, index);
 
                     if(op->displ.scale > 1) {
                         rdrenderer_text(r->renderer, " * ");
-                        rdrenderer_constant(r->renderer, op->displ.scale, 16);
+                        rdrenderer_cnst(r->renderer, op->displ.scale, 16);
                     }
                 }
 
                 if(op->displ.displ > 0) {
                     rdrenderer_text(r->renderer, " + ");
-                    rdrenderer_reference(r->renderer, op->displ.displ);
+                    rdrenderer_ref(r->renderer, op->displ.displ);
                 }
 
                 rdrenderer_text(r->renderer, "]");

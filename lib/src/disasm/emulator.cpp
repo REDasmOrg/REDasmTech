@@ -8,14 +8,43 @@ namespace redasm {
 
 namespace {
 
-void sorted_unique_insert(std::vector<AddressDetail::Ref>& v,
-                          AddressDetail::Ref r) {
+void sortedunique_insert(std::vector<MIndex>& v, MIndex r) {
+    auto it =
+        std::lower_bound(v.begin(), v.end(), r,
+                         [](const auto& a, const auto& b) { return a < b; });
+
+    if(it == v.end() || (*it != r))
+        v.insert(it, r);
+}
+
+void sortedunique_insert(std::vector<AddressDetail::Ref>& v,
+                         AddressDetail::Ref r) {
     auto it = std::lower_bound(
         v.begin(), v.end(), r,
         [](const auto& a, const auto& b) { return a.index < b.index; });
 
     if(it == v.end() || (it->index != r.index))
         v.insert(it, r);
+}
+
+std::string_view get_refname(usize reftype) {
+    switch(reftype) {
+        case DR_READ: return "READ";
+        case DR_WRITE: return "WRITE";
+        case DR_ADDRESS: return "ADDRESS";
+        case CR_FLOW: return "FLOW";
+        case CR_JUMP: return "JUMP";
+        case CR_CALL: return "CALL";
+        default: break;
+    }
+
+    unreachable;
+}
+
+void add_noncodeproblem(const Segment* s, MIndex index, usize type) {
+    state::context->add_problem(
+        index, fmt::format("Trying to {} in non-code segment '{}'",
+                           get_refname(type), s->name));
 }
 
 } // namespace
@@ -31,8 +60,13 @@ const Segment* Emulator::get_segment(MIndex idx) const {
 
 void Emulator::add_ref(MIndex fromidx, MIndex toidx, usize type) {
     Context* ctx = state::context;
-    if(toidx >= ctx->memory->size())
+    const Segment* s = this->get_segment(toidx);
+
+    if(!s) {
+        ctx->add_problem(
+            toidx, fmt::format("Invalid {} reference", get_refname(type)));
         return;
+    }
 
     // stringfinder::classify(toidx).map([&](const RDStringResult& x) {
     //     ctx->memory->unset_n(toidx, x.totalsize);
@@ -40,32 +74,54 @@ void Emulator::add_ref(MIndex fromidx, MIndex toidx, usize type) {
     //     ctx->memory->set(toidx, BF_WEAK);
     // });
 
+    auto& mem = ctx->memory;
+    AddressDetail& dfrom = ctx->database.check_detail(fromidx);
+    AddressDetail& dto = ctx->database.check_detail(toidx);
+
     switch(type) {
         case DR_READ:
         case DR_WRITE:
-        case DR_ADDRESS: break;
+        case DR_ADDRESS: {
+            sortedunique_insert(dto.refs, {.index = fromidx, .type = type});
+            break;
+        }
 
         case CR_FLOW: {
-            this->qflow.push_back({
-                .from = AddressDetail::Ref{.index = fromidx, .type = type},
-                .index = toidx,
-            });
+            if(s->type & SEG_HASCODE) {
+                this->qflow.push_back(toidx);
+                dfrom.flow = toidx;
+                ctx->memory->set(fromidx, BF_FLOW);
+            }
+            else
+                add_noncodeproblem(s, toidx, type);
             break;
         }
 
         case CR_JUMP: {
-            this->qjump.push_back({
-                .from = AddressDetail::Ref{.index = fromidx, .type = type},
-                .index = toidx,
-            });
+            if(s->type & SEG_HASCODE) {
+                this->qjump.push_back(toidx);
+                sortedunique_insert(dfrom.jumps, toidx);
+                sortedunique_insert(dto.refs, {.index = fromidx, .type = type});
+                mem->set(fromidx, BF_JUMP);
+                mem->set(toidx, BF_JUMPDST);
+                mem->set_flags(toidx, BF_REFS, !dto.refs.empty());
+            }
+            else
+                add_noncodeproblem(s, toidx, type);
             break;
         }
 
         case CR_CALL: {
-            this->qcall.push_back({
-                .from = AddressDetail::Ref{.index = fromidx, .type = type},
-                .index = toidx,
-            });
+            if(s->type & SEG_HASCODE) {
+                this->qcall.push_back(toidx);
+                sortedunique_insert(dfrom.calls, toidx);
+                sortedunique_insert(dto.refs, {.index = fromidx, .type = type});
+                mem->set(fromidx, BF_CALL);
+                mem->set(toidx, BF_FUNCTION);
+                mem->set_flags(toidx, BF_REFS, !dto.refs.empty());
+            }
+            else
+                add_noncodeproblem(s, toidx, type);
             break;
         }
 
@@ -73,106 +129,34 @@ void Emulator::add_ref(MIndex fromidx, MIndex toidx, usize type) {
     }
 }
 
-bool Emulator::check_qitem(const Emulator::QueueItem& item,
-                           const std::string& errmsg) const {
-    const Segment* s = this->get_segment(item.index);
-
-    if(!s) {
-        state::context->add_problem(item.index, errmsg);
-        return false;
-    }
-
-    return true;
-}
-
 void Emulator::tick() {
-    QueueItem curr;
+    MIndex idx;
     Context* ctx = state::context;
     auto& mem = ctx->memory;
 
     if(!this->qflow.empty()) {
-        curr = this->qflow.front();
+        idx = this->qflow.front();
         this->qflow.pop_front();
-
-        if(!this->check_qitem(curr, fmt::format("Invalid FLOW address")))
-            return;
-
-        if(curr.from) {
-            AddressDetail& dfrom = ctx->database.check_detail(curr.from->index);
-            dfrom.flow = curr.index;
-
-            // Apply 'flow' to previous instruction
-            ctx->memory->set(curr.from->index, BF_FLOW);
-        }
     }
     else if(!this->qjump.empty()) {
-        curr = this->qjump.front();
+        idx = this->qjump.front();
         this->qjump.pop_front();
-
-        if(!this->check_qitem(curr, fmt::format("Invalid JUMP address")))
-            return;
-
-        AddressDetail& dto = ctx->database.check_detail(curr.index);
-
-        if(curr.from) {
-            AddressDetail& dfrom = ctx->database.check_detail(curr.from->index);
-            sorted_unique_insert(
-                dfrom.jumps, {.index = curr.index, .type = curr.from->type});
-            sorted_unique_insert(dto.refs, *curr.from);
-            mem->set(curr.from->index, BF_JUMP);
-        }
-
-        mem->set_flags(curr.index, BF_REFS, !dto.refs.empty());
-        mem->set(curr.index, BF_JUMPDST);
     }
     else if(!qcall.empty()) {
-        curr = qcall.front();
+        idx = qcall.front();
         qcall.pop_front();
-
-        if(!this->check_qitem(curr, fmt::format("Invalid CALL address")))
-            return;
-
-        if(!ctx->set_function(curr.index)) {
-            ctx->add_problem(curr.index,
-                             fmt::format("Function creation failed"));
-            return;
-        }
-
-        AddressDetail& dto = ctx->database.check_detail(curr.index);
-
-        if(curr.from) {
-            AddressDetail& dfrom = ctx->database.check_detail(curr.from->index);
-            sorted_unique_insert(
-                dfrom.jumps, {.index = curr.index, .type = curr.from->type});
-            sorted_unique_insert(dto.refs, *curr.from);
-            mem->set(curr.from->index, BF_CALL);
-        }
-
-        mem->set_flags(curr.index, BF_REFS, !dto.refs.empty());
-        mem->set(curr.index, BF_FUNCTION);
     }
     else
         return;
-
-    assume(m_currsegment);
-    assume(curr.index < ctx->memory->size());
-
-    if(!(m_currsegment->type & SEG_HASCODE)) {
-        ctx->add_problem(
-            curr.index,
-            fmt::format("Trying to execute in non-code segment '{}'",
-                        m_currsegment->name));
-        return;
-    }
 
     const RDProcessor* p = ctx->processor;
     assume(p);
     assume(p->emulate);
 
-    if(ctx->memory->at(curr.index).is_unknown()) {
-        this->pc = curr.index;
+    if(ctx->memory->at(idx).is_unknown()) {
+        this->pc = idx;
 
-        auto address = ctx->index_to_address(curr.index);
+        auto address = ctx->index_to_address(idx);
         assume(address.has_value());
 
         RDInstruction instr = {
@@ -183,15 +167,14 @@ void Emulator::tick() {
             p->decode(p, &instr);
         else {
             ctx->add_problem(
-                curr.index,
-                fmt::format("decode() not implemented for processor '{}'",
-                            p->name));
+                idx, fmt::format("decode() not implemented for processor '{}'",
+                                 p->name));
             return;
         }
 
         if(instr.length) {
             p->emulate(p, api::to_c(this), &instr);
-            mem->set_n(curr.index, instr.length, BF_INSTR);
+            mem->set_n(idx, instr.length, BF_INSTR);
         }
     }
 }

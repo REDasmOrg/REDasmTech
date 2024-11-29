@@ -229,7 +229,7 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
             const AddressDetail& d = db.get_detail(item.index);
             const auto& mem = state::context->memory;
 
-            for(const auto& [toidx, type] : d.jumps) {
+            for(MIndex toidx : d.jumps) {
                 const Segment* seg = state::context->index_to_segment(toidx);
 
                 if(seg && (seg->type & SEG_HASCODE) &&
@@ -505,7 +505,7 @@ void Surface::render_range(LIndex start, usize n) {
             case LISTINGITEM_HEX_DUMP: this->render_hexdump(*it); break;
             case LISTINGITEM_SEGMENT: this->render_segment(*it); break;
             case LISTINGITEM_FUNCTION: this->render_function(*it); break;
-            case LISTINGITEM_JUMP: this->render_jump(*it); break;
+            case LISTINGITEM_LABEL: this->render_label(*it); break;
 
             case LISTINGITEM_INSTRUCTION: {
                 RDRendererParams rp = m_renderer->create_render_params(*it);
@@ -583,7 +583,7 @@ void Surface::render_hexdump(const ListingItem& item) {
         m_renderer->chunk(std::string(HEX_WIDTH - c, ' '));
 }
 
-void Surface::render_jump(const ListingItem& item) {
+void Surface::render_label(const ListingItem& item) {
     std::string name = state::context->get_name(item.index);
     m_renderer->new_row(item).chunk(name + ":", THEME_ADDRESS);
 }
