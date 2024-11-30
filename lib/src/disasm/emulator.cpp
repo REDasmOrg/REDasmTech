@@ -95,7 +95,6 @@ void Emulator::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         case CR_FLOW: {
             if(s->type & SEG_HASCODE) {
                 this->qflow.push_back(toidx);
-                dfrom.flow = toidx;
                 ctx->memory->set(fromidx, BF_FLOW);
             }
             else

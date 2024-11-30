@@ -29,21 +29,13 @@ struct AddressDetail {
         usize type;
     };
 
-    // AddressDetail(const AddressDetail&) = delete;
-    // AddressDetail(AddressDetail&&) = delete;
-    // AddressDetail& operator=(const AddressDetail&) = delete;
-    // AddressDetail& operator=(AddressDetail&&) = delete;
-
     RDType type;
     std::array<std::string, NS::COUNT> names;
     std::vector<MIndex> jumps, calls;
     std::vector<Ref> refsto, refs;
     std::string comment;
 
-    union {
-        usize string_bytes;
-        MIndex flow;
-    };
+    usize string_bytes;
 };
 
 struct Database {

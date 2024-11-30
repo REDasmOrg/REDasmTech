@@ -479,9 +479,9 @@ void Context::process_listing_code(MIndex& idx) {
         this->listing.push_indent(2);
 
         const Segment* s = this->listing.current_segment();
-
-        if(s && (s->type & SEG_HASCODE))
-            this->process_function_graph(idx);
+        assume(s);
+        assume(s->type & SEG_HASCODE);
+        this->process_function_graph(idx);
     }
     else if(b.has(BF_REFS)) {
         this->listing.pop_indent();
@@ -645,16 +645,19 @@ void Context::process_function_graph(MIndex idx) {
             assume(bb);
 
             if(b.has(BF_FLOW)) {
-                const AddressDetail& d = db.get_detail(curridx);
+                usize len = this->memory->get_length(curridx);
+                assume(len);
+
+                MIndex flow = idx + len;
 
                 if(b.has(BF_JUMP)) {
-                    pending.push_back(d.flow);
-                    f.jmp_false(n, f.try_add_block(d.flow));
+                    pending.push_back(flow);
+                    f.jmp_false(n, f.try_add_block(flow));
                     break;
                 }
 
                 bb->end = curridx;
-                curridx = d.flow;
+                curridx = flow;
                 b = mem->at(curridx);
             }
             else {
