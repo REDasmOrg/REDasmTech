@@ -178,7 +178,7 @@ void Emulator::tick() {
 
         if(instr.length) {
             p->emulate(p, api::to_c(this), &instr);
-            mem->set_n(idx, instr.length, BF_INSTR);
+            mem->set_n(idx, instr.length, BF_CODE);
 
             if(instr.features & INSTR_JUMP)
                 mem->set(idx, BF_JUMP);

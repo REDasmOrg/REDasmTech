@@ -33,11 +33,10 @@ typedef enum RDByteFlags {
     BF_ARRAY = BF_DATA | (1U << 19), // Array type flag
 
     // Code-Specific Flags
-    BF_INSTR = BF_CODE | (1U << 18), // Instruction (BF_CODE is sufficient?)
-    BF_CALL = 1U << 19,              // Call
-    BF_JUMP = 1U << 20,              // Jump
-    BF_FLOW = 1U << 21,              // Flow control instruction
-    BF_JUMPDST = 1U << 22,           // Jump destination
+    BF_CALL = 1U << 18,    // Call
+    BF_JUMP = 1U << 19,    // Jump
+    BF_FLOW = 1U << 20,    // Flow control instruction
+    BF_JUMPDST = 1U << 21, // Jump destination
 
     // Special Flags
     BF_CONT = 1U << 31, // Continuation flag

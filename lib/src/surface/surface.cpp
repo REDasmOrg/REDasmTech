@@ -233,7 +233,7 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
                 const Segment* seg = state::context->index_to_segment(toidx);
 
                 if(seg && (seg->type & SEG_HASCODE) &&
-                   mem->at(toidx).has(BF_INSTR)) {
+                   mem->at(toidx).has(BF_CODE)) {
                     this->insert_path(b, i, this->calculate_index(toidx));
                 }
             }

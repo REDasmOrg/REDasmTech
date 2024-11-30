@@ -48,7 +48,7 @@ void do_autorename(const RDAnalyzer*) {
                                   SN_DEFAULT);
                 }
             }
-            else if(b.has(BF_INSTR)) {
+            else if(b.has(BF_CODE)) {
                 ctx->index_to_address(f.index).map([&](RDAddress x) {
                     ctx->set_name(f.index, "nullsub_" + ctx->to_hex(x),
                                   SN_DEFAULT);

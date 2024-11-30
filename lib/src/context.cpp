@@ -471,6 +471,7 @@ void Context::process_listing_data(MIndex& idx) {
 
 void Context::process_listing_code(MIndex& idx) {
     Byte b = this->memory->at(idx);
+    assume(b.has(BF_CODE));
 
     if(b.has(BF_FUNCTION)) {
         this->listing.pop_indent(2);
@@ -488,14 +489,8 @@ void Context::process_listing_code(MIndex& idx) {
         this->listing.push_indent();
     }
 
-    if(b.has(BF_INSTR)) {
-        this->listing.instruction(idx);
-        idx += this->memory->get_length(idx);
-    }
-    else {
-        this->process_hex_dump(
-            idx, [](Byte b) { return b.is_code() && !b.has(BF_INSTR); });
-    }
+    this->listing.instruction(idx);
+    idx += this->memory->get_length(idx);
 }
 
 void Context::process_listing_array(MIndex& idx, RDType t) {
@@ -637,7 +632,7 @@ void Context::process_function_graph(MIndex idx) {
                     const Segment* seg = this->index_to_segment(toidx);
 
                     if(seg && seg->type & SEG_HASCODE) {
-                        if(!mem->at(toidx).has(BF_INSTR))
+                        if(!mem->at(toidx).has(BF_CODE))
                             continue;
 
                         pending.push_back(toidx);

@@ -71,9 +71,7 @@ typedef struct RDInstruction {
 
 inline usize rdinstruction_operandscount(const RDInstruction* instr) {
     int c = 0;
-
     while(instr->operands[c].type != OP_NULL)
         c++;
-
     return c;
 }
