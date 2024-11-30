@@ -5,6 +5,7 @@
 #include <redasm/processor.h>
 #include <redasm/types.h>
 #include <redasm/typing.h>
+#include <sqlite3.h>
 #include <string>
 #include <tl/optional.hpp>
 #include <unordered_map>
@@ -45,6 +46,8 @@ private:
                                         std::equal_to<>>;
 
 public:
+    explicit Database(const std::string& source);
+    ~Database();
     void set_name(MIndex idx, const std::string& name,
                   usize ns = AddressDetail::LABEL);
 
@@ -56,6 +59,8 @@ public:
     AddressDetail& check_detail(MIndex idx);
 
 private:
+    sqlite3* m_db{nullptr};
+    std::string m_dbpath;
     IndexMap m_indexdb;
     NamesMap m_names;
 };

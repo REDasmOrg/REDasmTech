@@ -111,6 +111,7 @@ target_link_libraries(${PROJECT_NAME_LIB}
         expected
         optional
         fmt
+        sqlite3
         spdlog::spdlog_header_only
         Python3::Python
 )

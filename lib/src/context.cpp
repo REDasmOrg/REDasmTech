@@ -45,7 +45,7 @@ int calculate_bits(RDAddress address) {
 } // namespace
 
 Context::Context(const std::shared_ptr<AbstractBuffer>& b, RDLoader* l)
-    : loader{l}, file{b} {
+    : loader{l}, database{b->source}, file{b} {
     assume(this->loader);
 }
 
@@ -647,7 +647,6 @@ void Context::process_function_graph(MIndex idx) {
             if(b.has(BF_FLOW)) {
                 usize len = this->memory->get_length(curridx);
                 assume(len);
-
                 MIndex flow = idx + len;
 
                 if(b.has(BF_JUMP)) {

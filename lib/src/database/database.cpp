@@ -4,8 +4,73 @@
 #include "../state.h"
 #include "../utils/utils.h"
 #include <cctype>
+#include <filesystem>
 
 namespace redasm {
+
+namespace fs = std::filesystem;
+
+namespace {
+
+constexpr std::string_view DB_SCHEMA = R"(
+CREATE TABLE MetaData(
+    k TEXT NOT NULL,
+    v TEXT NOT NULL
+);
+
+CREATE TABLE Comments(
+    idx INT PRIMARY KEY,
+    value TEXT
+);
+
+CREATE TABLE Refs(
+    fromidx INT NOT NULL,
+    toidx INT NOT NULL,
+    type INT NOT NULL
+);
+
+CREATE TABLE Names(
+    idx INT PRIMARY KEY,
+    label TEXT,
+    array TEXT,
+    func TEXT,
+    import TEXT,
+    export TEXT,
+    segment TEXT
+);
+)";
+
+}
+
+Database::Database(const std::string& source) {
+    assume(!source.empty());
+
+    std::string dbname = fs::path{source}.stem().replace_extension(".sqlite");
+
+    // We don't have project support atm: delete old db
+    m_dbpath = fs::path{source}.remove_filename() / dbname;
+    if(fs::exists(m_dbpath))
+        fs::remove(m_dbpath);
+
+    spdlog::critical(">>>> {}", m_dbpath);
+    assume(!sqlite3_open(m_dbpath.c_str(), &m_db));
+
+    char* errmsg = nullptr;
+    int rc = sqlite3_exec(m_db, DB_SCHEMA.data(), nullptr, nullptr, &errmsg);
+
+    if(rc != SQLITE_OK)
+        except("SQLite Error: {}", errmsg);
+}
+
+Database::~Database() {
+    if(m_db) {
+        sqlite3_close(m_db);
+        m_db = nullptr;
+    }
+
+    if(!m_dbpath.empty() && fs::exists(m_dbpath))
+        fs::remove(m_dbpath);
+}
 
 std::string Database::get_name(MIndex idx, usize ns) const {
     auto it = m_indexdb.find(idx);
