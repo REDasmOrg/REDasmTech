@@ -106,7 +106,6 @@ void Emulator::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         case CR_JUMP: {
             sortedunique_insert(dfrom.jumps, toidx);
             sortedunique_insert(dto.refs, {.index = fromidx, .type = type});
-            mem->set(fromidx, BF_JUMP);
             mem->set(toidx, BF_JUMPDST);
             mem->set_flags(toidx, BF_REFS, !dto.refs.empty());
 
@@ -120,7 +119,6 @@ void Emulator::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         case CR_CALL: {
             sortedunique_insert(dfrom.calls, toidx);
             sortedunique_insert(dto.refs, {.index = fromidx, .type = type});
-            mem->set(fromidx, BF_CALL);
             mem->set(toidx, BF_FUNCTION);
             mem->set_flags(toidx, BF_REFS, !dto.refs.empty());
 
@@ -181,6 +179,11 @@ void Emulator::tick() {
         if(instr.length) {
             p->emulate(p, api::to_c(this), &instr);
             mem->set_n(idx, instr.length, BF_INSTR);
+
+            if(instr.features & INSTR_JUMP)
+                mem->set(idx, BF_JUMP);
+            if(instr.features & INSTR_CALL)
+                mem->set(idx, BF_CALL);
         }
     }
 }

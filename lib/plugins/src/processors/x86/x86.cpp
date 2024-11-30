@@ -266,7 +266,6 @@ void decode(const RDProcessor* self, RDInstruction* instr) {
 
 void emulate(const RDProcessor* /*self*/, RDEmulator* e,
              const RDInstruction* instr) {
-
     foreach_operand(i, op, instr) {
         switch(op->type) {
             case OP_IMM: {

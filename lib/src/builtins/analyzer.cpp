@@ -42,8 +42,9 @@ void do_autorename(const RDAnalyzer*) {
             if(b.has(BF_JUMP)) {
                 const AddressDetail& d = ctx->database.get_detail(f.index);
 
-                if(d.jumps.size() == 1) {
-                    ctx->set_name(f.index, "_" + ctx->get_name(d.jumps.front()),
+                if(d.refs.size() == 1) {
+                    ctx->set_name(f.index,
+                                  "_" + ctx->get_name(d.refs.front().index),
                                   SN_DEFAULT);
                 }
             }

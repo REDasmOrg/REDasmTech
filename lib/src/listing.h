@@ -1,10 +1,10 @@
 #pragma once
 
 #include "segment.h"
-#include "typing/typing.h"
 #include <deque>
 #include <redasm/listing.h>
 #include <redasm/types.h>
+#include <redasm/typing.h>
 #include <tl/optional.hpp>
 #include <vector>
 
