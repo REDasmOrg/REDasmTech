@@ -24,28 +24,29 @@ usize get_processors(const RDProcessor** processors) {
 }
 
 void register_processor(const RDProcessor& processor) {
-    spdlog::trace("register_processor('{}')", processor.name);
+    spdlog::trace("register_processor('{}', '{}')", processor.id,
+                  processor.name);
 
-    if(processor.name)
+    if(processor.id)
         state::processors.push_back(processor);
     else
-        spdlog::error("register_processor: invalid name");
+        spdlog::error("register_processor: invalid id");
 }
 
-void set_processor(std::string_view name) {
-    spdlog::trace("set_processor('{}')", name);
+void set_processor(std::string_view id) {
+    spdlog::trace("set_processor('{}')", id);
 
     if(!state::context)
         return;
 
     for(const RDProcessor& p : state::processors) {
-        if(p.name == name) {
+        if(p.id == id) {
             state::context->processor = &p;
             return;
         }
     }
 
-    spdlog::error("set_processor: '{}' not found", name);
+    spdlog::error("set_processor: '{}' not found", id);
 }
 
 } // namespace redasm::api::internal

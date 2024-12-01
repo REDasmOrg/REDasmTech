@@ -40,11 +40,12 @@ void do_autorename(const RDAnalyzer*) {
 
         if(Byte b = ctx->memory->at(f.index); !b.has(BF_FLOW)) {
             if(b.has(BF_JUMP)) {
-                const AddressDetail& d = ctx->database.get_detail(f.index);
+                Database::RefList refs =
+                    ctx->get_refs_from_type(f.index, CR_JUMP);
 
-                if(d.refs.size() == 1) {
+                if(refs.size() == 1) {
                     ctx->set_name(f.index,
-                                  "_" + ctx->get_name(d.refs.front().index),
+                                  "_" + ctx->get_name(refs.front().index),
                                   SN_DEFAULT);
                 }
             }
@@ -61,19 +62,23 @@ void do_autorename(const RDAnalyzer*) {
 } // namespace
 
 void register_analyzers() {
-    RDAnalyzer autorename{};
-    autorename.name = "Autorename Nullsubs and Thunks";
-    autorename.flags = ANA_SELECTED;
-    autorename.order = 0;
-    autorename.isenabled = [](const RDAnalyzer*) { return true; };
-    autorename.execute = do_autorename;
+    RDAnalyzer autorename{
+        .id = "autorename",
+        .name = "Autorename Nullsubs and Thunks",
+        .flags = ANA_SELECTED,
+        .order = 0,
+        .isenabled = [](const RDAnalyzer*) { return true; },
+        .execute = do_autorename,
+    };
+
     api::internal::register_analyzer(autorename);
 
-    RDAnalyzer strings{};
-
-    strings.name = "Search and mark all strings";
-    strings.order = std::numeric_limits<u32>::max();
-    strings.isenabled = [](const RDAnalyzer*) { return true; };
+    RDAnalyzer strings{
+        .id = "strings",
+        .name = "Search and mark all strings",
+        .order = std::numeric_limits<u32>::max(),
+        .isenabled = [](const RDAnalyzer*) { return true; },
+    };
 
     strings.execute = [](const RDAnalyzer*) {
         RDMemoryInfo mi;

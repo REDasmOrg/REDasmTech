@@ -7,8 +7,10 @@
 namespace redasm::builtins {
 
 void register_loaders() {
-    RDLoader binary{};
-    binary.name = "Binary";
+    RDLoader binary{
+        .id = "binary",
+        .name = "Binary",
+    };
 
     binary.init = [](RDLoader*) {
         api::internal::memory_map(0, state::context->file->size());

@@ -16,8 +16,8 @@ typedef enum RDByteFlags {
     BF_WEAK = 1U << 9,      // Weak reference
     BF_NAME = 1U << 10,     // Named entity
     BF_COMMENT = 1U << 11,  // Comment flag
-    BF_REFS = 1U << 12,     // References from location
-    BF_REFSTO = 1U << 13,   // References to location
+    BF_REFSTO = 1U << 12,   // References to location(s)
+    BF_REFSFROM = 1U << 13, // References from location(s)
     BF_SEGMENT = 1U << 14,  // Segment flag
     BF_IMPORT = 1U << 15,   // Import flag
     BF_EXPORT = 1U << 16,   // Export flag

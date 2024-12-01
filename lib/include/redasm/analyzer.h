@@ -17,6 +17,7 @@ typedef void (*RDAnalyzerExecute)(const RDAnalyzer*);
 typedef void (*RDAnalyzerFree)(const RDAnalyzer*);
 
 typedef struct RDAnalyzer {
+    const char* id;
     const char* name;
     usize flags;
     usize order;

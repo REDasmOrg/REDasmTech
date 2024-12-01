@@ -9,7 +9,7 @@ namespace actions {
 enum Type : quint8 {
     GOTO,
     COPY,
-    REFS,
+    REFS_TO,
     RENAME,
     COMMENT,
 };

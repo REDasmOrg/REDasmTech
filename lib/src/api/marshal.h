@@ -169,8 +169,8 @@ inline const RDValueDict* to_c(const typing::ValueDict* arg) {
 }
 
 RDSegment to_c(const Segment& arg);
-RDRef to_c(const AddressDetail::Ref& arg);
-std::vector<RDRef> to_c(const std::vector<AddressDetail::Ref>& arg);
+RDRef to_c(const Database::Ref& arg);
+std::vector<RDRef> to_c(const std::vector<Database::Ref>& arg);
 RDFunctionBasicBlock to_c(const Function::BasicBlock* bb);
 RDValue to_c(const typing::Value& v);
 

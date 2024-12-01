@@ -185,9 +185,39 @@ const char* rd_getcomment(RDAddress address) {
     return res.c_str();
 }
 
-usize rd_getrefs(RDAddress address, const RDRef** refs) {
+usize rd_getrefsfrom(RDAddress fromaddr, const RDRef** refs) {
     static std::vector<RDRef> r;
-    r = redasm::api::internal::get_refs(address);
+    r = redasm::api::internal::get_refsfrom(fromaddr);
+
+    if(refs)
+        *refs = r.data();
+
+    return r.size();
+}
+
+usize rd_getrefsfromtype(RDAddress fromaddr, usize type, const RDRef** refs) {
+    static std::vector<RDRef> r;
+    r = redasm::api::internal::get_refsfromtype(fromaddr, type);
+
+    if(refs)
+        *refs = r.data();
+
+    return r.size();
+}
+
+usize rd_getrefsto(RDAddress toaddr, const RDRef** refs) {
+    static std::vector<RDRef> r;
+    r = redasm::api::internal::get_refsto(toaddr);
+
+    if(refs)
+        *refs = r.data();
+
+    return r.size();
+}
+
+usize rd_getrefstotype(RDAddress toaddr, usize type, const RDRef** refs) {
+    static std::vector<RDRef> r;
+    r = redasm::api::internal::get_refstotype(toaddr, type);
 
     if(refs)
         *refs = r.data();

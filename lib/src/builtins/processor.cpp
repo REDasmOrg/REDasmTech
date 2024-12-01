@@ -48,8 +48,11 @@ bool render_function(const RDRendererParams* rp) {
 } // namespace processor
 
 void register_processors() {
-    RDProcessor nullprocessor{};
-    nullprocessor.name = "";
+    RDProcessor nullprocessor{
+        .id = "null",
+        .name = "",
+    };
+
     nullprocessor.rendersegment = [](const RDProcessor*,
                                      const RDRendererParams* rp) {
         return builtins::processor::render_segment(rp);

@@ -146,7 +146,7 @@ Renderer& Renderer::instr(const RDRendererParams& rp) {
 
     if(instr.length && p->renderinstruction &&
        p->renderinstruction(p, &rp, &instr)) {
-        if(!Byte{rp.byte}.has(BF_REFS))
+        if(!Byte{rp.byte}.has(BF_REFSTO))
             return *this;
         // TODO(davide): Print references information
     }
@@ -187,7 +187,7 @@ Renderer& Renderer::addr(RDAddress address) {
 
     ctx->address_to_index(address)
         .and_then([&](MIndex idx) -> tl::optional<MIndex> {
-            if(ctx->memory->at(idx).has(BF_REFS)) {
+            if(ctx->memory->at(idx).has(BF_REFSTO)) {
                 this->chunk(ctx->get_name(idx), THEME_ADDRESS);
                 return idx;
             }

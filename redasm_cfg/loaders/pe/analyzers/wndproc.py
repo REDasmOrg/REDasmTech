@@ -28,7 +28,9 @@ def get_import(pe, name):
 
 def get_api_refs(pe, name):
     address = get_import(pe, name)
-    return redasm.get_refs(address) if address else []
+    print(address)
+    print(redasm.get_refsto(address))
+    return redasm.get_refsto(address) if address else []
 
 
 def wndproc_isenabled(pe):

@@ -374,6 +374,7 @@ def init():
 
 
 redasm.register_loader(
+    id="pe",
     name="Portable Executable",
     init=init
 )

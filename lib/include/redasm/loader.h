@@ -8,6 +8,7 @@ typedef bool (*RDLoaderInit)(RDLoader*);
 typedef void (*RDLoaderFree)(RDLoader*);
 
 typedef struct RDLoader {
+    const char* id;
     const char* name;
     void* userdata;
 

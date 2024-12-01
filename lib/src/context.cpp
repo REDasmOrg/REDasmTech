@@ -1,6 +1,7 @@
 #include "context.h"
 #include "api/marshal.h"
 #include "error.h"
+#include "memory/stringfinder.h"
 #include "state.h"
 #include "utils/utils.h"
 #include <climits>
@@ -27,6 +28,26 @@ namespace redasm {
 
 namespace {
 
+std::string_view get_refname(usize reftype) {
+    switch(reftype) {
+        case DR_READ: return "READ";
+        case DR_WRITE: return "WRITE";
+        case DR_ADDRESS: return "ADDRESS";
+        case CR_FLOW: return "FLOW";
+        case CR_JUMP: return "JUMP";
+        case CR_CALL: return "CALL";
+        default: break;
+    }
+
+    unreachable;
+}
+
+void add_noncodeproblem(const Segment* s, MIndex index, usize type) {
+    state::context->add_problem(
+        index, fmt::format("Trying to {} in non-code segment '{}'",
+                           get_refname(type), s->name));
+}
+
 constexpr std::array<char, 16> INTHEX_TABLE = {
     '0', '1', '2', '3', '4', '5', '6', '7',
     '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
@@ -45,7 +66,7 @@ int calculate_bits(RDAddress address) {
 } // namespace
 
 Context::Context(const std::shared_ptr<AbstractBuffer>& b, RDLoader* l)
-    : loader{l}, database{b->source}, file{b} {
+    : loader{l}, database{l->id, b->source}, file{b} {
     assume(this->loader);
 }
 
@@ -106,12 +127,81 @@ bool Context::set_entry(MIndex idx, const std::string& name) {
     return false;
 }
 
+void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
+    const Segment* s = this->index_to_segment(toidx);
+
+    if(!s) {
+        this->add_problem(
+            toidx, fmt::format("Invalid {} reference", get_refname(type)));
+        return;
+    }
+
+    auto& mem = this->memory;
+
+    switch(type) {
+        case DR_READ:
+        case DR_WRITE: {
+            stringfinder::classify(toidx).map([&](const RDStringResult& x) {
+                this->memory->unset_n(toidx, x.totalsize);
+                this->set_type(toidx, x.type);
+            });
+
+            this->database.add_ref(fromidx, toidx, type);
+            mem->set(fromidx, BF_REFSFROM);
+            mem->set(toidx, BF_REFSTO);
+            break;
+        }
+
+        case DR_ADDRESS: {
+            this->database.add_ref(fromidx, toidx, type);
+            mem->set(fromidx, BF_REFSFROM);
+            mem->set(toidx, BF_REFSTO);
+            break;
+        }
+
+        case CR_FLOW: {
+            if(s->type & SEG_HASCODE) {
+                this->disassembler.emulator.qflow.push_back(toidx);
+                mem->set(fromidx, BF_FLOW);
+            }
+            else
+                add_noncodeproblem(s, toidx, type);
+            break;
+        }
+
+        case CR_JUMP: {
+            this->database.add_ref(fromidx, toidx, type);
+            mem->set(fromidx, BF_REFSFROM);
+            mem->set(toidx, BF_JUMPDST | BF_REFSTO);
+
+            if(s->type & SEG_HASCODE)
+                this->disassembler.emulator.qjump.push_back(toidx);
+            else
+                add_noncodeproblem(s, toidx, type);
+            break;
+        }
+
+        case CR_CALL: {
+            this->database.add_ref(fromidx, toidx, type);
+            mem->set(fromidx, BF_REFSFROM);
+            mem->set(toidx, BF_FUNCTION | BF_REFSTO);
+
+            if(s->type & SEG_HASCODE)
+                this->disassembler.emulator.qcall.push_back(toidx);
+            else
+                add_noncodeproblem(s, toidx, type);
+            break;
+        }
+
+        default: unreachable;
+    }
+}
+
 bool Context::set_comment(MIndex idx, std::string_view comment) {
     if(idx >= this->memory->size())
         return false;
 
-    AddressDetail& detail = this->database.check_detail(idx);
-    detail.comment.assign(comment.begin(), comment.end());
+    this->database.set_comment(idx, comment);
     this->memory->at(idx).set_flag(BF_COMMENT, !comment.empty());
     return true;
 }
@@ -362,8 +452,38 @@ std::string Context::get_comment(MIndex idx) const {
     if(idx >= this->memory->size() || !this->memory->at(idx).has(BF_COMMENT))
         return {};
 
-    const AddressDetail& d = this->database.get_detail(idx);
-    return d.comment;
+    return this->database.get_comment(idx);
+}
+
+Database::RefList Context::get_refs_from_type(MIndex fromidx,
+                                              usize type) const {
+    if(fromidx >= this->memory->size() ||
+       !this->memory->at(fromidx).has(BF_REFSFROM))
+        return {};
+
+    return this->database.get_refs_from_type(fromidx, type);
+}
+
+Database::RefList Context::get_refs_from(MIndex fromidx) const {
+    if(fromidx >= this->memory->size() ||
+       !this->memory->at(fromidx).has(BF_REFSFROM))
+        return {};
+
+    return this->database.get_refs_from(fromidx);
+}
+
+Database::RefList Context::get_refs_to_type(MIndex toidx, usize type) const {
+    if(toidx >= this->memory->size() || !this->memory->at(toidx).has(BF_REFSTO))
+        return {};
+
+    return this->database.get_refs_to_type(toidx, type);
+}
+
+Database::RefList Context::get_refs_to(MIndex toidx) const {
+    if(toidx >= this->memory->size() || !this->memory->at(toidx).has(BF_REFSTO))
+        return {};
+
+    return this->database.get_refs_to(toidx);
 }
 
 std::string Context::to_hex(usize v, int n) const {
@@ -483,7 +603,7 @@ void Context::process_listing_code(MIndex& idx) {
         assume(s->type & SEG_HASCODE);
         this->process_function_graph(idx);
     }
-    else if(b.has(BF_REFS)) {
+    else if(b.has(BF_REFSTO)) {
         this->listing.pop_indent();
         this->listing.label(idx);
         this->listing.push_indent();
@@ -583,7 +703,6 @@ void Context::process_function_graph(MIndex idx) {
     assume(address.has_value());
     spdlog::info("Creating function graph @ {}", this->to_hex(*address));
 
-    const Database& db = this->database;
     const auto& mem = this->memory;
     Function& f = this->functions.emplace_back(idx);
     std::unordered_set<MIndex> done;
@@ -626,17 +745,16 @@ void Context::process_function_graph(MIndex idx) {
                 assume(bb);
                 bb->end = curridx;
 
-                const AddressDetail& d = db.get_detail(curridx);
-
-                for(MIndex toidx : d.jumps) {
-                    const Segment* seg = this->index_to_segment(toidx);
+                for(Database::Ref r :
+                    this->get_refs_from_type(curridx, CR_JUMP)) {
+                    const Segment* seg = this->index_to_segment(r.index);
 
                     if(seg && seg->type & SEG_HASCODE) {
-                        if(!mem->at(toidx).has(BF_CODE))
+                        if(!mem->at(r.index).has(BF_CODE))
                             continue;
 
-                        pending.push_back(toidx);
-                        f.jmp_true(n, f.try_add_block(toidx));
+                        pending.push_back(r.index);
+                        f.jmp_true(n, f.try_add_block(r.index));
                     }
                 }
             }

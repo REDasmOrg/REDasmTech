@@ -28,7 +28,7 @@ QString ref_getdirection(RDAddress address, const RDRef& r) {
 
 ReferencesModel::ReferencesModel(RDAddress address, QObject* parent)
     : QAbstractListModel{parent}, m_address{address} {
-    m_nrefs = rd_getrefs(address, &m_refs);
+    m_nrefs = rd_getrefsto(address, &m_refs);
 }
 
 RDAddress ReferencesModel::address(const QModelIndex& index) const {

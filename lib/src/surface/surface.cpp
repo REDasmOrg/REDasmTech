@@ -192,9 +192,9 @@ bool Surface::jump_to_ep() {
 }
 
 const std::vector<RDSurfacePath>& Surface::get_path() const {
-    const Listing& lst = state::context->listing;
-    const Database& db = state::context->database;
-    const auto& mem = state::context->memory;
+    const Context* ctx = state::context;
+    const Listing& lst = ctx->listing;
+    const auto& mem = ctx->memory;
 
     m_path.clear();
     m_done.clear();
@@ -211,12 +211,8 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
         Byte b = mem->at(item.index);
 
         if(b.has(BF_JUMPDST)) {
-            const AddressDetail& d = db.get_detail(item.index);
-
-            for(const auto& [fromidx, type] : d.refs) {
-                if(!(type == CR_JUMP))
-                    continue;
-
+            for(const auto& [fromidx, type] :
+                ctx->get_refs_to_type(item.index, CR_JUMP)) {
                 const Segment* seg = state::context->index_to_segment(fromidx);
 
                 if(seg && (seg->type & SEG_HASCODE)) {
@@ -226,15 +222,15 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
             }
         }
         else if(b.has(BF_JUMP)) {
-            const AddressDetail& d = db.get_detail(item.index);
             const auto& mem = state::context->memory;
 
-            for(MIndex toidx : d.jumps) {
-                const Segment* seg = state::context->index_to_segment(toidx);
+            for(Database::Ref r :
+                ctx->get_refs_from_type(item.index, CR_JUMP)) {
+                const Segment* seg = state::context->index_to_segment(r.index);
 
                 if(seg && (seg->type & SEG_HASCODE) &&
-                   mem->at(toidx).has(BF_CODE)) {
-                    this->insert_path(b, i, this->calculate_index(toidx));
+                   mem->at(r.index).has(BF_CODE)) {
+                    this->insert_path(b, i, this->calculate_index(r.index));
                 }
             }
         }
@@ -518,7 +514,7 @@ void Surface::render_range(LIndex start, usize n) {
 
                 this->render_comment(*it);
 
-                if(state::context->memory->at(it->index).has(BF_REFSTO))
+                if(state::context->memory->at(it->index).has(BF_REFSFROM))
                     this->render_refs(*it);
                 break;
             }
@@ -527,7 +523,7 @@ void Surface::render_range(LIndex start, usize n) {
                 this->render_type(*it);
                 this->render_comment(*it);
 
-                if(state::context->memory->at(it->index).has(BF_REFSTO))
+                if(state::context->memory->at(it->index).has(BF_REFSFROM))
                     this->render_refs(*it);
                 break;
 
@@ -535,7 +531,7 @@ void Surface::render_range(LIndex start, usize n) {
                 this->render_array(*it);
                 this->render_comment(*it);
 
-                if(state::context->memory->at(it->index).has(BF_REFSTO))
+                if(state::context->memory->at(it->index).has(BF_REFSFROM))
                     this->render_refs(*it);
                 break;
 
@@ -777,11 +773,10 @@ void Surface::render_refs(const ListingItem& item) {
 
     const Context* ctx = state::context;
     const auto& mem = ctx->memory;
-    const AddressDetail& d = state::context->database.check_detail(item.index);
 
     m_renderer->ws(COLUMN_PADDING);
 
-    for(const auto& [index, _] : d.refsto) {
+    for(const auto& [index, _] : ctx->get_refs_to(item.index)) {
         if(!mem->at(index).has(BF_TYPE))
             continue;
 

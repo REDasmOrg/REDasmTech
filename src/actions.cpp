@@ -58,7 +58,7 @@ void comment() {
         cv->invalidate();
 }
 
-void refs() {
+void refs_to() {
     ContextView* cv = g_mainwindow->context_view();
     if(!cv)
         return;
@@ -68,7 +68,7 @@ void refs() {
         return;
 
     auto* dlg = new TableDialog(
-        QString("References for %1").arg(rd_tohex(address)), g_mainwindow);
+        QString("References to %1").arg(rd_tohex(address)), g_mainwindow);
 
     QObject::connect(dlg, &TableDialog::double_clicked, g_mainwindow,
                      [cv, dlg](const QModelIndex& index) {
@@ -117,9 +117,9 @@ void init(MainWindow* mw) {
         mw->addAction("Copy", QKeySequence{Qt::CTRL | Qt::Key_C}, mw,
                       []() { actions::copy(); });
 
-    g_actions[Type::REFS] =
-        mw->addAction("Cross References", QKeySequence{Qt::Key_X}, mw,
-                      []() { actions::refs(); });
+    g_actions[Type::REFS_TO] =
+        mw->addAction("Cross References To…", QKeySequence{Qt::Key_X}, mw,
+                      []() { actions::refs_to(); });
 
     g_actions[Type::RENAME] = mw->addAction("Rename", QKeySequence(Qt::Key_N),
                                             mw, []() { actions::rename(); });

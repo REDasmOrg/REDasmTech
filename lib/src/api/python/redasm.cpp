@@ -9,17 +9,20 @@
 namespace redasm::api::python {
 
 struct LoaderUserData {
+    std::string id;
     std::string name;
     PyObject* init;
 };
 
 struct AnalyzerUserData {
+    std::string id;
     std::string name;
     PyObject* isenabled;
     PyObject* execute;
 };
 
 struct ProcessorUserData {
+    std::string id;
     std::string name;
     PyObject* emulate;
     PyObject* rendersegment;
@@ -118,9 +121,76 @@ PyObject* symbolize(PyObject* /*self*/, PyObject* args) {
     return PyUnicode_FromString(internal::symbolize(s).c_str());
 }
 
-PyObject* get_refs(PyObject* /*self*/, PyObject* args) {
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
-    std::vector<RDRef> refs = internal::get_refs(address);
+PyObject* get_refsfrom(PyObject* /*self*/, PyObject* args) {
+    RDAddress fromaddr = PyLong_AsUnsignedLongLong(args);
+    std::vector<RDRef> refs = internal::get_refsfrom(fromaddr);
+    PyObject* res = PyTuple_New(refs.size());
+
+    for(usize i = 0; i < refs.size(); i++) {
+        PyObject* item = python::new_simplenamespace();
+        PyObject* itemaddr = PyLong_FromUnsignedLongLong(refs[i].address);
+        PyObject* itemtype = PyLong_FromUnsignedLongLong(refs[i].type);
+        PyObject_SetAttrString(item, "address", itemaddr);
+        PyObject_SetAttrString(item, "type", itemtype);
+        PyTuple_SET_ITEM(res, i, item);
+        Py_DECREF(itemtype);
+        Py_DECREF(itemaddr);
+    }
+
+    return res;
+}
+
+PyObject* get_refsfromtype(PyObject* /*self*/, PyObject* args) {
+    RDAddress fromaddr = 0;
+    usize type = 0;
+
+    if(!PyArg_ParseTuple(args, "KK", &fromaddr, &type))
+        return nullptr;
+
+    std::vector<RDRef> refs = internal::get_refsfromtype(fromaddr, type);
+    PyObject* res = PyTuple_New(refs.size());
+
+    for(usize i = 0; i < refs.size(); i++) {
+        PyObject* item = python::new_simplenamespace();
+        PyObject* itemaddr = PyLong_FromUnsignedLongLong(refs[i].address);
+        PyObject* itemtype = PyLong_FromUnsignedLongLong(refs[i].type);
+        PyObject_SetAttrString(item, "address", itemaddr);
+        PyObject_SetAttrString(item, "type", itemtype);
+        PyTuple_SET_ITEM(res, i, item);
+        Py_DECREF(itemtype);
+        Py_DECREF(itemaddr);
+    }
+
+    return res;
+}
+
+PyObject* get_refsto(PyObject* /*self*/, PyObject* args) {
+    RDAddress toaddr = PyLong_AsUnsignedLongLong(args);
+    std::vector<RDRef> refs = internal::get_refsto(toaddr);
+    PyObject* res = PyTuple_New(refs.size());
+
+    for(usize i = 0; i < refs.size(); i++) {
+        PyObject* item = python::new_simplenamespace();
+        PyObject* itemaddr = PyLong_FromUnsignedLongLong(refs[i].address);
+        PyObject* itemtype = PyLong_FromUnsignedLongLong(refs[i].type);
+        PyObject_SetAttrString(item, "address", itemaddr);
+        PyObject_SetAttrString(item, "type", itemtype);
+        PyTuple_SET_ITEM(res, i, item);
+        Py_DECREF(itemtype);
+        Py_DECREF(itemaddr);
+    }
+
+    return res;
+}
+
+PyObject* get_refstotype(PyObject* /*self*/, PyObject* args) {
+    RDAddress toaddr = 0;
+    usize type = 0;
+
+    if(!PyArg_ParseTuple(args, "KK", &toaddr, &type))
+        return nullptr;
+
+    std::vector<RDRef> refs = internal::get_refstotype(toaddr, type);
     PyObject* res = PyTuple_New(refs.size());
 
     for(usize i = 0; i < refs.size(); i++) {
@@ -390,27 +460,31 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args,
                           PyObject* kwargs) {
 
     static const char* const KW_LIST[] = {
+        "id",
         "name",
         "init",
         nullptr,
     };
 
-    const char* name = nullptr;
+    const char *id = nullptr, *name = nullptr;
     PyObject* initfn = nullptr;
 
-    if(!PyArg_ParseTupleAndKeywords(
-           args, kwargs, "sO", const_cast<char**>(KW_LIST), &name, &initfn)) {
+    if(!PyArg_ParseTupleAndKeywords(args, kwargs, "ssO",
+                                    const_cast<char**>(KW_LIST), &id, &name,
+                                    &initfn)) {
         return nullptr;
     }
 
     Py_INCREF(reinterpret_cast<PyObject*>(initfn));
 
     auto* userdata = new LoaderUserData{
-        name,
-        initfn,
+        .id = id,
+        .name = name,
+        .init = initfn,
     };
 
     RDLoader loader{};
+    loader.id = userdata->id.c_str();
     loader.name = userdata->name.c_str();
     loader.userdata = userdata;
 
@@ -442,6 +516,7 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
                              PyObject* kwargs) {
 
     static const char* const KW_LIST[] = {
+        "id",
         "name",
         "emulate",
         "render_segment",
@@ -450,12 +525,12 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
         nullptr,
     };
 
-    const char* name = nullptr;
+    const char *id = nullptr, *name = nullptr;
     PyObject *emulatefn = nullptr, *rendersegmentfn = nullptr;
     PyObject *renderfunctionfn = nullptr, *renderinstructionfn = nullptr;
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwargs, "sO|OOO",
-                                    const_cast<char**>(KW_LIST), &name,
+    if(!PyArg_ParseTupleAndKeywords(args, kwargs, "ssO|OOO",
+                                    const_cast<char**>(KW_LIST), &id, &name,
                                     &emulatefn, &rendersegmentfn,
                                     &renderfunctionfn, &renderinstructionfn)) {
         return nullptr;
@@ -467,7 +542,12 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
     Py_XINCREF(renderinstructionfn);
 
     auto* userdata = new ProcessorUserData{
-        name, emulatefn, rendersegmentfn, renderfunctionfn, renderinstructionfn,
+        .id = id,
+        .name = name,
+        .emulate = emulatefn,
+        .rendersegment = rendersegmentfn,
+        .renderfunction = renderfunctionfn,
+        .renderinstruction = renderinstructionfn,
     };
 
     RDProcessor processor{};
@@ -555,15 +635,15 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args,
                             PyObject* kwargs) {
 
     static const char* const KW_LIST[] = {
-        "name", "execute", "description", "flags", "is_enabled", nullptr,
+        "id", "name", "execute", "description", "flags", "is_enabled", nullptr,
     };
 
-    const char *name = nullptr, *description = nullptr;
+    const char *id = nullptr, *name = nullptr, *description = nullptr;
     usize flags = ANA_NONE;
     PyObject *executefn = nullptr, *isenabledfn = nullptr;
 
     if(!PyArg_ParseTupleAndKeywords(
-           args, kwargs, "sO|sKO", const_cast<char**>(KW_LIST), &name,
+           args, kwargs, "ssO|sKO", const_cast<char**>(KW_LIST), &id, &name,
            &executefn, &description, &flags, &isenabledfn)) {
         return nullptr;
     }
@@ -572,12 +652,14 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args,
     Py_XINCREF(isenabledfn);
 
     auto* userdata = new AnalyzerUserData{
-        name,
-        isenabledfn,
-        executefn,
+        .id = id,
+        .name = name,
+        .isenabled = isenabledfn,
+        .execute = executefn,
     };
 
     RDAnalyzer analyzer{};
+    analyzer.id = userdata->id.c_str();
     analyzer.name = userdata->name.c_str();
     analyzer.flags = flags;
     analyzer.userdata = userdata;

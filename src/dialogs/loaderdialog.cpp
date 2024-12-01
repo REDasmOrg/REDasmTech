@@ -40,7 +40,7 @@ void LoaderDialog::accept() {
     rd_select(tr.context);
 
     if(usize idx = m_ui.cbprocessors->currentIndex(); idx < m_nprocessors) {
-        rd_setprocessor(m_processors[idx].name);
+        rd_setprocessor(m_processors[idx].id);
         p = &m_processors[idx];
     }
 
@@ -61,7 +61,7 @@ void LoaderDialog::reject() {
 
 void LoaderDialog::select_processor(const RDProcessor* processor) {
     for(usize i = 0; i < m_nprocessors; i++) {
-        if(m_processors[i].name == processor->name) {
+        if(m_processors[i].id == processor->id) {
             m_ui.cbprocessors->setCurrentIndex(i);
             return;
         }

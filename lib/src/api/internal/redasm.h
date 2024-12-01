@@ -45,7 +45,10 @@ std::vector<RDAddress> get_entries();
 
 usize get_segments(const RDSegment** segments);
 bool find_segment(RDAddress address, RDSegment* segment);
-std::vector<RDRef> get_refs(RDAddress address);
+std::vector<RDRef> get_refsfrom(RDAddress fromaddr);
+std::vector<RDRef> get_refsfromtype(RDAddress fromaddr, usize type);
+std::vector<RDRef> get_refsto(RDAddress toaddr);
+std::vector<RDRef> get_refstotype(RDAddress toaddr, usize type);
 usize get_bytes(const RDByte** bytes);
 void set_bits(int bits);
 int get_bits();
@@ -70,7 +73,6 @@ bool set_name(RDAddress address, const std::string& name, usize flags);
 bool set_function(RDAddress address);
 bool set_entry(RDAddress address, const std::string& name);
 void add_ref(RDAddress fromaddr, RDAddress toaddr, usize type);
-void add_ref(RDAddress toaddr, usize type);
 
 bool is_address(RDAddress address);
 bool address_to_segment(RDAddress address, RDSegment* res);

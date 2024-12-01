@@ -312,7 +312,8 @@ RDProcessor x86_64{};
 } // namespace
 
 void rdplugin_init() {
-    x86_32.name = "x86_32";
+    x86_32.id = "x86_32";
+    x86_32.name = "X86";
     x86_32.userdata = new X86Processor(32);
     x86_32.renderinstruction = render_instruction;
     x86_32.decode = decode;
@@ -320,7 +321,8 @@ void rdplugin_init() {
     x86_32.lift = x86_lifter::lift;
     rd_registerprocessor(&x86_32);
 
-    x86_64.name = "x86_64";
+    x86_64.id = "x86_64";
+    x86_64.name = "X64";
     x86_64.userdata = new X86Processor(64);
     x86_64.renderinstruction = render_instruction;
     x86_64.decode = decode;

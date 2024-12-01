@@ -310,18 +310,48 @@ bool find_segment(RDAddress address, RDSegment* segment) {
     return false;
 }
 
-std::vector<RDRef> get_refs(RDAddress address) {
-    spdlog::trace("get_refs({})", address);
+std::vector<RDRef> get_refsfrom(RDAddress fromaddr) {
+    spdlog::trace("get_refsfrom({})", fromaddr);
+    if(!state::context)
+        return {};
 
-    if(auto idx = state::context->address_to_index(address); idx) {
-        if(!state::context->memory->at(*idx).has(BF_REFS))
-            return {};
+    return state::context->address_to_index(fromaddr).map_or(
+        [](MIndex x) { return api::to_c(state::context->get_refs_from(x)); },
+        std::vector<RDRef>{});
+}
 
-        const AddressDetail& d = state::context->database.get_detail(*idx);
-        return api::to_c(d.refs);
-    }
+std::vector<RDRef> get_refsfromtype(RDAddress fromaddr, usize type) {
+    spdlog::trace("get_refsfromtype({}, {})", fromaddr, type);
+    if(!state::context)
+        return {};
 
-    return {};
+    return state::context->address_to_index(fromaddr).map_or(
+        [type](MIndex x) {
+            return api::to_c(state::context->get_refs_from_type(x, type));
+        },
+        std::vector<RDRef>{});
+}
+
+std::vector<RDRef> get_refsto(RDAddress toaddr) {
+    spdlog::trace("get_refsto({})", toaddr);
+    if(!state::context)
+        return {};
+
+    return state::context->address_to_index(toaddr).map_or(
+        [](MIndex x) { return api::to_c(state::context->get_refs_to(x)); },
+        std::vector<RDRef>{});
+}
+
+std::vector<RDRef> get_refstotype(RDAddress toaddr, usize type) {
+    spdlog::trace("get_refstotype({}, {})", toaddr, type);
+    if(!state::context)
+        return {};
+
+    return state::context->address_to_index(toaddr).map_or(
+        [type](MIndex x) {
+            return api::to_c(state::context->get_refs_to_type(x, type));
+        },
+        std::vector<RDRef>{});
 }
 
 usize get_bytes(const RDByte** bytes) {
@@ -522,18 +552,7 @@ void add_ref(RDAddress fromaddr, RDAddress toaddr, usize type) {
         auto toidx = state::context->address_to_index(toaddr);
 
         if(fromidx && toidx)
-            state::context->disassembler.emulator.add_ref(*fromidx, *toidx,
-                                                          type);
-    }
-}
-
-void add_ref(RDAddress toaddr, usize type) {
-    spdlog::trace("add_ref({:x}, {})", toaddr, type);
-
-    if(state::context) {
-        state::context->address_to_index(toaddr).map([&](MIndex idx) {
-            state::context->disassembler.emulator.add_ref(idx, type);
-        });
+            state::context->add_ref(*fromidx, *toidx, type);
     }
 }
 

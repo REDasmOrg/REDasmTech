@@ -26,7 +26,7 @@ RDSegment to_c(const Segment& arg) {
     return s;
 }
 
-RDRef to_c(const AddressDetail::Ref& arg) {
+RDRef to_c(const Database::Ref& arg) {
     auto address = state::context->index_to_address(arg.index);
     assume(address.has_value());
 
@@ -36,11 +36,11 @@ RDRef to_c(const AddressDetail::Ref& arg) {
     };
 }
 
-std::vector<RDRef> to_c(const std::vector<AddressDetail::Ref>& arg) {
+std::vector<RDRef> to_c(const std::vector<Database::Ref>& arg) {
     std::vector<RDRef> refs;
     refs.reserve(arg.size());
 
-    for(const AddressDetail::Ref& r : arg)
+    for(Database::Ref r : arg)
         refs.push_back(api::to_c(r));
 
     return refs;

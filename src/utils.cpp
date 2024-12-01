@@ -73,7 +73,7 @@ void draw_surface(RDSurface* s, QTextDocument* doc, usize start, usize n) {
 
 QMenu* create_surface_menu(RDSurface* s, QWidget* w) {
     QAction* actcopy = actions::get(actions::COPY);
-    QAction* actrefs = actions::get(actions::REFS);
+    QAction* actrefs = actions::get(actions::REFS_TO);
     QAction* actrename = actions::get(actions::RENAME);
     QAction* actcomment = actions::get(actions::COMMENT);
 
@@ -98,7 +98,7 @@ QMenu* create_surface_menu(RDSurface* s, QWidget* w) {
         actcopy->setVisible(rdsurface_hasselection(s));
         actrename->setVisible(loc.cursoraddress.valid);
         actrefs->setVisible(loc.cursoraddress.valid &&
-                            rd_getrefs(loc.cursoraddress.value, nullptr));
+                            rd_getrefsto(loc.cursoraddress.value, nullptr));
     });
 
     return menu;

@@ -35,6 +35,7 @@ typedef void (*RDProcessorFree)(RDProcessor*);
 // clang-format on
 
 typedef struct RDProcessor {
+    const char* id;
     const char* name;
     void* userdata;
 
