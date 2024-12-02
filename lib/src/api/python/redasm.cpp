@@ -31,63 +31,99 @@ struct ProcessorUserData {
 };
 
 PyObject* is_alnum(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     auto b = static_cast<u8>(PyLong_AsUnsignedLong(args));
-    return std::isalnum(b) ? Py_True : Py_False;
+    return PyBool_FromLong(std::isalnum(b));
 }
 
 PyObject* is_alpha(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     auto b = static_cast<u8>(PyLong_AsUnsignedLong(args));
-    return std::isalpha(b) ? Py_True : Py_False;
+    return PyBool_FromLong(std::isalpha(b));
 }
 
 PyObject* is_lower(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     auto b = static_cast<u8>(PyLong_AsUnsignedLong(args));
-    return std::islower(b) ? Py_True : Py_False;
+    return PyBool_FromLong(std::islower(b));
 }
 
 PyObject* is_upper(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     auto b = static_cast<u8>(PyLong_AsUnsignedLong(args));
-    return internal::is_upper(b) ? Py_True : Py_False;
+    return PyBool_FromLong(internal::is_upper(b));
 }
 
 PyObject* is_digit(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     auto b = static_cast<u8>(PyLong_AsUnsignedLong(args));
-    return internal::is_digit(b) ? Py_True : Py_False;
+    return PyBool_FromLong(internal::is_digit(b));
 }
 
 PyObject* is_xdigit(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     auto b = static_cast<u8>(PyLong_AsUnsignedLong(args));
-    return internal::is_xdigit(b) ? Py_True : Py_False;
+    return PyBool_FromLong(internal::is_xdigit(b));
 }
 
 PyObject* is_cntrl(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     auto b = static_cast<u8>(PyLong_AsUnsignedLong(args));
-    return internal::is_cntrl(b) ? Py_True : Py_False;
+    return PyBool_FromLong(internal::is_cntrl(b));
 }
 
 PyObject* is_graph(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     auto b = static_cast<u8>(PyLong_AsUnsignedLong(args));
-    return internal::is_graph(b) ? Py_True : Py_False;
+    return PyBool_FromLong(internal::is_graph(b));
 }
 
 PyObject* is_space(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     auto b = static_cast<u8>(PyLong_AsUnsignedLong(args));
-    return internal::is_space(b) ? Py_True : Py_False;
+    return PyBool_FromLong(internal::is_space(b));
 }
 
 PyObject* is_blank(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     auto b = static_cast<u8>(PyLong_AsUnsignedLong(args));
-    return internal::is_blank(b) ? Py_True : Py_False;
+    return PyBool_FromLong(internal::is_blank(b));
 }
 
 PyObject* is_print(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     auto b = static_cast<u8>(PyLong_AsUnsignedLong(args));
-    return internal::is_print(b) ? Py_True : Py_False;
+    return PyBool_FromLong(internal::is_print(b));
 }
 
 PyObject* is_punct(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     auto b = static_cast<u8>(PyLong_AsUnsignedLong(args));
-    return internal::is_punct(b) ? Py_True : Py_False;
+    return PyBool_FromLong(internal::is_punct(b));
 }
 
 PyObject* init(PyObject* /*self*/, PyObject* /*args*/) {
@@ -101,22 +137,34 @@ PyObject* deinit(PyObject* /*self*/, PyObject* /*args*/) {
 }
 
 PyObject* set_loglevel(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     auto level = static_cast<RDLogLevel>(PyLong_AsUnsignedLong(args));
     internal::set_loglevel(level);
     Py_RETURN_NONE;
 }
 
 PyObject* log(PyObject* /*self*/, PyObject* args) {
+    if(!PyUnicode_Check(args))
+        return python::type_error(args, "string");
+
     internal::log(PyUnicode_AsUTF8(args));
     Py_RETURN_NONE;
 }
 
 PyObject* status(PyObject* /*self*/, PyObject* args) {
+    if(!PyUnicode_Check(args))
+        return python::type_error(args, "string");
+
     internal::status(PyUnicode_AsUTF8(args));
     Py_RETURN_NONE;
 }
 
 PyObject* symbolize(PyObject* /*self*/, PyObject* args) {
+    if(!PyUnicode_Check(args))
+        return python::type_error(args, "string");
+
     const char* s = PyUnicode_AsUTF8(args);
     return PyUnicode_FromString(internal::symbolize(s).c_str());
 }
@@ -165,6 +213,9 @@ PyObject* get_refsfromtype(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_refsto(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress toaddr = PyLong_AsUnsignedLongLong(args);
     std::vector<RDRef> refs = internal::get_refsto(toaddr);
     PyObject* res = PyTuple_New(refs.size());
@@ -208,6 +259,9 @@ PyObject* get_refstotype(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_address(PyObject* /*self*/, PyObject* args) {
+    if(!PyUnicode_Check(args))
+        return python::type_error(args, "string");
+
     const char* name = PyUnicode_AsUTF8(args);
 
     return internal::get_address(name).map_or(
@@ -216,6 +270,9 @@ PyObject* get_address(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_name(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
     return PyUnicode_FromString(internal::get_name(address).c_str());
 }
@@ -243,6 +300,9 @@ PyObject* set_name(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* set_function(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
     return PyBool_FromLong(internal::set_function(address));
 }
@@ -273,6 +333,9 @@ PyObject* add_ref(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_bool(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_bool(address); v)
@@ -282,6 +345,9 @@ PyObject* get_bool(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_char(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_char(address); v)
@@ -291,6 +357,9 @@ PyObject* get_char(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_u8(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_u8(address); v)
@@ -300,6 +369,9 @@ PyObject* get_u8(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_u16(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_u16(address); v)
@@ -309,6 +381,9 @@ PyObject* get_u16(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_u32(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_u32(address); v)
@@ -318,6 +393,9 @@ PyObject* get_u32(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_u64(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_u64(address); v)
@@ -327,6 +405,9 @@ PyObject* get_u64(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_i8(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_i8(address); v)
@@ -336,6 +417,9 @@ PyObject* get_i8(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_i16(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_i16(address); v)
@@ -345,6 +429,9 @@ PyObject* get_i16(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_i32(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_i32(address); v)
@@ -354,6 +441,9 @@ PyObject* get_i32(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_i64(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_i32(address); v)
@@ -363,6 +453,9 @@ PyObject* get_i64(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_u16be(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_u16be(address); v)
@@ -372,6 +465,9 @@ PyObject* get_u16be(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_u32be(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_u32be(address); v)
@@ -381,6 +477,9 @@ PyObject* get_u32be(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_u64be(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_u64be(address); v)
@@ -390,6 +489,9 @@ PyObject* get_u64be(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_i16be(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_i16be(address); v)
@@ -399,6 +501,9 @@ PyObject* get_i16be(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_i32be(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_i32be(address); v)
@@ -407,6 +512,9 @@ PyObject* get_i32be(PyObject* /*self*/, PyObject* args) {
     Py_RETURN_NONE;
 }
 PyObject* get_i64be(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_i64be(address); v)
@@ -416,6 +524,9 @@ PyObject* get_i64be(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_stringz(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::get_stringz(address); v)
@@ -451,6 +562,9 @@ PyObject* get_type(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* set_processor(PyObject* /*self*/, PyObject* args) {
+    if(!PyUnicode_Check(args))
+        return python::type_error(args, "string");
+
     const char* name = PyUnicode_AsUTF8(args);
     internal::set_processor(name);
     Py_RETURN_NONE;
@@ -514,7 +628,6 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args,
 
 PyObject* register_processor(PyObject* /*self*/, PyObject* args,
                              PyObject* kwargs) {
-
     static const char* const KW_LIST[] = {
         "id",
         "name",
@@ -633,7 +746,6 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
 
 PyObject* register_analyzer(PyObject* /*self*/, PyObject* args,
                             PyObject* kwargs) {
-
     static const char* const KW_LIST[] = {
         "id", "name", "execute", "description", "flags", "is_enabled", nullptr,
     };
@@ -719,6 +831,9 @@ PyObject* get_bits(PyObject* /*self*/, PyObject* /*args*/) {
 }
 
 PyObject* set_bits(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     redasm::api::internal::set_bits(PyLong_AsLong(args));
     Py_RETURN_NONE;
 }
@@ -784,6 +899,9 @@ PyObject* map_segment_n(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* is_address(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(internal::is_address(address))
@@ -793,6 +911,9 @@ PyObject* is_address(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* to_offset(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::to_offset(address); v)
@@ -802,6 +923,9 @@ PyObject* to_offset(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* to_address(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress offset = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::to_address(offset); v)
@@ -811,6 +935,9 @@ PyObject* to_address(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* from_reladdress(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress offset = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::from_reladdress(offset); v)
@@ -820,6 +947,9 @@ PyObject* from_reladdress(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* address_to_index(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::address_to_index(address); v)
@@ -829,6 +959,9 @@ PyObject* address_to_index(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* index_to_address(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     usize index = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::index_to_address(index); v)
@@ -838,6 +971,9 @@ PyObject* index_to_address(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* check_string(PyObject* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     RDStringResult r{};

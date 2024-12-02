@@ -279,17 +279,19 @@ void Database::set_name(MIndex idx, const std::string& name, usize ns) {
     sql_step(m_db, stmt);
 }
 
-tl::optional<MIndex> Database::get_index(std::string_view name) const {
+tl::optional<MIndex> Database::get_index(std::string_view name,
+                                         usize ns) const {
     if(name.empty())
         return tl::nullopt;
 
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_INDEX, R"(
         SELECT idx 
         FROM Names 
-        WHERE name = :name 
+        WHERE name = :name AND ns = :ns
     )");
 
     sql_bindparam(m_db, stmt, ":name", name);
+    sql_bindparam(m_db, stmt, ":ns", ns);
 
     if(sql_step(m_db, stmt) == SQLITE_ROW)
         return static_cast<u64>(sqlite3_column_int64(stmt, 0));

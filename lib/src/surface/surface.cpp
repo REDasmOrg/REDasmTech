@@ -59,7 +59,7 @@ tl::optional<MIndex> Surface::current_index() const {
 tl::optional<usize> Surface::index_under_cursor() const {
     if(this->start) {
         if(std::string w = m_renderer->word_at(m_row, m_col); !w.empty())
-            return state::context->database.get_index(w);
+            return state::context->get_index(w);
     }
 
     return tl::nullopt;

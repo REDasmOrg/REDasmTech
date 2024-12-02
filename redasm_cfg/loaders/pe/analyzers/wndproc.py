@@ -28,8 +28,6 @@ def get_import(pe, name):
 
 def get_api_refs(pe, name):
     address = get_import(pe, name)
-    print(address)
-    print(redasm.get_refsto(address))
     return redasm.get_refsto(address) if address else []
 
 
@@ -50,8 +48,8 @@ def find_wndproc(address, argidx):
                 wndproc = vstack[argidx]
 
                 if wndproc.addr is not None:
-                    redasm.add_ref(x.address, wndproc.addr, redasm.CR_CALL)
                     redasm.set_name(wndproc.addr, f"DialogProc_{redasm.to_hex(wndproc.addr)}", redasm.SN_DEFAULT)
+                    redasm.add_ref(x.address, wndproc.addr, redasm.CR_CALL)
 
                 break
             else:
@@ -62,4 +60,3 @@ def wndproc_execute(pe):
     for api in WNDPROC_API:
         for ref in get_api_refs(pe, api["name"]):
             find_wndproc(ref.address, api["arg"])
-            return

@@ -127,6 +127,9 @@ PyObject* ilexpr_to_pyobject(const rdil::ILExpr* e) {
 }
 
 PyObject* rdil_createfunction(PyRDIL* /*self*/, PyObject* args) {
+    if(!PyLong_Check(args))
+        return python::type_error(args, "int");
+
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
     const Function* f = state::context->address_to_index(address)

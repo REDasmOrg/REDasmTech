@@ -161,7 +161,8 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
 
         case CR_FLOW: {
             if(s->type & SEG_HASCODE) {
-                this->disassembler.emulator.qflow.push_back(toidx);
+                if(!mem->at(toidx).has(BF_CODE)) // Check if already decoded
+                    this->disassembler.emulator.qflow.push_back(toidx);
                 mem->set(fromidx, BF_FLOW);
             }
             else
@@ -174,8 +175,10 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
             mem->set(fromidx, BF_REFSFROM);
             mem->set(toidx, BF_JUMPDST | BF_REFSTO);
 
-            if(s->type & SEG_HASCODE)
-                this->disassembler.emulator.qjump.push_back(toidx);
+            if(s->type & SEG_HASCODE) {
+                if(!mem->at(toidx).has(BF_CODE)) // Check if already decoded
+                    this->disassembler.emulator.qjump.push_back(toidx);
+            }
             else
                 add_noncodeproblem(s, toidx, type);
             break;
@@ -186,8 +189,10 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
             mem->set(fromidx, BF_REFSFROM);
             mem->set(toidx, BF_FUNCTION | BF_REFSTO);
 
-            if(s->type & SEG_HASCODE)
-                this->disassembler.emulator.qcall.push_back(toidx);
+            if(s->type & SEG_HASCODE) {
+                if(!mem->at(toidx).has(BF_CODE)) // Check if already decoded
+                    this->disassembler.emulator.qcall.push_back(toidx);
+            }
             else
                 add_noncodeproblem(s, toidx, type);
             break;
@@ -363,7 +368,7 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
 }
 
 tl::optional<MIndex> Context::get_index(std::string_view name) const {
-    return this->database.get_index(name);
+    return this->database.get_index(name, AddressDetail::LABEL);
 }
 
 std::string Context::get_name(MIndex idx) const {
@@ -404,6 +409,11 @@ std::string Context::get_name(MIndex idx) const {
 }
 
 bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
+    if(name.starts_with("DialogProc_")) {
+        int zzz = 0;
+        zzz++;
+    }
+
     if(idx >= this->memory->size()) {
         if(!(flags & SN_NOWARN))
             spdlog::warn("set_name: Invalid address");
@@ -414,14 +424,15 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
     std::string dbname = name;
 
     if(!name.empty()) {
-        auto nameidx = this->database.get_index(dbname);
+        auto nameidx = this->database.get_index(dbname, AddressDetail::LABEL);
 
         if(nameidx && (flags & SN_FORCE)) {
             usize n = 0;
 
             while(nameidx) {
                 dbname = fmt::format("{}_{}", name, ++n);
-                nameidx = this->database.get_index(dbname);
+                nameidx =
+                    this->database.get_index(dbname, AddressDetail::LABEL);
             }
         }
         else if(nameidx) {
@@ -739,7 +750,7 @@ void Context::process_function_graph(MIndex idx) {
                 break;
             }
 
-            // ?Delay slots? can have both FLOW and JUMP
+            // FIXME: ?Delay slots? can have both FLOW and JUMP
             if(b.has(BF_JUMP)) {
                 Function::BasicBlock* bb = f.get_basic_block(n);
                 assume(bb);
@@ -764,8 +775,8 @@ void Context::process_function_graph(MIndex idx) {
 
             if(b.has(BF_FLOW)) {
                 usize len = this->memory->get_length(curridx);
-                assume(len);
-                MIndex flow = idx + len;
+                MIndex flow = curridx + len;
+                assume(flow > curridx);
 
                 if(b.has(BF_JUMP)) {
                     pending.push_back(flow);
