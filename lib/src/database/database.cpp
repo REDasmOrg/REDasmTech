@@ -53,6 +53,9 @@ int sql_step(sqlite3* db, sqlite3_stmt* stmt) {
 }
 
 constexpr std::string_view DB_SCHEMA = R"(
+    PRAGMA synchronous = OFF;
+    PRAGMA journal_mode = MEMORY;
+
     CREATE TABLE Info(
         k TEXT PRIMARY KEY,
         v TEXT NOT NULL
