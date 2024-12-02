@@ -98,8 +98,8 @@ def read_exports(pe):
         redasm.set_type(nameva, "str")
 
     functions = redasm.set_type(
-        functionsva, f"u32^[{exporttable.NumberOfFunctions}]")
-    names = redasm.set_type(namesva, f"u32^[{exporttable.NumberOfNames}]")
+        functionsva, f"u32[{exporttable.NumberOfFunctions}]")
+    names = redasm.set_type(namesva, f"u32[{exporttable.NumberOfNames}]")
     ordinals = redasm.set_type(ordinalsva, f"u16[{exporttable.NumberOfNames}]")
 
     for i, f in enumerate(functions):

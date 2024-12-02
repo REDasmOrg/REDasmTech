@@ -57,7 +57,7 @@ def create_ctrl_info(addr, n):
                 redasm.enqueue(eventinfo.lpEVENT_SINK_Release)
 
             events = redasm.set_type(ctrl.lpEventHandlerTable + redasm.size_of("VB_EVENT_INFO"),
-                                     f"u32*[{ctrl.wEventHandlerCount}]")
+                                     f"u32[{ctrl.wEventHandlerCount}]")
 
             for i, e in enumerate(events):
                 if e:
@@ -164,7 +164,7 @@ def vb_execute(pe):
     if signature != "VB5!":
         return
 
-    vbheader = redasm.set_type_as(vbaddr, "VB_HEADER", "vbheader")
+    vbheader = redasm.set_type(vbaddr, "VB_HEADER")
     redasm.set_type(vbaddr + vbheader.bSZProjectDescription, "str")
     redasm.set_type(vbaddr + vbheader.bSZProjectExeName, "str")
     redasm.set_type(vbaddr + vbheader.bSZProjectHelpFile, "str")

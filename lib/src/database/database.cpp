@@ -71,10 +71,8 @@ constexpr std::string_view DB_SCHEMA = R"(
     );
 
     CREATE TABLE Names(
-        idx INTEGER NOT NULL,
-        ns INTEGER NOT NULL,
-        name TEXT NOT NULL,
-        UNIQUE(idx, ns)
+        idx INTEGER PRIMARY KEY,
+        name TEXT NOT NULL
     );
 )";
 
@@ -143,15 +141,14 @@ sqlite3_stmt* Database::prepare_query(SQLQueries q, std::string_view s) const {
     return stmt;
 }
 
-std::string Database::get_name(MIndex idx, usize ns) const {
+std::string Database::get_name(MIndex idx) const {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_NAME, R"(
         SELECT name 
         FROM Names 
-        WHERE idx = :idx AND ns = :ns
+        WHERE idx = :idx
     )");
 
     sql_bindparam(m_db, stmt, ":idx", idx);
-    sql_bindparam(m_db, stmt, ":ns", ns);
 
     if(sql_step(m_db, stmt) == SQLITE_ROW)
         return reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
@@ -265,36 +262,37 @@ Database::RefList Database::get_refs_to(MIndex toidx) const {
     return res;
 }
 
-void Database::set_name(MIndex idx, const std::string& name, usize ns) {
+void Database::set_name(MIndex idx, const std::string& name) {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::SET_NAME, R"(
         INSERT INTO Names
-            VALUES (:idx, :ns, :name)
+            VALUES (:idx, :name)
         ON CONFLICT DO 
             UPDATE SET name = EXCLUDED.name
     )");
 
     sql_bindparam(m_db, stmt, ":idx", idx);
-    sql_bindparam(m_db, stmt, ":ns", ns);
     sql_bindparam(m_db, stmt, ":name", name);
     sql_step(m_db, stmt);
 }
 
 tl::optional<MIndex> Database::get_index(std::string_view name,
-                                         usize ns) const {
+                                         bool onlydb) const {
     if(name.empty())
         return tl::nullopt;
 
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_INDEX, R"(
         SELECT idx 
         FROM Names 
-        WHERE name = :name AND ns = :ns
+        WHERE name = :name
     )");
 
     sql_bindparam(m_db, stmt, ":name", name);
-    sql_bindparam(m_db, stmt, ":ns", ns);
 
     if(sql_step(m_db, stmt) == SQLITE_ROW)
         return static_cast<u64>(sqlite3_column_int64(stmt, 0));
+
+    if(onlydb)
+        return tl::nullopt;
 
     usize idx = name.size();
 

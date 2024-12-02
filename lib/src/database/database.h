@@ -12,23 +12,6 @@
 namespace redasm {
 
 struct AddressDetail {
-    enum NS : u8 {
-        LABEL = 0,
-        TYPE,
-        ARRAY,
-        FUNCTION,
-        IMPORT,
-        EXPORT,
-        SEGMENT,
-
-        COUNT,
-    };
-
-    struct Ref {
-        MIndex index;
-        usize type;
-    };
-
     RDType type;
     usize string_bytes;
 };
@@ -70,12 +53,13 @@ public:
     RefList get_refs_from(MIndex fromidx) const;
     RefList get_refs_to_type(MIndex toidx, usize type) const;
     RefList get_refs_to(MIndex toidx) const;
-    std::string get_name(MIndex idx, usize ns) const;
-    tl::optional<usize> get_index(std::string_view name, usize ns) const;
+    std::string get_name(MIndex idx) const;
+    tl::optional<usize> get_index(std::string_view name,
+                                  bool onlydb = false) const;
     std::string get_comment(MIndex idx) const;
     void add_ref(MIndex fromidx, MIndex toidx, usize type);
     void set_comment(MIndex idx, std::string_view comment);
-    void set_name(MIndex idx, const std::string& name, usize ns);
+    void set_name(MIndex idx, const std::string& name);
 
 public: // Obsolete
     const AddressDetail& get_detail(MIndex idx) const;

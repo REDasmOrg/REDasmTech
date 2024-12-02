@@ -368,23 +368,15 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
 }
 
 tl::optional<MIndex> Context::get_index(std::string_view name) const {
-    return this->database.get_index(name, AddressDetail::LABEL);
+    return this->database.get_index(name);
 }
 
 std::string Context::get_name(MIndex idx) const {
     Byte b = this->memory->at(idx);
     std::string name;
 
-    if(b.has(BF_NAME)) {
-        if(b.has(BF_ARRAY))
-            name = this->database.get_name(idx, AddressDetail::ARRAY);
-        else if(b.has(BF_TYPE))
-            name = this->database.get_name(idx, AddressDetail::TYPE);
-        else if(b.has(BF_FUNCTION))
-            name = this->database.get_name(idx, AddressDetail::FUNCTION);
-        else
-            name = this->database.get_name(idx, AddressDetail::LABEL);
-    }
+    if(b.has(BF_NAME))
+        name = this->database.get_name(idx);
 
     if(name.empty()) {
         std::string prefix = "loc";
@@ -409,11 +401,6 @@ std::string Context::get_name(MIndex idx) const {
 }
 
 bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
-    if(name.starts_with("DialogProc_")) {
-        int zzz = 0;
-        zzz++;
-    }
-
     if(idx >= this->memory->size()) {
         if(!(flags & SN_NOWARN))
             spdlog::warn("set_name: Invalid address");
@@ -424,15 +411,14 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
     std::string dbname = name;
 
     if(!name.empty()) {
-        auto nameidx = this->database.get_index(dbname, AddressDetail::LABEL);
+        auto nameidx = this->database.get_index(dbname, true);
 
         if(nameidx && (flags & SN_FORCE)) {
             usize n = 0;
 
             while(nameidx) {
                 dbname = fmt::format("{}_{}", name, ++n);
-                nameidx =
-                    this->database.get_index(dbname, AddressDetail::LABEL);
+                nameidx = this->database.get_index(dbname, true);
             }
         }
         else if(nameidx) {
@@ -447,15 +433,7 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
     b.set_flag(BF_WEAK, flags & SN_WEAK);
     b.set_flag(BF_IMPORT, flags & SN_IMPORT);
 
-    if(b.has(BF_ARRAY))
-        this->database.set_name(idx, dbname, AddressDetail::ARRAY);
-    else if(b.has(BF_TYPE))
-        this->database.set_name(idx, dbname, AddressDetail::TYPE);
-    else if(b.has(BF_FUNCTION))
-        this->database.set_name(idx, dbname, AddressDetail::FUNCTION);
-    else
-        this->database.set_name(idx, dbname, AddressDetail::LABEL);
-
+    this->database.set_name(idx, dbname);
     return true;
 }
 
