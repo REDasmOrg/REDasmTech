@@ -66,7 +66,7 @@ int calculate_bits(RDAddress address) {
 } // namespace
 
 Context::Context(const std::shared_ptr<AbstractBuffer>& b, RDLoader* l)
-    : loader{l}, database{l->id, b->source}, file{b} {
+    : loader{l}, file{b}, m_database{l->id, b->source} {
     assume(this->loader);
 }
 
@@ -146,14 +146,14 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
                 this->set_type(toidx, x.type);
             });
 
-            this->database.add_ref(fromidx, toidx, type);
+            this->m_database.add_ref(fromidx, toidx, type);
             mem->set(fromidx, BF_REFSFROM);
             mem->set(toidx, BF_REFSTO);
             break;
         }
 
         case DR_ADDRESS: {
-            this->database.add_ref(fromidx, toidx, type);
+            this->m_database.add_ref(fromidx, toidx, type);
             mem->set(fromidx, BF_REFSFROM);
             mem->set(toidx, BF_REFSTO);
             break;
@@ -171,7 +171,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         }
 
         case CR_JUMP: {
-            this->database.add_ref(fromidx, toidx, type);
+            this->m_database.add_ref(fromidx, toidx, type);
             mem->set(fromidx, BF_REFSFROM);
             mem->set(toidx, BF_JUMPDST | BF_REFSTO);
 
@@ -185,7 +185,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         }
 
         case CR_CALL: {
-            this->database.add_ref(fromidx, toidx, type);
+            this->m_database.add_ref(fromidx, toidx, type);
             mem->set(fromidx, BF_REFSFROM);
             mem->set(toidx, BF_FUNCTION | BF_REFSTO);
 
@@ -206,22 +206,28 @@ bool Context::set_comment(MIndex idx, std::string_view comment) {
     if(idx >= this->memory->size())
         return false;
 
-    this->database.set_comment(idx, comment);
+    this->m_database.set_comment(idx, comment);
     this->memory->at(idx).set_flag(BF_COMMENT, !comment.empty());
     return true;
 }
 
 bool Context::set_type(MIndex idx, typing::FullTypeName tname) {
-    if(idx >= this->memory->size())
+    if(idx >= this->memory->size()) {
+        spdlog::warn("set_type: Invalid address");
         return false;
+    }
 
     typing::ParsedType pt = this->types.parse(tname);
     return this->set_type(idx, pt.to_type());
 }
 
 bool Context::set_type(MIndex idx, RDType t) {
+    if(idx >= this->memory->size()) {
+        spdlog::warn("set_type: Invalid address");
+        return false;
+    }
+
     const typing::TypeDef* td = this->types.get_typedef(t);
-    AddressDetail& detail = this->database.check_detail(idx);
     usize len;
 
     switch(t.id) {
@@ -233,19 +239,20 @@ bool Context::set_type(MIndex idx, RDType t) {
             else
                 s = this->memory->get_string(idx);
 
-            if(!s)
+            if(!s) {
+                spdlog::warn("set_type: string not found in {:x}",
+                             this->index_to_address(idx).value());
                 return false;
+            }
 
-            detail.string_bytes =
-                (s->size() * td->size) + td->size; // Null terminator included
-            len = detail.string_bytes;
+            len = (s->size() * td->size) + td->size; // Null terminator included
             break;
         }
 
         default: len = std::max<usize>(t.n, 1) * td->size; break;
     }
 
-    detail.type = t;
+    m_database.set_type(idx, t);
     this->memory->unset_n(idx, len); // TODO(davide): Handle unset transparently
     this->memory->set_n(idx, len, BF_DATA);
     this->memory->set(idx, t.n > 0 ? BF_ARRAY : BF_TYPE);
@@ -368,24 +375,42 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
 }
 
 tl::optional<MIndex> Context::get_index(std::string_view name) const {
-    return this->database.get_index(name);
+    return m_database.get_index(name);
+}
+
+tl::optional<RDType> Context::get_type(MIndex idx) const {
+    if(idx >= this->memory->size()) {
+        spdlog::warn("get_type: Invalid address");
+        return tl::nullopt;
+    }
+
+    if(this->memory->at(idx).has(BF_TYPE) ||
+       this->memory->at(idx).has(BF_ARRAY))
+        return m_database.get_type(idx);
+
+    return tl::nullopt;
 }
 
 std::string Context::get_name(MIndex idx) const {
+    if(idx >= this->memory->size()) {
+        spdlog::warn("get_name: Invalid address");
+        return {};
+    }
+
     Byte b = this->memory->at(idx);
     std::string name;
 
     if(b.has(BF_NAME))
-        name = this->database.get_name(idx);
+        name = m_database.get_name(idx);
 
     if(name.empty()) {
         std::string prefix = "loc";
 
         if(b.has(BF_ARRAY) || b.has(BF_TYPE)) {
-            const AddressDetail& d = this->database.get_detail(idx);
-            assume(d.type.id);
+            auto type = this->get_type(idx);
+            assume(type);
 
-            const typing::TypeDef* td = this->types.get_typedef(d.type);
+            const typing::TypeDef* td = this->types.get_typedef(*type);
             assume(td);
             prefix = utils::to_lower(td->name);
         }
@@ -411,14 +436,14 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
     std::string dbname = name;
 
     if(!name.empty()) {
-        auto nameidx = this->database.get_index(dbname, true);
+        auto nameidx = m_database.get_index(dbname, true);
 
         if(nameidx && (flags & SN_FORCE)) {
             usize n = 0;
 
             while(nameidx) {
                 dbname = fmt::format("{}_{}", name, ++n);
-                nameidx = this->database.get_index(dbname, true);
+                nameidx = m_database.get_index(dbname, true);
             }
         }
         else if(nameidx) {
@@ -433,7 +458,7 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
     b.set_flag(BF_WEAK, flags & SN_WEAK);
     b.set_flag(BF_IMPORT, flags & SN_IMPORT);
 
-    this->database.set_name(idx, dbname);
+    m_database.set_name(idx, dbname);
     return true;
 }
 
@@ -441,7 +466,7 @@ std::string Context::get_comment(MIndex idx) const {
     if(idx >= this->memory->size() || !this->memory->at(idx).has(BF_COMMENT))
         return {};
 
-    return this->database.get_comment(idx);
+    return m_database.get_comment(idx);
 }
 
 Database::RefList Context::get_refs_from_type(MIndex fromidx,
@@ -450,7 +475,7 @@ Database::RefList Context::get_refs_from_type(MIndex fromidx,
        !this->memory->at(fromidx).has(BF_REFSFROM))
         return {};
 
-    return this->database.get_refs_from_type(fromidx, type);
+    return m_database.get_refs_from_type(fromidx, type);
 }
 
 Database::RefList Context::get_refs_from(MIndex fromidx) const {
@@ -458,21 +483,21 @@ Database::RefList Context::get_refs_from(MIndex fromidx) const {
        !this->memory->at(fromidx).has(BF_REFSFROM))
         return {};
 
-    return this->database.get_refs_from(fromidx);
+    return m_database.get_refs_from(fromidx);
 }
 
 Database::RefList Context::get_refs_to_type(MIndex toidx, usize type) const {
     if(toidx >= this->memory->size() || !this->memory->at(toidx).has(BF_REFSTO))
         return {};
 
-    return this->database.get_refs_to_type(toidx, type);
+    return m_database.get_refs_to_type(toidx, type);
 }
 
 Database::RefList Context::get_refs_to(MIndex toidx) const {
     if(toidx >= this->memory->size() || !this->memory->at(toidx).has(BF_REFSTO))
         return {};
 
-    return this->database.get_refs_to(toidx);
+    return m_database.get_refs_to(toidx);
 }
 
 std::string Context::to_hex(usize v, int n) const {
@@ -562,14 +587,14 @@ void Context::process_listing_data(MIndex& idx) {
     Byte b = this->memory->at(idx);
 
     if(b.has(BF_ARRAY)) {
-        const AddressDetail& d = this->database.get_detail(idx);
-        assume(d.type.id);
-        this->process_listing_array(idx, d.type);
+        auto type = this->get_type(idx);
+        assume(type);
+        this->process_listing_array(idx, *type);
     }
     else if(b.has(BF_TYPE)) {
-        const AddressDetail& d = this->database.get_detail(idx);
-        assume(d.type.id);
-        this->process_listing_type(idx, d.type);
+        auto type = this->get_type(idx);
+        assume(type);
+        this->process_listing_type(idx, *type);
     }
     else {
         this->process_hex_dump(idx, [](Byte b) {
@@ -672,13 +697,8 @@ LIndex Context::process_listing_type(MIndex& idx, RDType t) {
             case typing::ids::I64:
             case typing::ids::U64: idx += td->size; break;
 
-            case typing::ids::STR:
-            case typing::ids::WSTR: {
-                const AddressDetail& d = this->database.get_detail(idx);
-                assume(d.string_bytes > 0);
-                idx += d.string_bytes;
-                break;
-            }
+            case typing::ids::WSTR:
+            case typing::ids::STR: idx += this->memory->get_length(idx); break;
 
             default: unreachable;
         }

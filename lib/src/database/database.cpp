@@ -10,6 +10,23 @@ namespace redasm {
 
 namespace fs = std::filesystem;
 
+struct SQLQueries {
+    enum {
+        SET_NAME = 0,
+        GET_NAME,
+        GET_INDEX,
+        ADD_REF,
+        GET_REFS_FROM_TYPE,
+        GET_REFS_FROM,
+        GET_REFS_TO_TYPE,
+        GET_REFS_TO,
+        SET_COMMENT,
+        GET_COMMENT,
+        SET_TYPE,
+        GET_TYPE,
+    };
+};
+
 namespace {
 
 constexpr std::string_view DATABASE_FILE = "database.sqlite";
@@ -20,7 +37,8 @@ concept SQLBindable =
     std::same_as<T, std::string> || 
     std::same_as<T, std::string_view> ||
     std::same_as<T, MIndex> || 
-    std::same_as<T, u64>;
+    std::same_as<T, u64> ||
+    std::same_as<T, u32>;
 // clang-format on
 
 template<SQLBindable T>
@@ -38,6 +56,8 @@ void sql_bindparam(sqlite3* db, sqlite3_stmt* stmt, std::string_view n,
         res = sqlite3_bind_text(stmt, idx, v.data(), v.size(), SQLITE_STATIC);
     else if constexpr(std::is_same_v<U, MIndex> || std::is_same_v<U, u64>)
         res = sqlite3_bind_int64(stmt, idx, static_cast<sqlite3_int64>(v));
+    else if constexpr(std::is_same_v<U, u32>)
+        res = sqlite3_bind_int(stmt, idx, static_cast<int>(v));
 
     if(res != SQLITE_OK)
         except("SQL: {}", sqlite3_errmsg(db));
@@ -73,6 +93,12 @@ constexpr std::string_view DB_SCHEMA = R"(
         UNIQUE(fromidx, toidx)
     );
 
+    CREATE TABLE Types(
+        idx INTEGER PRIMARY KEY,
+        id INTEGER NOT NULL,
+        n INTEGER NOT NULL
+    );
+
     CREATE TABLE Names(
         idx INTEGER PRIMARY KEY,
         name TEXT NOT NULL
@@ -81,7 +107,7 @@ constexpr std::string_view DB_SCHEMA = R"(
 
 } // namespace
 
-Database::Database(std::string_view ldrid, const std::string& source) {
+Database::Database(std::string_view ldrid, std::string_view source) {
     assume(!source.empty());
 
     m_dbname = fs::path{source}.filename().replace_extension(".rdb").string();
@@ -125,7 +151,7 @@ Database::~Database() {
         fs::remove_all(projroot);
 }
 
-sqlite3_stmt* Database::prepare_query(SQLQueries q, std::string_view s) const {
+sqlite3_stmt* Database::prepare_query(int q, std::string_view s) const {
     sqlite3_stmt* stmt = nullptr;
 
     if(auto it = m_queries.find(q); it == m_queries.end()) {
@@ -265,7 +291,7 @@ Database::RefList Database::get_refs_to(MIndex toidx) const {
     return res;
 }
 
-void Database::set_name(MIndex idx, const std::string& name) {
+void Database::set_name(MIndex idx, std::string_view name) {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::SET_NAME, R"(
         INSERT INTO Names
             VALUES (:idx, :name)
@@ -275,6 +301,20 @@ void Database::set_name(MIndex idx, const std::string& name) {
 
     sql_bindparam(m_db, stmt, ":idx", idx);
     sql_bindparam(m_db, stmt, ":name", name);
+    sql_step(m_db, stmt);
+}
+
+void Database::set_type(MIndex idx, RDType t) {
+    sqlite3_stmt* stmt = this->prepare_query(SQLQueries::SET_TYPE, R"(
+        INSERT INTO Types
+            VALUES (:idx, :id, :n)
+        ON CONFLICT DO 
+            UPDATE SET id = EXCLUDED.id, n = EXCLUDED.n
+    )");
+
+    sql_bindparam(m_db, stmt, ":idx", idx);
+    sql_bindparam(m_db, stmt, ":id", t.id);
+    sql_bindparam(m_db, stmt, ":n", t.n);
     sql_step(m_db, stmt);
 }
 
@@ -331,15 +371,23 @@ std::string Database::get_comment(MIndex idx) const {
     return {};
 }
 
-AddressDetail& Database::check_detail(MIndex idx) { return m_indexdb[idx]; }
+tl::optional<RDType> Database::get_type(MIndex idx) const {
+    sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_COMMENT, R"(
+        SELECT id,n
+        FROM Types
+        WHERE idx = :idx
+    )");
 
-const AddressDetail& Database::get_detail(MIndex idx) const {
-    auto it = m_indexdb.find(idx);
+    sql_bindparam(m_db, stmt, ":idx", idx);
 
-    if(it != m_indexdb.end())
-        return it->second;
+    if(sql_step(m_db, stmt) == SQLITE_ROW) {
+        return RDType{
+            .id = static_cast<u32>(sqlite3_column_int(stmt, 0)),
+            .n = static_cast<u64>(sqlite3_column_int64(stmt, 1)),
+        };
+    }
 
-    except("Cannot find index {:x}", idx);
+    return tl::nullopt;
 }
 
 } // namespace redasm

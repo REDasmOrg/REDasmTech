@@ -46,6 +46,7 @@ public: // Database Interface
     bool set_type(MIndex idx, RDType t);
     bool set_name(MIndex idx, const std::string& name, usize flags);
     tl::optional<MIndex> get_index(std::string_view name) const;
+    tl::optional<RDType> get_type(MIndex idx) const;
     std::string get_name(MIndex idx) const;
     std::string get_comment(MIndex idx) const;
     Database::RefList get_refs_from_type(MIndex fromidx, usize type) const;
@@ -115,13 +116,13 @@ public:
     RDLoader* loader;
     const RDProcessor* processor;
     Listing listing;
-    Database database;
     typing::Types types;
     std::unique_ptr<Memory> memory;
     std::shared_ptr<AbstractBuffer> file;
 
 private:
     mutable int m_nchars{0};
+    Database m_database;
 };
 
 } // namespace redasm

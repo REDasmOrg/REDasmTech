@@ -780,8 +780,9 @@ void Surface::render_refs(const ListingItem& item) {
         if(!mem->at(index).has(BF_TYPE))
             continue;
 
-        const AddressDetail& d = ctx->database.get_detail(index);
-        const typing::TypeDef* td = ctx->types.get_typedef(d.type);
+        auto type = ctx->get_type(index);
+        assume(type);
+        const typing::TypeDef* td = ctx->types.get_typedef(*type);
         assume(td);
 
         switch(td->get_id()) {
