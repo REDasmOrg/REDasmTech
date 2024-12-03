@@ -14,25 +14,70 @@ namespace {
 constexpr usize COLUMN_PADDING = 6;
 
 template<typename T>
-std::pair<bool, std::string> surface_checkpointer(const typing::TypeDef* td,
-                                                  T v) {
-    Context* ctx = state::context;
+std::pair<bool, std::string> surface_checkaddr(const typing::TypeDef* td, T v) {
+    const Context* ctx = state::context;
+    bool isaddr = false;
 
-    // if(v) {
-    //     if(pt.modifier == typing::TYPEMODIFIER_POINTER) {
-    //         auto idx = ctx->address_to_index(static_cast<RDAddress>(v));
-    //         if(idx)
-    //             return {true, ctx->get_name(*idx)};
-    //     }
-    //     else if(pt.modifier == typing::TYPEMODIFIER_RELPOINTER) {
-    //         RDAddress address = ctx->baseaddress + static_cast<RDAddress>(v);
-    //         auto idx = ctx->address_to_index(address);
-    //         if(idx)
-    //             return {true, ctx->get_name(*idx)};
-    //     }
-    // }
+    if((td->size * CHAR_BIT == ctx->bits) && ctx->is_address(v)) {
+        const auto& mem = ctx->memory;
+        auto idx = ctx->address_to_index(static_cast<RDAddress>(v));
+        isaddr = idx.has_value();
 
-    return {false, ctx->to_hex(v, td->size * 2)};
+        if(idx && idx < mem->size() && mem->at(*idx).has(BF_NAME))
+            return {true, ctx->get_name(*idx)};
+    }
+
+    return {isaddr, ctx->to_hex(v, td->size * 2)};
+}
+
+std::string value_to_str(const typing::Value& v) {
+    assume(!v.type.n);
+
+    const Context* ctx = state::context;
+
+    switch(v.type.id) {
+        case typing::ids::I8: {
+            if(v.i8_v < 0)
+                return std::to_string(v.i8_v);
+            return ctx->to_hex(v.i8_v, sizeof(i8) * 2);
+        }
+
+        case typing::ids::I16:
+        case typing::ids::I16BE: {
+            if(v.i16_v < 0)
+                return std::to_string(v.i16_v);
+            return ctx->to_hex(v.i16_v, sizeof(i16) * 2);
+        }
+
+        case typing::ids::I32:
+        case typing::ids::I32BE: {
+            if(v.i32_v < 0)
+                return std::to_string(v.i32_v);
+            return ctx->to_hex(v.i32_v, sizeof(i32) * 2);
+        }
+
+        case typing::ids::I64:
+        case typing::ids::I64BE: {
+            if(v.i64_v < 0)
+                return std::to_string(v.i64_v);
+            return ctx->to_hex(v.i64_v, sizeof(i64) * 2);
+        }
+
+        case typing::ids::U8: return ctx->to_hex(v.u8_v, sizeof(u8) * 2);
+
+        case typing::ids::U16:
+        case typing::ids::U16BE: return ctx->to_hex(v.u16_v, sizeof(u16) * 2);
+
+        case typing::ids::U32:
+        case typing::ids::U32BE: return ctx->to_hex(v.u32_v, sizeof(u32) * 2);
+
+        case typing::ids::U64:
+        case typing::ids::U64BE: return ctx->to_hex(v.u64_v, sizeof(u64) * 2);
+
+        default: break;
+    }
+
+    unreachable;
 }
 
 } // namespace
@@ -616,8 +661,9 @@ void Surface::render_type(const ListingItem& item) {
 
     auto type = item.dtype_context;
     assume(type);
-    const typing::TypeDef* td = state::context->types.get_typedef(*type);
-    const auto& mem = state::context->memory;
+    const Context* ctx = state::context;
+    const typing::TypeDef* td = ctx->types.get_typedef(*type);
+    const auto& mem = ctx->memory;
     std::string fname;
 
     if(item.field_index) {
@@ -625,13 +671,13 @@ void Surface::render_type(const ListingItem& item) {
         auto f = td->dict.at(*item.field_index);
         fname = f.second;
         type = item.dtype;
-        td = state::context->types.get_typedef(*type);
+        td = ctx->types.get_typedef(*type);
     }
     else
-        fname = state::context->get_name(item.index);
+        fname = ctx->get_name(item.index);
 
     assume(type);
-    std::string t = state::context->types.to_string(*type);
+    std::string t = ctx->types.to_string(*type);
 
     m_renderer->new_row(item);
 
@@ -640,7 +686,7 @@ void Surface::render_type(const ListingItem& item) {
 
     if(td->is_struct()) {
         if(!item.array_index) {
-            std::string label = state::context->get_name(item.index);
+            std::string label = ctx->get_name(item.index);
             m_renderer->function("struct").ws().type(td->name).ws().chunk(
                 label);
         }
@@ -671,59 +717,25 @@ void Surface::render_type(const ListingItem& item) {
         }
 
         case typing::ids::I8:
-        case typing::ids::U8: {
-            auto v = mem->get_u8(item.index);
-
-            if(v.has_value()) {
-                auto [isptr, val] = surface_checkpointer(td, *v);
-                m_renderer->word("=").chunk(val, isptr ? THEME_ADDRESS
-                                                       : THEME_CONSTANT);
-            }
-            else
-                m_renderer->word("=").unknown();
-            break;
-        }
-
+        case typing::ids::U8:
         case typing::ids::I16:
-        case typing::ids::U16: {
-            auto v = mem->get_u16(item.index, td->isbig);
-
-            if(v.has_value()) {
-                auto [isptr, val] = surface_checkpointer(td, *v);
-
-                m_renderer->word("=").chunk(val, isptr ? THEME_ADDRESS
-                                                       : THEME_CONSTANT);
-            }
-            else
-                m_renderer->word("=").unknown();
-            break;
-        }
-
+        case typing::ids::U16:
         case typing::ids::I32:
-        case typing::ids::U32: {
-            auto v = mem->get_u32(item.index, td->isbig);
-
-            if(v.has_value()) {
-                auto [isptr, val] = surface_checkpointer(td, *v);
-                m_renderer->word("=").chunk(val, isptr ? THEME_ADDRESS
-                                                       : THEME_CONSTANT);
-            }
-            else
-                m_renderer->word("=").unknown();
-            break;
-        }
-
+        case typing::ids::U32:
         case typing::ids::I64:
-        case typing::ids::U64: {
-            auto v = mem->get_u64(item.index, td->isbig);
-            assume(v.has_value());
-            if(v.has_value()) {
-                auto [isptr, val] = surface_checkpointer(td, *v);
-                m_renderer->word("=").chunk(val, isptr ? THEME_ADDRESS
-                                                       : THEME_CONSTANT);
-            }
-            else
-                m_renderer->word("=").unknown();
+        case typing::ids::U64:
+        case typing::ids::I16BE:
+        case typing::ids::U16BE:
+        case typing::ids::I32BE:
+        case typing::ids::U32BE:
+        case typing::ids::I64BE:
+        case typing::ids::U64BE: {
+            mem->get_type(item.index, td->to_type())
+                .map([&](const typing::Value& v) {
+                    m_renderer->word("=").chunk(value_to_str(v),
+                                                THEME_CONSTANT);
+                })
+                .or_else([&]() { m_renderer->word("=").unknown(); });
             break;
         }
 
