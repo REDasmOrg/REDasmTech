@@ -18,7 +18,7 @@ struct MainWindow {
     QMenu *mnufile, *mnuedit, *mnuview, *mnutools, *mnuhelp;
     QMenu* mnurecents;
     QAction *actfileopen, *actfileclose, *actfileexit;
-    QAction *acttoolsflc, *acttoolssettings;
+    QAction *acttoolsflc, *acttoolsproblems, *acttoolssettings;
     QAction *actedit, *actview, *acttools;
     QAction *actviewmemorymap, *actviewsegments, *actviewstrings,
         *actviewimports, *actviewexports;
@@ -61,8 +61,12 @@ struct MainWindow {
 
         this->acttoolsflc = this->mnutools->addAction(
             "&FLC", QKeySequence{Qt::CTRL | Qt::Key_L});
-
         this->acttoolsflc->setVisible(false);
+
+        this->acttoolsproblems = this->mnutools->addAction("&Problems");
+        this->acttoolsproblems->setVisible(false);
+
+        this->mnutools->addSeparator();
         this->acttoolssettings = this->mnutools->addAction("&Settings");
 
         this->actviewmemorymap = this->mnuview->addAction(

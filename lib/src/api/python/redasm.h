@@ -22,6 +22,7 @@ PyObject* deinit(PyObject* self, PyObject* args);
 PyObject* log(PyObject* self, PyObject* args);
 PyObject* status(PyObject* self, PyObject* args);
 PyObject* set_loglevel(PyObject* self, PyObject* args);
+PyObject* get_problems(PyObject* self, PyObject* args);
 PyObject* symbolize(PyObject* self, PyObject* args);
 PyObject* is_address(PyObject* self, PyObject* args);
 PyObject* to_offset(PyObject* self, PyObject* args);

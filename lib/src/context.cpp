@@ -435,7 +435,7 @@ std::string Context::get_name(MIndex idx) const {
 bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
     if(idx >= this->memory->size()) {
         if(!(flags & SN_NOWARN))
-            spdlog::warn("set_name: Invalid address");
+            this->add_problem(idx, "Cannot set name, address out of bounds");
 
         return false;
     }
@@ -454,8 +454,10 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
             }
         }
         else if(nameidx) {
-            if(!(flags & SN_NOWARN))
-                spdlog::warn("set_name: name '{}' already exists", name);
+            if(!(flags & SN_NOWARN)) {
+                this->add_problem(
+                    idx, fmt::format("name '{}' already exists", name));
+            }
             return false;
         }
     }

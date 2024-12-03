@@ -34,6 +34,11 @@ typedef enum RDSetName {
     SN_FORCE = (1 << 2),
 } RDSetName;
 
+typedef struct RDProblem {
+    RDAddress address;
+    const char* problem;
+} RDProblem;
+
 RD_HANDLE(RDContext);
 RD_HANDLE(RDBuffer);
 
@@ -118,6 +123,7 @@ REDASM_EXPORT void rd_addsearchpath(const char* path);
 REDASM_EXPORT RDBuffer* rd_loadfile(const char* filepath);
 REDASM_EXPORT usize rd_test(RDBuffer* buffer, const RDTestResult** result);
 REDASM_EXPORT void rd_disassemble();
+REDASM_EXPORT usize rd_getproblems(const RDProblem** problems);
 
 REDASM_EXPORT bool rd_setcomment(RDAddress address, const char* comment);
 REDASM_EXPORT bool rd_settype(RDAddress address, const RDType* type);

@@ -8,6 +8,7 @@
 #include "dialogs/tabledialog.h"
 #include "models/exportsmodel.h"
 #include "models/importsmodel.h"
+#include "models/problemsmodel.h"
 #include "models/segmentsmodel.h"
 #include "models/symbolsfiltermodel.h"
 #include "models/symbolsmodel.h"
@@ -97,6 +98,12 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
     connect(m_ui.acttoolsflc, &QAction::triggered, this, [&]() {
         auto* dlgflc = new FLCDialog(this);
         dlgflc->show();
+    });
+
+    connect(m_ui.acttoolsproblems, &QAction::triggered, this, [&]() {
+        auto* dlg = new TableDialog("Problems", this);
+        dlg->set_model(new ProblemsModel(dlg));
+        dlg->show();
     });
 
     connect(m_pbrdilswitch, &QPushButton::clicked, this,
@@ -271,6 +278,7 @@ void MainWindow::enable_context_actions(bool e) { // NOLINT
     m_ui.actview->setVisible(e);
     m_ui.acttools->setVisible(e);
     m_ui.acttoolsflc->setVisible(e);
+    m_ui.acttoolsproblems->setVisible(e);
 
     m_ui.acttbseparator->setVisible(e);
     m_ui.actviewexports->setVisible(e);

@@ -42,6 +42,7 @@ target_sources(${PROJECT_NAME}
         src/models/symbolsmodel.cpp
         src/models/exportsmodel.cpp
         src/models/importsmodel.cpp
+        src/models/problemsmodel.cpp
 
         src/dialogs/flcdialog.cpp
         src/dialogs/gotodialog.cpp

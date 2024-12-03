@@ -274,7 +274,26 @@ std::vector<RDAddress> get_entries() {
     return entries;
 }
 
+std::vector<RDProblem> get_problems() {
+    spdlog::trace("get_problems()");
+
+    Context* ctx = state::context;
+
+    if(!ctx)
+        return {};
+
+    std::vector<RDProblem> res;
+    res.reserve(ctx->problems.size());
+
+    for(const auto& [index, problem] : ctx->problems)
+        res.emplace_back(ctx->baseaddress + index, problem.c_str());
+
+    return res;
+}
+
 usize get_segments(const RDSegment** segments) {
+    spdlog::trace("get_segments()");
+
     static std::vector<RDSegment> res;
 
     if(segments) {
@@ -291,6 +310,8 @@ usize get_segments(const RDSegment** segments) {
 }
 
 bool find_segment(RDAddress address, RDSegment* segment) {
+    spdlog::trace("find_segment()");
+
     auto idx = state::context->address_to_index(address);
     if(!idx)
         return false;

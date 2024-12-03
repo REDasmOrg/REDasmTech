@@ -145,6 +145,24 @@ PyObject* set_loglevel(PyObject* /*self*/, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+PyObject* get_problems(PyObject* /*self*/, PyObject* /*args*/) {
+    std::vector<RDProblem> problems = internal::get_problems();
+    PyObject* res = PyTuple_New(problems.size());
+
+    for(usize i = 0; i < problems.size(); i++) {
+        PyObject* item = python::new_simplenamespace();
+        PyObject* itemaddr = PyLong_FromUnsignedLongLong(problems[i].address);
+        PyObject* itemprob = PyUnicode_FromString(problems[i].problem);
+        PyObject_SetAttrString(item, "address", itemaddr);
+        PyObject_SetAttrString(item, "problem", itemprob);
+        PyTuple_SET_ITEM(res, i, item);
+        Py_DECREF(itemaddr);
+        Py_DECREF(itemprob);
+    }
+
+    return res;
+}
+
 PyObject* log(PyObject* /*self*/, PyObject* args) {
     if(!PyUnicode_Check(args))
         return python::type_error(args, "string");
@@ -181,8 +199,8 @@ PyObject* get_refsfrom(PyObject* /*self*/, PyObject* args) {
         PyObject_SetAttrString(item, "address", itemaddr);
         PyObject_SetAttrString(item, "type", itemtype);
         PyTuple_SET_ITEM(res, i, item);
-        Py_DECREF(itemtype);
         Py_DECREF(itemaddr);
+        Py_DECREF(itemtype);
     }
 
     return res;

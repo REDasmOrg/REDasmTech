@@ -42,6 +42,7 @@ bool tick(const RDAnalysisStatus** s);
 std::string to_hex_n(usize v, usize n);
 std::string to_hex(usize v);
 std::vector<RDAddress> get_entries();
+std::vector<RDProblem> get_problems();
 
 usize get_segments(const RDSegment** segments);
 bool find_segment(RDAddress address, RDSegment* segment);

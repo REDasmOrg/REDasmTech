@@ -116,6 +116,14 @@ void rd_select(RDContext* context) { redasm::api::internal::select(context); }
 bool rd_destroy(void) { return redasm::api::internal::destroy(); }
 void rd_discard(void) { redasm::api::internal::discard(); }
 
+usize rd_getproblems(const RDProblem** problems) {
+    static std::vector<RDProblem> res;
+    res = redasm::api::internal::get_problems();
+    if(problems)
+        *problems = res.data();
+    return res.size();
+}
+
 bool rd_setcomment(RDAddress address, const char* comment) {
     if(comment)
         return redasm::api::internal::set_comment(address, comment);

@@ -15,6 +15,7 @@ inline PyMethodDef methods[] = {
     {"log", python::log, METH_O, nullptr},
     {"status", python::status, METH_O, nullptr},
     {"set_loglevel", python::set_loglevel, METH_O, nullptr},
+    {"get_problems", python::get_problems, METH_NOARGS, nullptr},
     {"symbolize", python::symbolize, METH_O, nullptr},
     {"is_address", python::is_address, METH_O, nullptr},
     {"to_offset", python::to_offset, METH_O, nullptr},
