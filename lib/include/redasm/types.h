@@ -18,8 +18,8 @@ typedef intmax_t isize;
 typedef uintptr_t uptr;
 typedef intptr_t iptr;
 
-typedef usize RDAddress;
-typedef usize RDOffset;
+typedef u64 RDAddress;
+typedef u64 RDOffset;
 
 typedef usize MIndex;
 typedef usize LIndex;

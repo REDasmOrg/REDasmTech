@@ -33,7 +33,7 @@ struct Renderer {
     void set_current_item(LIndex lidx, const ListingItem& item);
 
     Renderer& new_row(const ListingItem& item);
-    Renderer& constant(usize c, int base = 0);
+    Renderer& constant(u64 c, int base = 0, RDThemeKind fg = THEME_CONSTANT);
 
     Renderer& character(SurfaceRow& row, char ch,
                         RDThemeKind fg = THEME_DEFAULT,

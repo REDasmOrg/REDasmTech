@@ -194,7 +194,7 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
                 if(is_addr_instruction(instr) && rd_isaddress(op->imm))
                     rdrenderer_addr(r->renderer, op->imm);
                 else
-                    rdrenderer_cnst(r->renderer, op->imm, 16);
+                    rdrenderer_cnst(r->renderer, op->imm);
                 break;
             }
 
@@ -245,7 +245,7 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
 
                     if(op->displ.scale > 1) {
                         rdrenderer_text(r->renderer, " * ");
-                        rdrenderer_cnst(r->renderer, op->displ.scale, 16);
+                        rdrenderer_cnst(r->renderer, op->displ.scale);
                     }
                 }
 

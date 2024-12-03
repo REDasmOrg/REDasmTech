@@ -38,6 +38,10 @@ void rdrenderer_addr(RDRenderer* self, RDAddress address) {
     redasm::api::internal::renderer_addr(self, address);
 }
 
-void rdrenderer_cnst(RDRenderer* self, usize value, int base) {
-    redasm::api::internal::renderer_cnst(self, value, base);
+void rdrenderer_cnst_ex(RDRenderer* self, usize value, int base) {
+    redasm::api::internal::renderer_cnst_ex(self, value, base);
+}
+
+void rdrenderer_cnst(RDRenderer* self, usize value) {
+    redasm::api::internal::renderer_cnst(self, value);
 }

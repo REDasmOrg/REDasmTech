@@ -12,6 +12,10 @@ void renderer_reg(RDRenderer* self, std::string_view s);
 void renderer_text(RDRenderer* self, std::string_view s);
 void renderer_ws(RDRenderer* self);
 void renderer_addr(RDRenderer* self, RDAddress address);
-void renderer_cnst(RDRenderer* self, usize value, int base);
+void renderer_cnst_ex(RDRenderer* self, u64 value, int base);
+
+inline void renderer_cnst(RDRenderer* self, u64 value) {
+    renderer_cnst_ex(self, value, 0);
+}
 
 } // namespace redasm::api::internal

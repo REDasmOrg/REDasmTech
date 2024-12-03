@@ -41,8 +41,8 @@ void renderer_addr(RDRenderer* self, RDAddress address) {
     api::from_c(self)->addr(address);
 }
 
-void renderer_cnst(RDRenderer* self, usize value, int base) {
-    spdlog::trace("renderer_cnst({}, {}, {})", fmt::ptr(self), value, base);
+void renderer_cnst_ex(RDRenderer* self, u64 value, int base) {
+    spdlog::trace("renderer_cnst_ex({}, {}, {})", fmt::ptr(self), value, base);
     api::from_c(self)->constant(value, base);
 }
 

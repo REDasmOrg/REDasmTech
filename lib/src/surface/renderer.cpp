@@ -183,7 +183,7 @@ Renderer& Renderer::rdil(const RDRendererParams& rp) {
 }
 
 Renderer& Renderer::addr(RDAddress address) {
-    Context* ctx = state::context;
+    const Context* ctx = state::context;
 
     ctx->address_to_index(address)
         .and_then([&](MIndex idx) -> tl::optional<MIndex> {
@@ -193,7 +193,9 @@ Renderer& Renderer::addr(RDAddress address) {
             }
             return tl::nullopt;
         })
-        .or_else([&]() { this->chunk(ctx->to_hex(address), THEME_ADDRESS); });
+        .or_else([&]() {
+            this->constant(static_cast<u64>(address), 0, THEME_ADDRESS);
+        });
 
     return *this;
 }
@@ -220,15 +222,15 @@ Renderer& Renderer::new_row(const ListingItem& item) {
     return *this;
 }
 
-Renderer& Renderer::constant(usize c, int base) {
+Renderer& Renderer::constant(u64 c, int base, RDThemeKind fg) {
     static constexpr std::string_view DIGITS = "0123456789ABCDEF";
 
     if(c == 0) { // Simplified logic
-        this->chunk("0", THEME_CONSTANT);
+        this->chunk("0", fg);
         return *this;
     }
 
-    auto sc = static_cast<isize>(c);
+    auto sc = static_cast<i64>(c);
     bool isnegative = ((base == 0 || base == 10) && sc < 0);
 
     if(base == 0)
@@ -238,11 +240,11 @@ Renderer& Renderer::constant(usize c, int base) {
         return *this;
     }
 
-    if(c < 10) {
+    if(sc < 10) {
         if(isnegative)
-            this->chunk(std::to_string(sc), THEME_CONSTANT);
+            this->chunk(std::to_string(sc), fg);
         else
-            this->chunk(std::to_string(c), THEME_CONSTANT);
+            this->chunk(std::to_string(c), fg);
     }
     else {
         std::string val;
@@ -252,7 +254,7 @@ Renderer& Renderer::constant(usize c, int base) {
             c /= base;
         } while(c > 0);
 
-        this->chunk(val, THEME_CONSTANT);
+        this->chunk(val, fg);
     }
 
     return *this;
