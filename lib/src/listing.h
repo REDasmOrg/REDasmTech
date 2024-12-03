@@ -67,7 +67,6 @@ public:
     ConstIterator upper_bound(MIndex idx, ConstIterator begin) const;
     void hex_dump(MIndex startindex, MIndex endindex);
     usize type(MIndex index, RDType t);
-    usize array(MIndex index, RDType t);
     usize instruction(MIndex index);
     usize label(MIndex index);
     usize function(MIndex index);

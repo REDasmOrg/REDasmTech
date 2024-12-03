@@ -82,9 +82,8 @@ QString SymbolsModel::get_symbol_type(usize t) const {
     switch(t) {
         case SYMBOL_SEGMENT: return "SEGMENT";
         case SYMBOL_FUNCTION: return "FUNCTION";
-        case SYMBOL_TYPE: return "TYPE";
         case SYMBOL_STRING: return "STRING";
-        case SYMBOL_ARRAY: return "ARRAY";
+        case SYMBOL_TYPE: return "TYPE";
         default: break;
     }
 

@@ -13,6 +13,7 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
     assume(symbol);
 
     const Context* ctx = state::context;
+    const auto& mem = ctx->memory;
     const Listing& listing = ctx->listing;
     const ListingItem& item = listing[listingidx];
 
@@ -42,22 +43,10 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
             assume(item.dtype);
 
             switch(item.dtype->id) {
-                case typing::ids::STR:
-                    s = state::context->memory->get_string(item.index);
-                    break;
-
-                case typing::ids::WSTR:
-                    s = state::context->memory->get_wstring(item.index);
-                    break;
-
-                case typing::ids::CHAR:
-                    spdlog::critical("UNHANDLED CHAR");
-                    break;
-
-                case typing::ids::WCHAR:
-                    spdlog::critical("UNHANDLED WCHAR");
-                    break;
-
+                case typing::ids::STR: s = mem->get_string(item.index); break;
+                case typing::ids::WSTR: s = mem->get_wstring(item.index); break;
+                case typing::ids::CHAR: s = "***UNHANDLED CHAR***"; break;
+                case typing::ids::WCHAR: s = "***UNHANDLED WCHAR***"; break;
                 default: break;
             }
 
@@ -76,15 +65,6 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
                 symbol->value = value.c_str();
             }
 
-            break;
-        }
-
-        case LISTINGITEM_ARRAY: {
-            value = ctx->get_name(item.index);
-
-            symbol->type = SYMBOL_ARRAY;
-            symbol->theme = THEME_DEFAULT;
-            symbol->value = value.c_str();
             break;
         }
 

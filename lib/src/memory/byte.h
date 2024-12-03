@@ -13,15 +13,10 @@ struct Byte {
         return (value & BF_MUNKN) == BF_UNKNOWN;
     }
 
-    [[nodiscard]] bool is_strong() const {
-        return !this->is_unknown() && !this->is_weak();
-    }
-
     [[nodiscard]] bool is_code() const { return (value & BF_CODE) == BF_CODE; }
     [[nodiscard]] bool is_data() const { return (value & BF_DATA) == BF_DATA; }
     [[nodiscard]] bool is_cont() const { return this->has(BF_CONT); }
-    [[nodiscard]] bool is_weak() const { return this->has(BF_WEAK); }
-    [[nodiscard]] bool has_byte() const { return this->has(BF_HASBYTE); }
+    [[nodiscard]] bool has_byte() const { return this->has(BF_BYTE); }
     [[nodiscard]] bool has(u32 f) const { return (value & f) == f; }
 
     [[nodiscard]] u32 category() const {
@@ -45,7 +40,7 @@ struct Byte {
 
     void set_byte(u8 byte) {
         value &= ~BF_MBYTE;
-        this->set(byte | BF_HASBYTE);
+        this->set(byte | BF_BYTE);
     }
 };
 

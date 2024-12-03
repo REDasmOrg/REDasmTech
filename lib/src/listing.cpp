@@ -89,19 +89,6 @@ usize Listing::type(MIndex index, RDType t) {
     return lidx;
 }
 
-usize Listing::array(MIndex index, RDType t) {
-    usize lidx = this->push_item(LISTINGITEM_ARRAY, index);
-    m_items[lidx].dtype = t;
-
-    if(!m_items[lidx].dtype_context)
-        m_items[lidx].dtype_context = m_items[lidx].dtype;
-
-    if(!this->field_index() && !this->current_type())
-        m_symbols.push_back(lidx);
-
-    return lidx;
-}
-
 usize Listing::instruction(MIndex index) {
     return this->push_item(LISTINGITEM_INSTRUCTION, index);
 }

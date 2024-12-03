@@ -92,7 +92,6 @@ QMenu* create_surface_menu(RDSurface* s, QWidget* w) {
         actcomment->setVisible(
             loc.listingindex.valid &&
             (loc.listingindex.type == LISTINGITEM_INSTRUCTION ||
-             loc.listingindex.type == LISTINGITEM_ARRAY ||
              loc.listingindex.type == LISTINGITEM_TYPE));
 
         actcopy->setVisible(rdsurface_hasselection(s));

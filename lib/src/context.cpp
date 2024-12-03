@@ -263,7 +263,7 @@ bool Context::set_type(MIndex idx, RDType t) {
     m_database.set_type(idx, t);
     this->memory->unset_n(idx, len); // TODO(davide): Handle unset transparently
     this->memory->set_n(idx, len, BF_DATA);
-    this->memory->set(idx, t.n > 0 ? BF_ARRAY : BF_TYPE);
+    this->memory->set(idx, BF_TYPE);
     return true;
 }
 
@@ -392,8 +392,7 @@ tl::optional<RDType> Context::get_type(MIndex idx) const {
         return tl::nullopt;
     }
 
-    if(this->memory->at(idx).has(BF_TYPE) ||
-       this->memory->at(idx).has(BF_ARRAY))
+    if(this->memory->at(idx).has(BF_TYPE))
         return m_database.get_type(idx);
 
     return tl::nullopt;
@@ -414,7 +413,7 @@ std::string Context::get_name(MIndex idx) const {
     if(name.empty()) {
         std::string prefix = "loc";
 
-        if(b.has(BF_ARRAY) || b.has(BF_TYPE)) {
+        if(b.has(BF_TYPE)) {
             auto type = this->get_type(idx);
             assume(type);
 
@@ -463,7 +462,6 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
 
     Byte& b = this->memory->at(idx);
     b.set_flag(BF_NAME, !dbname.empty());
-    b.set_flag(BF_WEAK, flags & SN_WEAK);
     b.set_flag(BF_IMPORT, flags & SN_IMPORT);
 
     m_database.set_name(idx, dbname);
@@ -594,21 +592,17 @@ void Context::process_listing_unknown(MIndex& idx) {
 void Context::process_listing_data(MIndex& idx) {
     Byte b = this->memory->at(idx);
 
-    if(b.has(BF_ARRAY)) {
+    if(b.has(BF_TYPE)) {
         auto type = this->get_type(idx);
         assume(type);
-        this->process_listing_array(idx, *type);
+
+        if(type->n > 0)
+            this->process_listing_array(idx, *type);
+        else
+            this->process_listing_type(idx, *type);
     }
-    else if(b.has(BF_TYPE)) {
-        auto type = this->get_type(idx);
-        assume(type);
-        this->process_listing_type(idx, *type);
-    }
-    else {
-        this->process_hex_dump(idx, [](Byte b) {
-            return b.is_data() && !b.has(BF_TYPE) && !b.has(BF_ARRAY);
-        });
-    }
+    else
+        unreachable;
 }
 
 void Context::process_listing_code(MIndex& idx) {
@@ -638,7 +632,7 @@ void Context::process_listing_code(MIndex& idx) {
 void Context::process_listing_array(MIndex& idx, RDType t) {
     assume(t.n > 0);
 
-    this->listing.array(idx, t);
+    this->listing.type(idx, t);
     this->listing.push_indent();
 
     const typing::TypeDef* td = this->types.get_typedef(t);
@@ -651,7 +645,7 @@ void Context::process_listing_array(MIndex& idx, RDType t) {
 
         default: {
             for(usize i = 0; i < std::max<usize>(t.n, 1); i++) {
-                LIndex lidx = this->process_listing_type(idx, t);
+                LIndex lidx = this->process_listing_type(idx, td->to_type());
                 this->listing[lidx].array_index = i;
             }
             break;

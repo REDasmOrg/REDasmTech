@@ -8,9 +8,8 @@ typedef enum RDSymbolKind {
     SYMBOL_INVALID = 0,
     SYMBOL_SEGMENT,
     SYMBOL_FUNCTION,
-    SYMBOL_TYPE,
     SYMBOL_STRING,
-    SYMBOL_ARRAY,
+    SYMBOL_TYPE,
 } RDSymbolKind;
 
 typedef enum RDListingItemType {
@@ -21,7 +20,6 @@ typedef enum RDListingItemType {
     LISTINGITEM_SEGMENT,
     LISTINGITEM_FUNCTION,
     LISTINGITEM_TYPE,
-    LISTINGITEM_ARRAY,
 } RDListingItemType;
 
 typedef struct RDSymbol {

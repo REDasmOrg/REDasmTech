@@ -520,15 +520,11 @@ void Surface::render_range(LIndex start, usize n) {
             }
 
             case LISTINGITEM_TYPE:
-                this->render_type(*it);
-                this->render_comment(*it);
+                if(it->dtype->n > 0)
+                    this->render_array(*it);
+                else
+                    this->render_type(*it);
 
-                if(state::context->memory->at(it->index).has(BF_REFSFROM))
-                    this->render_refs(*it);
-                break;
-
-            case LISTINGITEM_ARRAY:
-                this->render_array(*it);
                 this->render_comment(*it);
 
                 if(state::context->memory->at(it->index).has(BF_REFSFROM))
@@ -816,8 +812,10 @@ void Surface::render_refs(const ListingItem& item) {
 }
 
 void Surface::render_array(const ListingItem& item) {
+    assume(item.dtype_context);
+    assume(item.dtype);
+
     auto type = item.dtype;
-    assume(type);
     std::string chars;
 
     const typing::TypeDef* td = state::context->types.get_typedef(*type);
