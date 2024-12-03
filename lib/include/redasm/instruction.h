@@ -29,16 +29,23 @@ typedef enum RDInstructionFeatures {
     INSTR_CALL = (1 << 2),
 } RDInstructionFeatures;
 
+typedef usize RDRegister;
+
 typedef struct _RDPhraseOperand {
-    usize base;
-    usize index;
+    RDRegister base;
+    RDRegister index;
 } _RDPhraseOperand;
 
 typedef struct _RDDisplOperand {
-    usize base;
-    usize index;
-    usize scale;
-    usize displ;
+    RDRegister base;
+    RDRegister index;
+
+    union {
+        u64 displ;
+        i64 s_displ;
+    };
+
+    int scale;
 } _RDDisplOperand;
 
 typedef struct RDOperand {
@@ -47,8 +54,9 @@ typedef struct RDOperand {
     RDType dtype;
 
     union {
-        usize reg;
-        usize imm;
+        RDRegister reg;
+        u64 imm;
+        i64 s_imm;
         RDAddress mem;
         _RDPhraseOperand phrase;
         _RDDisplOperand displ;
