@@ -96,17 +96,19 @@ bool Context::activate() {
     return false;
 }
 
-bool Context::set_function(MIndex idx) { // NOLINT
-    if(idx >= this->memory->size())
-        return false;
+bool Context::set_function(MIndex idx, usize flags) {
+    if(const Segment* s = this->index_to_segment(idx); s) {
+        if(s->type & SEG_HASCODE) {
+            this->memory->set(idx, BF_FUNCTION);
 
-    const Segment* s = this->index_to_segment(idx);
+            if(!this->memory->at(idx).has(BF_CODE))
+                this->disassembler.emulator.qcall.push_back(idx);
 
-    if(s && s->type & SEG_HASCODE) {
-        this->memory->set(idx, BF_FUNCTION);
-        return true;
+            return true;
+        }
     }
 
+    this->add_problem(idx, "Invalid function location");
     return false;
 }
 
@@ -114,25 +116,31 @@ bool Context::set_entry(MIndex idx, const std::string& name) {
     if(const Segment* s = this->index_to_segment(idx); s) {
         this->memory->set(idx, BF_EXPORT);
 
-        if(s->type & SEG_HASCODE) {
-            this->memory->set(idx, BF_FUNCTION); // Name belongs to a function
-            this->disassembler.emulator.qcall.push_back(idx);
-        }
+        if(s->type & SEG_HASCODE)
+            assume(this->set_function(idx, 0));
 
-        this->set_name(idx, name, SN_DEFAULT);
+        this->set_name(idx, name, 0);
         this->entrypoints.push_back(idx);
         return true;
     }
 
+    this->add_problem(idx, "Invalid entry location");
     return false;
 }
 
 void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
+    if(fromidx >= this->memory->size()) {
+        this->add_problem(fromidx, fmt::format("Invalid FROM reference ({:x})",
+                                               this->baseaddress + fromidx));
+        return;
+    }
+
     const Segment* s = this->index_to_segment(toidx);
 
     if(!s) {
-        this->add_problem(
-            toidx, fmt::format("Invalid {} reference", get_refname(type)));
+        this->add_problem(toidx, fmt::format("Invalid {} reference ({:x})",
+                                             get_refname(type),
+                                             this->baseaddress + toidx));
         return;
     }
 
@@ -309,7 +317,7 @@ tl::optional<RDOffset> Context::index_to_offset(MIndex index) const {
 }
 
 const Segment* Context::index_to_segment(MIndex index) const {
-    if(index >= state::context->memory->size())
+    if(index >= this->memory->size())
         return {};
 
     for(const Segment& s : this->segments) {
@@ -321,7 +329,7 @@ const Segment* Context::index_to_segment(MIndex index) const {
 }
 
 const Function* Context::index_to_function(usize index) const {
-    if(index >= state::context->memory->size())
+    if(index >= this->memory->size())
         return nullptr;
 
     for(const Function& f : this->functions) {
@@ -633,7 +641,7 @@ void Context::process_listing_array(MIndex& idx, RDType t) {
     this->listing.array(idx, t);
     this->listing.push_indent();
 
-    const typing::TypeDef* td = state::context->types.get_typedef(t);
+    const typing::TypeDef* td = this->types.get_typedef(t);
     assume(td);
 
     switch(td->get_id()) {
@@ -657,7 +665,7 @@ LIndex Context::process_listing_type(MIndex& idx, RDType t) {
     LIndex listingidx = this->listing.size();
     this->listing.type(idx, t);
 
-    const typing::TypeDef* td = state::context->types.get_typedef(t);
+    const typing::TypeDef* td = this->types.get_typedef(t);
     assume(td);
 
     if(td->is_struct()) { // Struct creates a new scope
@@ -667,8 +675,7 @@ LIndex Context::process_listing_type(MIndex& idx, RDType t) {
         for(usize j = 0; j < td->dict.size(); j++) {
             const auto& [fieldtype, _] = td->dict[j];
 
-            const typing::TypeDef* ftd =
-                state::context->types.get_typedef(fieldtype);
+            const typing::TypeDef* ftd = this->types.get_typedef(fieldtype);
             assume(ftd);
 
             this->listing.push_fieldindex(j);

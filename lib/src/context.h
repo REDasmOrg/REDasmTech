@@ -25,7 +25,7 @@ public:
 
     Context(const std::shared_ptr<AbstractBuffer>& b, RDLoader* loader);
     bool activate();
-    bool set_function(MIndex idx);
+    bool set_function(MIndex idx, usize flags);
     bool set_entry(MIndex idx, const std::string& name = {});
     void memory_map(RDAddress base, usize size);
     RDAddress memory_copy(MIndex idx, RDOffset start, RDOffset end) const;

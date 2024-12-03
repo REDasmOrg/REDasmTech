@@ -57,7 +57,6 @@ void init_constants(PyObject* m) {
     assume(PyModule_AddIntConstant(m, "CR_CALL", CR_CALL) == 0);
     assume(PyModule_AddIntConstant(m, "CR_JUMP", CR_JUMP) == 0);
 
-    assume(PyModule_AddIntConstant(m, "SN_DEFAULT", SN_DEFAULT) == 0);
     assume(PyModule_AddIntConstant(m, "SN_NOWARN", SN_NOWARN) == 0);
     assume(PyModule_AddIntConstant(m, "SN_IMPORT", SN_IMPORT) == 0);
     assume(PyModule_AddIntConstant(m, "SN_WEAK", SN_WEAK) == 0);

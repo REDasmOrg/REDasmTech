@@ -165,10 +165,10 @@ def read_imports(pe):
                             name = redasm.set_type(importbynameva + redasm.size_of("u16"), "str")
                             importname = pe.get_import_name(modulename, name)
                             redasm.set_type(importbynameva, "u16")
-                            redasm.set_name(importbynameva, f"{importname}_hint", redasm.SN_DEFAULT)
+                            redasm.set_name(importbynameva, f"{importname}_hint")
 
                     redasm.set_type(iatva, pe.integertype)
-                    redasm.set_name(iatva, importname, redasm.SN_IMPORT)
+                    redasm.set_name_ex(iatva, importname, redasm.SN_IMPORT)
 
                     currva = currva + redasm.size_of(pe.integertype)
                     nthunks = nthunks + 1
@@ -194,14 +194,13 @@ def read_exceptions(pe):
         if e.UnwindInfoAddress & 1:
             continue
 
-        va = pe.optionalheader.ImageBase + e.BeginAddress
-
         unwindva = redasm.from_reladdress(e.UnwindInfoAddress)
         if not unwindva:
             continue
 
         unwindinfo = redasm.set_type(unwindva, "UNWIND_INFO")
         flags = unwindinfo.VersionAndFlags >> 3
+        va = redasm.from_reladdress(e.BeginAddress)
 
         if unwindinfo and not (flags & PEH.UNW_FLAG_CHAININFO):
             redasm.set_function(va)

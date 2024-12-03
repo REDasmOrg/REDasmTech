@@ -46,23 +46,20 @@ def create_ctrl_info(addr, n):
 
             if eventinfo.lpEVENT_SINK_QueryInterface:
                 redasm.set_function(eventinfo.lpEVENT_SINK_QueryInterface)
-                redasm.enqueue(eventinfo.lpEVENT_SINK_QueryInterface)
 
             if eventinfo.lpEVENT_SINK_AddRef:
                 redasm.set_function(eventinfo.lpEVENT_SINK_AddRef)
-                redasm.enqueue(eventinfo.lpEVENT_SINK_AddRef)
 
             if eventinfo.lpEVENT_SINK_Release:
                 redasm.set_function(eventinfo.lpEVENT_SINK_Release)
-                redasm.enqueue(eventinfo.lpEVENT_SINK_Release)
 
             events = redasm.set_type(ctrl.lpEventHandlerTable + redasm.size_of("VB_EVENT_INFO"),
                                      f"u32[{ctrl.wEventHandlerCount}]")
 
             for i, e in enumerate(events):
                 if e:
-                    redasm.set_function_as(e, f"{ctrlname}.{ctrldef["events"][i]}")
-                    redasm.enqueue(e)
+                    redasm.set_function(e)
+                    redasm.set_name(e, f"{ctrlname}.{ctrldef["events"][i]}")
 
 
 def create_obj_info(addr):
@@ -87,7 +84,7 @@ def create_proj_info2(objtable):
     projinfo2 = redasm.set_type(objtable.lpProjectInfo2, "VB_PROJECT_INFO2")
 
     if projinfo2.lpObjectList:
-        compiledobjects = redasm.set_type(projinfo2.lpObjectList, f"u32*[{objtable.wCompiledObjects}]")
+        compiledobjects = redasm.set_type(projinfo2.lpObjectList, f"u32[{objtable.wCompiledObjects}]")
 
         for objaddr in compiledobjects:
             redasm.set_type(objaddr, "VB_PRIVATE_OBJECT_DESCRIPTOR")
@@ -107,7 +104,7 @@ def create_obj_array(objtable):
             redasm.set_type(obj.lpszObjectName, "str")
 
         if obj.lpMethodNames and obj.dwMethodCount:
-            addrlist = redasm.set_type(obj.lpMethodNames, f"u32*[{obj.dwMethodCount}]")
+            addrlist = redasm.set_type(obj.lpMethodNames, f"u32[{obj.dwMethodCount}]")
 
             for addr in addrlist:
                 if addr:
@@ -171,8 +168,8 @@ def vb_execute(pe):
     redasm.set_type(vbaddr + vbheader.bSZProjectName, "str")
 
     if vbheader.lpSubMain:
-        redasm.set_function_as(vbheader.lpSubMain, "SubMain")
-        redasm.enqueue(vbheader.lpSubMain)
+        redasm.set_function(vbheader.lpSubMain)
+        redasm.set_name(vbheader.lpSubMain, "SubMain")
 
     if vbheader.lpComRegisterData:
         create_com_reg_data(vbheader)

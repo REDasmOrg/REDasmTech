@@ -138,6 +138,10 @@ bool rd_setfunction(RDAddress address) {
     return redasm::api::internal::set_function(address);
 }
 
+bool rd_setfunction_ex(RDAddress address, usize flags) {
+    return redasm::api::internal::set_function_ex(address, flags);
+}
+
 bool rd_setentry(RDAddress address, const char* name) {
     std::string n;
     if(name)
@@ -146,8 +150,12 @@ bool rd_setentry(RDAddress address, const char* name) {
     return redasm::api::internal::set_entry(address, name);
 }
 
-bool rd_setname(RDAddress address, const char* name, usize flags) {
-    return name && redasm::api::internal::set_name(address, name, flags);
+bool rd_setname(RDAddress address, const char* name) {
+    return name && redasm::api::internal::set_name(address, name);
+}
+
+bool rd_setname_ex(RDAddress address, const char* name, usize flags) {
+    return name && redasm::api::internal::set_name_ex(address, name, flags);
 }
 
 void rd_addref(RDAddress fromaddr, RDAddress toaddr, usize type) {

@@ -45,14 +45,12 @@ void do_autorename(const RDAnalyzer*) {
 
                 if(refs.size() == 1) {
                     ctx->set_name(f.index,
-                                  "_" + ctx->get_name(refs.front().index),
-                                  SN_DEFAULT);
+                                  "_" + ctx->get_name(refs.front().index), 0);
                 }
             }
             else if(b.has(BF_CODE)) {
                 ctx->index_to_address(f.index).map([&](RDAddress x) {
-                    ctx->set_name(f.index, "nullsub_" + ctx->to_hex(x),
-                                  SN_DEFAULT);
+                    ctx->set_name(f.index, "nullsub_" + ctx->to_hex(x), 0);
                 });
             }
         }

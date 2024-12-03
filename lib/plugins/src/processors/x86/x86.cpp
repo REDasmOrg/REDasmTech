@@ -6,6 +6,11 @@
 namespace {
 
 void apply_optype(const ZydisDecodedOperand& zop, RDOperand& op) {
+    if(!zop.element_size) {
+        op.dtype = {};
+        return;
+    }
+
     std::string tname;
 
     switch(zop.element_type) {

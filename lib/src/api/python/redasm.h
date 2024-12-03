@@ -49,8 +49,9 @@ PyObject* get_name(PyObject* self, PyObject* args);
 PyObject* set_type(PyObject* self, PyObject* args);
 PyObject* set_type_as(PyObject* self, PyObject* args);
 PyObject* set_name(PyObject* self, PyObject* args);
+PyObject* set_name_ex(PyObject* self, PyObject* args);
 PyObject* set_function(PyObject* self, PyObject* args);
-PyObject* set_function_as(PyObject* self, PyObject* args);
+PyObject* set_function_ex(PyObject* self, PyObject* args);
 PyObject* set_entry(PyObject* self, PyObject* args);
 PyObject* add_ref(PyObject* self, PyObject* args);
 

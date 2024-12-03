@@ -48,7 +48,7 @@ def find_wndproc(address, argidx):
                 wndproc = vstack[argidx]
 
                 if wndproc.addr is not None:
-                    redasm.set_name(wndproc.addr, f"DialogProc_{redasm.to_hex(wndproc.addr)}", redasm.SN_DEFAULT)
+                    redasm.set_name(wndproc.addr, f"DialogProc_{redasm.to_hex(wndproc.addr)}")
                     redasm.add_ref(x.address, wndproc.addr, redasm.CR_CALL)
 
                 break

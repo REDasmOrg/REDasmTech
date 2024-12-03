@@ -291,12 +291,22 @@ PyObject* set_type(PyObject* /*self*/, PyObject* args) {
 PyObject* set_name(PyObject* /*self*/, PyObject* args) {
     RDAddress address{};
     const char* name = nullptr;
+
+    if(!PyArg_ParseTuple(args, "Kz", &address, &name))
+        return nullptr;
+
+    return PyBool_FromLong(internal::set_name(address, name));
+}
+
+PyObject* set_name_ex(PyObject* /*self*/, PyObject* args) {
+    RDAddress address{};
+    const char* name = nullptr;
     usize flags = 0;
 
     if(!PyArg_ParseTuple(args, "KzK", &address, &name, &flags))
         return nullptr;
 
-    return PyBool_FromLong(internal::set_name(address, name, flags));
+    return PyBool_FromLong(internal::set_name_ex(address, name, flags));
 }
 
 PyObject* set_function(PyObject* /*self*/, PyObject* args) {
@@ -305,6 +315,10 @@ PyObject* set_function(PyObject* /*self*/, PyObject* args) {
 
     RDAddress address = PyLong_AsUnsignedLongLong(args);
     return PyBool_FromLong(internal::set_function(address));
+}
+
+PyObject* set_function_ex(PyObject* /*self*/, PyObject* args) {
+    Py_RETURN_NONE;
 }
 
 PyObject* set_entry(PyObject* /*self*/, PyObject* args) {

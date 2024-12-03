@@ -432,8 +432,8 @@ bool map_segment_n(const std::string& name, RDAddress address, usize asize,
     return true;
 }
 
-bool set_name(RDAddress address, const std::string& name, usize flags) {
-    spdlog::trace("set_name({:x}, '{}', {:x})", address, name, flags);
+bool set_name_ex(RDAddress address, const std::string& name, usize flags) {
+    spdlog::trace("set_nameex({:x}, '{}', {:x})", address, name, flags);
 
     if(!state::context)
         return false;
@@ -529,11 +529,12 @@ bool set_comment(RDAddress address, std::string_view comment) {
         false);
 }
 
-bool set_function(RDAddress address) {
-    spdlog::trace("set_function({:x})", address);
+bool set_function_ex(RDAddress address, usize flags) {
+    spdlog::trace("set_function_ex({:x}, {})", address, flags);
 
     return state::context->address_to_index(address).map_or(
-        [&](MIndex idx) { return state::context->set_function(idx); }, false);
+        [&](MIndex idx) { return state::context->set_function(idx, flags); },
+        false);
 }
 
 bool set_entry(RDAddress address, const std::string& name) {
