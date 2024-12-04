@@ -14,23 +14,19 @@ namespace {
 constexpr usize COLUMN_PADDING = 6;
 
 template<typename T>
-std::pair<bool, std::string> surface_checkaddr(const typing::TypeDef* td, T v) {
+tl::optional<std::string> surface_checkaddr(T v, bool& isaddr) {
     const Context* ctx = state::context;
-    bool isaddr = false;
+    isaddr = ctx->is_address(v);
 
-    if((td->size * CHAR_BIT == ctx->bits) && ctx->is_address(v)) {
-        const auto& mem = ctx->memory;
-        auto idx = ctx->address_to_index(static_cast<RDAddress>(v));
-        isaddr = idx.has_value();
-
-        if(idx && idx < mem->size() && mem->at(*idx).has(BF_NAME))
-            return {true, ctx->get_name(*idx)};
+    if(isaddr) {
+        return ctx->address_to_index(static_cast<RDAddress>(v))
+            .map([&](MIndex idx) { return ctx->get_name(idx); });
     }
 
-    return {isaddr, ctx->to_hex(v, td->size * 2)};
+    return tl::nullopt;
 }
 
-std::string value_to_str(const typing::Value& v) {
+std::string surface_valuestr(const typing::Value& v, bool& isaddr) {
     assume(!v.type.n);
 
     const Context* ctx = state::context;
@@ -39,40 +35,56 @@ std::string value_to_str(const typing::Value& v) {
         case typing::ids::I8: {
             if(v.i8_v < 0)
                 return std::to_string(v.i8_v);
-            return ctx->to_hex(v.i8_v, sizeof(i8) * 2);
+            return surface_checkaddr(v.i8_v, isaddr)
+                .value_or(ctx->to_hex(v.i8_v, sizeof(i8) * 2));
         }
 
         case typing::ids::I16:
         case typing::ids::I16BE: {
             if(v.i16_v < 0)
                 return std::to_string(v.i16_v);
-            return ctx->to_hex(v.i16_v, sizeof(i16) * 2);
+            return surface_checkaddr(v.i16_v, isaddr)
+                .value_or(ctx->to_hex(v.i16_v, sizeof(i16) * 2));
         }
 
         case typing::ids::I32:
         case typing::ids::I32BE: {
             if(v.i32_v < 0)
                 return std::to_string(v.i32_v);
-            return ctx->to_hex(v.i32_v, sizeof(i32) * 2);
+            return surface_checkaddr(v.i32_v, isaddr)
+                .value_or(ctx->to_hex(v.i32_v, sizeof(i32) * 2));
         }
 
         case typing::ids::I64:
         case typing::ids::I64BE: {
             if(v.i64_v < 0)
                 return std::to_string(v.i64_v);
-            return ctx->to_hex(v.i64_v, sizeof(i64) * 2);
+            return surface_checkaddr(v.i64_v, isaddr)
+                .value_or(ctx->to_hex(v.i64_v, sizeof(i64) * 2));
         }
 
-        case typing::ids::U8: return ctx->to_hex(v.u8_v, sizeof(u8) * 2);
+        case typing::ids::U8: {
+            return surface_checkaddr(v.u8_v, isaddr)
+                .value_or(ctx->to_hex(v.u8_v, sizeof(u8) * 2));
+        }
 
         case typing::ids::U16:
-        case typing::ids::U16BE: return ctx->to_hex(v.u16_v, sizeof(u16) * 2);
+        case typing::ids::U16BE: {
+            return surface_checkaddr(v.u16_v, isaddr)
+                .value_or(ctx->to_hex(v.u16_v, sizeof(u16) * 2));
+        }
 
         case typing::ids::U32:
-        case typing::ids::U32BE: return ctx->to_hex(v.u32_v, sizeof(u32) * 2);
+        case typing::ids::U32BE: {
+            return surface_checkaddr(v.u32_v, isaddr)
+                .value_or(ctx->to_hex(v.u32_v, sizeof(u32) * 2));
+        }
 
         case typing::ids::U64:
-        case typing::ids::U64BE: return ctx->to_hex(v.u64_v, sizeof(u64) * 2);
+        case typing::ids::U64BE: {
+            return surface_checkaddr(v.u64_v, isaddr)
+                .value_or(ctx->to_hex(v.u64_v, sizeof(u64) * 2));
+        }
 
         default: break;
     }
@@ -732,8 +744,10 @@ void Surface::render_type(const ListingItem& item) {
         case typing::ids::U64BE: {
             mem->get_type(item.index, td->to_type())
                 .map([&](const typing::Value& v) {
-                    m_renderer->word("=").chunk(value_to_str(v),
-                                                THEME_CONSTANT);
+                    bool isaddr = false;
+                    std::string vs = surface_valuestr(v, isaddr);
+                    m_renderer->word("=").chunk(vs, isaddr ? THEME_ADDRESS
+                                                           : THEME_CONSTANT);
                 })
                 .or_else([&]() { m_renderer->word("=").unknown(); });
             break;
