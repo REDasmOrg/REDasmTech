@@ -121,7 +121,6 @@ public:
     std::shared_ptr<AbstractBuffer> file;
 
 private:
-    mutable int m_nchars{0};
     Database m_database;
 };
 

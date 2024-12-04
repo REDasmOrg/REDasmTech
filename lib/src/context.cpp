@@ -148,19 +148,13 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
 
     switch(type) {
         case DR_READ:
-        case DR_WRITE: {
+        case DR_WRITE:
+        case DR_ADDRESS: {
             stringfinder::classify(toidx).map([&](const RDStringResult& x) {
                 this->memory->unset_n(toidx, x.totalsize);
                 this->set_type(toidx, x.type);
             });
 
-            this->m_database.add_ref(fromidx, toidx, type);
-            mem->set(fromidx, BF_REFSFROM);
-            mem->set(toidx, BF_REFSTO);
-            break;
-        }
-
-        case DR_ADDRESS: {
             this->m_database.add_ref(fromidx, toidx, type);
             mem->set(fromidx, BF_REFSFROM);
             mem->set(toidx, BF_REFSTO);
@@ -509,13 +503,10 @@ Database::RefList Context::get_refs_to(MIndex toidx) const {
 }
 
 std::string Context::to_hex(usize v, int n) const {
-    if(!m_nchars && this->bits)
-        m_nchars = (*this->bits / CHAR_BIT) * 2;
-
-    if(n == -1)
+    if(n == -1 || !this->bits)
         n = 0;
     else if(!n)
-        n = m_nchars;
+        n = (*this->bits / CHAR_BIT) * 2;
 
     std::string hexstr;
     hexstr.reserve(n);

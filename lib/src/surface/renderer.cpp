@@ -214,7 +214,7 @@ Renderer& Renderer::new_row(const ListingItem& item) {
         if(const Segment* s = this->current_segment(); s)
             this->chunk(s->name).chunk(":");
 
-        this->chunk(state::context->to_hex(m_curraddress)).ws(2);
+        this->chunk(state::context->to_hex(m_curraddress, 0)).ws(2);
 
         if(item.indent)
             this->ws(item.indent);
