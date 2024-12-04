@@ -204,6 +204,7 @@ def read_exceptions(pe):
 
         if unwindinfo and not (flags & PEH.UNW_FLAG_CHAININFO):
             redasm.set_function(va)
+            redasm.set_name(va, f"rnt_entry_{redasm.to_hex(va, n=-1)}")
 
 
 def read_debuginfo(pe):
@@ -229,7 +230,7 @@ def read_debuginfo(pe):
         dbgva = 0
 
         if dbgdir.AddressOfRawData:
-            dbgva = PE.redasm.from_reladdress(dir.AddressOfRawData)
+            dbgva = PE.redasm.from_reladdress(dbgdir.AddressOfRawData)
 
         if not dbgva and dbgdir.PointerToRawData:
             dbgva = redasm.to_address(dbgdir.PointerToRawData)
@@ -317,7 +318,7 @@ def load_default(pe):
     read_exports(pe)
     read_imports(pe)
     read_exceptions(pe)
-    # read_debuginfo(pe)
+    read_debuginfo(pe)
     read_resources(pe)
     select_processor(pe)
 
