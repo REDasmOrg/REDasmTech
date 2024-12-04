@@ -20,6 +20,8 @@ typedef enum RDOperandType {
     OP_MEM,    // [Address]
     OP_PHRASE, // [BaseReg + IndexReg]
     OP_DISPL,  // [BaseReg + IndexReg + Displ]
+
+    OP_USERBASE, // User defined operands
 } RDOperandType;
 
 typedef enum RDInstructionFeatures {
@@ -48,6 +50,16 @@ typedef struct _RDDisplOperand {
     int scale;
 } _RDDisplOperand;
 
+typedef struct _RDUserOperand {
+    RDRegister reg1;
+    RDRegister reg2;
+
+    union {
+        usize val;
+        isize s_val;
+    };
+} _RDUserOperand;
+
 typedef struct RDOperand {
     usize type;
     usize features;
@@ -60,7 +72,11 @@ typedef struct RDOperand {
         RDAddress mem;
         _RDPhraseOperand phrase;
         _RDDisplOperand displ;
+        _RDUserOperand user;
     };
+
+    u32 userdata1;
+    u32 userdata2;
 } RDOperand;
 
 typedef struct RDInstruction {

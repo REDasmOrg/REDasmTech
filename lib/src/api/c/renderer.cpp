@@ -34,12 +34,16 @@ void rdrenderer_ws(RDRenderer* self) {
     redasm::api::internal::renderer_ws(self);
 }
 
+void rdrenderer_addr_ex(RDRenderer* self, RDAddress address, int flags) {
+    redasm::api::internal::renderer_addr_ex(self, address, flags);
+}
+
 void rdrenderer_addr(RDRenderer* self, RDAddress address) {
     redasm::api::internal::renderer_addr(self, address);
 }
 
-void rdrenderer_cnst_ex(RDRenderer* self, usize value, int base) {
-    redasm::api::internal::renderer_cnst_ex(self, value, base);
+void rdrenderer_cnst_ex(RDRenderer* self, usize value, int base, int flags) {
+    redasm::api::internal::renderer_cnst_ex(self, value, base, flags);
 }
 
 void rdrenderer_cnst(RDRenderer* self, usize value) {

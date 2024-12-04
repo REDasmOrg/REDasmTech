@@ -33,7 +33,8 @@ struct Renderer {
     void set_current_item(LIndex lidx, const ListingItem& item);
 
     Renderer& new_row(const ListingItem& item);
-    Renderer& constant(u64 c, int base = 0, RDThemeKind fg = THEME_CONSTANT);
+    Renderer& constant(u64 c, int base = 0, int flags = 0,
+                       RDThemeKind fg = THEME_CONSTANT);
 
     Renderer& character(SurfaceRow& row, char ch,
                         RDThemeKind fg = THEME_DEFAULT,
@@ -94,7 +95,7 @@ public: // High level interface
     RDRendererParams create_render_params(const ListingItem& item);
     Renderer& instr(const RDRendererParams& rp);
     Renderer& rdil(const RDRendererParams& rp);
-    Renderer& addr(RDAddress address);
+    Renderer& addr(RDAddress address, int flags = 0);
 
 public:
     usize columns{0};

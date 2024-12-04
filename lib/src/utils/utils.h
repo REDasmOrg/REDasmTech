@@ -22,6 +22,36 @@ using Data = std::vector<u8>;
 
 std::string_view trim(std::string_view v);
 
+template<typename T>
+static std::string_view to_string(T value, int base, bool sign = false) {
+    constexpr std::string_view DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static std::array<char, 66> out;
+
+    if(base < 2 || base > 36)
+        return {};
+
+    bool isneg = false;
+
+    if(sign && value < 0) {
+        isneg = true;
+        value = -value;
+    }
+
+    usize c = out.size() - 1;
+    out[c] = 0;
+
+    do {
+        T rem = value % base;
+        value /= base;
+        out[--c] = DIGITS.at(rem);
+    } while(value > 0);
+
+    if(isneg)
+        out[--c] = '-';
+
+    return std::string_view{&out[c], out.size() - c - 1};
+}
+
 template<typename T = usize>
 [[nodiscard]] tl::optional<T> to_integer(std::string_view sv, int base = 0) {
     if(sv.empty())

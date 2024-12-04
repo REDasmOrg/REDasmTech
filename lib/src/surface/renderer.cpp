@@ -4,6 +4,7 @@
 #include "../error.h"
 #include "../rdil/rdil.h"
 #include "../state.h"
+#include "../utils/utils.h"
 #include <cctype>
 
 namespace redasm {
@@ -182,7 +183,7 @@ Renderer& Renderer::rdil(const RDRendererParams& rp) {
     return *this;
 }
 
-Renderer& Renderer::addr(RDAddress address) {
+Renderer& Renderer::addr(RDAddress address, int flags) {
     const Context* ctx = state::context;
 
     ctx->address_to_index(address)
@@ -194,7 +195,7 @@ Renderer& Renderer::addr(RDAddress address) {
             return tl::nullopt;
         })
         .or_else([&]() {
-            this->constant(static_cast<u64>(address), 0, THEME_ADDRESS);
+            this->constant(static_cast<u64>(address), 16, flags, THEME_ADDRESS);
         });
 
     return *this;
@@ -222,39 +223,24 @@ Renderer& Renderer::new_row(const ListingItem& item) {
     return *this;
 }
 
-Renderer& Renderer::constant(u64 c, int base, RDThemeKind fg) {
-    static constexpr std::string_view DIGITS = "0123456789ABCDEF";
-
+Renderer& Renderer::constant(u64 c, int base, int flags, RDThemeKind fg) {
     if(c == 0) { // Simplified logic
         this->chunk("0", fg);
         return *this;
     }
 
     auto sc = static_cast<i64>(c);
-    bool isnegative = ((base == 0 || base == 10) && sc < 0);
 
-    if(base == 0)
-        base = 16;
-    else if(base > 16) {
-        this->chunk(fmt::format("INVALID BASE ({})", base), THEME_FAIL);
-        return *this;
-    }
-
-    if(sc < 10) {
-        if(isnegative)
-            this->chunk(std::to_string(sc), fg);
+    if(sc < 0) {
+        if(flags == RC_NOSIGN)
+            this->chunk(utils::to_string(std::abs(sc), base), fg);
         else
-            this->chunk(std::to_string(c), fg);
+            this->chunk(utils::to_string(sc, base, true), fg);
     }
     else {
-        std::string val;
-
-        do {
-            val = DIGITS[c % base] + val;
-            c /= base;
-        } while(c > 0);
-
-        this->chunk(val, fg);
+        if(flags == RC_NEEDSIGN)
+            this->chunk("+", fg);
+        this->chunk(utils::to_string(c, base), fg);
     }
 
     return *this;

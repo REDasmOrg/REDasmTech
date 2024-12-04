@@ -148,6 +148,7 @@ void X86Processor::decode(RDInstruction* instr) {
                     op.type = OP_PHRASE;
                     op.phrase.base = zop.mem.base;
                     op.phrase.index = zop.mem.index;
+                    op.userdata1 = zop.mem.segment;
                 }
                 else if(zop.mem.base == ZYDIS_REGISTER_NONE &&
                         zop.mem.index == ZYDIS_REGISTER_NONE) {
@@ -162,6 +163,7 @@ void X86Processor::decode(RDInstruction* instr) {
                         op.mem = addr;
                     }
                     op.mem = zop.mem.disp.value;
+                    op.userdata1 = zop.mem.segment;
                 }
                 else {
                     op.type = OP_DISPL;
@@ -169,6 +171,7 @@ void X86Processor::decode(RDInstruction* instr) {
                     op.displ.index = zop.mem.index;
                     op.displ.scale = zop.mem.scale;
                     op.displ.displ = zop.mem.disp.value;
+                    op.userdata1 = zop.mem.segment;
                 }
                 break;
             }
@@ -219,6 +222,15 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
 
             case OP_MEM: {
                 rdrenderer_text(r->renderer, "[");
+
+                if(op->userdata1 && op->userdata1 != ZYDIS_REGISTER_CS &&
+                   op->userdata1 != ZYDIS_REGISTER_DS) {
+                    const char* reg = ZydisRegisterGetString(
+                        static_cast<ZydisRegister>(op->userdata1));
+                    rdrenderer_reg(r->renderer, reg);
+                    rdrenderer_text(r->renderer, ":");
+                }
+
                 rdrenderer_addr(r->renderer, op->mem);
                 rdrenderer_text(r->renderer, "]");
                 break;
@@ -238,7 +250,7 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
                     static_cast<ZydisRegister>(op->phrase.base));
                 rdrenderer_reg(r->renderer, base);
 
-                rdrenderer_text(r->renderer, " + ");
+                rdrenderer_text(r->renderer, "+");
 
                 const char* index = ZydisRegisterGetString(
                     static_cast<ZydisRegister>(op->phrase.index));
@@ -256,21 +268,21 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
                 rdrenderer_reg(r->renderer, base);
 
                 if(op->displ.index != ZYDIS_REGISTER_NONE) {
-                    rdrenderer_text(r->renderer, " + ");
+                    rdrenderer_text(r->renderer, "+");
 
                     const char* index = ZydisRegisterGetString(
                         static_cast<ZydisRegister>(op->displ.index));
                     rdrenderer_reg(r->renderer, index);
 
                     if(op->displ.scale > 1) {
-                        rdrenderer_text(r->renderer, " * ");
+                        rdrenderer_text(r->renderer, "*");
                         rdrenderer_cnst(r->renderer, op->displ.scale);
                     }
                 }
 
-                if(op->displ.displ > 0) {
-                    rdrenderer_text(r->renderer, " + ");
-                    rdrenderer_addr(r->renderer, op->displ.displ);
+                if(op->displ.displ != 0) {
+                    rdrenderer_addr_ex(r->renderer, op->displ.displ,
+                                       RC_NEEDSIGN);
                 }
 
                 rdrenderer_text(r->renderer, "]");

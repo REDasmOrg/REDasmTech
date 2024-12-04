@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "../error.h"
 #include <algorithm>
 #include <cctype>
 #include <fstream>

@@ -36,14 +36,14 @@ void renderer_ws(RDRenderer* self) {
     api::from_c(self)->ws();
 }
 
-void renderer_addr(RDRenderer* self, RDAddress address) {
-    spdlog::trace("renderer_addr({}, {})", fmt::ptr(self), address);
-    api::from_c(self)->addr(address);
+void renderer_addr_ex(RDRenderer* self, RDAddress address, int flags) {
+    spdlog::trace("renderer_addr_ex({}, {})", fmt::ptr(self), address);
+    api::from_c(self)->addr(address, flags);
 }
 
-void renderer_cnst_ex(RDRenderer* self, u64 value, int base) {
+void renderer_cnst_ex(RDRenderer* self, u64 value, int base, int flags) {
     spdlog::trace("renderer_cnst_ex({}, {}, {})", fmt::ptr(self), value, base);
-    api::from_c(self)->constant(value, base);
+    api::from_c(self)->constant(value, base, flags);
 }
 
 } // namespace redasm::api::internal
