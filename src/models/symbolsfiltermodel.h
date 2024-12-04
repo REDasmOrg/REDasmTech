@@ -10,21 +10,23 @@ class SymbolsFilterModel: public QSortFilterProxyModel {
     Q_OBJECT
 
 public:
-    explicit SymbolsFilterModel(QObject* parent = nullptr);
-    explicit SymbolsFilterModel(usize filter, QObject* parent = nullptr);
+    explicit SymbolsFilterModel(bool autoalign = true,
+                                QObject* parent = nullptr);
+    explicit SymbolsFilterModel(usize filter, bool autoalign = true,
+                                QObject* parent = nullptr);
     [[nodiscard]] RDAddress address(const QModelIndex& index) const;
     void resync();
 
-    inline void set_type_filter(usize s) {
+    void set_type_filter(usize s) {
         m_typefilter = s;
         this->invalidate();
     }
 
-    [[nodiscard]] inline const SymbolsModel* symbols_model() const {
+    [[nodiscard]] const SymbolsModel* symbols_model() const {
         return qobject_cast<const SymbolsModel*>(this->sourceModel());
     }
 
-    inline SymbolsModel* symbols_model() {
+    SymbolsModel* symbols_model() {
         return qobject_cast<SymbolsModel*>(this->sourceModel());
     }
 

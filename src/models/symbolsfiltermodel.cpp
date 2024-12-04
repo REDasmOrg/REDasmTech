@@ -1,14 +1,15 @@
 #include "symbolsfiltermodel.h"
 #include <QRegularExpression>
 
-SymbolsFilterModel::SymbolsFilterModel(QObject* parent)
+SymbolsFilterModel::SymbolsFilterModel(bool autoalign, QObject* parent)
     : QSortFilterProxyModel{parent} {
-    this->setSourceModel(new SymbolsModel(this));
+    this->setSourceModel(new SymbolsModel(autoalign, this));
     this->setFilterKeyColumn(2);
 }
 
-SymbolsFilterModel::SymbolsFilterModel(usize filter, QObject* parent)
-    : SymbolsFilterModel{parent} {
+SymbolsFilterModel::SymbolsFilterModel(usize filter, bool autoalign,
+                                       QObject* parent)
+    : SymbolsFilterModel{autoalign, parent} {
     this->set_type_filter(filter);
 }
 

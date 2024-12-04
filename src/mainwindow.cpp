@@ -384,7 +384,7 @@ void MainWindow::show_strings() {
             });
 
     dlg->hide_column(1);
-    dlg->set_model(new SymbolsFilterModel(SYMBOL_STRING, dlg));
+    dlg->set_model(new SymbolsFilterModel(SYMBOL_STRING, true, dlg));
     dlg->show();
 }
 

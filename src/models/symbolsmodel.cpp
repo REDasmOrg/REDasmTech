@@ -1,7 +1,8 @@
 #include "symbolsmodel.h"
 #include "../themeprovider.h"
 
-SymbolsModel::SymbolsModel(QObject* parent): QAbstractListModel{parent} {
+SymbolsModel::SymbolsModel(bool autoalign, QObject* parent)
+    : QAbstractListModel{parent}, m_autoalign{autoalign} {
     m_nsymbols = rdlisting_getsymbolslength();
 }
 
@@ -29,7 +30,7 @@ QVariant SymbolsModel::data(const QModelIndex& index, int role) const {
 
     if(role == Qt::DisplayRole) {
         switch(index.column()) {
-            case 0: return rd_tohex(symbol.address);
+            case 0: return rd_tohex_n(symbol.address, 0);
             case 1: return this->get_symbol_type(symbol.type);
 
             case 2: {
@@ -41,7 +42,7 @@ QVariant SymbolsModel::data(const QModelIndex& index, int role) const {
             default: break;
         }
     }
-    else if(role == Qt::TextAlignmentRole) {
+    else if(m_autoalign && role == Qt::TextAlignmentRole) {
         if(index.column() == 0)
             return QVariant{Qt::AlignRight | Qt::AlignVCenter};
         if(index.column() == 1)
@@ -68,7 +69,7 @@ QVariant SymbolsModel::headerData(int section, Qt::Orientation orientation,
     switch(section) {
         case 0: return tr("Address");
         case 1: return tr("Type");
-        case 2: return tr("Name");
+        case 2: return tr("Symbol");
         default: break;
     }
 

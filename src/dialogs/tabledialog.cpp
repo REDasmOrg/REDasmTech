@@ -46,6 +46,10 @@ void TableDialog::set_model(QAbstractItemModel* m) {
         this->resize_column(i, QHeaderView::ResizeToContents);
 }
 
+void TableDialog::move_column(int fromidx, int toidx) const {
+    m_ui.tvtable->header()->moveSection(fromidx, toidx);
+}
+
 void TableDialog::hide_column(int idx) const { m_ui.tvtable->hideColumn(idx); }
 
 void TableDialog::resize_column(int idx, QHeaderView::ResizeMode r) const {

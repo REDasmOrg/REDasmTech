@@ -7,7 +7,7 @@ class SymbolsModel: public QAbstractListModel {
     Q_OBJECT
 
 public:
-    explicit SymbolsModel(QObject* parent = nullptr);
+    explicit SymbolsModel(bool autoalign = true, QObject* parent = nullptr);
     [[nodiscard]] RDAddress address(const QModelIndex& index) const;
     void set_highlight_address(bool b) { m_highlightaddress = b; }
     void set_highlight_symbol(bool b) { m_highlightsymbol = b; }
@@ -26,5 +26,6 @@ private:
 
 private:
     usize m_nsymbols;
+    bool m_autoalign;
     bool m_highlightaddress{false}, m_highlightsymbol{false};
 };
