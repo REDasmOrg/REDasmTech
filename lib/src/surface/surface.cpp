@@ -857,11 +857,6 @@ void Surface::render_array(const ListingItem& item) {
     assume(item.dtype_context);
     assume(item.dtype);
 
-    if(item.index == 0x61aa) {
-        int zzz = 0;
-        zzz++;
-    }
-
     auto type = item.dtype;
     std::string chars;
 
