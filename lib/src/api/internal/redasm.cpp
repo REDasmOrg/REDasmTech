@@ -244,7 +244,7 @@ bool tick(const RDAnalysisStatus** s) {
     return state::context->disassembler.execute(s);
 }
 
-std::string to_hex_n(usize v, usize n) {
+std::string to_hex_n(usize v, int n) {
     if(state::context)
         return state::context->to_hex(v, n);
     return {};

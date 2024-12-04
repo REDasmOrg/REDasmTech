@@ -39,7 +39,7 @@ void enqueue(RDAddress address);
 void schedule(RDAddress address);
 void disassemble();
 bool tick(const RDAnalysisStatus** s);
-std::string to_hex_n(usize v, usize n);
+std::string to_hex_n(usize v, int n);
 std::string to_hex(usize v);
 std::vector<RDAddress> get_entries();
 std::vector<RDProblem> get_problems();

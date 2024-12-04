@@ -69,7 +69,7 @@ public:
         this->problems.emplace_back(idx, s);
     }
 
-    [[nodiscard]] std::string to_hex(usize v, int n = 0) const;
+    [[nodiscard]] std::string to_hex(usize v, int n = -1) const;
     void process_segments();
     void process_listing();
 

@@ -1044,13 +1044,15 @@ PyObject* check_string(PyObject* /*self*/, PyObject* args) {
 
 PyObject* to_hex(PyObject* /*self*/, PyObject* args, PyObject* kwargs) {
     static const char* const KW_LIST[] = {
+        "",
         "n",
         nullptr,
     };
 
-    usize v = {}, n = 0;
+    usize v = 0;
+    int n = 0;
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwargs, "K|K",
+    if(!PyArg_ParseTupleAndKeywords(args, kwargs, "K|i",
                                     const_cast<char**>(KW_LIST), &v, &n)) {
         return nullptr;
     }

@@ -426,7 +426,7 @@ std::string Context::get_name(MIndex idx) const {
 
         auto address = this->index_to_address(idx);
         assume(address.has_value());
-        name = prefix + "_" + this->to_hex(*address);
+        name = prefix + "_" + this->to_hex(*address, -1);
     }
 
     return name;
