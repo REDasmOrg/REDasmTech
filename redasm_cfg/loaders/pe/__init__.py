@@ -204,7 +204,6 @@ def read_exceptions(pe):
 
         if unwindinfo and not (flags & PEH.UNW_FLAG_CHAININFO):
             redasm.set_function(va)
-            redasm.enqueue(va)
 
 
 def read_debuginfo(pe):
@@ -317,9 +316,9 @@ def select_processor(pe):
 def load_default(pe):
     read_exports(pe)
     read_imports(pe)
-    # read_exceptions(pe)
+    read_exceptions(pe)
     # read_debuginfo(pe)
-    # read_resources(pe)
+    read_resources(pe)
     select_processor(pe)
 
     redasm.set_entry(redasm.from_reladdress(pe.optionalheader.AddressOfEntryPoint),
