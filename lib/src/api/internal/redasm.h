@@ -75,6 +75,7 @@ bool set_name_ex(RDAddress address, const std::string& name, usize flags);
 bool set_function_ex(RDAddress address, usize flags);
 bool set_entry(RDAddress address, const std::string& name);
 void add_ref(RDAddress fromaddr, RDAddress toaddr, usize type);
+void add_problem(RDAddress address, const std::string& problem);
 bool is_address(RDAddress address);
 bool address_to_segment(RDAddress address, RDSegment* res);
 bool offset_to_segment(RDOffset offset, RDSegment* res);

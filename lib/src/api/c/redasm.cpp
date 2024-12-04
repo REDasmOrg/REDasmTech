@@ -170,15 +170,19 @@ void rd_addref(RDAddress fromaddr, RDAddress toaddr, usize type) {
     redasm::api::internal::add_ref(fromaddr, toaddr, type);
 }
 
+void rd_addproblem(RDAddress address, const char* problem) {
+    if(problem)
+        redasm::api::internal::add_problem(address, problem);
+}
+
 bool rd_getaddress(const char* name, RDAddress* address) {
-    return name && redasm::api::internal::get_address(name)
-                       .map([&](RDAddress x) {
+    return name && redasm::api::internal::get_address(name).map_or(
+                       [&](RDAddress x) {
                            if(address)
                                *address = x;
-
                            return true;
-                       })
-                       .value_or(false);
+                       },
+                       false);
 }
 
 const char* rd_getname(RDAddress address) {

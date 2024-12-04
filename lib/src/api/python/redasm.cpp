@@ -364,6 +364,17 @@ PyObject* add_ref(PyObject* /*self*/, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+PyObject* add_problem(PyObject* /*self*/, PyObject* args) {
+    RDAddress address{};
+    const char* problem = nullptr;
+
+    if(!PyArg_ParseTuple(args, "Ks", &address, &problem))
+        return nullptr;
+
+    internal::add_problem(address, problem);
+    Py_RETURN_NONE;
+}
+
 PyObject* get_bool(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args))
         return python::type_error(args, "int");

@@ -132,6 +132,7 @@ REDASM_EXPORT bool rd_setfunction(RDAddress address);
 REDASM_EXPORT bool rd_setfunction_ex(RDAddress address, usize flags);
 REDASM_EXPORT bool rd_setentry(RDAddress address, const char* name);
 REDASM_EXPORT void rd_addref(RDAddress fromaddr, RDAddress toaddr, usize type);
+REDASM_EXPORT void rd_addproblem(RDAddress address, const char* problem);
 
 REDASM_EXPORT bool rd_setname(RDAddress address, const char* name);
 REDASM_EXPORT bool rd_setname_ex(RDAddress address, const char* name,

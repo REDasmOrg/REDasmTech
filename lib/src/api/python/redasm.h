@@ -55,6 +55,7 @@ PyObject* set_function(PyObject* self, PyObject* args);
 PyObject* set_function_ex(PyObject* self, PyObject* args);
 PyObject* set_entry(PyObject* self, PyObject* args);
 PyObject* add_ref(PyObject* self, PyObject* args);
+PyObject* add_problem(PyObject* self, PyObject* args);
 
 PyObject* get_bool(PyObject* self, PyObject* args);
 PyObject* get_char(PyObject* self, PyObject* args);

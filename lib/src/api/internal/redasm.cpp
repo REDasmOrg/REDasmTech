@@ -578,6 +578,15 @@ void add_ref(RDAddress fromaddr, RDAddress toaddr, usize type) {
     }
 }
 
+void add_problem(RDAddress address, const std::string& problem) {
+    spdlog::trace("add_problem({:x}, '{}')", address, problem);
+
+    if(state::context) {
+        state::context->add_problem(address - state::context->baseaddress,
+                                    problem);
+    }
+}
+
 bool is_address(RDAddress address) {
     spdlog::trace("is_address({:x})", address);
     const Context* ctx = state::context;
