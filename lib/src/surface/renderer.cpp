@@ -229,6 +229,9 @@ Renderer& Renderer::constant(u64 c, int base, int flags, RDThemeKind fg) {
         return *this;
     }
 
+    if(!base)
+        base = 16;
+
     auto sc = static_cast<i64>(c);
 
     if(sc < 0) {

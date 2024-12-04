@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../error.h"
 #include <charconv>
 #include <redasm/types.h>
 #include <string>
@@ -28,7 +29,7 @@ static std::string_view to_string(T value, int base, bool sign = false) {
     static std::array<char, 66> out;
 
     if(base < 2 || base > 36)
-        return {};
+        except("tostring: invalid base {}", base);
 
     bool isneg = false;
 
