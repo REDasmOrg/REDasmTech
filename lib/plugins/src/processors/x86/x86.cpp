@@ -327,7 +327,8 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
                     if(addr)
                         rdemulator_addref(e, *addr, CR_CALL);
                 }
-                else if(!rd_istypenull(&op->dtype))
+
+                if(!rd_istypenull(&op->dtype))
                     rd_settype(op->mem, &op->dtype);
 
                 rdemulator_addref(e, op->mem, DR_READ);
