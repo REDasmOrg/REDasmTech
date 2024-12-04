@@ -1,7 +1,6 @@
 #include "x86.h"
 #include "x86_common.h"
 #include "x86_lifter.h"
-#include <string>
 
 namespace {
 
@@ -11,20 +10,40 @@ void apply_optype(const ZydisDecodedOperand& zop, RDOperand& op) {
         return;
     }
 
-    std::string tname;
-
     switch(zop.element_type) {
-        case ZYDIS_ELEMENT_TYPE_UINT: tname = "u"; break;
-        case ZYDIS_ELEMENT_TYPE_INT: tname = "i"; break;
+        case ZYDIS_ELEMENT_TYPE_INT: {
+            if(zop.element_size == 8)
+                op.dtype.id = TID_I8;
+            else if(zop.element_size == 16)
+                op.dtype.id = TID_I16;
+            else if(zop.element_size == 32)
+                op.dtype.id = TID_I32;
+            else if(zop.element_size == 64)
+                op.dtype.id = TID_I64;
+            else
+                op.dtype.id = 0;
+            break;
+        }
+
+        case ZYDIS_ELEMENT_TYPE_UINT: {
+            if(zop.element_size == 8)
+                op.dtype.id = TID_U8;
+            else if(zop.element_size == 16)
+                op.dtype.id = TID_U16;
+            else if(zop.element_size == 32)
+                op.dtype.id = TID_U32;
+            else if(zop.element_size == 64)
+                op.dtype.id = TID_U64;
+            else
+                op.dtype.id = 0;
+            break;
+        }
+
         default: op.dtype = {}; return;
     }
 
-    tname += std::to_string(zop.element_size);
-
-    if(zop.element_count > 1)
-        tname += '[' + std::to_string(zop.element_count) + ']';
-
-    rd_createtype(tname.c_str(), &op.dtype);
+    if(op.dtype.id && zop.element_count > 1)
+        op.dtype.n = zop.element_count;
 }
 
 bool is_addr_instruction(const RDInstruction* instr) {

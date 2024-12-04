@@ -3,6 +3,26 @@
 #include <redasm/common.h>
 #include <redasm/types.h>
 
+extern const u32 TID_BOOL;
+extern const u32 TID_CHAR;
+extern const u32 TID_WCHAR;
+extern const u32 TID_U8;
+extern const u32 TID_U16;
+extern const u32 TID_U32;
+extern const u32 TID_U64;
+extern const u32 TID_I8;
+extern const u32 TID_I16;
+extern const u32 TID_I32;
+extern const u32 TID_I64;
+extern const u32 TID_U16BE;
+extern const u32 TID_U32BE;
+extern const u32 TID_U64BE;
+extern const u32 TID_I16BE;
+extern const u32 TID_I32BE;
+extern const u32 TID_I64BE;
+extern const u32 TID_STR;
+extern const u32 TID_WSTR;
+
 typedef struct RDStructField {
     const char* type;
     const char* name;
