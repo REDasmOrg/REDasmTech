@@ -1,6 +1,7 @@
 #include "actions.h"
 #include "dialogs/aboutdialog.h"
 #include "dialogs/gotodialog.h"
+#include "dialogs/settingsdialog.h"
 #include "dialogs/tabledialog.h"
 #include "fontawesome.h"
 #include "mainwindow.h"
@@ -160,7 +161,10 @@ void init(QMainWindow* mw) {
         dlgabout->show();
     });
 
-    g_actions[Type::OPEN_SETTINGS] = mw->addAction("&Settings", mw, []() {});
+    g_actions[Type::OPEN_SETTINGS] = mw->addAction("&Settings", mw, []() {
+        auto* dlgsettings = new SettingsDialog(g_mainwindow);
+        dlgsettings->show();
+    });
 }
 
 QAction* get(Type t) {

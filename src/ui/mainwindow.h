@@ -60,6 +60,7 @@ struct MainWindow {
         this->actfileclose->setVisible(false);
 
         this->mnufile->addSeparator();
+        this->mnufile->addAction(actions::get(actions::OPEN_SETTINGS));
         this->actfileexit = this->mnufile->addAction("&Exit");
 
         this->acttoolsflc = this->mnutools->addAction(
@@ -73,9 +74,6 @@ struct MainWindow {
 
         this->acttoolsproblems = this->mnutools->addAction("&Problems");
         this->acttoolsproblems->setVisible(false);
-
-        this->mnutools->addSeparator();
-        this->mnutools->addAction(actions::get(actions::OPEN_SETTINGS));
 
         this->actviewmemorymap = this->mnuview->addAction(
             "&Memory Map", QKeySequence{Qt::CTRL | Qt::Key_M});
