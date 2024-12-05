@@ -1,4 +1,5 @@
 #include "actions.h"
+#include "dialogs/aboutdialog.h"
 #include "dialogs/gotodialog.h"
 #include "dialogs/tabledialog.h"
 #include "fontawesome.h"
@@ -6,6 +7,7 @@
 #include "models/referencesmodel.h"
 #include <QApplication>
 #include <QClipboard>
+#include <QDesktopServices>
 #include <QHash>
 #include <QInputDialog>
 
@@ -106,8 +108,8 @@ void rename() {
 
 } // namespace
 
-void init(MainWindow* mw) {
-    g_mainwindow = mw;
+void init(QMainWindow* mw) {
+    g_mainwindow = static_cast<MainWindow*>(mw);
 
     g_actions[Type::GOTO] =
         mw->addAction(FA_ICON(0xf1e5), "Goto…", QKeySequence{Qt::Key_G}, mw,
@@ -127,6 +129,38 @@ void init(MainWindow* mw) {
     g_actions[Type::COMMENT] =
         mw->addAction("Comment", QKeySequence{Qt::Key_Semicolon}, mw,
                       []() { actions::comment(); });
+
+    g_actions[Type::OPEN_HOME] =
+        mw->addAction(FA_ICON(0xf015), "Homepage", mw, []() {
+            QDesktopServices::openUrl(QUrl{"https://redasm.dev"});
+        });
+
+    g_actions[Type::OPEN_TELEGRAM] =
+        mw->addAction(FAB_ICON(0xf2c6), "Telegram", mw, []() {
+            QDesktopServices::openUrl(QUrl{"https://t.me/REDasmDisassembler"});
+        });
+
+    g_actions[Type::OPEN_REDDIT] =
+        mw->addAction(FAB_ICON(0xf281), "Reddit", mw, []() {
+            QDesktopServices::openUrl(QUrl{"https://reddit.com/r/REDasm"});
+        });
+
+    g_actions[Type::OPEN_X] = mw->addAction(FAB_ICON(0xe61b), "X", mw, []() {
+        QDesktopServices::openUrl(QUrl{"https://x.com/re_dasm"});
+    });
+
+    g_actions[Type::OPEN_GITHUB] =
+        mw->addAction(FAB_ICON(0xf113), "Report an Issue", mw, []() {
+            QDesktopServices::openUrl(
+                QUrl{"https://github.com/REDasmOrg/REDasm/issues"});
+        });
+
+    g_actions[Type::OPEN_ABOUT] = mw->addAction("&About", mw, []() {
+        auto* dlgabout = new AboutDialog(g_mainwindow);
+        dlgabout->show();
+    });
+
+    g_actions[Type::OPEN_SETTINGS] = mw->addAction("&Settings", mw, []() {});
 }
 
 QAction* get(Type t) {

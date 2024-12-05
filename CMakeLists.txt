@@ -11,8 +11,8 @@ qt_add_resources(${PROJECT_NAME} "resources"
     PREFIX "/"
 
     FILES
-        "res/fonts/FontAwesomeBrands.otf"
-        "res/fonts/FontAwesome.otf"
+        "res/fonts/FontAwesomeBrands6.otf"
+        "res/fonts/FontAwesomeSolid6.otf"
         "res/themes/light.json"
         "res/themes/dark.json"
         "res/logo_dark.png"
@@ -51,6 +51,7 @@ target_sources(${PROJECT_NAME}
         src/dialogs/analyzerdialog.cpp
         src/dialogs/memorymapdialog.cpp
         src/dialogs/errordialog.cpp
+        src/dialogs/aboutdialog.cpp
 
         src/views/logview.cpp
         src/views/contextview.cpp

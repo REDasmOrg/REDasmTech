@@ -14,8 +14,6 @@ private Q_SLOTS:
 
 Q_SIGNALS:
     void file_selected(const QString& filepath);
-    void settings_requested();
-    void about_requested();
     void open_requested();
 
 private:

@@ -58,14 +58,14 @@ QStringList g_fafamilies, g_fabfamilies;
 void init_fontawesome() {
     if(g_fabfamilies.empty()) {
         int id = QFontDatabase::addApplicationFont(
-            ":/res/fonts/FontAwesomeBrands.otf");
+            ":/res/fonts/FontAwesomeBrands6.otf");
         if(id != -1)
             g_fabfamilies = QFontDatabase::applicationFontFamilies(id);
     }
 
     if(g_fafamilies.empty()) {
-        int id =
-            QFontDatabase::addApplicationFont(":/res/fonts/FontAwesome.otf");
+        int id = QFontDatabase::addApplicationFont(
+            ":/res/fonts/FontAwesomeSolid6.otf");
         if(id != -1)
             g_fafamilies = QFontDatabase::applicationFontFamilies(id);
     }

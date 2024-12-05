@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../actions.h"
 #include "../fontawesome.h"
 #include "../views/logview.h"
 #include <QMainWindow>
@@ -18,7 +19,7 @@ struct MainWindow {
     QMenu *mnufile, *mnuedit, *mnuview, *mnutools, *mnuhelp;
     QMenu* mnurecents;
     QAction *actfileopen, *actfileclose, *actfileexit;
-    QAction *acttoolsflc, *acttoolsproblems, *acttoolssettings;
+    QAction *acttoolsflc, *acttoolsproblems;
     QAction *actedit, *actview, *acttools;
     QAction *actviewmemorymap, *actviewsegments, *actviewstrings,
         *actviewimports, *actviewexports;
@@ -32,6 +33,8 @@ struct MainWindow {
 #if !defined(NDEBUG)
         self->setFixedSize(1300, 850);
 #endif
+
+        actions::init(self);
 
         auto* menubar = new QMenuBar(self);
         this->mnufile = menubar->addMenu("&File");
@@ -63,11 +66,16 @@ struct MainWindow {
             "&FLC", QKeySequence{Qt::CTRL | Qt::Key_L});
         this->acttoolsflc->setVisible(false);
 
+        this->mnuhelp->addAction(actions::get(actions::OPEN_ABOUT));
+        this->mnuhelp->addSeparator();
+        this->mnuhelp->addAction(actions::get(actions::OPEN_HOME));
+        this->mnuhelp->addAction(actions::get(actions::OPEN_GITHUB));
+
         this->acttoolsproblems = this->mnutools->addAction("&Problems");
         this->acttoolsproblems->setVisible(false);
 
         this->mnutools->addSeparator();
-        this->acttoolssettings = this->mnutools->addAction("&Settings");
+        this->mnutools->addAction(actions::get(actions::OPEN_SETTINGS));
 
         this->actviewmemorymap = this->mnuview->addAction(
             "&Memory Map", QKeySequence{Qt::CTRL | Qt::Key_M});

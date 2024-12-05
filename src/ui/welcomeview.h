@@ -18,11 +18,11 @@ struct WelcomeView {
     QPushButton* pbopen;
     QPushButton* pbsettings;
     QPushButton* pbabout;
-    QPushButton* pbreddit;
-    QPushButton* pbredasmws;
-    QPushButton* pbgithub;
-    QPushButton* pbtelegram;
-    QPushButton* pbtwitter;
+    QPushButton* pbopenreddit;
+    QPushButton* pbopenhome;
+    QPushButton* pbopengithub;
+    QPushButton* pbopentelegram;
+    QPushButton* pbopenx;
     QLabel* lblrecents;
     QLabel* lblbrand;
     QLabel* lblversion;
@@ -58,14 +58,12 @@ struct WelcomeView {
             this->pbsettings->sizePolicy().hasHeightForWidth());
         this->pbsettings->setSizePolicy(sizepolicy);
         this->pbsettings->setMinimumSize(QSize{0, 40});
-        this->pbsettings->setText("Settings");
 
         this->pbabout = new QPushButton(self);
         sizepolicy.setHeightForWidth(
             this->pbabout->sizePolicy().hasHeightForWidth());
         this->pbabout->setSizePolicy(sizepolicy);
         this->pbabout->setMinimumSize(QSize{0, 40});
-        this->pbabout->setText("About");
 
         auto* vbox4 = new QVBoxLayout(self);
         vbox4->setContentsMargins(16, 16, 16, 16);
@@ -96,25 +94,20 @@ struct WelcomeView {
         auto* grid = new QGridLayout();
         grid->setSpacing(0);
 
-        this->pbreddit = new QPushButton(self);
-        this->pbreddit->setText("Reddit");
-        grid->addWidget(this->pbreddit, 3, 0, 1, 1);
+        this->pbopenhome = new QPushButton(self);
+        grid->addWidget(this->pbopenhome, 0, 0, 1, 1);
 
-        this->pbredasmws = new QPushButton(self);
-        this->pbredasmws->setText("REDasm.IO");
-        grid->addWidget(this->pbredasmws, 0, 0, 1, 1);
+        this->pbopengithub = new QPushButton(self);
+        grid->addWidget(this->pbopengithub, 1, 0, 1, 1);
 
-        this->pbgithub = new QPushButton(self);
-        this->pbgithub->setText("Report an Issue");
-        grid->addWidget(this->pbgithub, 4, 0, 1, 1);
+        this->pbopentelegram = new QPushButton(self);
+        grid->addWidget(this->pbopentelegram, 2, 0, 1, 1);
 
-        this->pbtelegram = new QPushButton(self);
-        this->pbtelegram->setText("Telegram");
-        grid->addWidget(this->pbtelegram, 2, 0, 1, 1);
+        this->pbopenreddit = new QPushButton(self);
+        grid->addWidget(this->pbopenreddit, 3, 0, 1, 1);
 
-        this->pbtwitter = new QPushButton(self);
-        this->pbtwitter->setText("Twitter");
-        grid->addWidget(this->pbtwitter, 1, 0, 1, 1);
+        this->pbopenx = new QPushButton(self);
+        grid->addWidget(this->pbopenx, 4, 0, 1, 1);
 
         hbox1->addLayout(grid);
         hbox1->addItem(new QSpacerItem(40, 20, QSizePolicy::Expanding,
@@ -155,7 +148,6 @@ struct WelcomeView {
         vbox3->addWidget(this->lvrecents);
 
         this->lblversion = new QLabel(self);
-        this->lblversion->setText("Version");
         this->lblversion->setAlignment(Qt::AlignBottom | Qt::AlignRight |
                                        Qt::AlignTrailing);
 

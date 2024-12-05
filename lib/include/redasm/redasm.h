@@ -17,6 +17,7 @@
 #include <redasm/theme.h>
 #include <redasm/types.h>
 #include <redasm/typing.h>
+#include <redasm/version.h>
 
 typedef enum RDLogLevel {
     LOGLEVEL_TRACE,

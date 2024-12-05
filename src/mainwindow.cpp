@@ -44,7 +44,6 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
     m_pbrdilswitch->setFixedHeight(m_ui.statusbar->height());
 
     this->load_recents();
-    actions::init(this);
     this->update_menubar();
 
     m_ui.statusbar->addPermanentWidget(
@@ -98,6 +97,12 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
     connect(m_ui.acttoolsflc, &QAction::triggered, this, [&]() {
         auto* dlgflc = new FLCDialog(this);
         dlgflc->show();
+    });
+
+    connect(m_ui.acttoolsproblems, &QAction::triggered, this, [&]() {
+        auto* dlg = new TableDialog("Problems", this);
+        dlg->set_model(new ProblemsModel(dlg));
+        dlg->show();
     });
 
     connect(m_ui.acttoolsproblems, &QAction::triggered, this, [&]() {
