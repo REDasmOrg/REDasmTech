@@ -16,9 +16,10 @@ namespace ui {
 struct MainWindow {
     QStatusBar* statusbar;
     QStackedWidget* stackwidget;
-    QMenu *mnufile, *mnuedit, *mnuview, *mnutools, *mnuhelp;
+    QMenu *mnufile, *mnuedit, *mnuview, *mnutools, *mnuwindow, *mnuhelp;
     QMenu* mnurecents;
     QAction *actfileopen, *actfileclose, *actfileexit;
+    QAction* actwinrestoredefault;
     QAction *acttoolsflc, *acttoolsproblems;
     QAction *actedit, *actview, *acttools;
     QAction *actviewmemorymap, *actviewsegments, *actviewstrings,
@@ -41,6 +42,7 @@ struct MainWindow {
         this->mnuedit = menubar->addMenu("&Edit");
         this->mnuview = menubar->addMenu("&View");
         this->mnutools = menubar->addMenu("&Tools");
+        this->mnuwindow = menubar->addMenu("&Window");
         this->mnuhelp = menubar->addMenu("&?");
 
         this->actedit = this->mnuedit->menuAction();
@@ -62,6 +64,9 @@ struct MainWindow {
         this->mnufile->addSeparator();
         this->mnufile->addAction(actions::get(actions::OPEN_SETTINGS));
         this->actfileexit = this->mnufile->addAction("&Exit");
+
+        this->actwinrestoredefault =
+            this->mnuwindow->addAction("Restore Default");
 
         this->acttoolsflc = this->mnutools->addAction(
             "&FLC", QKeySequence{Qt::CTRL | Qt::Key_L});
@@ -93,6 +98,7 @@ struct MainWindow {
             FA_ICON(0xf56f), "&Imports", QKeySequence{Qt::CTRL | Qt::Key_I});
 
         auto* toolbar = new QToolBar(self);
+        toolbar->setObjectName("MainToolBar");
         toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         toolbar->setFloatable(false);
         toolbar->setMovable(false);

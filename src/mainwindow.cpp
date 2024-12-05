@@ -43,6 +43,7 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
     m_pbrdilswitch->setVisible(false);
     m_pbrdilswitch->setFixedHeight(m_ui.statusbar->height());
 
+    this->load_window_state();
     this->load_recents();
     this->update_menubar();
 
@@ -111,6 +112,9 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
         dlg->show();
     });
 
+    connect(m_ui.actwinrestoredefault, &QAction::triggered, this,
+            [&]() { REDasmSettings{}.restore_state(this); });
+
     connect(m_pbrdilswitch, &QPushButton::clicked, this,
             &MainWindow::toggle_rdil);
 }
@@ -143,6 +147,15 @@ void MainWindow::dropEvent(QDropEvent* e) {
 
     this->open_file(filepath);
     e->acceptProposedAction();
+}
+
+void MainWindow::load_window_state() {
+    if(REDasmSettings{}.restore_state(this))
+        return;
+
+    QRect position = this->frameGeometry();
+    position.moveCenter(qApp->primaryScreen()->availableGeometry().center());
+    this->move(position.topLeft());
 }
 
 void MainWindow::load_recents() {
@@ -431,6 +444,7 @@ void MainWindow::show_imports() {
 
 void MainWindow::closeEvent(QCloseEvent* e) {
     if(this->can_close()) {
+        REDasmSettings{}.save_state(this);
         QWidget::closeEvent(e);
         Q_EMIT closed();
     }
