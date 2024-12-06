@@ -1,5 +1,6 @@
 #pragma once
 
+#include <redasm/common.h>
 #include <redasm/types.h>
 
 struct RDLoader;
@@ -15,3 +16,5 @@ typedef struct RDLoader {
     RDLoaderInit init;
     RDLoaderFree free;
 } RDLoader;
+
+REDASM_EXPORT usize rd_getloaders(const RDLoader** loaders);

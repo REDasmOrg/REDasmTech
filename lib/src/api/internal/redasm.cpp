@@ -121,6 +121,16 @@ void set_loglevel(RDLogLevel l) {
     // clang-format on
 }
 
+void add_searchpath(const std::string& sp) {
+    spdlog::trace("add_searchpath('{}')", sp);
+    redasm::add_searchpath(sp);
+}
+
+const SearchPaths& get_searchpaths() {
+    spdlog::trace("get_searchpaths()");
+    return redasm::get_searchpaths();
+}
+
 void log(std::string_view s) { state::log(s); }
 void status(std::string_view s) { state::log(s); }
 
@@ -133,11 +143,6 @@ std::string symbolize(std::string s) {
     }
 
     return s;
-}
-
-void add_search_path(const std::string& p) {
-    spdlog::trace("add_search_path('{}')", p);
-    redasm::add_search_path(p);
 }
 
 RDBuffer* load_file(const std::string& filepath) {

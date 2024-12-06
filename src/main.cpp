@@ -14,6 +14,7 @@ int main(int argc, char** argv) {
     QApplication::setStyle(QStyleFactory::create("Fusion"));
 
     QApplication app{argc, argv};
+    app.setApplicationName("redasm");
     app.setApplicationDisplayName("REDasm " + REDASM_VERSION);
 
     rd_setloglevel(LOGLEVEL_TRACE);

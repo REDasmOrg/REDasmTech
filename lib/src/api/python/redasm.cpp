@@ -145,6 +145,24 @@ PyObject* set_loglevel(PyObject* /*self*/, PyObject* args) {
     Py_RETURN_NONE;
 }
 
+PyObject* add_searchpath(PyObject* /*self*/, PyObject* args) {
+    if(!PyUnicode_Check(args))
+        return python::type_error(args, "string");
+
+    internal::add_searchpath(PyUnicode_AsUTF8(args));
+    Py_RETURN_NONE;
+}
+
+PyObject* get_searchpaths(PyObject* /*self*/, PyObject* /*args*/) {
+    const redasm::SearchPaths& sp = internal::get_searchpaths();
+    PyObject* res = PyTuple_New(sp.size());
+
+    for(usize i = 0; i < sp.size(); i++)
+        PyTuple_SET_ITEM(res, i, PyUnicode_FromString(sp[i].c_str()));
+
+    return res;
+}
+
 PyObject* get_problems(PyObject* /*self*/, PyObject* /*args*/) {
     std::vector<RDProblem> problems = internal::get_problems();
     PyObject* res = PyTuple_New(problems.size());

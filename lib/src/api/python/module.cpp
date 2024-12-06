@@ -1,5 +1,6 @@
 #include "module.h"
 #include "../../error.h"
+#include "../../modulemanager.h"
 #include "../../state.h"
 #include "buffer.h"
 #include "common.h"
@@ -19,12 +20,9 @@ namespace fs = std::filesystem;
 
 namespace {
 
-constexpr std::string_view CONFIG_ROOT = "redasm_cfg";
-constexpr std::string_view REPO_NAME = "deps";
+constexpr std::string_view PYTHON_PREFIX = "python";
 
-std::string g_rootpath;
-std::string g_repopath;
-std::string g_initfilepath;
+std::vector<std::string> g_initpaths;
 
 // clang-format off
 struct PyModuleDef moduledef = { // NOLINT
@@ -82,30 +80,35 @@ PyMODINIT_FUNC PyInit_redasm() { // NOLINT
 }
 
 bool init() {
+    if(Py_IsInitialized())
+        return true;
+
     spdlog::info("Initializing Python");
-
-    g_rootpath = (fs::current_path() / CONFIG_ROOT).string();
-    g_repopath = (fs::path{g_rootpath} / REPO_NAME).string();
-
-    if(!fs::exists(g_rootpath)) {
-        spdlog::warn("'{}' not found", g_rootpath);
-        return false;
-    }
-
-    g_initfilepath = (fs::path{g_rootpath} / "init.py").string();
-
-    if(!fs::exists(g_initfilepath)) {
-        spdlog::warn("'{}' not found", g_initfilepath);
-        return false;
-    }
-
     PyImport_AppendInittab("redasm", PyInit_redasm);
     Py_Initialize();
 
-    // Add search paths
+    if(!Py_IsInitialized()) {
+        spdlog::error("Python initialization failed");
+        return false;
+    }
+
     PyObject* syspath = PySys_GetObject("path");
-    PyList_Insert(syspath, 0, PyUnicode_FromString(g_repopath.c_str()));
-    PyList_Insert(syspath, 0, PyUnicode_FromString(g_rootpath.c_str()));
+
+    for(const std::string& sp : redasm::get_searchpaths()) {
+        fs::path rootpath = fs::path{sp} / PYTHON_PREFIX;
+        if(!fs::is_directory(rootpath))
+            continue;
+
+        fs::path initfile = rootpath / "init.py";
+        if(!fs::is_regular_file(initfile))
+            continue;
+
+        PyObject* item = PyUnicode_FromString(rootpath.c_str());
+        assume(PyList_Append(syspath, item) == 0);
+        Py_DECREF(item);
+        g_initpaths.push_back(initfile.string());
+    }
+
     return true;
 }
 
@@ -119,18 +122,22 @@ void deinit() {
 void main() {
     assume(Py_IsInitialized());
 
-    FILE* fp = std::fopen(g_initfilepath.c_str(), "r");
+    for(const std::string& init : g_initpaths) {
+        FILE* fp = std::fopen(init.c_str(), "r");
 
-    if(!fp) {
-        spdlog::error("Cannot open '{}'", g_initfilepath);
-        return;
-    }
+        if(!fp) {
+            spdlog::error("Cannot open '{}'", init);
+            continue;
+        }
 
-    spdlog::info("Executing '{}'", g_initfilepath);
+        spdlog::info("Executing '{}'", init);
 
-    if(PyRun_SimpleFileEx(fp, g_initfilepath.c_str(), true)) {
-        state::error(fmt::format("Error Executing '{}'", g_initfilepath));
-        python::on_error();
+        if(PyRun_SimpleFileEx(fp, init.c_str(), true)) {
+            state::error(fmt::format("Error Executing '{}'", init));
+            python::on_error();
+        }
+
+        // std::fclose(fp); Handled by PyRun_SimpleFileEx()
     }
 }
 

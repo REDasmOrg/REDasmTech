@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../modulemanager.h"
 #include "../../typing/typing.h"
 #include "../../utils/object.h"
 #include <redasm/redasm.h>
@@ -24,11 +25,12 @@ bool is_punct(u8 b);
 bool init(const RDInitParams* params);
 void deinit();
 void set_loglevel(RDLogLevel l);
+void add_searchpath(const std::string& sp);
+const redasm::SearchPaths& get_searchpaths();
 void log(std::string_view s);
 void status(std::string_view s);
 std::string symbolize(std::string s);
 
-void add_search_path(const std::string& p);
 RDBuffer* load_file(const std::string& filepath);
 std::vector<RDTestResult> test(RDBuffer* buffer);
 void select(RDContext* context);

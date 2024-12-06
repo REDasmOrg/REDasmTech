@@ -34,12 +34,12 @@ struct Module {
     ModuleInitFunc initfn;
     ModuleDeinitFunc deinitfn;
 
-    inline void init() const {
+    void init() const {
         assume(initfn);
         initfn();
     }
 
-    inline void deinit() const {
+    void deinit() const {
         if(deinitfn)
             deinitfn();
     }
@@ -47,7 +47,7 @@ struct Module {
     explicit operator bool() const { return !!this->handle; }
 };
 
-std::vector<std::string> g_searchpaths;
+SearchPaths g_searchpaths;
 std::vector<Module> g_modules;
 
 template<typename Function>
@@ -120,11 +120,18 @@ void load_modules_from(const std::string& p) {
 
 } // namespace
 
-void add_search_path(const std::string& p) {
-    auto it = std::find(g_searchpaths.begin(), g_searchpaths.end(), p);
+const SearchPaths& get_searchpaths() { return g_searchpaths; }
+
+void add_searchpath(const std::string& sp) {
+    if(sp.empty())
+        return;
+
+    auto it = std::ranges::find(g_searchpaths, sp);
 
     if(it == g_searchpaths.end())
-        g_searchpaths.push_back(p);
+        g_searchpaths.push_back(sp);
+    else
+        spdlog::warn("add_searchpath(): duplicate entry '{}'", sp);
 }
 
 void unload_modules() {

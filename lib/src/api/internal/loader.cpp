@@ -4,11 +4,20 @@
 
 namespace redasm::api::internal {
 
+usize get_loaders(const RDLoader** loaders) {
+    spdlog::trace("get_loaders({})", fmt::ptr(loaders));
+
+    if(loaders)
+        *loaders = state::loaders.data();
+
+    return state::loaders.size();
+}
+
 void register_loader(const RDLoader& loader) {
     spdlog::trace("register_loader('{}', '{}')", loader.id, loader.name);
 
     if(loader.id)
-        state::loaders.push_front(loader);
+        state::loaders.push_back(loader);
     else
         spdlog::error("register_loader: invalid id");
 }

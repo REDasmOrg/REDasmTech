@@ -30,6 +30,7 @@ private Q_SLOTS:
 
 private:
     [[nodiscard]] bool can_close() const;
+    void init_searchpaths();
     void report_status();
     void select_analyzers();
     void show_context_view();

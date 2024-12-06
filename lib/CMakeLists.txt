@@ -88,6 +88,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/c/function.cpp
         src/api/c/listing.cpp
         src/api/c/analyzer.cpp
+        src/api/c/loader.cpp
         src/api/c/surface.cpp
         src/api/c/processor.cpp
         src/api/c/renderer.cpp

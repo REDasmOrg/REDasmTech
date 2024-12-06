@@ -50,7 +50,7 @@ bool render_function(const RDRendererParams* rp) {
 void register_processors() {
     RDProcessor nullprocessor{
         .id = "null",
-        .name = "",
+        .name = "Null",
     };
 
     nullprocessor.rendersegment = [](const RDProcessor*,

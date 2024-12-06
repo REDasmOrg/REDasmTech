@@ -16,6 +16,26 @@ void rd_free(void* obj) {
 
 void rd_setloglevel(RDLogLevel l) { redasm::api::internal::set_loglevel(l); }
 
+void rd_addsearchpath(const char* sp) {
+    if(sp)
+        redasm::api::internal::add_searchpath(sp);
+}
+
+usize rd_getsearchpaths(const char*** spaths) {
+    static std::vector<const char*> res;
+
+    const auto& sp = redasm::api::internal::get_searchpaths();
+    res.resize(sp.size());
+
+    std::ranges::transform(sp, res.begin(),
+                           [](const std::string& x) { return x.c_str(); });
+
+    if(spaths)
+        *spaths = res.data();
+
+    return res.size();
+}
+
 void rd_log(const char* s) {
     if(s)
         redasm::api::internal::log(s);
@@ -74,7 +94,7 @@ bool rd_setflags(RDAddress address, u32 flags) {
     return redasm::api::internal::memory_setflags(address, flags);
 }
 
-int rd_getbits() { return redasm::api::internal::get_bits(); }
+int rd_getbits(void) { return redasm::api::internal::get_bits(); }
 void rd_setbits(int bits) { redasm::api::internal::set_bits(bits); }
 
 bool rd_checkstring(RDAddress address, RDStringResult* r) {
@@ -87,11 +107,6 @@ const char* rd_rendertext(RDAddress address) {
     static std::string s;
     s = redasm::api::internal::render_text(address);
     return s.c_str();
-}
-
-void rd_addsearchpath(const char* path) {
-    if(path)
-        redasm::api::internal::add_search_path(path);
 }
 
 RDBuffer* rd_loadfile(const char* filepath) {
@@ -111,7 +126,7 @@ usize rd_test(RDBuffer* buffer, const RDTestResult** result) {
     return res.size();
 }
 
-void rd_disassemble() { redasm::api::internal::disassemble(); }
+void rd_disassemble(void) { redasm::api::internal::disassemble(); }
 void rd_select(RDContext* context) { redasm::api::internal::select(context); }
 bool rd_destroy(void) { return redasm::api::internal::destroy(); }
 void rd_discard(void) { redasm::api::internal::discard(); }

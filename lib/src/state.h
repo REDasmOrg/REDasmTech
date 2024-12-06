@@ -18,7 +18,7 @@ namespace state {
 
 inline RDInitParams params;                 // Init Configuration
 inline Theme theme;                         // Current Theme
-inline std::deque<RDLoader> loaders;        // Registered Loaders
+inline std::vector<RDLoader> loaders;       // Registered Loaders
 inline std::vector<RDProcessor> processors; // Registered Processors
 inline std::vector<RDAnalyzer> analyzers;   // Registered Analyzers
 inline ContextList contextlist;             // Context Candidates

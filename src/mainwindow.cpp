@@ -22,9 +22,11 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QMimeData>
+#include <QStandardPaths>
 
 namespace {
 
+const QString PLUGINS_FOLDER_NAME = "plugins";
 const QString LISTING_MODE_TEXT = "Listing";
 const QString RDIL_MODE_TEXT = "RDIL";
 
@@ -56,9 +58,7 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
         new QPushButton(this), m_ui.statusbar->height()));
 
     this->show_welcome_view();
-
-    QString searchpath = qApp->applicationDirPath() + "/lib/plugins/src";
-    rd_addsearchpath(qUtf8Printable(searchpath));
+    this->init_searchpaths();
 
     RDInitParams params = {
         [](const char* arg, void* userdata) { // onlog
@@ -342,6 +342,29 @@ void MainWindow::select_file() {
     QString s = QFileDialog::getOpenFileName(this, "Disassemble file...");
     if(!s.isEmpty())
         this->open_file(s);
+}
+
+void MainWindow::init_searchpaths() {
+    QString searchpath = qApp->applicationDirPath() + "/lib/plugins/src";
+    rd_addsearchpath(qUtf8Printable(searchpath));
+
+    const char* appdir = std::getenv("APPDIR");
+    bool isappimage = appdir && std::getenv("APPIMAGE");
+
+    for(const QString& searchpath :
+        QStandardPaths::standardLocations(QStandardPaths::AppDataLocation)) {
+        rd_addsearchpath(qUtf8Printable(
+            QDir{searchpath}.absoluteFilePath(PLUGINS_FOLDER_NAME)));
+
+        if(!isappimage)
+            continue;
+
+        QString appdirqt = QString::fromUtf8(appdir);
+
+        rd_addsearchpath(qUtf8Printable(
+            QDir{appdirqt + QDir::separator() + searchpath}.absoluteFilePath(
+                PLUGINS_FOLDER_NAME)));
+    }
 }
 
 void MainWindow::report_status() {
