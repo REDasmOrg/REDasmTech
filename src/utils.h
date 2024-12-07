@@ -17,7 +17,6 @@ inline size_t bits{};
 
 inline void log(const QString& s) { rd_log(qUtf8Printable(s)); }
 
-QString to_hex(size_t n);
 float cell_width();
 float cell_height();
 void draw_surface(RDSurface* s, QTextDocument* doc, usize start, usize n);

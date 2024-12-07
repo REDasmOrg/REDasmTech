@@ -17,14 +17,10 @@ float cellw{}, cellh{};
 
 }
 
-QString to_hex(size_t n) {
-    const int N_CHARS = (utils::bits / CHAR_BIT) * 2;
-    return QStringLiteral("%1").arg(n, N_CHARS, 16, QLatin1Char('0')).toUpper();
-}
-
 float cell_width() {
     if(!utils::cellw) {
         QFontMetricsF fm{REDasmSettings::font()};
+        // utils::cellw = fm.horizontalAdvance(" ");
         utils::cellw = fm.horizontalAdvance(" ");
     }
 
