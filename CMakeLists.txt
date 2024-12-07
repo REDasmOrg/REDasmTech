@@ -66,6 +66,7 @@ target_sources(${PROJECT_NAME}
         src/views/surface/surfacepath.cpp
         src/views/surface/surfacegraphnode.cpp
         src/views/surface/surfacegraph.cpp
+        src/views/surface/surfacepopup.cpp
         src/views/graphview/graphviewnode.cpp
         src/views/graphview/graphview.cpp
 )

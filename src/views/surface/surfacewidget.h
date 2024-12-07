@@ -1,5 +1,6 @@
 #pragma once
 
+#include "surfacepopup.h"
 #include <QAbstractScrollArea>
 #include <QMenu>
 #include <QTextDocument>
@@ -38,6 +39,7 @@ protected:
     void resizeEvent(QResizeEvent* e) override;
     void keyPressEvent(QKeyEvent* e) override;
     void paintEvent(QPaintEvent* e) override;
+    bool event(QEvent* event) override;
 
 private:
     [[nodiscard]] RDSurfacePosition get_surface_coords(QPointF pt) const;
@@ -48,6 +50,7 @@ private:
     bool follow_under_cursor();
     void update_scrollbars();
     bool sync_location();
+    void show_popup(const QPoint& pt);
 
 Q_SIGNALS:
     void history_updated();
@@ -55,6 +58,7 @@ Q_SIGNALS:
     void switch_view();
 
 private:
+    SurfacePopup* m_popup;
     RDSurface* m_surface{nullptr};
     QTextDocument m_document;
     QMenu* m_menu;

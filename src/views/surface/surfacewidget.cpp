@@ -15,6 +15,7 @@ static constexpr int SCROLL_SPEED = 3;
 
 SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
     m_surface = rdsurface_new(SURFACE_DEFAULT);
+    m_popup = new SurfacePopup(this);
 
     this->setContextMenuPolicy(Qt::CustomContextMenu);
     this->setCursor(Qt::ArrowCursor);
@@ -277,6 +278,16 @@ void SurfaceWidget::paintEvent(QPaintEvent* e) {
     statusbar::set_location(m_surface);
 }
 
+bool SurfaceWidget::event(QEvent* event) {
+    if(m_surface && event->type() == QEvent::ToolTip) {
+        auto* helpevent = static_cast<QHelpEvent*>(event);
+        this->show_popup(helpevent->pos());
+        return true;
+    }
+
+    return QAbstractScrollArea::event(event);
+}
+
 bool SurfaceWidget::can_goback() const {
     return rdsurface_cangoback(m_surface);
 }
@@ -377,4 +388,20 @@ bool SurfaceWidget::sync_location() {
     }
 
     return false;
+}
+
+void SurfaceWidget::show_popup(const QPoint& pt) {
+    if(!m_surface)
+        return;
+
+    RDSurfacePosition pos = this->get_surface_coords(pt);
+    RDAddress address;
+
+    if(rdsurface_getaddressunderpos(m_surface, &pos, &address) &&
+       rdsurface_indexof(m_surface, address) == -1) {
+        m_popup->popup(address);
+        return;
+    }
+
+    m_popup->hide();
 }
