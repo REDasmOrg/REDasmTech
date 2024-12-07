@@ -48,9 +48,9 @@ void SurfaceGraphNode::mousedoubleclick_event(QMouseEvent*) {
 
 void SurfaceGraphNode::mousepress_event(QMouseEvent* e) {
     if(e->buttons() == Qt::LeftButton) {
-        usize row, col;
-        this->localpos_to_surface(e->position(), &row, &col);
-        rdsurface_setposition(m_surface, row, col);
+        RDSurfacePosition pos;
+        this->get_surface_pos(e->position(), &pos);
+        rdsurface_setposition(m_surface, pos.row, pos.col);
         this->invalidate();
     }
     else
@@ -63,9 +63,9 @@ void SurfaceGraphNode::mousemove_event(QMouseEvent* e) {
     if(e->buttons() != Qt::LeftButton)
         return;
 
-    usize row, col;
-    this->localpos_to_surface(e->position(), &row, &col);
-    rdsurface_select(m_surface, row, col);
+    RDSurfacePosition pos;
+    this->get_surface_pos(e->position(), &pos);
+    rdsurface_select(m_surface, pos.row, pos.col);
     this->invalidate();
     e->accept();
 }
@@ -85,10 +85,10 @@ void SurfaceGraphNode::update_document() {
         m_document.clear();
 }
 
-void SurfaceGraphNode::localpos_to_surface(const QPointF& pt, usize* row,
-                                           usize* col) const {
-    *row = this->start_row() + (pt.y() / utils::cell_height());
-    *col = (pt.x() / utils::cell_width());
+void SurfaceGraphNode::get_surface_pos(const QPointF& pt,
+                                       RDSurfacePosition* pos) const {
+    pos->row = this->start_row() + (pt.y() / utils::cell_height());
+    pos->col = (pt.x() / utils::cell_width());
 }
 
 int SurfaceGraphNode::start_row() const {

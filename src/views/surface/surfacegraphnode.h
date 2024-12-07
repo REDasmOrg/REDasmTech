@@ -14,6 +14,7 @@ public:
     [[nodiscard]] bool contains_address(RDAddress address) const;
     [[nodiscard]] int current_row() const override;
     [[nodiscard]] QSize size() const override;
+    void get_surface_pos(const QPointF& pt, RDSurfacePosition* pos) const;
     void render(QPainter* painter, usize state) override;
     void update_document();
 
@@ -23,7 +24,6 @@ protected:
     void mousemove_event(QMouseEvent* e) override;
 
 private:
-    void localpos_to_surface(const QPointF& pt, usize* row, usize* col) const;
     [[nodiscard]] int start_row() const;
 
 Q_SIGNALS:

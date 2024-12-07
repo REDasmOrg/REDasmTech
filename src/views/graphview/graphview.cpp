@@ -142,7 +142,7 @@ void GraphView::mouseReleaseEvent(QMouseEvent* e) {
 void GraphView::mouseMoveEvent(QMouseEvent* e) {
     if(m_selecteditem) {
         QPoint itempos;
-        GraphViewNode* item = this->item_from_mouse_event(e, &itempos);
+        GraphViewNode* item = this->node_from_pos(e->position(), &itempos);
 
         if(item == m_selecteditem) {
             QMouseEvent iteme{
@@ -312,7 +312,7 @@ void GraphView::update_graph() {
             if(!item)
                 continue;
 
-            connect(m_nodes[n], &GraphViewNode::invalidated, this->viewport(),
+            connect(item, &GraphViewNode::invalidated, this->viewport(),
                     [&]() { this->viewport()->update(); });
 
             item->setParent(this); // Take Ownership
@@ -375,17 +375,17 @@ void GraphView::update_graph() {
     this->end_compute();
 }
 
-GraphViewNode* GraphView::item_from_mouse_event(QMouseEvent* e,
-                                                QPoint* itempos) const {
+GraphViewNode* GraphView::node_from_pos(const QPointF& pt,
+                                        QPoint* itempos) const {
     // Convert coordinates to system used in blocks
     int xofs = this->horizontalScrollBar()->value();
     int yofs = this->verticalScrollBar()->value();
 
     QPoint pos = {
-        static_cast<int>(std::floor(
-            (e->position().x() + xofs - m_renderoffset.x()) / m_scalefactor)),
-        static_cast<int>(std::floor(
-            (e->position().y() + yofs - m_renderoffset.y()) / m_scalefactor)),
+        static_cast<int>(
+            std::floor((pt.x() + xofs - m_renderoffset.x()) / m_scalefactor)),
+        static_cast<int>(
+            std::floor((pt.y() + yofs - m_renderoffset.y()) / m_scalefactor)),
     };
 
     for(GraphViewNode* item : m_nodes) {
@@ -515,7 +515,7 @@ void GraphView::precompute_line(const RDGraphEdge& e) {
 
 bool GraphView::update_selected_item(QMouseEvent* e, QPoint* itempos) {
     GraphViewNode* olditem = m_selecteditem;
-    m_selecteditem = this->item_from_mouse_event(e, itempos);
+    m_selecteditem = this->node_from_pos(e->position(), itempos);
 
     if(olditem) {
         olditem->itemselection_changed(false);

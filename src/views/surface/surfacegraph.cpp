@@ -7,6 +7,7 @@ SurfaceGraph::SurfaceGraph(QWidget* parent): GraphView{parent} {
     this->setContextMenuPolicy(Qt::CustomContextMenu);
 
     m_surface = rdsurface_new(SURFACE_GRAPH);
+    m_popup = new SurfacePopup(this);
     m_menu = utils::create_surface_menu(m_surface, this);
 
     connect(this, &SurfaceGraph::customContextMenuRequested, this,
@@ -121,6 +122,16 @@ void SurfaceGraph::keyPressEvent(QKeyEvent* e) {
         GraphView::keyPressEvent(e);
 }
 
+bool SurfaceGraph::event(QEvent* event) {
+    if(m_surface && event->type() == QEvent::ToolTip) {
+        auto* helpevent = static_cast<QHelpEvent*>(event);
+        this->show_popup(helpevent->pos());
+        return true;
+    }
+
+    return GraphView::event(event);
+}
+
 SurfaceGraphNode* SurfaceGraph::find_node(RDAddress address) {
     for(GraphViewNode* g : m_nodes) {
         auto* sg = static_cast<SurfaceGraphNode*>(g);
@@ -166,4 +177,27 @@ void SurfaceGraph::set_location(const RDSurfaceLocation& loc, bool seek) {
     }
     else // No graph, switch to listing
         Q_EMIT switch_view();
+}
+
+void SurfaceGraph::show_popup(const QPoint& pt) {
+    if(!m_surface)
+        return;
+
+    QPoint nodepos;
+    const auto* n = static_cast<SurfaceGraphNode*>(
+        this->node_from_pos(pt.toPointF(), &nodepos));
+
+    if(n) {
+        RDSurfacePosition pos;
+        n->get_surface_pos(nodepos.toPointF(), &pos);
+
+        RDAddress address;
+        if(rdsurface_getaddressunderpos(m_surface, &pos, &address) &&
+           rdsurface_indexof(m_surface, address) == -1) {
+            m_popup->popup(address);
+            return;
+        }
+
+        m_popup->hide();
+    }
 }

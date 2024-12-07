@@ -28,6 +28,8 @@ public Q_SLOTS:
     void update_graph();
 
 protected:
+    GraphViewNode* node_from_pos(const QPointF& pt,
+                                 QPoint* itempos = nullptr) const;
     void mouseDoubleClickEvent(QMouseEvent* e) override;
     void mousePressEvent(QMouseEvent* e) override;
     void mouseReleaseEvent(QMouseEvent* e) override;
@@ -46,8 +48,6 @@ protected:
     virtual void end_compute();
 
 private:
-    GraphViewNode* item_from_mouse_event(QMouseEvent* e,
-                                         QPoint* itempos = nullptr) const;
     void zoom_out(const QPointF& cursorpos);
     void zoom_in(const QPointF& cursorpos);
     void adjust_size(int vpw, int vph, const QPointF& cursorpos = QPoint(),

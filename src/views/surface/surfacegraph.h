@@ -2,6 +2,7 @@
 
 #include "../graphview/graphview.h"
 #include "surfacegraphnode.h"
+#include "surfacepopup.h"
 #include <QMenu>
 
 class SurfaceGraph: public GraphView {
@@ -30,23 +31,26 @@ public Q_SLOTS:
     void clear_history();
 
 protected:
+    GraphViewNode* create_node(RDGraphNode n, const RDGraph* g) override;
     void begin_compute() override;
     void end_compute() override;
     void update_edge(const RDGraphEdge& e) override;
     void update_node(GraphViewNode*) override;
-    GraphViewNode* create_node(RDGraphNode n, const RDGraph* g) override;
     void keyPressEvent(QKeyEvent* e) override;
+    bool event(QEvent* event) override;
 
 private:
     SurfaceGraphNode* find_node(RDAddress address);
     bool seek_to_address(RDAddress address);
     void set_location(const RDSurfaceLocation& loc, bool seek);
+    void show_popup(const QPoint& pt);
 
 Q_SIGNALS:
     void history_updated();
     void switch_view();
 
 private:
+    SurfacePopup* m_popup;
     RDFunction* m_function{nullptr};
     RDSurface* m_surface{nullptr};
     QMenu* m_menu;
