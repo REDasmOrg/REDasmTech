@@ -12,7 +12,7 @@ void surface_renderfunction(RDSurface* self, const RDFunction* f);
 bool surface_hasselection(const RDSurface* self);
 usize surface_getrowcount(const RDSurface* self);
 usize surface_getrow(const RDSurface* self, usize idx,
-                     const RDSurfaceCell** row);
+                     const RDSurfaceCell** row, usize* len);
 void surface_getposition(const RDSurface* self, RDSurfacePosition* pos);
 void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc);
 bool surface_getindex(const RDSurface* self, MIndex* index);

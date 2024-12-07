@@ -153,9 +153,6 @@ const Function* Surface::current_function() const {
 void Surface::render_function(const Function& f) {
     m_renderer->clear();
 
-    // if(!this->jump_to(f.entry))
-    //     return;
-
     const Listing& listing = state::context->listing;
 
     for(const Function::BasicBlock& bb : f.blocks) {
@@ -805,12 +802,16 @@ void Surface::render_refs(const ListingItem& item) {
 
     const Context* ctx = state::context;
     const auto& mem = ctx->memory;
-
-    m_renderer->ws(COLUMN_PADDING);
+    bool paddingdone = false;
 
     for(const auto& [index, _] : ctx->get_refs_from(item.index)) {
         if(!mem->at(index).has(BF_TYPE))
             continue;
+
+        if(!paddingdone) {
+            m_renderer->ws(COLUMN_PADDING);
+            paddingdone = true;
+        }
 
         auto type = ctx->get_type(index);
         assume(type);

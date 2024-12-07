@@ -40,7 +40,11 @@ int SurfaceGraphNode::current_row() const {
     return GraphViewNode::current_row();
 }
 
-QSize SurfaceGraphNode::size() const { return m_document.size().toSize(); }
+QSize SurfaceGraphNode::size() const {
+    QSize sz = m_document.size().toSize();
+    sz.setWidth(m_maxwidth); // Scale to longest row
+    return sz;
+}
 
 void SurfaceGraphNode::mousedoubleclick_event(QMouseEvent*) {
     Q_EMIT follow_requested();
@@ -78,8 +82,10 @@ void SurfaceGraphNode::update_document() {
         if(startidx == -1 || endidx == -1)
             return;
 
-        utils::draw_surface(m_surface, &m_document, startidx,
-                            endidx - startidx + 1);
+        usize nmaxcol = utils::draw_surface(m_surface, &m_document, startidx,
+                                            endidx - startidx + 1);
+
+        m_maxwidth = nmaxcol * utils::cell_width();
     }
     else
         m_document.clear();

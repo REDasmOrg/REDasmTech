@@ -33,4 +33,5 @@ private:
     RDFunctionBasicBlock m_basicblock;
     QTextDocument m_document;
     RDSurface* m_surface;
+    int m_maxwidth{};
 };

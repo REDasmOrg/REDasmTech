@@ -12,7 +12,7 @@
 namespace redasm {
 
 struct SurfaceRow {
-    usize listingindex;
+    usize listingindex, length;
     std::vector<RDSurfaceCell> cells;
 };
 
@@ -22,7 +22,6 @@ struct Renderer {
     explicit Renderer(usize f);
     [[nodiscard]] usize current_address() const;
     void swap(SurfaceRows& r) { m_rows.swap(r); }
-    void clear() { m_rows.clear(); }
     void highlight_row(int row);
     void highlight_words(int row, int col);
     void highlight_selection(RDSurfacePosition startsel,
@@ -43,6 +42,11 @@ struct Renderer {
                     RDThemeKind bg = THEME_DEFAULT);
 
     [[nodiscard]] bool has_flag(usize f) const { return this->flags & f; }
+
+    void clear() {
+        m_rows.clear();
+        this->autocolumns = 0;
+    }
 
     Renderer& arr_index(usize idx) {
         return this->chunk("[").constant(idx).chunk("]");
@@ -98,7 +102,8 @@ public: // High level interface
     Renderer& addr(RDAddress address, int flags = 0);
 
 public:
-    usize columns{0};
+    bool prevmnemonic{false}; // Autoinsert whitespace on next chunk
+    usize columns{0}, autocolumns{0};
     usize flags;
 
 private:

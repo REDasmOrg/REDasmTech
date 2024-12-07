@@ -32,7 +32,7 @@ usize surface_getrowcount(const RDSurface* self) {
 }
 
 usize surface_getrow(const RDSurface* self, usize idx,
-                     const RDSurfaceCell** row) {
+                     const RDSurfaceCell** row, usize* len) {
     spdlog::trace("surface_getrow({}, {}, {})", fmt::ptr(self), idx,
                   fmt::ptr(row));
 
@@ -43,6 +43,9 @@ usize surface_getrow(const RDSurface* self, usize idx,
 
     if(row)
         *row = s->rows[idx].cells.data();
+
+    if(len)
+        *len = s->rows[idx].length;
 
     return s->rows[idx].cells.size();
 }

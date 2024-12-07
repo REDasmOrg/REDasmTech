@@ -113,9 +113,15 @@ void Renderer::highlight_cursor(int row, int col) {
 }
 
 void Renderer::fill_columns() {
+    usize ncols = this->columns > 0 ? this->columns : this->autocolumns;
+
     for(SurfaceRow& row : m_rows) {
-        while(row.cells.size() < this->columns)
+        row.length = row.cells.size();
+
+        while(row.cells.size() < ncols)
             this->character(row, ' ');
+
+        assume(row.length <= row.cells.size());
     }
 }
 
@@ -202,6 +208,13 @@ Renderer& Renderer::addr(RDAddress address, int flags) {
 }
 
 Renderer& Renderer::new_row(const ListingItem& item) {
+    this->prevmnemonic = false;
+
+    if(!this->columns && !m_rows.empty()) {
+        this->autocolumns =
+            std::max(this->autocolumns, m_rows.back().cells.size());
+    }
+
     m_rows.emplace_back(SurfaceRow{
         .listingindex = m_listingidx,
         .cells = {},
@@ -257,6 +270,11 @@ Renderer& Renderer::character(SurfaceRow& row, char ch, RDThemeKind fg,
 
 Renderer& Renderer::chunk(std::string_view arg, RDThemeKind fg,
                           RDThemeKind bg) {
+    if(this->prevmnemonic) {
+        this->prevmnemonic = false;
+        this->ws();
+    }
+
     SurfaceRow& row = m_rows.back();
 
     for(char ch : arg) {

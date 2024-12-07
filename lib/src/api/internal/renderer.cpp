@@ -18,7 +18,9 @@ void renderer_mnem(RDRenderer* self, std::string_view s, RDThemeKind kind) {
     spdlog::trace("renderer_mnem({}, '{}', {})", fmt::ptr(self), s,
                   static_cast<int>(kind));
 
-    api::from_c(self)->chunk(s, kind).ws();
+    Renderer* renderer = api::from_c(self);
+    renderer->chunk(s, kind);
+    renderer->prevmnemonic = true;
 }
 
 void renderer_reg(RDRenderer* self, std::string_view s) {

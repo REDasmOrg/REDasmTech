@@ -23,7 +23,7 @@ typedef enum RDSurfaceFlags {
     SURFACE_GRAPH = SURFACE_NOADDRESS | SURFACE_NOSEGMENT | SURFACE_NOFUNCTION |
                     SURFACE_NOCOMMENTS,
 
-    SURFACE_SIMPLIFIED = ~0u & ~(SURFACE_RDIL | SURFACE_NOHIGHLIGHT),
+    SURFACE_POPUP = ~0u & ~(SURFACE_RDIL | SURFACE_NOREFS | SURFACE_NOCOMMENTS),
     SURFACE_TEXT = ~0u & ~SURFACE_RDIL,
 } RDSurfaceFlags;
 
@@ -93,7 +93,7 @@ REDASM_EXPORT usize rdsurface_getrowcount(const RDSurface* self);
 REDASM_EXPORT usize rdsurface_getpath(const RDSurface* self,
                                       const RDSurfacePath** path);
 REDASM_EXPORT usize rdsurface_getrow(const RDSurface* self, usize idx,
-                                     const RDSurfaceCell** row);
+                                     const RDSurfaceCell** row, usize* len);
 REDASM_EXPORT void rdsurface_getposition(const RDSurface* self,
                                          RDSurfacePosition* pos);
 REDASM_EXPORT void rdsurface_getlocation(const RDSurface* self,

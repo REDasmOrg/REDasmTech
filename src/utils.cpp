@@ -36,10 +36,11 @@ float cell_height() {
     return utils::cellh;
 }
 
-void draw_surface(RDSurface* s, QTextDocument* doc, usize start, usize n) {
+usize draw_surface(RDSurface* s, QTextDocument* doc, usize start, usize n) {
     doc->clear();
     QTextCursor cursor(doc);
     cursor.beginEditBlock();
+    usize nmaxcol = 0;
 
     for(usize i = 0; i < n; i++) {
         if(i) // Insert new block after the default one
@@ -48,7 +49,9 @@ void draw_surface(RDSurface* s, QTextDocument* doc, usize start, usize n) {
         // cursor.insertText(QString::number(i + 1) + " ");
 
         const RDSurfaceCell* row = nullptr;
-        usize ncols = rdsurface_getrow(s, start++, &row);
+        usize maxcol;
+        usize ncols = rdsurface_getrow(s, start++, &row, &maxcol);
+        nmaxcol = std::max(nmaxcol, maxcol);
 
         for(usize j = 0; j < ncols; j++) {
             QTextCharFormat cf;
@@ -65,6 +68,7 @@ void draw_surface(RDSurface* s, QTextDocument* doc, usize start, usize n) {
     }
 
     cursor.endEditBlock();
+    return nmaxcol;
 }
 
 QMenu* create_surface_menu(RDSurface* s, QWidget* w) {

@@ -38,8 +38,8 @@ usize rdsurface_getpath(const RDSurface* self, const RDSurfacePath** path) {
 }
 
 usize rdsurface_getrow(const RDSurface* self, usize idx,
-                       const RDSurfaceCell** row) {
-    return redasm::api::internal::surface_getrow(self, idx, row);
+                       const RDSurfaceCell** row, usize* len) {
+    return redasm::api::internal::surface_getrow(self, idx, row, len);
 }
 
 void rdsurface_getposition(const RDSurface* self, RDSurfacePosition* pos) {

@@ -24,7 +24,7 @@ SurfacePopup::SurfacePopup(QWidget* parent): QWidget{parent} {
     m_document.setDefaultFont(this->font());
     m_document.setUndoRedoEnabled(false);
 
-    m_surface = rdsurface_new(SURFACE_SIMPLIFIED);
+    m_surface = rdsurface_new(SURFACE_POPUP);
 }
 
 SurfacePopup::~SurfacePopup() { rd_free(m_surface); }
