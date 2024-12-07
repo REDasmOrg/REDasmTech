@@ -113,13 +113,23 @@ tl::optional<MIndex> Surface::current_index() const {
         [](LIndex index) { return state::context->listing[index].index; });
 }
 
-tl::optional<usize> Surface::index_under_cursor() const {
-    if(this->start) {
-        if(std::string w = m_renderer->word_at(m_row, m_col); !w.empty())
-            return state::context->get_index(w);
+tl::optional<usize> Surface::index_under_pos(RDSurfacePosition pos) const {
+    if(!this->start)
+        return tl::nullopt;
+
+    if(std::string w = Renderer::word_at(this->rows, pos.row, pos.col);
+       !w.empty()) {
+        return state::context->get_index(w);
     }
 
     return tl::nullopt;
+}
+
+tl::optional<usize> Surface::index_under_cursor() const {
+    return this->index_under_pos({
+        .row = m_row,
+        .col = m_col,
+    });
 }
 
 const Segment* Surface::current_segment() const {

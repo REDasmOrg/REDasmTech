@@ -22,6 +22,8 @@ typedef enum RDSurfaceFlags {
 
     SURFACE_GRAPH = SURFACE_NOADDRESS | SURFACE_NOSEGMENT | SURFACE_NOFUNCTION |
                     SURFACE_NOCOMMENTS,
+
+    SURFACE_SIMPLIFIED = ~0u & ~(SURFACE_RDIL | SURFACE_NOHIGHLIGHT),
     SURFACE_TEXT = ~0u & ~SURFACE_RDIL,
 } RDSurfaceFlags;
 
@@ -102,6 +104,9 @@ REDASM_EXPORT int rdsurface_lastindexof(const RDSurface* self,
                                         RDAddress address);
 REDASM_EXPORT const char* rdsurface_gettext(const RDSurface* self);
 REDASM_EXPORT const char* rdsurface_getselectedtext(const RDSurface* self);
+REDASM_EXPORT bool rdsurface_getaddressunderpos(const RDSurface* self,
+                                                const RDSurfacePosition* pos,
+                                                RDAddress* address);
 REDASM_EXPORT bool rdsurface_getaddressundercursor(const RDSurface* self,
                                                    RDAddress* address);
 REDASM_EXPORT bool rdsurface_hasrdil(const RDSurface* self);

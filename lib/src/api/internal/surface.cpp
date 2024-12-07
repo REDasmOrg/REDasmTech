@@ -176,6 +176,24 @@ std::string_view surface_getselectedtext(const RDSurface* self) {
     return api::from_c(self)->get_selected_text();
 }
 
+bool surface_getaddressunderpos(const RDSurface* self,
+                                const RDSurfacePosition* pos,
+                                RDAddress* address) {
+    spdlog::trace("surface_getaddressunderpos({}, {}, {})", fmt::ptr(pos),
+                  fmt::ptr(self), fmt::ptr(address));
+
+    if(!pos)
+        return false;
+
+    auto addr = api::from_c(self)->index_under_pos(*pos).and_then(
+        [](usize idx) { return state::context->index_to_address(idx); });
+
+    if(address && addr)
+        *address = *addr;
+
+    return addr.has_value();
+}
+
 bool surface_getaddressundercursor(const RDSurface* self, RDAddress* address) {
     spdlog::trace("surface_getaddressundercursor({}, {})", fmt::ptr(self),
                   fmt::ptr(address));

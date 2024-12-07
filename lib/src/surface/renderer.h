@@ -20,7 +20,6 @@ using SurfaceRows = std::vector<SurfaceRow>;
 
 struct Renderer {
     explicit Renderer(usize f);
-    [[nodiscard]] std::string word_at(int row, int col) const;
     [[nodiscard]] usize current_address() const;
     void swap(SurfaceRows& r) { m_rows.swap(r); }
     void clear() { m_rows.clear(); }
@@ -89,6 +88,7 @@ struct Renderer {
 
     Renderer& ws(usize n = 1) { return this->chunk(std::string(n, ' ')); }
 
+    static std::string word_at(const SurfaceRows& rows, int row, int col);
     static bool is_char_skippable(char ch);
 
 public: // High level interface

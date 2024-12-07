@@ -35,21 +35,22 @@ private:
 public:
     explicit Surface(usize flags = SURFACE_DEFAULT);
     Renderer* renderer() const { return m_renderer.get(); }
-    [[nodiscard]] bool can_goback() const { return !m_histback.empty(); }
-    [[nodiscard]] bool can_goforward() const { return !m_histforward.empty(); }
-    [[nodiscard]] tl::optional<LIndex> current_listing_index() const;
-    [[nodiscard]] tl::optional<MIndex> current_index() const;
-    [[nodiscard]] tl::optional<usize> index_under_cursor() const;
-    [[nodiscard]] const Function* current_function() const;
-    [[nodiscard]] const Segment* current_segment() const;
-    [[nodiscard]] RDSurfacePosition position() const;
-    [[nodiscard]] RDSurfacePosition start_selection() const;
-    [[nodiscard]] RDSurfacePosition end_selection() const;
-    [[nodiscard]] std::string_view get_selected_text() const;
-    [[nodiscard]] std::string_view get_text() const;
-    [[nodiscard]] const std::vector<RDSurfacePath>& get_path() const;
-    [[nodiscard]] bool has_selection() const;
-    [[nodiscard]] bool has_rdil() const;
+    bool can_goback() const { return !m_histback.empty(); }
+    bool can_goforward() const { return !m_histforward.empty(); }
+    tl::optional<LIndex> current_listing_index() const;
+    tl::optional<MIndex> current_index() const;
+    tl::optional<usize> index_under_pos(RDSurfacePosition pos) const;
+    tl::optional<usize> index_under_cursor() const;
+    const Function* current_function() const;
+    const Segment* current_segment() const;
+    RDSurfacePosition position() const;
+    RDSurfacePosition start_selection() const;
+    RDSurfacePosition end_selection() const;
+    std::string_view get_selected_text() const;
+    std::string_view get_text() const;
+    const std::vector<RDSurfacePath>& get_path() const;
+    bool has_selection() const;
+    bool has_rdil() const;
     int index_of(MIndex index) const;
     int last_index_of(MIndex index) const;
     void clear_selection();

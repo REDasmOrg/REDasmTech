@@ -10,8 +10,10 @@
 #include "../marshal.h"
 #include "../python/module.h"
 #include "buffer.h"
+#include <algorithm>
 #include <cctype>
 #include <fstream>
+#include <ranges>
 #include <spdlog/spdlog.h>
 
 namespace redasm::api::internal {
@@ -66,6 +68,9 @@ bool init(const RDInitParams* params) {
 
     if(python::init()) {
         python::main();
+
+        // Keep 'Binary' loader as last option
+        std::ranges::reverse(state::loaders);
         return true;
     }
 

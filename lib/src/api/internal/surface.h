@@ -21,6 +21,9 @@ int surface_lastindexof(const RDSurface* self, RDAddress address);
 usize surface_getpath(const RDSurface* self, const RDSurfacePath** path);
 std::string_view surface_gettext(const RDSurface* self);
 std::string_view surface_getselectedtext(const RDSurface* self);
+bool surface_getaddressunderpos(const RDSurface* self,
+                                const RDSurfacePosition* pos,
+                                RDAddress* address);
 bool surface_getaddressundercursor(const RDSurface* self, RDAddress* address);
 bool surface_hasrdil(const RDSurface* self);
 void surface_setrdil(RDSurface* self, bool v);

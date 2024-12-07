@@ -5,6 +5,13 @@ RDSurface* rdsurface_new(usize flags) {
     return redasm::api::internal::surface_new(flags);
 }
 
+bool rdsurface_getaddressunderpos(const RDSurface* self,
+                                  const RDSurfacePosition* pos,
+                                  RDAddress* address) {
+    return redasm::api::internal::surface_getaddressunderpos(self, pos,
+                                                             address);
+}
+
 bool rdsurface_getaddressundercursor(const RDSurface* self,
                                      RDAddress* address) {
     return redasm::api::internal::surface_getaddressundercursor(self, address);

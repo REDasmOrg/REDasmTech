@@ -36,7 +36,7 @@ void Renderer::highlight_words(int row, int col) {
     if(this->has_flag(SURFACE_NOHIGHLIGHT))
         return;
 
-    std::string word = this->word_at(row, col);
+    std::string word = Renderer::word_at(m_rows, row, col);
     if(word.empty())
         return;
 
@@ -311,23 +311,23 @@ void Renderer::check_current_segment(const ListingItem& item) {
     m_currsegment = state::context->segments.size();
 }
 
-std::string Renderer::word_at(int row, int col) const {
-    if(row >= static_cast<int>(m_rows.size()))
+std::string Renderer::word_at(const SurfaceRows& rows, int row, int col) {
+    if(row >= static_cast<int>(rows.size()))
         return {};
 
-    const SurfaceRow& sfrow = m_rows[row];
+    const SurfaceRow& sfrow = rows[row];
 
     if(col >= static_cast<int>(sfrow.cells.size()))
         col = sfrow.cells.size() - 1;
 
-    if(is_char_skippable(sfrow.cells[col].ch))
+    if(Renderer::is_char_skippable(sfrow.cells[col].ch))
         return {};
 
     std::string word;
 
     for(int i = col; i-- > 0;) {
         RDSurfaceCell cell = sfrow.cells[i];
-        if(is_char_skippable(cell.ch))
+        if(Renderer::is_char_skippable(cell.ch))
             break;
 
         word.insert(0, &cell.ch, 1);
@@ -335,7 +335,7 @@ std::string Renderer::word_at(int row, int col) const {
 
     for(int i = col; i < static_cast<int>(sfrow.cells.size()); i++) {
         RDSurfaceCell cell = sfrow.cells[i];
-        if(is_char_skippable(cell.ch))
+        if(Renderer::is_char_skippable(cell.ch))
             break;
 
         word.append(&cell.ch, 1);
