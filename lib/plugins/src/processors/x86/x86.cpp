@@ -309,10 +309,18 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
                     rdemulator_addref(e, op->imm, CR_JUMP);
                 else if(instr->features & INSTR_CALL)
                     rdemulator_addref(e, op->imm, CR_CALL);
-                else if(is_addr_instruction(instr) && rd_isaddress(op->imm))
+                else if(is_addr_instruction(instr) && rd_isaddress(op->imm)) {
                     rdemulator_addref(e, op->imm, DR_ADDRESS);
-                else
+
+                    if(!rd_istypenull(&op->dtype))
+                        rd_settype_ex(op->mem, &op->dtype, ST_WEAK);
+                }
+                else {
                     rdemulator_addref(e, op->imm, DR_READ);
+
+                    if(!rd_istypenull(&op->dtype))
+                        rd_settype_ex(op->mem, &op->dtype, ST_WEAK);
+                }
 
                 break;
             }
@@ -329,7 +337,7 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
                 }
 
                 if(!rd_istypenull(&op->dtype))
-                    rd_settype(op->mem, &op->dtype);
+                    rd_settype_ex(op->mem, &op->dtype, ST_WEAK);
 
                 rdemulator_addref(e, op->mem, DR_READ);
                 break;
