@@ -77,6 +77,19 @@ Context::Context(const std::shared_ptr<AbstractBuffer>& b, RDLoader* l)
     assume(this->loader);
 }
 
+void Context::set_userdata(const std::string& k, uptr v) {
+    if(k.empty()) {
+        spdlog::warn("set_userdata(): Empty userdata");
+        return;
+    }
+
+    m_database.set_userdata(k, v);
+}
+
+tl::optional<uptr> Context::get_userdata(const std::string& k) const {
+    return m_database.get_userdata(k);
+}
+
 bool Context::activate() {
     state::context = this; // Set context as active
 

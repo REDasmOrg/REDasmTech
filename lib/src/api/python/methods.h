@@ -18,6 +18,8 @@ inline PyMethodDef methods[] = {
     {"add_searchpath", python::add_searchpath, METH_O, nullptr},
     {"get_searchpaths", python::get_searchpaths, METH_NOARGS, nullptr},
     {"get_problems", python::get_problems, METH_NOARGS, nullptr},
+    {"set_userdata", python::set_userdata, METH_VARARGS, nullptr},
+    {"get_userdata", python::get_userdata, METH_O, nullptr},
     {"symbolize", python::symbolize, METH_O, nullptr},
     {"is_address", python::is_address, METH_O, nullptr},
     {"to_offset", python::to_offset, METH_O, nullptr},

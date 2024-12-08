@@ -26,6 +26,8 @@ bool init(const RDInitParams* params);
 void deinit();
 void set_loglevel(RDLogLevel l);
 void add_searchpath(const std::string& sp);
+void set_userdata(const std::string& k, uptr v);
+tl::optional<uptr> get_userdata(const std::string& k);
 const redasm::SearchPaths& get_searchpaths();
 void log(std::string_view s);
 void status(std::string_view s);

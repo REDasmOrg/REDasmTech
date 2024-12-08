@@ -103,6 +103,8 @@ REDASM_EXPORT void rd_free(void* obj);
 REDASM_EXPORT void rd_setloglevel(RDLogLevel l);
 REDASM_EXPORT void rd_addsearchpath(const char* sp);
 REDASM_EXPORT usize rd_getsearchpaths(const char*** spaths);
+REDASM_EXPORT void rd_setuserdata(const char* k, uptr v);
+REDASM_EXPORT bool rd_getuserdata(const char* k, uptr* v);
 REDASM_EXPORT void rd_log(const char* s);
 REDASM_EXPORT void rd_status(const char* s);
 REDASM_EXPORT void rd_select(RDContext* context);

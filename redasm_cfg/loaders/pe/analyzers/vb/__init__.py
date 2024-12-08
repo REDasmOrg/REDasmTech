@@ -1,7 +1,8 @@
 # Based on: https://hex-rays.com/products/ida/support/freefiles/vb.idc
 import redasm
-from . import header as VBH
-from .controls import find_control
+from loaders.pe.analyzers.vb import header as VBH
+from loaders.pe.analyzers.vb.controls import find_control
+from loaders.pe.classifier import is_visualbasic
 
 
 def has_optional_info(addr, objinfo):
@@ -128,11 +129,12 @@ def create_proj_info(vbheader):
         create_obj_table(projinfo)
 
 
-def vb_isenabled(pe):
-    return pe.classifier.is_visualbasic
+def vb_isenabled():
+    c = redasm.get_userdata("pe_class")
+    return c is not None and is_visualbasic(c)
 
 
-def vb_execute(pe):
+def vb_execute():
     redasm.create_struct("VB_HEADER", VBH.VB_HEADER)
     redasm.create_struct("COM_REGISTRATION_DATA", VBH.COM_REGISTRATION_DATA)
     redasm.create_struct("COM_REGISTRATION_INFO", VBH.COM_REGISTRATION_INFO)

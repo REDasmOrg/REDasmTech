@@ -1,6 +1,10 @@
 import redasm
-from . import header as PEH
-from .dotnet import header as DOTNET_HDR
+from loaders.pe import header as PEH
+from loaders.pe.dotnet import header as DOTNET_HDR
+
+
+def get_import_name(library, name):
+    return f"{library}.{name}"
 
 
 def image_first_section(pe):

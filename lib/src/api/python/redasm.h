@@ -25,6 +25,8 @@ PyObject* set_loglevel(PyObject* self, PyObject* args);
 PyObject* add_searchpath(PyObject* self, PyObject* args);
 PyObject* get_searchpaths(PyObject* self, PyObject* args);
 PyObject* get_problems(PyObject* self, PyObject* args);
+PyObject* set_userdata(PyObject* self, PyObject* args);
+PyObject* get_userdata(PyObject* self, PyObject* args);
 PyObject* symbolize(PyObject* self, PyObject* args);
 PyObject* is_address(PyObject* self, PyObject* args);
 PyObject* to_offset(PyObject* self, PyObject* args);

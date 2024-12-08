@@ -181,6 +181,29 @@ PyObject* get_problems(PyObject* /*self*/, PyObject* /*args*/) {
     return res;
 }
 
+PyObject* set_userdata(PyObject* /*self*/, PyObject* args) {
+    const char* k = nullptr;
+    uptr v = 0;
+
+    if(!PyArg_ParseTuple(args, "zK", &k, &v))
+        return nullptr;
+
+    internal::set_userdata(k, v);
+    Py_RETURN_NONE;
+}
+
+PyObject* get_userdata(PyObject* /*self*/, PyObject* args) {
+    if(!PyUnicode_Check(args))
+        return python::type_error(args, "string");
+
+    auto ud = internal::get_userdata(PyUnicode_AsUTF8(args));
+
+    if(ud)
+        return PyLong_FromUnsignedLongLong(*ud);
+
+    Py_RETURN_NONE;
+}
+
 PyObject* log(PyObject* /*self*/, PyObject* args) {
     if(!PyUnicode_Check(args))
         return python::type_error(args, "string");

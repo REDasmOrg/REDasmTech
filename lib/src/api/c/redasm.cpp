@@ -36,6 +36,25 @@ usize rd_getsearchpaths(const char*** spaths) {
     return res.size();
 }
 
+void rd_setuserdata(const char* k, uptr v) {
+    if(k)
+        redasm::api::internal::set_userdata(k, v);
+}
+
+bool rd_getuserdata(const char* k, uptr* v) {
+    if(!k)
+        return false;
+
+    auto ud = redasm::api::internal::get_userdata(k);
+
+    ud.map([&](uptr x) {
+        if(v)
+            *v = x;
+    });
+
+    return ud.has_value();
+}
+
 void rd_log(const char* s) {
     if(s)
         redasm::api::internal::log(s);

@@ -131,6 +131,22 @@ void add_searchpath(const std::string& sp) {
     redasm::add_searchpath(sp);
 }
 
+void set_userdata(const std::string& k, uptr v) {
+    spdlog::trace("set_userdata('{}', {:x})", k, v);
+
+    if(state::context)
+        state::context->set_userdata(k, v);
+}
+
+tl::optional<uptr> get_userdata(const std::string& k) {
+    spdlog::trace("get_userdata('{}')", k);
+
+    if(state::context)
+        return state::context->get_userdata(k);
+
+    return tl::nullopt;
+}
+
 const SearchPaths& get_searchpaths() {
     spdlog::trace("get_searchpaths()");
     return redasm::get_searchpaths();

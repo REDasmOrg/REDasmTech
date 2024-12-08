@@ -1,5 +1,5 @@
 import redasm
-from . import format as PE
+from loaders.pe import format as PE
 from enum import IntEnum
 
 

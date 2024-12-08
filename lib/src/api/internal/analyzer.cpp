@@ -1,7 +1,6 @@
 #include "analyzer.h"
 #include "../../context.h"
 #include "../../state.h"
-#include <algorithm>
 #include <spdlog/spdlog.h>
 
 namespace redasm::api::internal {
@@ -9,8 +8,15 @@ namespace redasm::api::internal {
 void register_analyzer(const RDAnalyzer& analyzer) {
     spdlog::trace("register_analyzer('{}')", analyzer.name);
 
-    auto it = std::upper_bound(
-        state::analyzers.begin(), state::analyzers.end(), analyzer,
+    if(std::ranges::find_if(state::analyzers, [&](const RDAnalyzer& x) {
+           return x.id == analyzer.id;
+       }) != state::analyzers.end()) {
+        state::error(fmt::format("Analyzer '{}' already exists", analyzer.id));
+        return;
+    }
+
+    auto it = std::ranges::upper_bound(
+        state::analyzers, analyzer,
         [](const auto& a, const auto& b) { return a.order < b.order; });
 
     state::analyzers.insert(it, analyzer);
@@ -33,18 +39,17 @@ bool analyzer_select(const RDAnalyzer* self, bool select) {
 
     Context* ctx = state::context;
 
-    return std::any_of(ctx->analyzers.begin(), ctx->analyzers.end(),
-                       [&](const RDAnalyzer& x) {
-                           if(&x != self)
-                               return false;
+    return std::ranges::any_of(ctx->analyzers, [&](const RDAnalyzer& x) {
+        if(&x != self)
+            return false;
 
-                           if(select)
-                               state::context->selectedanalyzers.insert(x.name);
-                           else
-                               state::context->selectedanalyzers.erase(x.name);
+        if(select)
+            state::context->selectedanalyzers.insert(x.name);
+        else
+            state::context->selectedanalyzers.erase(x.name);
 
-                           return true;
-                       });
+        return true;
+    });
 }
 
 bool analyzer_isselected(const RDAnalyzer* self) {

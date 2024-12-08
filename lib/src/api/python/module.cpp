@@ -99,7 +99,7 @@ bool init() {
         if(!fs::is_directory(rootpath))
             continue;
 
-        fs::path initfile = rootpath / "init.py";
+        fs::path initfile = rootpath / "__init__.py";
         if(!fs::is_regular_file(initfile))
             continue;
 
@@ -132,12 +132,10 @@ void main() {
 
         spdlog::info("Executing '{}'", init);
 
-        if(PyRun_SimpleFileEx(fp, init.c_str(), true)) {
-            state::error(fmt::format("Error Executing '{}'", init));
+        if(PyRun_SimpleFile(fp, init.c_str()) == -1)
             python::on_error();
-        }
 
-        // std::fclose(fp); Handled by PyRun_SimpleFileEx()
+        std::fclose(fp);
     }
 }
 

@@ -24,6 +24,8 @@ public:
     static constexpr usize DEFAULT_MIN_STRING = 4;
 
     Context(const std::shared_ptr<AbstractBuffer>& b, RDLoader* loader);
+    void set_userdata(const std::string& k, uptr v);
+    tl::optional<uptr> get_userdata(const std::string& k) const;
     bool activate();
     bool set_function(MIndex idx, usize flags);
     bool set_entry(MIndex idx, const std::string& name = {});

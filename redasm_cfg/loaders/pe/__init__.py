@@ -1,10 +1,10 @@
 import redasm
-from . import format as PE
-from . import header as PEH
-from . import debug as Debug
-from .classifier import PEClassifier
-from .resources import PEResources
-from .analyzers import register_analyzers
+from loaders.pe import format as PE
+from loaders.pe import header as PEH
+from loaders.pe import debug as Debug
+from loaders.pe.classifier import PEClassifier
+from loaders.pe.resources import PEResources
+from loaders.pe.analyzers import register_pe_analyzers
 
 
 class PEFormat:
@@ -14,9 +14,6 @@ class PEFormat:
         self.dosheader = None
         self.ntheaders = None
         self.optionalheader = None
-
-    def get_import_name(self, library, name):
-        return f"{library}.{name}"
 
 
 def check_header():
@@ -157,13 +154,13 @@ def read_imports(pe):
 
                     if thunk & ORDINAL_FLAG:
                         ordinal = thunk ^ ORDINAL_FLAG
-                        importname = pe.get_import_name(modulename, f"ordinal_{ordinal}")
+                        importname = PE.get_import_name(modulename, f"ordinal_{ordinal}")
                     else:
                         importbynameva = redasm.from_reladdress(thunk)
 
                         if importbynameva:
                             name = redasm.set_type(importbynameva + redasm.size_of("u16"), "str")
-                            importname = pe.get_import_name(modulename, name)
+                            importname = PE.get_import_name(modulename, name)
                             redasm.set_type(importbynameva, "u16")
                             redasm.set_name(importbynameva, f"{importname}_hint")
 
@@ -368,7 +365,7 @@ def init():
     else:
         load_default(pe)
 
-    register_analyzers(pe)
+    redasm.set_userdata("pe_class", pe.classifier.value)
     return True
 
 
@@ -377,3 +374,5 @@ redasm.register_loader(
     name="Portable Executable",
     init=init
 )
+
+register_pe_analyzers()

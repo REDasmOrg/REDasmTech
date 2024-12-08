@@ -33,6 +33,8 @@ public:
     void set_comment(MIndex idx, std::string_view comment);
     void set_name(MIndex idx, std::string_view name);
     void set_type(MIndex idx, RDType t);
+    void set_userdata(std::string_view k, uptr v);
+    tl::optional<uptr> get_userdata(std::string_view k) const;
 
     void add_segment(std::string_view name, MIndex idx, MIndex endidx,
                      RDOffset offset, RDOffset endoffset, usize type);

@@ -1,4 +1,6 @@
 import redasm
+from loaders.pe.format import get_import_name
+from loaders.pe.classifier import is_borland, is_visualbasic, is_dotnet
 
 WNDPROC_API = [
     {"arg": 3, "name": "DialogBoxA"},
@@ -16,8 +18,8 @@ WNDPROC_API = [
 ]
 
 
-def get_import(pe, name):
-    impname = pe.get_import_name("user32.dll", name)
+def get_import(name):
+    impname = get_import_name("user32.dll", name)
     address = redasm.get_address("_" + impname)
 
     if not address:
@@ -26,14 +28,14 @@ def get_import(pe, name):
     return address
 
 
-def get_api_refs(pe, name):
-    address = get_import(pe, name)
+def get_api_refs(name):
+    address = get_import(name)
     return redasm.get_refsto(address) if address else []
 
 
-def wndproc_isenabled(pe):
-    c = pe.classifier
-    return not (c.is_borland or c.is_dotnet or c.is_visualbasic)
+def wndproc_isenabled():
+    c = redasm.get_userdata("pe_class")
+    return c is not None and not (is_borland(c) or is_dotnet(c) or is_visualbasic(c))
 
 
 def find_wndproc(address, argidx):
@@ -56,7 +58,7 @@ def find_wndproc(address, argidx):
                 vstack.clear()
 
 
-def wndproc_execute(pe):
+def wndproc_execute():
     for api in WNDPROC_API:
-        for ref in get_api_refs(pe, api["name"]):
+        for ref in get_api_refs(api["name"]):
             find_wndproc(ref.address, api["arg"])

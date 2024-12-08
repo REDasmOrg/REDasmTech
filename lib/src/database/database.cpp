@@ -25,6 +25,8 @@ struct SQLQueries {
         SET_TYPE,
         GET_TYPE,
         ADD_SEGMENT,
+        SET_USERDATA,
+        GET_USERDATA,
     };
 };
 
@@ -80,6 +82,11 @@ constexpr std::string_view DB_SCHEMA = R"(
     CREATE TABLE Info(
         k TEXT PRIMARY KEY,
         v TEXT NOT NULL
+    );
+
+    CREATE TABLE UserData(
+        k TEXT PRIMARY KEY,
+        v INTEGER NOT NULL
     );
 
     CREATE TABLE Segments(
@@ -182,7 +189,6 @@ sqlite3_stmt* Database::prepare_query(int q, std::string_view s) const {
 
 void Database::add_segment(std::string_view name, MIndex idx, MIndex endidx,
                            RDOffset offset, RDOffset endoffset, usize type) {
-
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::ADD_SEGMENT, R"(
         INSERT INTO Segments
             VALUES (:name, :type, :index, :endindex, :offset, :endoffset)
@@ -343,6 +349,37 @@ void Database::set_type(MIndex idx, RDType t) {
     sql_bindparam(m_db, stmt, ":id", t.id);
     sql_bindparam(m_db, stmt, ":n", t.n);
     sql_step(m_db, stmt);
+}
+
+void Database::set_userdata(std::string_view k, uptr v) {
+    sqlite3_stmt* stmt = this->prepare_query(SQLQueries::SET_USERDATA, R"(
+        INSERT INTO UserData
+            VALUES (:k, :v)
+        ON CONFLICT DO 
+            UPDATE SET v = EXCLUDED.v
+    )");
+
+    sql_bindparam(m_db, stmt, ":k", k);
+    sql_bindparam(m_db, stmt, ":v", v);
+    sql_step(m_db, stmt);
+}
+
+tl::optional<uptr> Database::get_userdata(std::string_view k) const {
+    if(k.empty())
+        return tl::nullopt;
+
+    sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_USERDATA, R"(
+        SELECT v 
+        FROM UserData
+        WHERE k = :k
+    )");
+
+    sql_bindparam(m_db, stmt, ":k", k);
+
+    if(sql_step(m_db, stmt) == SQLITE_ROW)
+        return static_cast<uptr>(sqlite3_column_int64(stmt, 0));
+
+    return tl::nullopt;
 }
 
 tl::optional<MIndex> Database::get_index(std::string_view name,
