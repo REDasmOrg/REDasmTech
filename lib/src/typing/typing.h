@@ -108,7 +108,6 @@ struct ParsedType {
 };
 
 struct Types {
-
     Types();
     const TypeDef* declare(const std::string& name, const StructBody& arg);
     [[nodiscard]] const TypeDef* get_typedef(RDType t, TypeName h = {}) const;
