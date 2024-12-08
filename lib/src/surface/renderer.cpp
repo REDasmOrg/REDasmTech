@@ -195,6 +195,13 @@ Renderer& Renderer::addr(RDAddress address, int flags) {
     ctx->address_to_index(address)
         .and_then([&](MIndex idx) -> tl::optional<MIndex> {
             if(ctx->memory->at(idx).has(BF_REFSTO)) {
+                if(flags == RC_NEEDSIGN) {
+                    if(static_cast<i64>(address) < 0)
+                        this->chunk("-");
+                    else
+                        this->chunk("+");
+                }
+
                 this->chunk(ctx->get_name(idx), THEME_ADDRESS);
                 return idx;
             }
