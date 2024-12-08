@@ -9,6 +9,7 @@ public:
     explicit LogView(QWidget* parent = nullptr);
 
 public Q_SLOTS:
+    void clear();
     void log(const QString& s);
 
 private:

@@ -18,6 +18,5 @@ void set_location(const RDSurface* surface);
 void set_busy_status();
 void set_pause_status();
 void set_ready_status();
-void hide_status_icon();
 
 } // namespace statusbar

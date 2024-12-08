@@ -100,7 +100,6 @@ void set_ready_status() {
     g_btnstatusicon->show();
 }
 
-void hide_status_icon() { g_btnstatusicon->hide(); }
 QPushButton* status_icon() { return g_btnstatusicon; }
 
 } // namespace statusbar

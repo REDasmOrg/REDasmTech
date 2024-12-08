@@ -222,7 +222,6 @@ void MainWindow::show_welcome_view() { // NOLINT
 
     this->replace_view(welcomeview);
     this->enable_context_actions(false);
-    statusbar::hide_status_icon();
 }
 
 void MainWindow::show_context_view() {
@@ -309,6 +308,10 @@ void MainWindow::enable_context_actions(bool e) { // NOLINT
     m_ui.actviewstrings->setVisible(e);
 
     m_pbrdilswitch->setVisible(e);
+    m_ui.statusbar->setVisible(e);
+
+    if(!e)
+        m_ui.logview->clear();
 }
 
 void MainWindow::open_file(const QString& filepath) {
