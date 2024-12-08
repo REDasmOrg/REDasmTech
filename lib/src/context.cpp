@@ -43,9 +43,16 @@ std::string_view get_refname(usize reftype) {
 }
 
 void add_noncodeproblem(const Segment* s, MIndex index, usize type) {
-    state::context->add_problem(
-        index, fmt::format("Trying to {} in non-code segment '{}'",
-                           get_refname(type), s->name));
+    if(s) {
+        state::context->add_problem(
+            index, fmt::format("Trying to {} in non-code segment '{}'",
+                               get_refname(type), s->name));
+    }
+    else {
+        state::context->add_problem(
+            index, fmt::format("Trying to {} in outside of segments",
+                               get_refname(type)));
+    }
 }
 
 constexpr std::array<char, 16> INTHEX_TABLE = {
@@ -130,21 +137,21 @@ bool Context::set_entry(MIndex idx, const std::string& name) {
 
 void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
     if(fromidx >= this->memory->size()) {
-        this->add_problem(fromidx, fmt::format("Invalid FROM reference ({:x})",
-                                               this->baseaddress + fromidx));
+        this->add_problem(fromidx,
+                          fmt::format("Invalid {} reference (from {:x})",
+                                      get_refname(type),
+                                      this->baseaddress + fromidx));
+        return;
+    }
+
+    if(toidx >= this->memory->size()) {
+        this->add_problem(fromidx, fmt::format("Invalid {} reference (to {:x})",
+                                               get_refname(type),
+                                               this->baseaddress + toidx));
         return;
     }
 
     const Segment* s = this->index_to_segment(toidx);
-
-    if(!s) {
-        this->add_problem(toidx, fmt::format("Invalid {} reference ({:x})",
-                                             get_refname(type),
-                                             this->baseaddress + toidx));
-        return;
-    }
-
-    auto& mem = this->memory;
 
     switch(type) {
         case DR_READ:
@@ -156,16 +163,17 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
             });
 
             this->m_database.add_ref(fromidx, toidx, type);
-            mem->set(fromidx, BF_REFSFROM);
-            mem->set(toidx, BF_REFSTO);
+            this->memory->set(fromidx, BF_REFSFROM);
+            this->memory->set(toidx, BF_REFSTO);
             break;
         }
 
         case CR_FLOW: {
-            if(s->type & SEG_HASCODE) {
-                if(!mem->at(toidx).has(BF_CODE)) // Check if already decoded
+            if(s && s->type & SEG_HASCODE) {
+                if(!this->memory->at(toidx).has(
+                       BF_CODE)) // Check if already decoded
                     this->disassembler.emulator.qflow.push_back(toidx);
-                mem->set(fromidx, BF_FLOW);
+                this->memory->set(fromidx, BF_FLOW);
             }
             else
                 add_noncodeproblem(s, toidx, type);
@@ -173,12 +181,15 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         }
 
         case CR_JUMP: {
-            this->m_database.add_ref(fromidx, toidx, type);
-            mem->set(fromidx, BF_REFSFROM);
-            mem->set(toidx, BF_JUMPDST | BF_REFSTO);
+            if(s) {
+                this->m_database.add_ref(fromidx, toidx, type);
+                this->memory->set(fromidx, BF_REFSFROM);
+                this->memory->set(toidx, BF_JUMPDST | BF_REFSTO);
+            }
 
-            if(s->type & SEG_HASCODE) {
-                if(!mem->at(toidx).has(BF_CODE)) // Check if already decoded
+            if(s && s->type & SEG_HASCODE) {
+                if(!this->memory->at(toidx).has(
+                       BF_CODE)) // Check if already decoded
                     this->disassembler.emulator.qjump.push_back(toidx);
             }
             else
@@ -187,12 +198,15 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         }
 
         case CR_CALL: {
-            this->m_database.add_ref(fromidx, toidx, type);
-            mem->set(fromidx, BF_REFSFROM);
-            mem->set(toidx, BF_FUNCTION | BF_REFSTO);
+            if(s) {
+                this->m_database.add_ref(fromidx, toidx, type);
+                this->memory->set(fromidx, BF_REFSFROM);
+                this->memory->set(toidx, BF_FUNCTION | BF_REFSTO);
+            }
 
-            if(s->type & SEG_HASCODE) {
-                if(!mem->at(toidx).has(BF_CODE)) // Check if already decoded
+            if(s && s->type & SEG_HASCODE) {
+                if(!this->memory->at(toidx).has(
+                       BF_CODE)) // Check if already decoded
                     this->disassembler.emulator.qcall.push_back(toidx);
             }
             else
@@ -229,6 +243,12 @@ bool Context::set_type(MIndex idx, RDType t) {
         return false;
     }
 
+    if(!this->memory->at(idx).is_unknown()) {
+        this->add_problem(
+            idx, fmt::format("Cannot set type '{}'", this->types.to_string(t)));
+        return false;
+    }
+
     const typing::TypeDef* td = this->types.get_typedef(t);
     usize len;
 
@@ -242,8 +262,7 @@ bool Context::set_type(MIndex idx, RDType t) {
                 s = this->memory->get_string(idx);
 
             if(!s) {
-                spdlog::warn("set_type: string not found in {:x}",
-                             this->index_to_address(idx).value());
+                this->add_problem(idx, "string not found");
                 return false;
             }
 
@@ -312,7 +331,7 @@ tl::optional<RDOffset> Context::index_to_offset(MIndex index) const {
 
 const Segment* Context::index_to_segment(MIndex index) const {
     if(index >= this->memory->size())
-        return {};
+        return nullptr;
 
     for(const Segment& s : this->segments) {
         if(index >= s.index && index < s.endindex)
@@ -594,8 +613,10 @@ void Context::process_listing_data(MIndex& idx) {
         else
             this->process_listing_type(idx, *type);
     }
-    else
-        unreachable;
+    else {
+        except("Unhandled data byte @ index {}, value {}", idx,
+               rd_tohex_n(b.value, 8));
+    }
 }
 
 void Context::process_listing_code(MIndex& idx) {
