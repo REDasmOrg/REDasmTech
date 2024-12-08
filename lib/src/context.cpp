@@ -172,7 +172,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         case DR_ADDRESS: {
             stringfinder::classify(toidx).map([&](const RDStringResult& x) {
                 this->memory->unset_n(toidx, x.totalsize);
-                this->set_type(toidx, x.type);
+                this->set_type(toidx, x.type, ST_WEAK);
             });
 
             this->m_database.add_ref(fromidx, toidx, type);
@@ -240,23 +240,23 @@ bool Context::set_comment(MIndex idx, std::string_view comment) {
     return true;
 }
 
-bool Context::set_type(MIndex idx, typing::FullTypeName tname) {
+bool Context::set_type(MIndex idx, typing::FullTypeName tname, usize flags) {
     if(idx >= this->memory->size()) {
         spdlog::warn("set_type: Invalid address");
         return false;
     }
 
     typing::ParsedType pt = this->types.parse(tname);
-    return this->set_type(idx, pt.to_type());
+    return this->set_type(idx, pt.to_type(), flags);
 }
 
-bool Context::set_type(MIndex idx, RDType t) {
+bool Context::set_type(MIndex idx, RDType t, usize flags) {
     if(idx >= this->memory->size()) {
         spdlog::warn("set_type: Invalid address");
         return false;
     }
 
-    if(!this->memory->at(idx).is_unknown()) {
+    if((flags & ST_WEAK) && !this->memory->at(idx).is_unknown()) {
         this->add_problem(
             idx, fmt::format("Cannot set type '{}'", this->types.to_string(t)));
         return false;
@@ -287,7 +287,7 @@ bool Context::set_type(MIndex idx, RDType t) {
     }
 
     m_database.set_type(idx, t);
-    this->memory->unset_n(idx, len); // TODO(davide): Handle unset transparently
+    this->memory->unset_n(idx, len);
     this->memory->set_n(idx, len, BF_DATA);
     this->memory->set(idx, BF_TYPE);
     return true;
@@ -308,7 +308,7 @@ void Context::memory_map(RDAddress base, usize size) {
         }
 
         this->memory_copy_n(idx, idx, this->types.size_of(tname));
-        this->set_type(idx, tname);
+        this->set_type(idx, tname, 0);
     }
 
     this->collectedtypes.clear();

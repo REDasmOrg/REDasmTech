@@ -13,7 +13,7 @@ usize file_size() {
 tl::optional<typing::Value> file_map_type(RDOffset offset,
                                           typing::FullTypeName tname) {
     spdlog::trace("file_map_type({:x}, '{}')", offset, tname);
-    if(!state::context->set_type(offset, tname))
+    if(!state::context->set_type(offset, tname, 0))
         return tl::nullopt;
 
     usize sz = state::context->types.size_of(tname);

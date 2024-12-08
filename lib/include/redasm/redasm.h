@@ -35,6 +35,10 @@ typedef enum RDSetName {
     SN_FORCE = (1 << 2),
 } RDSetName;
 
+typedef enum RDSetType {
+    ST_WEAK = (1 << 0),
+} RDSetType;
+
 typedef struct RDProblem {
     RDAddress address;
     const char* problem;
@@ -132,7 +136,11 @@ REDASM_EXPORT usize rd_getproblems(const RDProblem** problems);
 
 REDASM_EXPORT bool rd_setcomment(RDAddress address, const char* comment);
 REDASM_EXPORT bool rd_settype(RDAddress address, const RDType* type);
+REDASM_EXPORT bool rd_settype_ex(RDAddress address, const RDType* type,
+                                 usize flags);
 REDASM_EXPORT bool rd_settypename(RDAddress address, const char* tname);
+REDASM_EXPORT bool rd_settypename_ex(RDAddress address, const char* tname,
+                                     usize flags);
 REDASM_EXPORT bool rd_setfunction(RDAddress address);
 REDASM_EXPORT bool rd_setfunction_ex(RDAddress address, usize flags);
 REDASM_EXPORT bool rd_setentry(RDAddress address, const char* name);

@@ -58,6 +58,8 @@ void init_constants(PyObject* m) {
     assume(PyModule_AddIntConstant(m, "SN_NOWARN", SN_NOWARN) == 0);
     assume(PyModule_AddIntConstant(m, "SN_IMPORT", SN_IMPORT) == 0);
     assume(PyModule_AddIntConstant(m, "SN_FORCE", SN_FORCE) == 0);
+
+    assume(PyModule_AddIntConstant(m, "ST_FORCE", ST_WEAK) == 0);
     // clang-format on
 }
 

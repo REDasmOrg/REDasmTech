@@ -169,9 +169,21 @@ bool rd_settype(RDAddress address, const RDType* type) {
     return redasm::api::internal::set_type(address, type).has_value();
 }
 
+bool rd_settype_ex(RDAddress address, const RDType* type, usize flags) {
+    return redasm::api::internal::set_type_ex(address, type, flags).has_value();
+}
+
 bool rd_settypename(RDAddress address, const char* tname) {
     if(tname)
         return redasm::api::internal::set_typename(address, tname).has_value();
+
+    return false;
+}
+
+bool rd_settypename_ex(RDAddress address, const char* tname, usize flags) {
+    if(tname)
+        return redasm::api::internal::set_typename_ex(address, tname, flags)
+            .has_value();
 
     return false;
 }

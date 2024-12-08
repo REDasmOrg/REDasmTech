@@ -48,6 +48,7 @@ inline PyMethodDef methods[] = {
     {"map_segment", python::map_segment, METH_VARARGS, nullptr},
     {"map_segment_n", python::map_segment_n, METH_VARARGS, nullptr},
     {"set_type", python::set_type, METH_VARARGS, nullptr},
+    {"set_type_ex", python::set_type_ex, METH_VARARGS, nullptr},
     {"get_address", python::get_address, METH_O, nullptr},
     {"get_refsfrom", python::get_refsfrom, METH_O, nullptr},
     {"get_refsfromtype", python::get_refsfromtype, METH_VARARGS, nullptr},

@@ -546,24 +546,25 @@ std::string render_text(RDAddress address) {
     return std::string{s.get_text()};
 }
 
-tl::optional<typing::Value> set_type(RDAddress address, const RDType* t) {
-    spdlog::trace("set_type({:x}, {})", address, fmt::ptr(t));
+tl::optional<typing::Value> set_type_ex(RDAddress address, const RDType* t,
+                                        usize flags) {
+    spdlog::trace("set_type_ex({:x}, {}, {})", address, fmt::ptr(t), flags);
 
     if(t) {
         auto idx = state::context->address_to_index(address);
-        if(idx && state::context->set_type(*idx, *t))
+        if(idx && state::context->set_type(*idx, *t, flags))
             return state::context->memory->get_type(*idx, *t);
     }
 
     return tl::nullopt;
 }
 
-tl::optional<typing::Value> set_typename(RDAddress address,
-                                         typing::FullTypeName tname) {
-    spdlog::trace("set_typename({:x}, '{}')", address, tname);
+tl::optional<typing::Value>
+set_typename_ex(RDAddress address, typing::FullTypeName tname, usize flags) {
+    spdlog::trace("set_typename_ex({:x}, '{}', {})", address, tname, flags);
 
     auto idx = state::context->address_to_index(address);
-    if(idx && state::context->set_type(*idx, tname))
+    if(idx && state::context->set_type(*idx, tname, flags))
         return state::context->memory->get_type(*idx, tname);
     return tl::nullopt;
 }

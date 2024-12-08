@@ -74,7 +74,7 @@ tl::optional<typing::Value> map_type(RDAddress address,
     usize sz = state::context->types.size_of(tname);
     state::context->memory_copy(*idx, *idx, *idx + sz);
 
-    if(!state::context->set_type(*idx, tname))
+    if(!state::context->set_type(*idx, tname, 0))
         return tl::nullopt;
 
     return state::context->memory->get_type(*idx, tname);

@@ -44,8 +44,8 @@ public:
 public: // Database Interface
     void add_ref(MIndex fromidx, MIndex toidx, usize type);
     bool set_comment(MIndex idx, std::string_view comment = {});
-    bool set_type(MIndex idx, typing::FullTypeName tname);
-    bool set_type(MIndex idx, RDType t);
+    bool set_type(MIndex idx, typing::FullTypeName tname, usize flags);
+    bool set_type(MIndex idx, RDType t, usize flags);
     bool set_name(MIndex idx, const std::string& name, usize flags);
     tl::optional<MIndex> get_index(std::string_view name) const;
     tl::optional<RDType> get_type(MIndex idx) const;

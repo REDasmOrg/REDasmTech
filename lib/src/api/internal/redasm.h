@@ -69,10 +69,11 @@ std::string get_comment(RDAddress address);
 std::string get_name(RDAddress address);
 std::string render_text(RDAddress address);
 
-tl::optional<typing::Value> set_type(RDAddress address, const RDType* t);
+tl::optional<typing::Value> set_type_ex(RDAddress address, const RDType* t,
+                                        usize flags);
 
-tl::optional<typing::Value> set_typename(RDAddress address,
-                                         typing::FullTypeName tname);
+tl::optional<typing::Value>
+set_typename_ex(RDAddress address, typing::FullTypeName tname, usize flags);
 
 bool set_comment(RDAddress address, std::string_view comment);
 bool set_name_ex(RDAddress address, const std::string& name, usize flags);
@@ -115,6 +116,16 @@ inline bool set_name(RDAddress address, const std::string& name) {
 
 inline bool set_function(RDAddress address) {
     return api::internal::set_function_ex(address, 0);
+}
+
+inline tl::optional<typing::Value> set_type(RDAddress address,
+                                            const RDType* t) {
+    return api::internal::set_type_ex(address, t, 0);
+}
+
+inline tl::optional<typing::Value> set_typename(RDAddress address,
+                                                typing::FullTypeName tname) {
+    return api::internal::set_typename_ex(address, tname, 0);
 }
 
 } // namespace redasm::api::internal

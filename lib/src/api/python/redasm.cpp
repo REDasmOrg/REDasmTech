@@ -347,6 +347,18 @@ PyObject* set_type(PyObject* /*self*/, PyObject* args) {
         .map_or(python::to_object, Py_None);
 }
 
+PyObject* set_type_ex(PyObject* /*self*/, PyObject* args) {
+    RDAddress address{};
+    const char* name = nullptr;
+    usize flags = 0;
+
+    if(!PyArg_ParseTuple(args, "KzK", &address, &name, &flags))
+        return nullptr;
+
+    return internal::set_typename_ex(address, name, flags)
+        .map_or(python::to_object, Py_None);
+}
+
 PyObject* set_name(PyObject* /*self*/, PyObject* args) {
     RDAddress address{};
     const char* name = nullptr;
