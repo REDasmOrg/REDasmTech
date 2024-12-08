@@ -24,7 +24,7 @@ void show_goto() {
     if(!cv)
         return;
 
-    auto* dlggoto = new GotoDialog(g_mainwindow);
+    auto* dlggoto = new GotoDialog(cv);
 
     QObject::connect(dlggoto, &GotoDialog::accepted, g_mainwindow,
                      [&, cv, dlggoto]() { cv->jump_to(dlggoto->address); });
@@ -70,8 +70,8 @@ void refs_to() {
     if(!rdsurface_getaddressundercursor(cv->handle(), &address))
         return;
 
-    auto* dlg = new TableDialog(
-        QString("References to %1").arg(rd_tohex(address)), g_mainwindow);
+    auto* dlg =
+        new TableDialog(QString("References to %1").arg(rd_tohex(address)), cv);
 
     QObject::connect(dlg, &TableDialog::double_clicked, g_mainwindow,
                      [cv, dlg](const QModelIndex& index) {
