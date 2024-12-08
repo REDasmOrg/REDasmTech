@@ -102,12 +102,17 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
 
     connect(m_ui.acttoolsproblems, &QAction::triggered, this, [&]() {
         auto* dlg = new TableDialog("Problems", this);
-        dlg->set_model(new ProblemsModel(dlg));
-        dlg->show();
-    });
 
-    connect(m_ui.acttoolsproblems, &QAction::triggered, this, [&]() {
-        auto* dlg = new TableDialog("Problems", this);
+        QObject::connect(dlg, &TableDialog::double_clicked, this,
+                         [&, dlg](const QModelIndex& index) {
+                             if(ContextView* cv = this->context_view(); cv) {
+                                 auto* m =
+                                     static_cast<ProblemsModel*>(dlg->model());
+                                 cv->jump_to(m->address(index));
+                                 dlg->accept();
+                             }
+                         });
+
         dlg->set_model(new ProblemsModel(dlg));
         dlg->show();
     });

@@ -9,6 +9,7 @@ class ProblemsModel: public QAbstractListModel {
 
 public:
     explicit ProblemsModel(QObject* parent = nullptr);
+    [[nodiscard]] RDAddress address(const QModelIndex& index) const;
 
 public:
     [[nodiscard]] int rowCount(const QModelIndex&) const override;
