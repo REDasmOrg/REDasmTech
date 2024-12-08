@@ -24,6 +24,7 @@ struct SQLQueries {
         GET_COMMENT,
         SET_TYPE,
         GET_TYPE,
+        ADD_SEGMENT,
     };
 };
 
@@ -79,6 +80,15 @@ constexpr std::string_view DB_SCHEMA = R"(
     CREATE TABLE Info(
         k TEXT PRIMARY KEY,
         v TEXT NOT NULL
+    );
+
+    CREATE TABLE Segments(
+        name TEXT NOT NULL,
+        type INTEGER NOT NULL,
+        idx INTEGER NOT NULL,
+        endidx INTEGER NOT NULL,
+        off INTEGER NOT NULL,
+        endoff INTEGER NOT NULL
     );
 
     CREATE TABLE Comments(
@@ -168,6 +178,23 @@ sqlite3_stmt* Database::prepare_query(int q, std::string_view s) const {
     }
 
     return stmt;
+}
+
+void Database::add_segment(std::string_view name, MIndex idx, MIndex endidx,
+                           RDOffset offset, RDOffset endoffset, usize type) {
+
+    sqlite3_stmt* stmt = this->prepare_query(SQLQueries::ADD_SEGMENT, R"(
+        INSERT INTO Segments
+            VALUES (:name, :type, :index, :endindex, :offset, :endoffset)
+    )");
+
+    sql_bindparam(m_db, stmt, ":name", name);
+    sql_bindparam(m_db, stmt, ":type", type);
+    sql_bindparam(m_db, stmt, ":index", idx);
+    sql_bindparam(m_db, stmt, ":endindex", endidx);
+    sql_bindparam(m_db, stmt, ":offset", offset);
+    sql_bindparam(m_db, stmt, ":endoffset", endoffset);
+    sql_step(m_db, stmt);
 }
 
 std::string Database::get_name(MIndex idx) const {

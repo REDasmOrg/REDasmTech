@@ -27,14 +27,18 @@ public:
     RefList get_refs_to_type(MIndex toidx, usize type) const;
     RefList get_refs_to(MIndex toidx) const;
     std::string get_name(MIndex idx) const;
-    tl::optional<usize> get_index(std::string_view name,
-                                  bool onlydb = false) const;
     std::string get_comment(MIndex idx) const;
     tl::optional<RDType> get_type(MIndex idx) const;
     void add_ref(MIndex fromidx, MIndex toidx, usize type);
     void set_comment(MIndex idx, std::string_view comment);
     void set_name(MIndex idx, std::string_view name);
     void set_type(MIndex idx, RDType t);
+
+    void add_segment(std::string_view name, MIndex idx, MIndex endidx,
+                     RDOffset offset, RDOffset endoffset, usize type);
+
+    tl::optional<usize> get_index(std::string_view name,
+                                  bool onlydb = false) const;
 
 private:
     sqlite3_stmt* prepare_query(int q, std::string_view s) const;

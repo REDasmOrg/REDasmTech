@@ -391,8 +391,11 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
         .endoffset = endoffset,
     });
 
-    auto v = *this->index_to_address(endidx);
-    this->bits = std::max(this->bits.value_or(0), calculate_bits(v));
+    m_database.add_segment(name, idx, endidx, offset, endoffset, type);
+
+    auto v = this->index_to_address(endidx);
+    assume(v);
+    this->bits = std::max(this->bits.value_or(0), calculate_bits(*v));
 }
 
 tl::optional<MIndex> Context::get_index(std::string_view name) const {
