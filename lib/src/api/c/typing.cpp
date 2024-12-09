@@ -35,18 +35,17 @@ bool rd_createtype(const char* tname, RDType* t) {
     return redasm::api::internal::create_type(tname, t);
 }
 
-const char* rd_createstruct(const char* name, const RDStructField* fields,
-                            usize n) {
-    if(!name || !fields || !n)
+const char* rd_createstruct(const char* name, const RDStructField* fields) {
+    if(!name || !fields)
         return nullptr;
 
     static std::string res;
-
     redasm::typing::StructBody body;
-    body.reserve(n);
 
-    for(usize i = 0; i < n; i++)
-        body.emplace_back(fields[i].type, fields[i].name);
+    while(fields->name && fields->type) {
+        body.emplace_back(fields->type, fields->name);
+        fields++;
+    }
 
     res = redasm::api::internal::create_struct(name, body);
     return res.c_str();

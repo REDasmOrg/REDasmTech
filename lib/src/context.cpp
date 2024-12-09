@@ -95,7 +95,6 @@ bool Context::activate() {
 
     assume(!state::processors.empty());
     this->processor = &state::processors.front();
-
     this->availableprocessors.emplace_back(this->processor->name);
 
     if(this->loader->init && this->loader->init(this->loader)) {

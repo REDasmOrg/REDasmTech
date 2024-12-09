@@ -9,6 +9,7 @@ include(cmake/Compiler.cmake)
 
 # Loaders
 add_subdirectory(src/loaders/elf)
+add_subdirectory(src/loaders/psx)
 
 # Processors
 add_subdirectory(src/processors/x86)

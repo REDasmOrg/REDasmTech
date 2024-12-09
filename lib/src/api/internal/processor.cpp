@@ -39,6 +39,8 @@ void set_processor(std::string_view id) {
     if(!state::context)
         return;
 
+    assume(!state::processors.empty());
+
     for(const RDProcessor& p : state::processors) {
         if(p.id == id) {
             state::context->processor = &p;
@@ -46,6 +48,8 @@ void set_processor(std::string_view id) {
         }
     }
 
+    // Select 'null' processor;
+    state::context->processor = &state::processors.front();
     spdlog::error("set_processor: '{}' not found", id);
 }
 
