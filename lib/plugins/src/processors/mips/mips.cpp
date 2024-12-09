@@ -2,11 +2,6 @@
 
 namespace {
 
-RDProcessor mips32le;
-RDProcessor mips32be;
-// RDProcessor mips64le;
-// RDProcessor mips64be;
-
 template<bool BigEndian>
 void decode(const RDProcessor*, RDInstruction* instr) {
     MIPSDecodedInstruction dec;
@@ -27,6 +22,7 @@ void render_instruction(const RDProcessor*, const RDRendererParams* rp,
 void rdplugin_init() {
     mips_initialize_formats();
 
+    RDProcessor mips32le{};
     mips32le.id = "mips32le";
     mips32le.name = "MIPS32 (Little Endian)";
     mips32le.decode = decode<false>;
@@ -34,6 +30,7 @@ void rdplugin_init() {
     mips32le.renderinstruction = render_instruction;
     rd_registerprocessor(&mips32le);
 
+    RDProcessor mips32be{};
     mips32be.id = "mips32be";
     mips32be.name = "MIPS32 (Big Endian)";
     mips32be.decode = decode<true>;
@@ -41,9 +38,11 @@ void rdplugin_init() {
     mips32be.renderinstruction = render_instruction;
     rd_registerprocessor(&mips32be);
 
+    // RDProcessor mips64le{};
     // ...
     // rd_registerprocessor(&mips64le);
 
+    // RDProcessor mips64be{};
     // ...
     // rd_registerprocessor(&mips64be);
 }

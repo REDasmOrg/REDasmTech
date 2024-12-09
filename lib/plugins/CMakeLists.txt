@@ -7,5 +7,9 @@ setup_dependencies()
 
 include(cmake/Compiler.cmake)
 
+# Loaders
+add_subdirectory(src/loaders/elf)
+
+# Processors
 add_subdirectory(src/processors/x86)
 add_subdirectory(src/processors/mips)

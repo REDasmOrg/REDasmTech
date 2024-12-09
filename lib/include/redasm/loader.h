@@ -18,3 +18,4 @@ typedef struct RDLoader {
 } RDLoader;
 
 REDASM_EXPORT usize rd_getloaders(const RDLoader** loaders);
+REDASM_EXPORT void rd_registerloader(const RDLoader* ldr);
