@@ -1,7 +1,6 @@
 #include "module.h"
 #include "../../error.h"
 #include "../../modulemanager.h"
-#include "../../state.h"
 #include "buffer.h"
 #include "common.h"
 #include "methods.h"
