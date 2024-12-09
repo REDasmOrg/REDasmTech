@@ -35,7 +35,6 @@ PyObject* from_reladdress(PyObject* self, PyObject* args);
 PyObject* address_to_index(PyObject* self, PyObject* args);
 PyObject* index_to_address(PyObject* self, PyObject* args);
 PyObject* check_string(PyObject* self, PyObject* args);
-PyObject* to_hex(PyObject* self, PyObject* args, PyObject* kwargs);
 
 PyObject* get_entries(PyObject* self, PyObject* args);
 PyObject* get_bits(PyObject* self, PyObject* args);

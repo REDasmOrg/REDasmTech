@@ -1095,25 +1095,4 @@ PyObject* check_string(PyObject* /*self*/, PyObject* args) {
     return res;
 }
 
-PyObject* to_hex(PyObject* /*self*/, PyObject* args, PyObject* kwargs) {
-    static const char* const KW_LIST[] = {
-        "",
-        "n",
-        nullptr,
-    };
-
-    usize v = 0;
-    int n = 0;
-
-    if(!PyArg_ParseTupleAndKeywords(args, kwargs, "K|i",
-                                    const_cast<char**>(KW_LIST), &v, &n)) {
-        return nullptr;
-    }
-
-    if(n > 0)
-        return PyUnicode_FromString(internal::to_hex_n(v, n).c_str());
-
-    return PyUnicode_FromString(internal::to_hex(v).c_str());
-}
-
 } // namespace redasm::api::python

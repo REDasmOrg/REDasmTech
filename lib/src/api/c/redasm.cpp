@@ -322,15 +322,3 @@ bool rd_offsettoaddress(RDOffset offset, RDAddress* address) {
 bool rd_isaddress(RDAddress address) {
     return redasm::api::internal::is_address(address);
 }
-
-const char* rd_tohex_n(usize val, usize n) {
-    static std::string res;
-    res = redasm::api::internal::to_hex_n(val, n);
-    return res.empty() ? nullptr : res.c_str();
-}
-
-const char* rd_tohex(usize val) {
-    static std::string res;
-    res = redasm::api::internal::to_hex(val);
-    return res.empty() ? nullptr : res.c_str();
-}

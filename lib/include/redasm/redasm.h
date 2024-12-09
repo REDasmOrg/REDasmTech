@@ -17,6 +17,7 @@
 #include <redasm/theme.h>
 #include <redasm/types.h>
 #include <redasm/typing.h>
+#include <redasm/utils.h>
 #include <redasm/version.h>
 
 typedef enum RDLogLevel {
@@ -165,8 +166,6 @@ REDASM_EXPORT bool rd_offsettosegment(RDOffset offset, RDSegment* s);
 REDASM_EXPORT bool rd_addresstoffset(RDAddress address, RDOffset* offset);
 REDASM_EXPORT bool rd_offsettoaddress(RDOffset offset, RDAddress* address);
 REDASM_EXPORT bool rd_isaddress(RDAddress address);
-REDASM_EXPORT const char* rd_tohex_n(usize val, usize n);
-REDASM_EXPORT const char* rd_tohex(usize val);
 
 REDASM_EXPORT void rdplugin_init(void);
 REDASM_EXPORT void rdplugin_free(void);

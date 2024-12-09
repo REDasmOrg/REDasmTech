@@ -3,6 +3,7 @@
 #include "../api/internal/processor.h"
 #include "../api/internal/redasm.h"
 #include "../api/internal/renderer.h"
+#include "../api/internal/utils.h"
 #include "../error.h"
 
 namespace redasm::builtins {

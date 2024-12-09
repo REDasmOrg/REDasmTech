@@ -62,6 +62,7 @@ target_sources(${PROJECT_NAME_LIB}
 
     PRIVATE # Internal
         src/api/marshal.cpp
+        src/api/internal/utils.cpp
         src/api/internal/redasm.cpp
         src/api/internal/rdil.cpp
         src/api/internal/byte.cpp
@@ -81,6 +82,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/internal/function.cpp
 
     PRIVATE # C
+        src/api/c/utils.cpp
         src/api/c/redasm.cpp
         src/api/c/byte.cpp
         src/api/c/theme.cpp
@@ -96,6 +98,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/c/rdil.cpp
 
     PRIVATE # Python
+        src/api/python/utils.cpp
         src/api/python/rdil.cpp
         src/api/python/buffer.cpp
         src/api/python/stream.cpp

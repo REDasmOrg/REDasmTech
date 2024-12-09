@@ -3,13 +3,13 @@
 #include "common.h"
 #include "redasm.h"
 #include "typing.h"
+#include "utils.h"
 #include <Python.h>
 
 namespace redasm::api::python {
 
 // clang-format off
 inline PyMethodDef methods[] = {
-    // redasm.h
     {"init", python::init, METH_NOARGS, nullptr},
     {"deinit", python::deinit, METH_NOARGS, nullptr},
     {"log", python::log, METH_O, nullptr},
@@ -28,7 +28,6 @@ inline PyMethodDef methods[] = {
     {"index_to_address", python::index_to_address, METH_O, nullptr},
     {"address_to_index", python::address_to_index, METH_O, nullptr},
     {"check_string", python::check_string, METH_O, nullptr},
-    {"to_hex", python::to_cfunction(python::to_hex), METH_VARARGS | METH_KEYWORDS, nullptr},
     {"is_alnum", python::is_alnum, METH_O, nullptr},
     {"is_alpha", python::is_alpha, METH_O, nullptr},
     {"is_lower", python::is_lower, METH_O, nullptr},
@@ -85,11 +84,27 @@ inline PyMethodDef methods[] = {
     {"get_stringz", python::get_stringz, METH_O, nullptr},
     {"get_string", python::get_string, METH_VARARGS, nullptr},
     {"get_type", python::get_type, METH_VARARGS, nullptr},
-
-    // typing.h
+    {"to_hex", python::to_cfunction(python::to_hex), METH_VARARGS | METH_KEYWORDS, nullptr},
+    {"rol16", python::rol16, METH_VARARGS, nullptr},
+    {"rol32", python::rol32, METH_VARARGS, nullptr},
+    {"rol64", python::rol64, METH_VARARGS, nullptr},
+    {"ror16", python::ror16, METH_VARARGS, nullptr},
+    {"ror32", python::ror32, METH_VARARGS, nullptr},
+    {"ror64", python::ror64, METH_VARARGS, nullptr},
+    {"from_le16", python::from_le16, METH_O, nullptr},
+    {"from_le32", python::from_le32, METH_O, nullptr},
+    {"from_le64", python::from_le64, METH_O, nullptr},
+    {"from_be16", python::from_be16, METH_O, nullptr},
+    {"from_be32", python::from_be32, METH_O, nullptr},
+    {"from_be64", python::from_be64, METH_O, nullptr},
+    {"to_le16", python::to_le16, METH_O, nullptr},
+    {"to_le32", python::to_le32, METH_O, nullptr},
+    {"to_le64", python::to_le64, METH_O, nullptr},
+    {"to_be16", python::to_be16, METH_O, nullptr},
+    {"to_be32", python::to_be32, METH_O, nullptr},
+    {"to_be64", python::to_be64, METH_O, nullptr},
     {"size_of", python::size_of, METH_O, nullptr},
     {"create_struct", python::create_struct, METH_VARARGS, nullptr},
-
     {nullptr},
 };
 // clang-format on
