@@ -183,7 +183,7 @@ void X86Processor::decode(RDInstruction* instr) {
 
 namespace {
 
-bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
+void render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
                         const RDInstruction* instr) {
     const char* mnemonic =
         ZydisMnemonicGetString(static_cast<ZydisMnemonic>(instr->id));
@@ -292,8 +292,6 @@ bool render_instruction(const RDProcessor* /*self*/, const RDRendererParams* r,
             default: break;
         }
     }
-
-    return true;
 }
 
 void decode(const RDProcessor* self, RDInstruction* instr) {

@@ -151,14 +151,10 @@ Renderer& Renderer::instr(const RDRendererParams& rp) {
 
     p->decode(p, &instr);
 
-    if(instr.length && p->renderinstruction &&
-       p->renderinstruction(p, &rp, &instr)) {
-        if(!Byte{rp.byte}.has(BF_REFSTO))
-            return *this;
-        // TODO(davide): Print references information
-    }
-    else
+    if(!instr.length || !p->renderinstruction)
         this->chunk("???");
+    else
+        p->renderinstruction(p, &rp, &instr);
 
     return *this;
 }

@@ -859,6 +859,7 @@ tl::optional<std::string> get_string(RDAddress address, usize n) {
 tl::optional<typing::Value> get_type(RDAddress address,
                                      std::string_view tname) {
     spdlog::trace("get_type({:x}, '{}')", address, tname);
+
     if(auto idx = state::context->address_to_index(address); idx)
         return internal::buffer_gettype(api::to_c(state::context->memory.get()),
                                         *idx, tname);

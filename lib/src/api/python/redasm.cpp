@@ -708,7 +708,7 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args,
             return ok;
         }
 
-        python::on_error();
+        python::check_error();
         return false;
     };
 
@@ -768,8 +768,7 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
         auto* userdata = reinterpret_cast<ProcessorUserData*>(self->userdata);
         PyObject* ret = PyObject_CallNoArgs(userdata->emulate);
         Py_XDECREF(ret);
-
-        python::on_error();
+        python::check_error();
     };
 
     if(rendersegmentfn) {
@@ -778,15 +777,8 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
             auto* userdata =
                 reinterpret_cast<ProcessorUserData*>(self->userdata);
             PyObject* ret = PyObject_CallNoArgs(userdata->rendersegment);
-
-            if(ret) {
-                bool ok = PyObject_IsTrue(ret);
-                Py_DECREF(ret);
-                return ok;
-            }
-
-            python::on_error();
-            return false;
+            Py_XDECREF(ret);
+            python::check_error();
         };
     }
 
@@ -796,15 +788,8 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
             auto* userdata =
                 reinterpret_cast<ProcessorUserData*>(self->userdata);
             PyObject* ret = PyObject_CallNoArgs(userdata->renderfunction);
-
-            if(ret) {
-                bool ok = PyObject_IsTrue(ret);
-                Py_DECREF(ret);
-                return ok;
-            }
-
-            python::on_error();
-            return false;
+            Py_XDECREF(ret);
+            python::check_error();
         };
     }
 
@@ -815,15 +800,9 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
             auto* userdata =
                 reinterpret_cast<ProcessorUserData*>(self->userdata);
             PyObject* ret = PyObject_CallNoArgs(userdata->renderinstruction);
+            python::check_error();
 
-            if(ret) {
-                bool ok = PyObject_IsTrue(ret);
-                Py_DECREF(ret);
-                return ok;
-            }
-
-            python::on_error();
-            return false;
+            Py_XDECREF(ret);
         };
     }
 
@@ -884,7 +863,7 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args,
                 return ok;
             }
 
-            python::on_error();
+            python::check_error();
             return false;
         };
     }
@@ -896,7 +875,7 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args,
         if(ret)
             Py_DECREF(ret);
         else
-            python::on_error();
+            python::check_error();
     };
 
     analyzer.free = [](const RDAnalyzer* self) {

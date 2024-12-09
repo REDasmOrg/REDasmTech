@@ -28,9 +28,9 @@ struct RDProcessor;
 typedef void (*RDProcessorDecode)(const RDProcessor*, RDInstruction*);
 typedef void (*RDProcessorEmulate)(const RDProcessor*, RDEmulator*, const RDInstruction*);
 typedef bool (*RDProcessorLift)(const RDProcessor*, const RDInstruction*, RDILList*);
-typedef bool (*RDProcessorRenderSegment)(const RDProcessor*, const RDRendererParams*);
-typedef bool (*RDProcessorRenderFunction)(const RDProcessor*, const RDRendererParams*);
-typedef bool (*RDProcessorRenderInstruction)(const RDProcessor*, const RDRendererParams*, const RDInstruction*);
+typedef void (*RDProcessorRenderSegment)(const RDProcessor*, const RDRendererParams*);
+typedef void (*RDProcessorRenderFunction)(const RDProcessor*, const RDRendererParams*);
+typedef void (*RDProcessorRenderInstruction)(const RDProcessor*, const RDRendererParams*, const RDInstruction*);
 typedef void (*RDProcessorFree)(RDProcessor*);
 // clang-format on
 

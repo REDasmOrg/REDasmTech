@@ -8,3 +8,4 @@ setup_dependencies()
 include(cmake/Compiler.cmake)
 
 add_subdirectory(src/processors/x86)
+add_subdirectory(src/processors/mips)

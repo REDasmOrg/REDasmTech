@@ -10,7 +10,7 @@ namespace redasm::builtins {
 
 namespace processor {
 
-bool render_segment(const RDRendererParams* rp) {
+void render_segment(const RDRendererParams* rp) {
     assume(rp);
 
     const RDSegment* segments = nullptr;
@@ -27,10 +27,9 @@ bool render_segment(const RDRendererParams* rp) {
         fmt::format("segment {} (start: {}, end: {})", seg.name, start, end);
 
     api::internal::renderer_themed(rp->renderer, s, THEME_SEGMENT);
-    return true;
 }
 
-bool render_function(const RDRendererParams* rp) {
+void render_function(const RDRendererParams* rp) {
     std::string n = api::internal::get_name(rp->address);
     if(n.empty())
         n = "???";
@@ -43,7 +42,6 @@ bool render_function(const RDRendererParams* rp) {
         s = fmt::format("function {}()", n);
 
     api::internal::renderer_themed(rp->renderer, s, THEME_FUNCTION);
-    return true;
 }
 
 } // namespace processor
@@ -56,12 +54,12 @@ void register_processors() {
 
     nullprocessor.rendersegment = [](const RDProcessor*,
                                      const RDRendererParams* rp) {
-        return builtins::processor::render_segment(rp);
+        builtins::processor::render_segment(rp);
     };
 
     nullprocessor.renderfunction = [](const RDProcessor*,
                                       const RDRendererParams* rp) {
-        return builtins::processor::render_function(rp);
+        builtins::processor::render_function(rp);
     };
 
     api::internal::register_processor(nullprocessor);

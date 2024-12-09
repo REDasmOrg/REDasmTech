@@ -91,7 +91,7 @@ PyObject* to_object(const typing::Value& v) {
     return res;
 }
 
-void on_error() {
+void check_error() {
     if(!PyErr_Occurred())
         return;
 

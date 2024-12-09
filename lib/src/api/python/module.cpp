@@ -135,7 +135,7 @@ void main() {
         spdlog::info("Executing '{}'", init);
 
         if(PyRun_SimpleFile(fp, init.c_str()) == -1)
-            python::on_error();
+            python::check_error();
 
         std::fclose(fp);
     }

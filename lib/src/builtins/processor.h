@@ -10,8 +10,8 @@ namespace builtins {
 
 namespace processor {
 
-bool render_segment(const RDRendererParams* rp);
-bool render_function(const RDRendererParams* rp);
+void render_segment(const RDRendererParams* rp);
+void render_function(const RDRendererParams* rp);
 
 } // namespace processor
 
