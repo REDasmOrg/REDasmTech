@@ -269,9 +269,9 @@ bool Context::set_type(MIndex idx, RDType t, usize flags) {
         case typing::ids::WSTR: {
             tl::optional<std::string> s;
             if(t.id == typing::ids::WSTR)
-                s = this->memory->get_wstring(idx);
+                s = this->memory->get_wstr(idx);
             else
-                s = this->memory->get_string(idx);
+                s = this->memory->get_str(idx);
 
             if(!s) {
                 this->add_problem(idx, "string not found");

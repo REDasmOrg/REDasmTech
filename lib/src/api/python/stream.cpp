@@ -1,8 +1,6 @@
 #include "stream.h"
-#include "../../memory/memorystream.h"
-#include "../../memory/stream.h"
+#include "../internal/redasm.h"
 #include "../internal/stream.h"
-#include "../marshal.h"
 #include "common.h"
 
 namespace redasm::api::python {
@@ -34,10 +32,8 @@ PyObject* abstractstream_move(PyAbstractStream* self, PyObject* args) {
     return PyLong_FromUnsignedLongLong(internal::stream_move(self->stream, o));
 }
 
-PyObject* abstractstream_getposition(PyAbstractStream* self,
-                                     PyObject* /*args*/) {
-    return PyLong_FromUnsignedLongLong(
-        internal::stream_getposition(self->stream));
+PyObject* abstractstream_getpos(PyAbstractStream* self, PyObject* /*args*/) {
+    return PyLong_FromUnsignedLongLong(internal::stream_getpos(self->stream));
 }
 
 PyObject* abstractstream_rewind(PyAbstractStream* self, PyObject* /*args*/) {
@@ -54,18 +50,34 @@ PyObject* abstractstream_peek_type(PyAbstractStream* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-PyObject* abstractstream_peek_stringz(PyAbstractStream* self,
-                                      PyObject* /*args*/) {
-    if(auto v = internal::stream_peek_stringz(self->stream); v)
+PyObject* abstractstream_peek_strz(PyAbstractStream* self, PyObject* /*args*/) {
+    if(auto v = internal::stream_peek_strz(self->stream); v)
         return PyUnicode_FromString(v->c_str());
 
     Py_RETURN_NONE;
 }
 
-PyObject* abstractstream_peek_string(PyAbstractStream* self, PyObject* args) {
+PyObject* abstractstream_peek_str(PyAbstractStream* self, PyObject* args) {
     usize n = PyLong_AsUnsignedLongLong(args);
 
-    if(auto v = internal::stream_peek_string(self->stream, n); v)
+    if(auto v = internal::stream_peek_str(self->stream, n); v)
+        return PyUnicode_FromString(v->c_str());
+
+    Py_RETURN_NONE;
+}
+
+PyObject* abstractstream_peek_wstrz(PyAbstractStream* self,
+                                    PyObject* /*args*/) {
+    if(auto v = internal::stream_peek_wstrz(self->stream); v)
+        return PyUnicode_FromString(v->c_str());
+
+    Py_RETURN_NONE;
+}
+
+PyObject* abstractstream_peek_wstr(PyAbstractStream* self, PyObject* args) {
+    usize n = PyLong_AsUnsignedLongLong(args);
+
+    if(auto v = internal::stream_peek_wstr(self->stream, n); v)
         return PyUnicode_FromString(v->c_str());
 
     Py_RETURN_NONE;
@@ -184,18 +196,34 @@ PyObject* abstractstream_read_type(PyAbstractStream* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-PyObject* abstractstream_read_stringz(PyAbstractStream* self,
-                                      PyObject* /*args*/) {
-    if(auto v = internal::stream_read_stringz(self->stream); v)
+PyObject* abstractstream_read_strz(PyAbstractStream* self, PyObject* /*args*/) {
+    if(auto v = internal::stream_read_strz(self->stream); v)
         return PyUnicode_FromString(v->c_str());
 
     Py_RETURN_NONE;
 }
 
-PyObject* abstractstream_read_string(PyAbstractStream* self, PyObject* args) {
+PyObject* abstractstream_read_str(PyAbstractStream* self, PyObject* args) {
     usize n = PyLong_AsUnsignedLongLong(args);
 
-    if(auto v = internal::stream_read_string(self->stream, n); v)
+    if(auto v = internal::stream_read_str(self->stream, n); v)
+        return PyUnicode_FromString(v->c_str());
+
+    Py_RETURN_NONE;
+}
+
+PyObject* abstractstream_read_wstrz(PyAbstractStream* self,
+                                    PyObject* /*args*/) {
+    if(auto v = internal::stream_read_wstrz(self->stream); v)
+        return PyUnicode_FromString(v->c_str());
+
+    Py_RETURN_NONE;
+}
+
+PyObject* abstractstream_read_wstr(PyAbstractStream* self, PyObject* args) {
+    usize n = PyLong_AsUnsignedLongLong(args);
+
+    if(auto v = internal::stream_read_wstr(self->stream, n); v)
         return PyUnicode_FromString(v->c_str());
 
     Py_RETURN_NONE;
@@ -314,19 +342,35 @@ PyObject* abstractstream_collect_type(PyAbstractStream* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-PyObject* abstractstream_collect_stringz(PyAbstractStream* self,
-                                         PyObject* /*args*/) {
-    if(auto v = internal::stream_collect_stringz(self->stream); v)
+PyObject* abstractstream_collect_strz(PyAbstractStream* self,
+                                      PyObject* /*args*/) {
+    if(auto v = internal::stream_collect_strz(self->stream); v)
         return PyUnicode_FromString(v->c_str());
 
     Py_RETURN_NONE;
 }
 
-PyObject* abstractstream_collect_string(PyAbstractStream* self,
-                                        PyObject* args) {
+PyObject* abstractstream_collect_str(PyAbstractStream* self, PyObject* args) {
     usize n = PyLong_AsUnsignedLongLong(args);
 
-    if(auto v = internal::stream_collect_string(self->stream, n); v)
+    if(auto v = internal::stream_collect_str(self->stream, n); v)
+        return PyUnicode_FromString(v->c_str());
+
+    Py_RETURN_NONE;
+}
+
+PyObject* abstractstream_collect_wstrz(PyAbstractStream* self,
+                                       PyObject* /*args*/) {
+    if(auto v = internal::stream_collect_wstrz(self->stream); v)
+        return PyUnicode_FromString(v->c_str());
+
+    Py_RETURN_NONE;
+}
+
+PyObject* abstractstream_collect_wstr(PyAbstractStream* self, PyObject* args) {
+    usize n = PyLong_AsUnsignedLongLong(args);
+
+    if(auto v = internal::stream_collect_wstr(self->stream, n); v)
         return PyUnicode_FromString(v->c_str());
 
     Py_RETURN_NONE;
@@ -336,11 +380,13 @@ PyObject* abstractstream_collect_string(PyAbstractStream* self,
 PyMethodDef abstractstream_methods[] = {
     {"seek", reinterpret_cast<PyCFunction>(python::abstractstream_seek), METH_O, nullptr},
     {"move", reinterpret_cast<PyCFunction>(python::abstractstream_move), METH_O, nullptr},
-    {"getposition", reinterpret_cast<PyCFunction>(python::abstractstream_getposition), METH_NOARGS, nullptr},
+    {"get_pos", reinterpret_cast<PyCFunction>(python::abstractstream_getpos), METH_NOARGS, nullptr},
     {"rewind", reinterpret_cast<PyCFunction>(python::abstractstream_rewind), METH_NOARGS, nullptr},
     {"peek_type", reinterpret_cast<PyCFunction>(python::abstractstream_peek_type), METH_O, nullptr},
-    {"peek_stringz", reinterpret_cast<PyCFunction>(python::abstractstream_peek_stringz), METH_NOARGS, nullptr},
-    {"peek_string", reinterpret_cast<PyCFunction>(python::abstractstream_peek_string), METH_O, nullptr},
+    {"peek_strz", reinterpret_cast<PyCFunction>(python::abstractstream_peek_strz), METH_NOARGS, nullptr},
+    {"peek_str", reinterpret_cast<PyCFunction>(python::abstractstream_peek_str), METH_O, nullptr},
+    {"peek_wstrz", reinterpret_cast<PyCFunction>(python::abstractstream_peek_wstrz), METH_NOARGS, nullptr},
+    {"peek_wstr", reinterpret_cast<PyCFunction>(python::abstractstream_peek_wstr), METH_O, nullptr},
     {"peek_u8", reinterpret_cast<PyCFunction>(python::abstractstream_peek_u8), METH_NOARGS, nullptr},
     {"peek_u16", reinterpret_cast<PyCFunction>(python::abstractstream_peek_u16), METH_NOARGS, nullptr},
     {"peek_u32", reinterpret_cast<PyCFunction>(python::abstractstream_peek_u32), METH_NOARGS, nullptr},
@@ -356,8 +402,10 @@ PyMethodDef abstractstream_methods[] = {
     {"peek_i32be", reinterpret_cast<PyCFunction>(python::abstractstream_peek_i32be), METH_NOARGS, nullptr},
     {"peek_i64be", reinterpret_cast<PyCFunction>(python::abstractstream_peek_i64be), METH_NOARGS, nullptr},
     {"read_type", reinterpret_cast<PyCFunction>(python::abstractstream_read_type), METH_O, nullptr},
-    {"read_stringz", reinterpret_cast<PyCFunction>(python::abstractstream_read_stringz), METH_NOARGS, nullptr},
-    {"read_string", reinterpret_cast<PyCFunction>(python::abstractstream_read_string), METH_O, nullptr},
+    {"read_strz", reinterpret_cast<PyCFunction>(python::abstractstream_read_strz), METH_NOARGS, nullptr},
+    {"read_str", reinterpret_cast<PyCFunction>(python::abstractstream_read_str), METH_O, nullptr},
+    {"read_wstrz", reinterpret_cast<PyCFunction>(python::abstractstream_read_wstrz), METH_NOARGS, nullptr},
+    {"read_wstr", reinterpret_cast<PyCFunction>(python::abstractstream_read_wstr), METH_O, nullptr},
     {"read_u8", reinterpret_cast<PyCFunction>(python::abstractstream_read_u8), METH_NOARGS, nullptr},
     {"read_u16", reinterpret_cast<PyCFunction>(python::abstractstream_read_u16), METH_NOARGS, nullptr},
     {"read_u32", reinterpret_cast<PyCFunction>(python::abstractstream_read_u32), METH_NOARGS, nullptr},
@@ -373,8 +421,10 @@ PyMethodDef abstractstream_methods[] = {
     {"read_i32be", reinterpret_cast<PyCFunction>(python::abstractstream_read_i32be), METH_NOARGS, nullptr},
     {"read_i64be", reinterpret_cast<PyCFunction>(python::abstractstream_read_i64be), METH_NOARGS, nullptr},
     {"collect_type", reinterpret_cast<PyCFunction>(python::abstractstream_collect_type), METH_O, nullptr},
-    {"collect_stringz", reinterpret_cast<PyCFunction>(python::abstractstream_collect_stringz), METH_NOARGS, nullptr},
-    {"collect_string", reinterpret_cast<PyCFunction>(python::abstractstream_collect_string), METH_O, nullptr},
+    {"collect_strz", reinterpret_cast<PyCFunction>(python::abstractstream_collect_strz), METH_NOARGS, nullptr},
+    {"collect_str", reinterpret_cast<PyCFunction>(python::abstractstream_collect_str), METH_O, nullptr},
+    {"collect_wstrz", reinterpret_cast<PyCFunction>(python::abstractstream_collect_wstrz), METH_NOARGS, nullptr},
+    {"collect_wstr", reinterpret_cast<PyCFunction>(python::abstractstream_collect_wstr), METH_O, nullptr},
     {nullptr},
 }; // clang-format on
 
@@ -388,7 +438,7 @@ PyTypeObject abstractstream_type = []() {
     t.tp_methods = python::abstractstream_methods;
 
     t.tp_dealloc = reinterpret_cast<destructor>(+[](PyAbstractStream* self) {
-        delete api::from_c(self->stream);
+        internal::free(self->stream);
         Py_TYPE(self)->tp_free(reinterpret_cast<PyObject*>(self));
     });
 
@@ -404,7 +454,7 @@ PyTypeObject filestream_type = []() {
 
     t.tp_init = reinterpret_cast<initproc>(
         +[](PyFileStream* self, PyObject* /*args*/, PyObject* /*kwds*/) {
-            self->super.stream = api::to_c(new Stream());
+            self->super.stream = internal::stream_createfromfile();
             return 0;
         });
 
@@ -420,7 +470,7 @@ PyTypeObject memorystream_type = []() {
 
     t.tp_init = reinterpret_cast<initproc>(
         +[](PyMemoryStream* self, PyObject* /*args*/, PyObject* /*kwds*/) {
-            self->super.stream = api::to_c(new MemoryStream());
+            self->super.stream = internal::stream_createfrommemory();
             return 0;
         });
 

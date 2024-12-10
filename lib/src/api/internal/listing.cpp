@@ -43,20 +43,20 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
             assume(item.dtype);
 
             switch(item.dtype->id) {
-                case typing::ids::STR: s = mem->get_string(item.index); break;
-                case typing::ids::WSTR: s = mem->get_wstring(item.index); break;
+                case typing::ids::STR: s = mem->get_str(item.index); break;
+                case typing::ids::WSTR: s = mem->get_wstr(item.index); break;
 
                 case typing::ids::CHAR: {
                     usize len = mem->get_length(item.index);
                     assume(len > 0);
-                    s = mem->get_string(item.index, len);
+                    s = mem->get_str(item.index, len);
                     break;
                 }
 
                 case typing::ids::WCHAR: {
                     usize len = mem->get_length(item.index);
                     assume(len > 0);
-                    s = mem->get_wstring(item.index, len);
+                    s = mem->get_wstr(item.index, len);
                     break;
                 }
 

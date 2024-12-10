@@ -4,7 +4,6 @@
 #include "../internal/buffer.h"
 #include "../internal/file.h"
 #include "../internal/memory.h"
-#include "../marshal.h"
 #include "common.h"
 
 namespace redasm::api::python {
@@ -171,22 +170,43 @@ PyObject* buffer_geti64be(PyBuffer* self, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-PyObject* buffer_getstringz(PyBuffer* self, PyObject* args) {
+PyObject* buffer_getstrz(PyBuffer* self, PyObject* args) {
     usize idx = PyLong_AsUnsignedLongLong(args);
 
-    if(auto v = internal::buffer_getstringz(self->buffer, idx); v)
+    if(auto v = internal::buffer_getstrz(self->buffer, idx); v)
         return PyUnicode_FromString(v->c_str());
 
     Py_RETURN_NONE;
 }
 
-PyObject* buffer_getstring(PyBuffer* self, PyObject* args) {
+PyObject* buffer_getstr(PyBuffer* self, PyObject* args) {
     usize idx{}, n{};
 
     if(!PyArg_ParseTuple(args, "KK", &idx, &n))
         return nullptr;
 
-    if(auto v = internal::buffer_getstring(self->buffer, idx, n); v)
+    if(auto v = internal::buffer_getstr(self->buffer, idx, n); v)
+        return PyUnicode_FromString(v->c_str());
+
+    Py_RETURN_NONE;
+}
+
+PyObject* buffer_getwstrz(PyBuffer* self, PyObject* args) {
+    usize idx = PyLong_AsUnsignedLongLong(args);
+
+    if(auto v = internal::buffer_getstrz(self->buffer, idx); v)
+        return PyUnicode_FromString(v->c_str());
+
+    Py_RETURN_NONE;
+}
+
+PyObject* buffer_getwstr(PyBuffer* self, PyObject* args) {
+    usize idx{}, n{};
+
+    if(!PyArg_ParseTuple(args, "KK", &idx, &n))
+        return nullptr;
+
+    if(auto v = internal::buffer_getstr(self->buffer, idx, n); v)
         return PyUnicode_FromString(v->c_str());
 
     Py_RETURN_NONE;
@@ -223,8 +243,10 @@ PyMethodDef buffer_methods[] = {
     {"get_i16be", reinterpret_cast<PyCFunction>(python::buffer_geti16be), METH_O, nullptr},
     {"get_i32be", reinterpret_cast<PyCFunction>(python::buffer_geti32be), METH_O, nullptr},
     {"get_i64be", reinterpret_cast<PyCFunction>(python::buffer_geti64be), METH_O, nullptr},
-    {"get_stringz", reinterpret_cast<PyCFunction>(python::buffer_getstringz), METH_O, nullptr},
-    {"get_string", reinterpret_cast<PyCFunction>(python::buffer_getstring), METH_VARARGS, nullptr},
+    {"get_strz", reinterpret_cast<PyCFunction>(python::buffer_getstrz), METH_O, nullptr},
+    {"get_str", reinterpret_cast<PyCFunction>(python::buffer_getstr), METH_VARARGS, nullptr},
+    {"get_wstrz", reinterpret_cast<PyCFunction>(python::buffer_getwstrz), METH_O, nullptr},
+    {"get_wstr", reinterpret_cast<PyCFunction>(python::buffer_getwstr), METH_VARARGS, nullptr},
     {"get_type", reinterpret_cast<PyCFunction>(python::buffer_gettype), METH_VARARGS, nullptr},
     {nullptr},
 };
@@ -404,7 +426,7 @@ PyTypeObject file_type = []() {
 
     t.tp_init = reinterpret_cast<initproc>(
         +[](PyMemory* self, PyObject* /*args*/, PyObject* /*kwds*/) {
-            self->super.buffer = api::to_c(state::context->file.get());
+            self->super.buffer = internal::buffer_getfile();
             return 0;
         });
 
@@ -422,7 +444,7 @@ PyTypeObject memory_type = []() {
 
     t.tp_init = reinterpret_cast<initproc>(
         +[](PyMemory* self, PyObject* /*args*/, PyObject* /*kwds*/) {
-            self->super.buffer = api::to_c(state::context->memory.get());
+            self->super.buffer = internal::buffer_getmemory();
             return 0;
         });
 

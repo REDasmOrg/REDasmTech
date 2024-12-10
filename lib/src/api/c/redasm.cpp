@@ -1,19 +1,26 @@
 #include "../internal/redasm.h"
-#include "../../utils/object.h"
 #include "../internal/graph.h"
 #include "../internal/memory.h"
 #include "../marshal.h"
 #include <redasm/redasm.h>
 
+namespace {
+
+template<typename T, typename F>
+bool rd_getvalue(RDAddress address, T* v, F getter) {
+    auto res = getter(address);
+    res.map([&](T x) { *v = x; });
+    return res.has_value();
+}
+
+} // namespace
+
 bool rd_init(const RDInitParams* params) {
     return redasm::api::internal::init(params);
 }
+
 void rd_deinit(void) { redasm::api::internal::deinit(); }
-
-void rd_free(void* obj) {
-    redasm::api::internal::free(reinterpret_cast<redasm::Object*>(obj));
-}
-
+void rd_free(void* obj) { redasm::api::internal::free(obj); }
 void rd_setloglevel(RDLogLevel l) { redasm::api::internal::set_loglevel(l); }
 
 void rd_addsearchpath(const char* sp) {
@@ -65,164 +72,20 @@ void rd_status(const char* s) {
         redasm::api::internal::status(s);
 }
 
-bool rd_getbool(RDAddress address, bool* v) {
-    auto res = redasm::api::internal::get_bool(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_getchar(RDAddress address, char* v) {
-    auto res = redasm::api::internal::get_char(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_getu8(RDAddress address, u8* v) {
-    auto res = redasm::api::internal::get_u8(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_getu16(RDAddress address, u16* v) {
-    auto res = redasm::api::internal::get_u16(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_getu32(RDAddress address, u32* v) {
-    auto res = redasm::api::internal::get_u32(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_getu64(RDAddress address, u64* v) {
-    auto res = redasm::api::internal::get_u64(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_geti8(RDAddress address, i8* v) {
-    auto res = redasm::api::internal::get_i8(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_geti16(RDAddress address, i16* v) {
-    auto res = redasm::api::internal::get_i16(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_geti32(RDAddress address, i32* v) {
-    auto res = redasm::api::internal::get_i32(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_geti64(RDAddress address, i64* v) {
-    auto res = redasm::api::internal::get_i64(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_getu16be(RDAddress address, u16* v) {
-    auto res = redasm::api::internal::get_u16be(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_getu32be(RDAddress address, u32* v) {
-    auto res = redasm::api::internal::get_u32be(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_getu64be(RDAddress address, u64* v) {
-    auto res = redasm::api::internal::get_u64be(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_geti16be(RDAddress address, i16* v) {
-    auto res = redasm::api::internal::get_i16be(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_geti32be(RDAddress address, i32* v) {
-    auto res = redasm::api::internal::get_i32be(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
-bool rd_geti64be(RDAddress address, i64* v) {
-    auto res = redasm::api::internal::get_i64be(address);
-    res.map([&](auto x) {
-        if(v)
-            *v = x;
-    });
-    return res.has_value();
-}
-
 bool rd_gettype(RDAddress address, const char* tname, RDValue* v) {
-    static redasm::typing::Value res;
+    // static redasm::typing::Value res;
 
-    if(tname) {
-        return redasm::api::internal::get_type(address, tname)
-            .map_or(
-                [&](const redasm::typing::Value& x) {
-                    res = x;
-                    if(v)
-                        *v = redasm::api::to_c(res);
-                    return true;
-                },
-                false);
-    }
+    // if(tname) {
+    //     return redasm::api::internal::get_type(address, tname)
+    //         .map_or(
+    //             [&](const redasm::typing::Value& x) {
+    //                 res = x;
+    //                 if(v)
+    //                     *v = redasm::api::to_c(&res);
+    //                 return true;
+    //             },
+    //             false);
+    // }
 
     return false;
 }
@@ -465,4 +328,68 @@ bool rd_offsettoaddress(RDOffset offset, RDAddress* address) {
 
 bool rd_isaddress(RDAddress address) {
     return redasm::api::internal::is_address(address);
+}
+
+bool rd_getbool(RDAddress address, bool* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_bool);
+}
+
+bool rd_getchar(RDAddress address, char* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_char);
+}
+
+bool rd_getu8(RDAddress address, u8* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_u8);
+}
+
+bool rd_getu16(RDAddress address, u16* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_u16);
+}
+
+bool rd_getu32(RDAddress address, u32* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_u32);
+}
+
+bool rd_getu64(RDAddress address, u64* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_u64);
+}
+
+bool rd_geti8(RDAddress address, i8* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_i8);
+}
+
+bool rd_geti16(RDAddress address, i16* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_i16);
+}
+
+bool rd_geti32(RDAddress address, i32* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_i32);
+}
+
+bool rd_geti64(RDAddress address, i64* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_i64);
+}
+
+bool rd_getu16be(RDAddress address, u16* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_u16be);
+}
+
+bool rd_getu32be(RDAddress address, u32* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_u32be);
+}
+
+bool rd_getu64be(RDAddress address, u64* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_u64be);
+}
+
+bool rd_geti16be(RDAddress address, i16* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_i16be);
+}
+
+bool rd_geti32be(RDAddress address, i32* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_i32be);
+}
+
+bool rd_geti64be(RDAddress address, i64* v) {
+    return rd_getvalue(address, v, redasm::api::internal::get_i64be);
 }

@@ -18,13 +18,11 @@ public:
     [[nodiscard]] virtual tl::optional<u8> get_byte(usize idx) const = 0;
     [[nodiscard]] virtual usize size() const = 0;
 
-    [[nodiscard]] tl::optional<std::string> get_string(usize idx) const;
-    [[nodiscard]] tl::optional<std::string> get_string(usize idx,
-                                                       usize n) const;
+    [[nodiscard]] tl::optional<std::string> get_str(usize idx) const;
+    [[nodiscard]] tl::optional<std::string> get_str(usize idx, usize n) const;
 
-    [[nodiscard]] tl::optional<std::string> get_wstring(usize idx) const;
-    [[nodiscard]] tl::optional<std::string> get_wstring(usize idx,
-                                                        usize n) const;
+    [[nodiscard]] tl::optional<std::string> get_wstr(usize idx) const;
+    [[nodiscard]] tl::optional<std::string> get_wstr(usize idx, usize n) const;
 
     [[nodiscard]] tl::optional<u8> get_u8(usize idx) const {
         return this->get_byte(idx);
@@ -127,11 +125,11 @@ private:
         }
     }
 
-    tl::optional<std::string> get_string_impl(usize& idx,
-                                              std::string_view tname) const;
+    tl::optional<std::string> get_str_impl(usize& idx,
+                                           std::string_view tname) const;
 
-    tl::optional<std::string> get_string_impl(usize& idx, usize n,
-                                              typing::TypeName tname) const;
+    tl::optional<std::string> get_str_impl(usize& idx, usize n,
+                                           typing::TypeName tname) const;
 
     tl::optional<typing::Value> get_type_impl(usize& idx, RDType t) const;
 

@@ -8,6 +8,8 @@
 
 namespace redasm::api::internal {
 
+RDBuffer* buffer_getfile();
+RDBuffer* buffer_getmemory();
 tl::optional<bool> buffer_getbool(const RDBuffer* self, usize idx);
 tl::optional<char> buffer_getchar(const RDBuffer* self, usize idx);
 tl::optional<u8> buffer_getu8(const RDBuffer* self, usize idx);
@@ -24,9 +26,12 @@ tl::optional<u64> buffer_getu64be(const RDBuffer* self, usize idx);
 tl::optional<i16> buffer_geti16be(const RDBuffer* self, usize idx);
 tl::optional<i32> buffer_geti32be(const RDBuffer* self, usize idx);
 tl::optional<i64> buffer_geti64be(const RDBuffer* self, usize idx);
-tl::optional<std::string> buffer_getstringz(const RDBuffer* self, usize idx);
-tl::optional<std::string> buffer_getstring(const RDBuffer* self, usize idx,
-                                           usize n);
+tl::optional<std::string> buffer_getstrz(const RDBuffer* self, usize idx);
+tl::optional<std::string> buffer_getstr(const RDBuffer* self, usize idx,
+                                        usize n);
+tl::optional<std::string> buffer_getwstrz(const RDBuffer* self, usize idx);
+tl::optional<std::string> buffer_getwstr(const RDBuffer* self, usize idx,
+                                         usize n);
 tl::optional<typing::Value> buffer_gettype(const RDBuffer* self, usize idx,
                                            std::string_view tname);
 

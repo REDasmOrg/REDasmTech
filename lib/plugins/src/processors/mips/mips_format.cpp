@@ -25,7 +25,7 @@ MIPSOpcodeArray mips_opcodes_c1{};
 MIPSOpcodeArray mips_opcodes_c2{};
 MIPSOpcodeArray mips_opcodes_cls{};
 
-const MIPSMacroMap MIPSOPCODES_MACRO = {
+const MIPSMacroMap MIPS_OPCODES_MACRO = {
     MIPS_MACRO("la", MIPS_MACRO_LA, sizeof(MIPSInstruction) * 2),
     MIPS_MACRO("lw", MIPS_MACRO_LW, sizeof(MIPSInstruction) * 2),
     MIPS_MACRO("lhu", MIPS_MACRO_LHU, sizeof(MIPSInstruction) * 2),

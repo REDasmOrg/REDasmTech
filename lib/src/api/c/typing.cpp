@@ -1,4 +1,6 @@
 #include "../internal/typing.h"
+#include "../../utils/utils.h"
+#include "../marshal.h"
 #include <redasm/typing.h>
 
 const u32 TID_BOOL = redasm::typing::ids::BOOL;
@@ -49,4 +51,44 @@ const char* rd_createstruct(const char* name, const RDStructField* fields) {
 
     res = redasm::api::internal::create_struct(name, body);
     return res.c_str();
+}
+
+const RDValue* rdvalue_create() {
+    return redasm::api::to_c(redasm::api::internal::create_value());
+}
+
+const RDType* rdvalue_gettype(const RDValue* self) {
+    if(self)
+        return &redasm::api::from_c(self)->type;
+    return nullptr;
+}
+
+const char* rdvalue_tostring(const RDValue* self) {
+    if(self)
+        return redasm::api::from_c(self)->str.c_str();
+
+    return nullptr;
+}
+
+bool rdvalue_get(const RDValue* self, const char* key, const RDValue** v) {
+    if(!self)
+        return false;
+
+    const redasm::typing::Value* curr = redasm::api::from_c(self);
+
+    redasm::utils::split_each(key, '/', [&](std::string_view x) {
+        if(auto it = curr->dict.find(x); it != curr->dict.end())
+            curr = &it->second;
+        else
+            curr = nullptr;
+
+        return curr != nullptr;
+    });
+
+    if(v && curr)
+        *v = redasm::api::to_c(curr);
+    else if(!curr)
+        *v = {};
+
+    return curr != nullptr;
 }

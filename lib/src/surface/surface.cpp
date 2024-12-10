@@ -769,9 +769,9 @@ void Surface::render_type(const ListingItem& item) {
             tl::optional<std::string> v;
 
             if(td->get_id() == typing::ids::WSTR)
-                v = state::context->memory->get_wstring(item.index);
+                v = state::context->memory->get_wstr(item.index);
             else
-                v = state::context->memory->get_string(item.index);
+                v = state::context->memory->get_str(item.index);
 
             if(v.has_value())
                 m_renderer->ws().string(*v).chunk(",").constant(0);
@@ -797,6 +797,7 @@ void Surface::render_comment(const ListingItem& item) {
     utils::split_each(
         state::context->get_comment(item.index), '\n', [&](std::string_view x) {
             m_renderer->comment(i++ > 0 ? " | " : "# ").comment(x);
+            return true;
         });
 }
 
@@ -825,13 +826,12 @@ void Surface::render_refs(const ListingItem& item) {
         switch(td->get_id()) {
             case typing::ids::CHAR: {
                 if(type->n > 0) {
-                    mem->get_string(index, type->n)
-                        .map([&](const std::string& x) {
-                            m_renderer->string(x);
-                        });
+                    mem->get_str(index, type->n).map([&](const std::string& x) {
+                        m_renderer->string(x);
+                    });
                 }
                 else {
-                    mem->get_string(index, 1).map(
+                    mem->get_str(index, 1).map(
                         [&](const std::string& x) { m_renderer->string(x); });
                 }
                 break;
@@ -839,26 +839,26 @@ void Surface::render_refs(const ListingItem& item) {
 
             case typing::ids::WCHAR: {
                 if(type->n > 0) {
-                    mem->get_wstring(index, type->n)
+                    mem->get_wstr(index, type->n)
                         .map([&](const std::string& x) {
                             m_renderer->string(x);
                         });
                 }
                 else {
-                    mem->get_wstring(index, 1).map(
+                    mem->get_wstr(index, 1).map(
                         [&](const std::string& x) { m_renderer->string(x); });
                 }
                 break;
             }
 
             case typing::ids::STR: {
-                mem->get_string(index).map(
+                mem->get_str(index).map(
                     [&](const std::string& x) { m_renderer->string(x); });
                 break;
             }
 
             case typing::ids::WSTR: {
-                mem->get_wstring(index).map(
+                mem->get_wstr(index).map(
                     [&](const std::string& x) { m_renderer->string(x); });
                 break;
             }

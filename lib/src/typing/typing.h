@@ -1,7 +1,10 @@
 #pragma once
 
 #include "../utils/hash.h"
+#include "../utils/object.h"
 #include <fmt/core.h>
+#include <forward_list>
+#include <map>
 #include <redasm/typing.h>
 #include <string>
 #include <string_view>
@@ -74,13 +77,14 @@ struct TypeDef {
     RDType to_type(usize n = 0) const { return {.id = this->get_id(), .n = n}; }
 };
 
-struct Value;
+class Value;
 using ValueList = std::vector<Value>;
-using ValueDict = std::unordered_map<std::string, Value>;
+using ValueDict = std::map<std::string, Value, std::less<>>;
 using StructField = std::pair<std::string, std::string>;
 using StructBody = std::vector<typing::StructField>;
 
-struct Value {
+class Value: public Object {
+public:
     RDType type;
 
     ValueList list;
@@ -136,6 +140,7 @@ struct Types {
     }
 
     std::unordered_map<TypeId, typing::TypeDef> registered;
+    std::forward_list<Value> valuespool;
 };
 
 } // namespace redasm::typing

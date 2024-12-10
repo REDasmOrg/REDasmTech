@@ -4,7 +4,6 @@
 #include "../utils/utils.h"
 #include "abstractbuffer.h"
 #include <string>
-#include <string_view>
 #include <tl/optional.hpp>
 
 namespace redasm {
@@ -16,13 +15,17 @@ public:
     usize seek(usize o);
 
     [[nodiscard]] tl::optional<typing::Value>
-    peek_type(std::string_view tname) const;
+    peek_type(typing::FullTypeName tname) const;
 
-    [[nodiscard]] tl::optional<std::string> peek_string(usize n) const;
-    [[nodiscard]] tl::optional<std::string> peek_string() const;
+    [[nodiscard]] tl::optional<std::string> peek_str(usize n) const;
+    [[nodiscard]] tl::optional<std::string> peek_str() const;
+    [[nodiscard]] tl::optional<std::string> peek_wstr(usize n) const;
+    [[nodiscard]] tl::optional<std::string> peek_wstr() const;
     tl::optional<typing::Value> read_type(typing::FullTypeName tname);
-    tl::optional<std::string> read_string(usize n);
-    tl::optional<std::string> read_string();
+    tl::optional<std::string> read_str(usize n);
+    tl::optional<std::string> read_str();
+    tl::optional<std::string> read_wstr(usize n);
+    tl::optional<std::string> read_wstr();
 
     [[nodiscard]] tl::optional<bool> peek_bool() const;
     [[nodiscard]] tl::optional<char> peek_char() const;

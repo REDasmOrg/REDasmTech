@@ -21,21 +21,29 @@ usize stream_move(RDStream* self, isize off) {
 
 void stream_rewind(RDStream* self) { api::from_c(self)->rewind(); }
 
-usize stream_getposition(const RDStream* self) {
+usize stream_getpos(const RDStream* self) {
     return api::from_c(self)->position;
 }
 
 tl::optional<typing::Value> stream_peek_type(const RDStream* self,
-                                             std::string_view tname) {
+                                             typing::FullTypeName tname) {
     return api::from_c(self)->peek_type(tname);
 }
 
-tl::optional<std::string> stream_peek_stringz(const RDStream* self) {
-    return api::from_c(self)->peek_string();
+tl::optional<std::string> stream_peek_strz(const RDStream* self) {
+    return api::from_c(self)->peek_str();
 }
 
-tl::optional<std::string> stream_peek_string(const RDStream* self, usize n) {
-    return api::from_c(self)->peek_string(n);
+tl::optional<std::string> stream_peek_str(const RDStream* self, usize n) {
+    return api::from_c(self)->peek_str(n);
+}
+
+tl::optional<std::string> stream_peek_wstrz(const RDStream* self) {
+    return api::from_c(self)->peek_wstr();
+}
+
+tl::optional<std::string> stream_peek_wstr(const RDStream* self, usize n) {
+    return api::from_c(self)->peek_wstr(n);
 }
 
 tl::optional<u8> stream_peek_u8(const RDStream* self) {
@@ -99,12 +107,20 @@ tl::optional<typing::Value> stream_read_type(RDStream* self,
     return api::from_c(self)->read_type(tname);
 }
 
-tl::optional<std::string> stream_read_stringz(RDStream* self) {
-    return api::from_c(self)->read_string();
+tl::optional<std::string> stream_read_strz(RDStream* self) {
+    return api::from_c(self)->read_str();
 }
 
-tl::optional<std::string> stream_read_string(RDStream* self, usize n) {
-    return api::from_c(self)->read_string(n);
+tl::optional<std::string> stream_read_str(RDStream* self, usize n) {
+    return api::from_c(self)->read_str(n);
+}
+
+tl::optional<std::string> stream_read_wstrz(RDStream* self) {
+    return api::from_c(self)->read_wstr();
+}
+
+tl::optional<std::string> stream_read_wstr(RDStream* self, usize n) {
+    return api::from_c(self)->read_wstr(n);
 }
 
 tl::optional<u8> stream_read_u8(RDStream* self) {
@@ -175,10 +191,10 @@ tl::optional<typing::Value> stream_collect_type(RDStream* self,
     return t;
 }
 
-tl::optional<std::string> stream_collect_stringz(RDStream* self) {
+tl::optional<std::string> stream_collect_strz(RDStream* self) {
     AbstractStream* obj = api::from_c(self);
     usize pos = obj->position;
-    auto s = obj->read_string();
+    auto s = obj->read_str();
 
     if(s)
         state::context->collectedtypes.emplace_back(pos, "str");
@@ -186,14 +202,38 @@ tl::optional<std::string> stream_collect_stringz(RDStream* self) {
     return s;
 }
 
-tl::optional<std::string> stream_collect_string(RDStream* self, usize n) {
+tl::optional<std::string> stream_collect_str(RDStream* self, usize n) {
     AbstractStream* obj = api::from_c(self);
     usize pos = obj->position;
-    auto s = obj->read_string(n);
+    auto s = obj->read_str(n);
 
     if(s) {
         state::context->collectedtypes.emplace_back(
             pos, fmt::format("char[{}]", s->size()));
+    }
+
+    return s;
+}
+
+tl::optional<std::string> stream_collect_wstrz(RDStream* self) {
+    AbstractStream* obj = api::from_c(self);
+    usize pos = obj->position;
+    auto s = obj->read_wstr();
+
+    if(s)
+        state::context->collectedtypes.emplace_back(pos, "wstr");
+
+    return s;
+}
+
+tl::optional<std::string> stream_collect_wstr(RDStream* self, usize n) {
+    AbstractStream* obj = api::from_c(self);
+    usize pos = obj->position;
+    auto s = obj->read_wstr(n);
+
+    if(s) {
+        state::context->collectedtypes.emplace_back(
+            pos, fmt::format("wchar[{}]", s->size()));
     }
 
     return s;

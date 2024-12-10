@@ -1,6 +1,7 @@
 #pragma once
 
 #include <redasm/analyzer.h>
+#include <redasm/buffer.h>
 #include <redasm/byte.h>
 #include <redasm/common.h>
 #include <redasm/engine.h>
@@ -46,7 +47,6 @@ typedef struct RDProblem {
 } RDProblem;
 
 RD_HANDLE(RDContext);
-RD_HANDLE(RDBuffer);
 
 typedef struct RDTestResult {
     const RDLoader* loader;

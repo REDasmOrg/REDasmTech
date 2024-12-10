@@ -11,7 +11,7 @@ usize AbstractStream::seek(usize o) {
 usize AbstractStream::index_base() const { return 0; }
 
 tl::optional<typing::Value>
-AbstractStream::peek_type(std::string_view tname) const {
+AbstractStream::peek_type(typing::FullTypeName tname) const {
     usize idx = this->index_base() + this->position;
     return this->buffer().get_type(idx, tname);
 }
@@ -25,26 +25,51 @@ AbstractStream::read_type(typing::FullTypeName tname) {
     return v;
 }
 
-tl::optional<std::string> AbstractStream::peek_string(usize n) const {
+tl::optional<std::string> AbstractStream::peek_str(usize n) const {
     if(this->position + n >= this->size())
         n = this->size() - this->position;
 
-    return this->buffer().get_string(this->index_base() + this->position, n);
+    return this->buffer().get_str(this->index_base() + this->position, n);
 }
 
-tl::optional<std::string> AbstractStream::peek_string() const {
-    return this->buffer().get_string(this->index_base() + this->position);
+tl::optional<std::string> AbstractStream::peek_str() const {
+    return this->buffer().get_str(this->index_base() + this->position);
 }
 
-tl::optional<std::string> AbstractStream::read_string(usize n) {
-    auto s = this->peek_string(n);
+tl::optional<std::string> AbstractStream::peek_wstr(usize n) const {
+    if(this->position + n >= this->size())
+        n = this->size() - this->position;
+
+    return this->buffer().get_wstr(this->index_base() + this->position, n);
+}
+
+tl::optional<std::string> AbstractStream::peek_wstr() const {
+    return this->buffer().get_wstr(this->index_base() + this->position);
+}
+
+tl::optional<std::string> AbstractStream::read_str(usize n) {
+    auto s = this->peek_str(n);
     if(s)
         this->position += s->size();
     return s;
 }
 
-tl::optional<std::string> AbstractStream::read_string() {
-    auto s = this->peek_string();
+tl::optional<std::string> AbstractStream::read_str() {
+    auto s = this->peek_str();
+    if(s)
+        this->position += s->size();
+    return s;
+}
+
+tl::optional<std::string> AbstractStream::read_wstr(usize n) {
+    auto s = this->peek_wstr(n);
+    if(s)
+        this->position += s->size();
+    return s;
+}
+
+tl::optional<std::string> AbstractStream::read_wstr() {
+    auto s = this->peek_wstr();
     if(s)
         this->position += s->size();
     return s;

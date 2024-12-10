@@ -98,12 +98,8 @@ inline AbstractBuffer* from_c(RDBuffer* arg) {
     return reinterpret_cast<AbstractBuffer*>(arg);
 }
 
-inline const typing::ValueList* from_c(const RDValueList* arg) {
-    return reinterpret_cast<const typing::ValueList*>(arg);
-}
-
-inline const typing::ValueDict* from_c(const RDValueDict* arg) {
-    return reinterpret_cast<const typing::ValueDict*>(arg);
+inline const typing::Value* from_c(const RDValue* arg) {
+    return reinterpret_cast<const typing::Value*>(arg);
 }
 
 inline RDByte to_c(Byte arg) { return arg.value; }
@@ -160,19 +156,16 @@ inline const RDILExpr* to_c(const rdil::ILExpr* arg) {
     return reinterpret_cast<const RDILExpr*>(arg);
 }
 
-inline const RDValueList* to_c(const typing::ValueList* arg) {
-    return reinterpret_cast<const RDValueList*>(arg);
+inline const RDValue* to_c(const typing::Value* v) {
+    return reinterpret_cast<const RDValue*>(v);
 }
 
-inline const RDValueDict* to_c(const typing::ValueDict* arg) {
-    return reinterpret_cast<const RDValueDict*>(arg);
-}
+inline RDValue* to_c(typing::Value* v) { return reinterpret_cast<RDValue*>(v); }
 
 RDSegment to_c(const Segment& arg);
 RDRef to_c(const Database::Ref& arg);
 std::vector<RDRef> to_c(const std::vector<Database::Ref>& arg);
 RDFunctionBasicBlock to_c(const Function::BasicBlock* bb);
-RDValue to_c(const typing::Value& v);
 
 } // namespace api
 

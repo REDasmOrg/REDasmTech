@@ -229,7 +229,7 @@ void select(RDContext* context) {
     }
 }
 
-void free(Object* obj) { delete obj; }
+void free(void* obj) { delete reinterpret_cast<redasm::Object*>(obj); }
 
 bool destroy() {
     spdlog::trace("destroy()");
@@ -838,20 +838,20 @@ tl::optional<i64> get_i64be(RDAddress address) {
     return tl::nullopt;
 }
 
-tl::optional<std::string> get_stringz(RDAddress address) {
-    spdlog::trace("get_stringz({:x})", address);
+tl::optional<std::string> get_strz(RDAddress address) {
+    spdlog::trace("get_strz({:x})", address);
     if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_getstringz(
-            api::to_c(state::context->memory.get()), *idx);
+        return internal::buffer_getstrz(api::to_c(state::context->memory.get()),
+                                        *idx);
 
     return tl::nullopt;
 }
 
-tl::optional<std::string> get_string(RDAddress address, usize n) {
-    spdlog::trace("get_string({:x}, {})", address, n);
+tl::optional<std::string> get_str(RDAddress address, usize n) {
+    spdlog::trace("get_str({:x}, {})", address, n);
     if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_getstring(
-            api::to_c(state::context->memory.get()), *idx, n);
+        return internal::buffer_getstr(api::to_c(state::context->memory.get()),
+                                       *idx, n);
 
     return tl::nullopt;
 }

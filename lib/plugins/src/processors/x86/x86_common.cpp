@@ -3,17 +3,21 @@
 namespace x86_common {
 
 std::optional<RDAddress> read_address(RDAddress address) {
-    RDValue val;
-
     if(rd_getbits() == 64) {
-        if(rd_gettype(address, "u64", &val))
-            return val.u64_v;
+        u64 val;
+
+        if(rd_getu64(address, &val))
+            return val;
 
         return std::nullopt;
     }
 
-    if(rd_gettype(address, "u32", &val))
-        return val.u32_v;
+    if(rd_getbits() == 32) {
+        u32 val;
+
+        if(rd_getu32(address, &val))
+            return val;
+    }
 
     return std::nullopt;
 }

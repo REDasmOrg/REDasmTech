@@ -1,9 +1,25 @@
 #include "buffer.h"
+#include "../../context.h"
 #include "../../memory/abstractbuffer.h"
+#include "../../state.h"
 #include "../marshal.h"
 #include <spdlog/spdlog.h>
 
 namespace redasm::api::internal {
+
+RDBuffer* buffer_getfile() {
+    spdlog::trace("buffer_getfile()");
+    if(state::context)
+        return api::to_c(state::context->file.get());
+    return nullptr;
+}
+
+RDBuffer* buffer_getmemory() {
+    spdlog::trace("buffer_getmemory()");
+    if(state::context)
+        return api::to_c(state::context->memory.get());
+    return nullptr;
+}
 
 tl::optional<bool> buffer_getbool(const RDBuffer* self, usize idx) {
     spdlog::trace("buffer_getbool({}, {})", fmt::ptr(self), idx);
@@ -85,15 +101,26 @@ tl::optional<i64> buffer_geti64be(const RDBuffer* self, usize idx) {
     return api::from_c(self)->get_i64(idx, true);
 }
 
-tl::optional<std::string> buffer_getstringz(const RDBuffer* self, usize idx) {
-    spdlog::trace("buffer_getstringz({}, {})", fmt::ptr(self), idx);
-    return api::from_c(self)->get_string(idx);
+tl::optional<std::string> buffer_getstrz(const RDBuffer* self, usize idx) {
+    spdlog::trace("buffer_getstrz({}, {})", fmt::ptr(self), idx);
+    return api::from_c(self)->get_str(idx);
 }
 
-tl::optional<std::string> buffer_getstring(const RDBuffer* self, usize idx,
-                                           usize n) {
-    spdlog::trace("buffer_getstring({}, {}, {})", fmt::ptr(self), idx, n);
-    return api::from_c(self)->get_string(idx, n);
+tl::optional<std::string> buffer_getstr(const RDBuffer* self, usize idx,
+                                        usize n) {
+    spdlog::trace("buffer_getstr({}, {}, {})", fmt::ptr(self), idx, n);
+    return api::from_c(self)->get_str(idx, n);
+}
+
+tl::optional<std::string> buffer_getwstrz(const RDBuffer* self, usize idx) {
+    spdlog::trace("buffer_getwstrz({}, {})", fmt::ptr(self), idx);
+    return api::from_c(self)->get_wstr(idx);
+}
+
+tl::optional<std::string> buffer_getwstr(const RDBuffer* self, usize idx,
+                                         usize n) {
+    spdlog::trace("buffer_getwstr({}, {})", fmt::ptr(self), idx);
+    return api::from_c(self)->get_wstr(idx, n);
 }
 
 tl::optional<typing::Value> buffer_gettype(const RDBuffer* self, usize idx,

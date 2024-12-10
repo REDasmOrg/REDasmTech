@@ -2,7 +2,6 @@
 
 #include "../../modulemanager.h"
 #include "../../typing/typing.h"
-#include "../../utils/object.h"
 #include <redasm/redasm.h>
 #include <string>
 #include <string_view>
@@ -37,7 +36,7 @@ std::string symbolize(std::string s);
 RDBuffer* load_file(const std::string& filepath);
 std::vector<RDTestResult> test(RDBuffer* buffer);
 void select(RDContext* context);
-void free(Object* obj);
+void free(void* obj);
 bool destroy();
 void discard();
 void enqueue(RDAddress address);
@@ -105,8 +104,8 @@ tl::optional<u64> get_u64be(RDAddress address);
 tl::optional<i16> get_i16be(RDAddress address);
 tl::optional<i32> get_i32be(RDAddress address);
 tl::optional<i64> get_i64be(RDAddress address);
-tl::optional<std::string> get_stringz(RDAddress address);
-tl::optional<std::string> get_string(RDAddress address, usize n);
+tl::optional<std::string> get_strz(RDAddress address);
+tl::optional<std::string> get_str(RDAddress address, usize n);
 tl::optional<typing::Value> get_type(RDAddress address, std::string_view tname);
 
 inline bool set_name(RDAddress address, const std::string& name) {

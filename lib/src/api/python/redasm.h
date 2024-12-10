@@ -76,8 +76,8 @@ PyObject* get_u64be(PyObject* self, PyObject* args);
 PyObject* get_i16be(PyObject* self, PyObject* args);
 PyObject* get_i32be(PyObject* self, PyObject* args);
 PyObject* get_i64be(PyObject* self, PyObject* args);
-PyObject* get_stringz(PyObject* self, PyObject* args);
-PyObject* get_string(PyObject* self, PyObject* args);
+PyObject* get_strz(PyObject* self, PyObject* args);
+PyObject* get_str(PyObject* self, PyObject* args);
 PyObject* get_type(PyObject* self, PyObject* args);
 
 PyObject* set_processor(PyObject* self, PyObject* args);

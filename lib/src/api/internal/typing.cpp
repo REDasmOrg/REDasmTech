@@ -13,6 +13,13 @@ usize size_of(std::string_view tname) {
     return 0;
 }
 
+typing::Value* create_value() {
+    if(state::context)
+        return &state::context->types.valuespool.emplace_front();
+
+    return nullptr;
+}
+
 bool create_type(std::string_view tname, RDType* t) {
     spdlog::trace("create_type('{}', {})", tname, fmt::ptr(t));
 

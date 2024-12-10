@@ -27,7 +27,19 @@ bool init(RDLoader*) {
     rd_createstruct("PSX_EXE_HEADER", PSX_EXE_HEADER);
     rd_setbits(32);
 
-    return true;
+    RDBuffer* file = rdbuffer_getfile();
+    const RDValue* psxheader = rdvalue_create();
+
+    if(rdbuffer_gettype(file, 0, "PSX_EXE_HEADER", &psxheader)) {
+        const RDValue* id;
+        rdvalue_get(psxheader, "id", &id);
+        const char* v = rdvalue_tostring(id);
+
+        // return rdvalue_get(&psxheader, "id", &v) && v.str ==
+        // PSXEXE_SIGNATURE;
+    }
+
+    return false;
 }
 
 } // namespace psxexe

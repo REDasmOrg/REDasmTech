@@ -143,7 +143,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::STR: {
-                if(auto s = this->get_string(pos); s) {
+                if(auto s = this->get_str(pos); s) {
                     v.str = *s;
                     pos += s->size();
                 }
@@ -153,7 +153,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::WSTR: {
-                if(auto s = this->get_wstring(pos); s) {
+                if(auto s = this->get_wstr(pos); s) {
                     v.str = *s;
                     pos += s->size();
                 }
@@ -170,7 +170,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
 }
 
 tl::optional<std::string>
-AbstractBuffer::get_string_impl(usize& idx, typing::TypeName tname) const {
+AbstractBuffer::get_str_impl(usize& idx, typing::TypeName tname) const {
     if(idx >= this->size())
         return tl::nullopt;
 
@@ -196,8 +196,8 @@ AbstractBuffer::get_string_impl(usize& idx, typing::TypeName tname) const {
 }
 
 tl::optional<std::string>
-AbstractBuffer::get_string_impl(usize& idx, usize n,
-                                std::string_view tname) const {
+AbstractBuffer::get_str_impl(usize& idx, usize n,
+                             std::string_view tname) const {
     if(idx >= this->size())
         return tl::nullopt;
 
@@ -268,22 +268,21 @@ AbstractBuffer::get_type(usize idx, RDType t, usize& lastidx) const {
     return this->get_type_impl(lastidx, t);
 }
 
-tl::optional<std::string> AbstractBuffer::get_string(usize idx) const {
-    return this->get_string_impl(idx, typing::names::CHAR);
+tl::optional<std::string> AbstractBuffer::get_str(usize idx) const {
+    return this->get_str_impl(idx, typing::names::CHAR);
 }
 
-tl::optional<std::string> AbstractBuffer::get_string(usize idx, usize n) const {
-    return this->get_string_impl(idx, n, typing::names::CHAR);
+tl::optional<std::string> AbstractBuffer::get_str(usize idx, usize n) const {
+    return this->get_str_impl(idx, n, typing::names::CHAR);
 }
 
-tl::optional<std::string> AbstractBuffer::get_wstring(usize idx) const {
-    return this->get_string_impl(idx, typing::names::WCHAR);
+tl::optional<std::string> AbstractBuffer::get_wstr(usize idx) const {
+    return this->get_str_impl(idx, typing::names::WCHAR);
 }
 
-tl::optional<std::string> AbstractBuffer::get_wstring(usize idx,
-                                                      usize n) const {
+tl::optional<std::string> AbstractBuffer::get_wstr(usize idx, usize n) const {
 
-    return this->get_string_impl(idx, n, typing::names::WCHAR);
+    return this->get_str_impl(idx, n, typing::names::WCHAR);
 }
 
 } // namespace redasm

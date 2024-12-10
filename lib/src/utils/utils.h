@@ -76,8 +76,8 @@ void split_each(std::string_view s, char sep, Function f) {
     for(; i < s.size(); i++) {
         if(s[i] != sep)
             continue;
-        if(i > start)
-            f(utils::trim(s.substr(start, i - start)));
+        if(i > start && !f(utils::trim(s.substr(start, i - start))))
+            return;
         start = i + 1;
     }
 

@@ -619,26 +619,26 @@ PyObject* get_i64be(PyObject* /*self*/, PyObject* args) {
     Py_RETURN_NONE;
 }
 
-PyObject* get_stringz(PyObject* /*self*/, PyObject* args) {
+PyObject* get_strz(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args))
         return python::type_error(args, "int");
 
     RDAddress address = PyLong_AsUnsignedLongLong(args);
 
-    if(auto v = internal::get_stringz(address); v)
+    if(auto v = internal::get_strz(address); v)
         return PyUnicode_FromString(v->c_str());
 
     Py_RETURN_NONE;
 }
 
-PyObject* get_string(PyObject* /*self*/, PyObject* args) {
+PyObject* get_str(PyObject* /*self*/, PyObject* args) {
     RDAddress address{};
     usize n{};
 
     if(!PyArg_ParseTuple(args, "KK", &address, &n))
         return nullptr;
 
-    if(auto v = internal::get_string(address, n); v)
+    if(auto v = internal::get_str(address, n); v)
         return PyUnicode_FromString(v->c_str());
 
     Py_RETURN_NONE;
