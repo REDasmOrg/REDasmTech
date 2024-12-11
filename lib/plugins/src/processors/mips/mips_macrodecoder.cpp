@@ -2,19 +2,11 @@
 #include "mips_decoder.h"
 #include "mips_registers.h"
 #include <string_view>
-#include <type_traits>
 #include <unordered_map>
 
 namespace mips_macrodecoder {
 
 namespace {
-
-template<typename T>
-std::make_signed_t<T> sign_ext(T val, int valbits) {
-    T m = 1;
-    m <<= valbits - 1;
-    return static_cast<std::make_signed_t<T>>((val ^ m) - m);
-}
 
 void apply_macro(std::string_view mnemonic, MIPSDecodedInstruction& dec) {
     const auto& [macro, size] = MIPS_OPCODES_MACRO.at(mnemonic);
@@ -25,14 +17,13 @@ void apply_macro(std::string_view mnemonic, MIPSDecodedInstruction& dec) {
 bool can_simplify_lui(const MIPSDecodedInstruction& lui,
                       const MIPSDecodedInstruction& nextdec) {
     switch(nextdec.opcode->encoding) {
-        case MIPS_ENCODING_I:
-            return lui.instruction.i_u.rt == nextdec.instruction.i_u.rs;
+        case MIPS_ENCODING_I: return lui.instr.i_u.rt == nextdec.instr.i_u.rs;
 
         case MIPS_ENCODING_R: {
-            if(nextdec.instruction.r.rd != nextdec.instruction.r.rs)
+            if(nextdec.instr.r.rd != nextdec.instr.r.rs)
                 return false;
-            return (lui.instruction.i_u.rt == MIPS_REG_AT) &&
-                   (nextdec.instruction.r.rd == MIPS_REG_AT);
+            return (lui.instr.i_u.rt == MIPS_REG_AT) &&
+                   (nextdec.instr.r.rd == MIPS_REG_AT);
         }
 
         default: break;
@@ -55,11 +46,11 @@ void check_lui(RDAddress address, MIPSDecodedInstruction& lui, bool big) {
        !mips_macrodecoder::can_simplify_lui(lui, nextdec))
         return;
 
-    u32 mipsaddress = lui.instruction.i_u.immediate << 16;
+    u32 mipsaddress = lui.instr.i_u.immediate << 16;
 
     switch(nextdec.opcode->id) {
         case MIPS_INSTR_ORI:
-            mipsaddress |= static_cast<u32>(nextdec.instruction.i_u.immediate);
+            mipsaddress |= static_cast<u32>(nextdec.instr.i_u.immediate);
             break;
 
         case MIPS_INSTR_ADDIU:
@@ -67,36 +58,35 @@ void check_lui(RDAddress address, MIPSDecodedInstruction& lui, bool big) {
         case MIPS_INSTR_LHU:
         case MIPS_INSTR_SW:
         case MIPS_INSTR_SH:
-            mipsaddress += static_cast<u32>(mips_macrodecoder::sign_ext(
-                nextdec.instruction.i_u.immediate, 16));
+            mipsaddress += static_cast<u32>(
+                mips_decoder::sign_ext(nextdec.instr.i_u.immediate, 16));
             break;
 
         default: return;
     }
 
-    lui.macro.regimm.reg = nextdec.instruction.i_u.rt;
+    lui.macro.regimm.reg = nextdec.instr.i_u.rt;
     lui.macro.regimm.address = mipsaddress;
     mips_macrodecoder::apply_macro(LUI_MACROS.at(nextdec.opcode->id), lui);
 }
 
 void check_li(MIPSDecodedInstruction& dec) {
-    if(dec.instruction.i_u.rs == MIPS_REG_ZERO)
+    if(dec.instr.i_u.rs == MIPS_REG_ZERO)
         apply_macro("li", dec);
 }
 
 void check_move(MIPSDecodedInstruction& dec) {
-    if(dec.instruction.r.rt == MIPS_REG_ZERO)
+    if(dec.instr.r.rt == MIPS_REG_ZERO)
         apply_macro("move", dec);
 }
 
 void check_nop(MIPSDecodedInstruction& dec) {
-    if((dec.instruction.r.rd == MIPS_REG_ZERO) &&
-       (dec.instruction.r.rt != MIPS_REG_ZERO))
+    if((dec.instr.r.rd == MIPS_REG_ZERO) && (dec.instr.r.rt != MIPS_REG_ZERO))
         apply_macro("nop", dec);
 }
 
 void check_b(MIPSDecodedInstruction& dec) {
-    if(dec.instruction.i_u.rt == dec.instruction.i_u.rs)
+    if(dec.instr.i_u.rt == dec.instr.i_u.rs)
         apply_macro("b", dec);
 }
 

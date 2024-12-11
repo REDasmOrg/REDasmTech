@@ -29,13 +29,12 @@ enum MIPSCategory {
     MIPS_CATEGORY_LOAD,
     MIPS_CATEGORY_STORE,
     MIPS_CATEGORY_JUMP,
-    MIPS_CATEGORY_JUMP_COND,
+    MIPS_CATEGORY_JUMPCOND,
     MIPS_CATEGORY_CALL,
     MIPS_CATEGORY_RET,
 };
 
 struct MIPSOpcode {
-    const char* mnemonic;
     u32 id;
     int category;
     int encoding;
@@ -64,7 +63,7 @@ union MIPSMacroOpCode {
 };
 
 struct MIPSDecodedInstruction {
-    MIPSInstruction instruction;
+    MIPSInstruction instr;
     const MIPSOpcode* opcode;
     MIPSMacroOpCode macro;
     int length{sizeof(MIPSInstruction)};

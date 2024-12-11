@@ -25,7 +25,6 @@ const RDStructField PSX_EXE_HEADER[] = {
 
 bool init(RDLoader*) {
     rd_createstruct("PSX_EXE_HEADER", PSX_EXE_HEADER);
-    rd_setbits(32);
 
     RDBuffer* file = rdbuffer_getfile();
     RDValue* psxheader = rdvalue_create();
@@ -35,6 +34,8 @@ bool init(RDLoader*) {
        !rdvalue_getstr(psxheader, "id", &id) || id != PSXEXE_SIGNATURE)
         return false;
 
+    rd_setbits(32);
+    rd_setprocessor("mips32le");
     rd_map(PSX_USERRAM_START, PSX_USERRAM_END);
 
     u32 taddr{}, tsize{}, pc0{};

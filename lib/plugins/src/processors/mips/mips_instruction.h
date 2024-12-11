@@ -5,10 +5,8 @@
 constexpr int MIPS_OP_BITS = 6;
 
 enum MIPSInstructionId {
-    MIPS_INSTR_INVALID,
-
     // R-Type
-    MIPS_INSTR_ADD,
+    MIPS_INSTR_ADD = 0,
     MIPS_INSTR_ADDU,
     MIPS_INSTR_AND,
     MIPS_INSTR_DIV,
