@@ -85,6 +85,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/c/utils.cpp
         src/api/c/redasm.cpp
         src/api/c/buffer.cpp
+        src/api/c/memory.cpp
         src/api/c/stream.cpp
         src/api/c/byte.cpp
         src/api/c/theme.cpp

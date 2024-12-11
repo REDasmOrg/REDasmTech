@@ -46,9 +46,26 @@ REDASM_EXPORT const char* rd_createstruct(const char* name,
 
 inline bool rd_istypenull(const RDType* t) { return t && !t->id; }
 
-REDASM_EXPORT const RDValue* rdvalue_create();
+REDASM_EXPORT RDValue* rdvalue_create();
 REDASM_EXPORT const RDType* rdvalue_gettype(const RDValue* self);
 REDASM_EXPORT const char* rdvalue_tostring(const RDValue* self);
 
 REDASM_EXPORT bool rdvalue_get(const RDValue* self, const char* key,
                                const RDValue** v);
+
+REDASM_EXPORT bool rdvalue_query(const RDValue* self, const char* q,
+                                 const RDValue** v);
+
+REDASM_EXPORT bool rdvalue_query_n(const RDValue* self, const char* q, usize n,
+                                   const RDValue** v);
+
+REDASM_EXPORT bool rdvalue_getu8(const RDValue* self, const char* q, u8* v);
+REDASM_EXPORT bool rdvalue_getu16(const RDValue* self, const char* q, u16* v);
+REDASM_EXPORT bool rdvalue_getu32(const RDValue* self, const char* q, u32* v);
+REDASM_EXPORT bool rdvalue_getu64(const RDValue* self, const char* q, u64* v);
+REDASM_EXPORT bool rdvalue_geti8(const RDValue* self, const char* q, i8* v);
+REDASM_EXPORT bool rdvalue_geti16(const RDValue* self, const char* q, i16* v);
+REDASM_EXPORT bool rdvalue_geti32(const RDValue* self, const char* q, i32* v);
+REDASM_EXPORT bool rdvalue_geti64(const RDValue* self, const char* q, i64* v);
+REDASM_EXPORT bool rdvalue_getstr(const RDValue* self, const char* q,
+                                  const char** v);

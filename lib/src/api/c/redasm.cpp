@@ -1,7 +1,6 @@
 #include "../internal/redasm.h"
 #include "../internal/graph.h"
-#include "../internal/memory.h"
-#include "../marshal.h"
+#include <algorithm>
 #include <redasm/redasm.h>
 
 namespace {
@@ -112,27 +111,32 @@ usize rd_getbytes(const RDByte** bytes) {
     return redasm::api::internal::get_bytes(bytes);
 }
 
-usize rd_memoryread(RDAddress address, char* data, usize n) {
-    return redasm::api::internal::memory_read(address, data, n);
-}
-
-bool rd_setflags(RDAddress address, u32 flags) {
-    return redasm::api::internal::memory_setflags(address, flags);
-}
-
 int rd_getbits(void) { return redasm::api::internal::get_bits(); }
 void rd_setbits(int bits) { redasm::api::internal::set_bits(bits); }
-
-bool rd_checkstring(RDAddress address, RDStringResult* r) {
-    return redasm::api::internal::check_string(address, r);
-}
-
-void rd_memoryinfo(RDMemoryInfo* mi) { redasm::api::internal::memory_info(mi); }
 
 const char* rd_rendertext(RDAddress address) {
     static std::string s;
     s = redasm::api::internal::render_text(address);
     return s.c_str();
+}
+
+bool rd_mapsegment(const char* name, RDAddress address, RDAddress endaddress,
+                   RDOffset offset, RDOffset endoffset, usize type) {
+
+    if(name)
+        return redasm::api::internal::map_segment(name, address, endaddress,
+                                                  offset, endoffset, type);
+
+    return false;
+}
+
+bool rd_mapsegment_n(const char* name, RDAddress address, usize asize,
+                     RDOffset offset, usize osize, usize type) {
+    if(name)
+        return redasm::api::internal::map_segment_n(name, address, asize,
+                                                    offset, osize, type);
+
+    return false;
 }
 
 RDBuffer* rd_loadfile(const char* filepath) {

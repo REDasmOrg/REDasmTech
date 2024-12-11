@@ -33,4 +33,6 @@ REDASM_EXPORT bool rdbuffer_getwstrz(const RDBuffer* self, usize idx,
 REDASM_EXPORT bool rdbuffer_getwstr(const RDBuffer* self, usize idx, usize n,
                                     const char** v);
 REDASM_EXPORT bool rdbuffer_gettype(const RDBuffer* self, usize idx,
-                                    const char* tname, const RDValue** v);
+                                    const char* tname, RDValue* v);
+REDASM_EXPORT bool rdbuffer_collecttype(const RDBuffer* self, usize idx,
+                                        const char* tname, RDValue* v);

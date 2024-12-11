@@ -10,6 +10,7 @@
 #include <redasm/instruction.h>
 #include <redasm/listing.h>
 #include <redasm/loader.h>
+#include <redasm/memory.h>
 #include <redasm/processor.h>
 #include <redasm/rdil.h>
 #include <redasm/renderer.h>
@@ -54,21 +55,6 @@ typedef struct RDTestResult {
     RDContext* context;
 } RDTestResult;
 
-struct RDMemoryInfo {
-    union {
-        RDAddress start;
-        RDAddress baseaddress;
-    };
-
-    union {
-        RDAddress end;
-        RDAddress end_baseaddress;
-    };
-
-    usize size;
-    int bits;
-};
-
 typedef enum RDSegmentType {
     SEG_UNKNOWN = 0,
     SEG_HASDATA = 1 << 0,
@@ -83,13 +69,6 @@ typedef struct RDSegment {
     RDOffset offset;
     RDOffset endoffset;
 } RDSegment;
-
-typedef struct RDStringResult {
-    const char* type;
-    const char* value;
-    usize totalsize;
-    bool terminated;
-} RDStringResult;
 
 typedef void (*RDLogCallback)(const char*, void*);
 typedef void (*RDStatusCallback)(const char*, void*);
@@ -117,13 +96,17 @@ REDASM_EXPORT void rd_discard(void);
 REDASM_EXPORT bool rd_destroy(void);
 REDASM_EXPORT usize rd_getsegments(const RDSegment** segments);
 REDASM_EXPORT usize rd_getbytes(const RDByte** bytes);
-REDASM_EXPORT usize rd_memoryread(RDAddress address, char* data, usize n);
-REDASM_EXPORT bool rd_setflags(RDAddress address, u32 flags);
 REDASM_EXPORT int rd_getbits(void);
 REDASM_EXPORT void rd_setbits(int bits);
-REDASM_EXPORT bool rd_checkstring(RDAddress address, RDStringResult* r);
-REDASM_EXPORT void rd_memoryinfo(RDMemoryInfo* mi);
 REDASM_EXPORT const char* rd_rendertext(RDAddress address);
+
+REDASM_EXPORT bool rd_mapsegment(const char* name, RDAddress address,
+                                 RDAddress endaddress, RDOffset offset,
+                                 RDOffset endoffset, usize type);
+
+REDASM_EXPORT bool rd_mapsegment_n(const char* name, RDAddress address,
+                                   usize asize, RDOffset offset, usize osize,
+                                   usize type);
 
 REDASM_EXPORT bool rd_getbool(RDAddress address, bool* v);
 REDASM_EXPORT bool rd_getchar(RDAddress address, char* v);

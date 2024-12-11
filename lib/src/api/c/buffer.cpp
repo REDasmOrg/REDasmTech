@@ -153,7 +153,7 @@ bool rdbuffer_getwstr(const RDBuffer* self, usize idx, usize n,
 }
 
 bool rdbuffer_gettype(const RDBuffer* self, usize idx, const char* tname,
-                      const RDValue** v) {
+                      RDValue* v) {
     if(!tname)
         return false;
 
@@ -161,7 +161,22 @@ bool rdbuffer_gettype(const RDBuffer* self, usize idx, const char* tname,
 
     res.map([&](const redasm::typing::Value& x) {
         if(v)
-            *v = redasm::api::to_c(&x);
+            *redasm::api::from_c(v) = x;
+    });
+
+    return res.has_value();
+}
+
+bool rdbuffer_collecttype(const RDBuffer* self, usize idx, const char* tname,
+                          RDValue* v) {
+    if(!tname)
+        return false;
+
+    auto res = redasm::api::internal::buffer_collecttype(self, idx, tname);
+
+    res.map([&](const redasm::typing::Value& x) {
+        if(v)
+            *redasm::api::from_c(v) = x;
     });
 
     return res.has_value();

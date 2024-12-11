@@ -292,7 +292,12 @@ bool Context::set_type(MIndex idx, RDType t, usize flags) {
     return true;
 }
 
-void Context::memory_map(RDAddress base, usize size) {
+bool Context::memory_map(RDAddress base, usize size) {
+    if(!size) {
+        spdlog::error("memory_map: Invalid size");
+        return false;
+    }
+
     this->baseaddress = base;
     this->memory = std::make_unique<Memory>(size);
     this->bits = calculate_bits(this->end_baseaddress());
@@ -311,6 +316,7 @@ void Context::memory_map(RDAddress base, usize size) {
     }
 
     this->collectedtypes.clear();
+    return true;
 }
 
 tl::optional<MIndex> Context::address_to_index(RDAddress address) const {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../typing/typing.h"
+#include "../utils/object.h"
 #include "../utils/utils.h"
 #include "abstractbuffer.h"
 #include <string>
@@ -8,10 +9,9 @@
 
 namespace redasm {
 
-class AbstractStream {
+class AbstractStream: public Object {
 public:
     AbstractStream() = default;
-    virtual ~AbstractStream() = default;
     usize seek(usize o);
 
     [[nodiscard]] tl::optional<typing::Value>

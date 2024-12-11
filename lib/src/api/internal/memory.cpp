@@ -6,9 +6,37 @@
 
 namespace redasm::api::internal {
 
-void memory_map(RDAddress base, usize size) {
-    spdlog::trace("memory_map({:x}, {:x})", base, size);
-    state::context->memory_map(base, size);
+bool check_string(RDAddress address, RDStringResult* mi) {
+    spdlog::trace("check_string({:x}, {})", address, fmt::ptr(mi));
+
+    if(!mi)
+        return false;
+
+    auto idx = state::context->address_to_index(address);
+
+    if(!idx) {
+        *mi = {};
+        return false;
+    }
+
+    auto res = stringfinder::classify(*idx);
+    if(res)
+        *mi = *res;
+    return res.has_value();
+}
+
+bool memory_map(RDAddress startaddr, RDAddress endaddr) {
+    spdlog::trace("memory_map({:x}, {:x})", startaddr, endaddr);
+
+    if(startaddr > endaddr) // NOLINT
+        endaddr = startaddr;
+
+    return state::context->memory_map(startaddr, endaddr - startaddr);
+}
+
+bool memory_map_n(RDAddress base, usize size) {
+    spdlog::trace("memory_map_n({:x}, {:x})", base, size);
+    return state::context->memory_map(base, size);
 }
 
 void memory_copy(RDAddress address, RDOffset start, RDOffset end) {
@@ -28,25 +56,6 @@ usize memory_bytes(const Byte** b) {
         *b = state::context->memory->data();
 
     return state::context->memory->size();
-}
-
-bool check_string(RDAddress address, RDStringResult* mi) {
-    spdlog::trace("check_string({:x}, {})", address, fmt::ptr(mi));
-
-    if(!mi)
-        return false;
-
-    auto idx = state::context->address_to_index(address);
-
-    if(!idx) {
-        *mi = {};
-        return false;
-    }
-
-    auto res = stringfinder::classify(*idx);
-    if(res)
-        *mi = *res;
-    return res.has_value();
 }
 
 void memory_info(RDMemoryInfo* mi) {
@@ -109,19 +118,6 @@ usize memory_read(RDAddress address, char* data, usize n) {
 usize memory_size() {
     spdlog::trace("memory_size()");
     return state::context->memory->size();
-}
-
-bool memory_setflags(RDAddress address, u32 flags) {
-    spdlog::trace("memory_setflags({:x}, {:x})", address, flags);
-
-    Context* ctx = state::context;
-
-    return ctx->address_to_index(address).map_or(
-        [&](MIndex idx) {
-            ctx->memory->at(idx).set(flags);
-            return true;
-        },
-        false);
 }
 
 } // namespace redasm::api::internal

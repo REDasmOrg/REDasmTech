@@ -91,6 +91,8 @@ public:
     ValueDict dict;
     std::string str;
 
+    mutable std::vector<char> scratchpad;
+
     // clang-format off
     union {
         bool b_v; char ch_v;

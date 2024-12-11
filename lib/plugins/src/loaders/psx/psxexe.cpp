@@ -8,8 +8,8 @@ namespace {
 // constexpr int PSXEXE_SIGNATURE_SIZE = 8;
 constexpr std::string_view PSXEXE_SIGNATURE = "PS-X EXE";
 constexpr u32 PSXEXE_TEXT_OFFSET = 0x00000800;
-constexpr u32 PSX_USER_RAM_START = 0x80000000;
-constexpr u32 PSX_USER_RAM_END = 0x80200000;
+constexpr u32 PSX_USERRAM_START = 0x80000000;
+constexpr u32 PSX_USERRAM_END = 0x80200000;
 
 const RDStructField PSX_EXE_HEADER[] = {
     {"char[8]", "id"},  {"u32", "text"},    {"u32", "data"},
@@ -28,18 +28,25 @@ bool init(RDLoader*) {
     rd_setbits(32);
 
     RDBuffer* file = rdbuffer_getfile();
-    const RDValue* psxheader = rdvalue_create();
+    RDValue* psxheader = rdvalue_create();
+    const char* id = nullptr;
 
-    if(rdbuffer_gettype(file, 0, "PSX_EXE_HEADER", &psxheader)) {
-        const RDValue* id;
-        rdvalue_get(psxheader, "id", &id);
-        const char* v = rdvalue_tostring(id);
+    if(!rdbuffer_collecttype(file, 0, "PSX_EXE_HEADER", psxheader) ||
+       !rdvalue_getstr(psxheader, "id", &id) || id != PSXEXE_SIGNATURE)
+        return false;
 
-        // return rdvalue_get(&psxheader, "id", &v) && v.str ==
-        // PSXEXE_SIGNATURE;
-    }
+    rd_map(PSX_USERRAM_START, PSX_USERRAM_END);
 
-    return false;
+    u32 taddr{}, tsize{}, pc0;
+    rdvalue_getu32(psxheader, "t_addr", &taddr);
+    rdvalue_getu32(psxheader, "t_size", &tsize);
+    rdvalue_getu32(psxheader, "pc0", &pc0);
+
+    rd_mapsegment_n("TEXT", taddr, tsize, PSXEXE_TEXT_OFFSET, tsize,
+                    SEG_HASCODE | SEG_HASDATA);
+
+    rd_setentry(pc0, "PSXEXE_EntryPoint");
+    return true;
 }
 
 } // namespace psxexe

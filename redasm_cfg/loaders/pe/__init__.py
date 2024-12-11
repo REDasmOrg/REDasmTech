@@ -333,7 +333,7 @@ def init():
     filealign = pe.optionalheader.FileAlignment
     ep = pe.optionalheader.AddressOfEntryPoint
 
-    redasm.memory.map(imagebase, PE.aligned(
+    redasm.memory.map_n(imagebase, PE.aligned(
         pe.optionalheader.SizeOfImage, sectionalign))
 
     read_sections(pe)

@@ -129,4 +129,17 @@ tl::optional<typing::Value> buffer_gettype(const RDBuffer* self, usize idx,
     return api::from_c(self)->get_type(idx, tname);
 }
 
+tl::optional<typing::Value> buffer_collecttype(const RDBuffer* self, usize idx,
+                                               std::string_view tname) {
+    spdlog::trace("buffer_collecttype({}, {}, '{}')", fmt::ptr(self), idx,
+                  tname);
+    auto v = api::from_c(self)->get_type(idx, tname);
+
+    v.map([idx, tname](const typing::Value&) {
+        state::context->collectedtypes.emplace_back(idx, tname);
+    });
+
+    return v;
+}
+
 } // namespace redasm::api::internal

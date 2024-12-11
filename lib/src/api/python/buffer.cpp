@@ -314,14 +314,22 @@ PyMethodDef file_methods[] = {
 // clang-format on
 
 /* *** *** *** MEMORY *** *** *** */
-PyObject* memory_map(PyMemory* /*self*/, PyObject* args) {
+PyObject* memory_map_n(PyMemory* /*self*/, PyObject* args) {
     usize base{}, size{};
 
     if(!PyArg_ParseTuple(args, "KK", &base, &size))
         return nullptr;
 
-    internal::memory_map(base, size);
-    Py_RETURN_NONE;
+    return PyBool_FromLong(internal::memory_map_n(base, size));
+}
+
+PyObject* memory_map(PyMemory* /*self*/, PyObject* args) {
+    RDAddress startaddr{}, endaddr{};
+
+    if(!PyArg_ParseTuple(args, "KK", &startaddr, &endaddr))
+        return nullptr;
+
+    return PyBool_FromLong(internal::memory_map(startaddr, endaddr));
 }
 
 PyObject* memory_copy(PyMemory* /*self*/, PyObject* args) {
@@ -396,6 +404,7 @@ PySequenceMethods memory_sequence_methods = []() {
 // clang-format off
 PyMethodDef memory_methods[] = {
     {"map", reinterpret_cast<PyCFunction>(python::memory_map), METH_VARARGS, nullptr},
+    {"map_n", reinterpret_cast<PyCFunction>(python::memory_map_n), METH_VARARGS, nullptr},
     {"copy", reinterpret_cast<PyCFunction>(python::memory_copy), METH_VARARGS, nullptr},
     {"copy_n", reinterpret_cast<PyCFunction>(python::memory_copy_n), METH_VARARGS, nullptr},
     {nullptr},

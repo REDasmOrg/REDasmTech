@@ -29,7 +29,7 @@ public:
     bool activate();
     bool set_function(MIndex idx, usize flags);
     bool set_entry(MIndex idx, const std::string& name = {});
-    void memory_map(RDAddress base, usize size);
+    bool memory_map(RDAddress base, usize size);
     RDAddress memory_copy(MIndex idx, RDOffset start, RDOffset end) const;
     tl::optional<MIndex> address_to_index(RDAddress address) const;
     tl::optional<RDAddress> index_to_address(MIndex idx) const;

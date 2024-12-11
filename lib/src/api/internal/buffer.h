@@ -35,4 +35,7 @@ tl::optional<std::string> buffer_getwstr(const RDBuffer* self, usize idx,
 tl::optional<typing::Value> buffer_gettype(const RDBuffer* self, usize idx,
                                            std::string_view tname);
 
+tl::optional<typing::Value> buffer_collecttype(const RDBuffer* self, usize idx,
+                                               std::string_view tname);
+
 } // namespace redasm::api::internal
