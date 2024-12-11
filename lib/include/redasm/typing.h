@@ -54,10 +54,12 @@ REDASM_EXPORT bool rdvalue_get(const RDValue* self, const char* key,
                                const RDValue** v);
 
 REDASM_EXPORT bool rdvalue_query(const RDValue* self, const char* q,
-                                 const RDValue** v);
+                                 const RDValue** v,
+                                 const char** error = nullptr);
 
 REDASM_EXPORT bool rdvalue_query_n(const RDValue* self, const char* q, usize n,
-                                   const RDValue** v);
+                                   const RDValue** v,
+                                   const char** error = nullptr);
 
 REDASM_EXPORT bool rdvalue_getu8(const RDValue* self, const char* q, u8* v);
 REDASM_EXPORT bool rdvalue_getu16(const RDValue* self, const char* q, u16* v);

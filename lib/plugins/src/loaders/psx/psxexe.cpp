@@ -37,7 +37,7 @@ bool init(RDLoader*) {
 
     rd_map(PSX_USERRAM_START, PSX_USERRAM_END);
 
-    u32 taddr{}, tsize{}, pc0;
+    u32 taddr{}, tsize{}, pc0{};
     rdvalue_getu32(psxheader, "t_addr", &taddr);
     rdvalue_getu32(psxheader, "t_size", &tsize);
     rdvalue_getu32(psxheader, "pc0", &pc0);

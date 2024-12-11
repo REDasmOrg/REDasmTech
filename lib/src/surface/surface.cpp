@@ -656,9 +656,9 @@ void Surface::render_segment(const ListingItem& item) {
     RDRendererParams rp = m_renderer->create_render_params(item);
 
     if(p->rendersegment)
-        builtins::processor::render_segment(&rp);
-    else
         p->rendersegment(p, &rp);
+    else
+        builtins::processor::render_segment(&rp);
 }
 
 void Surface::render_function(const ListingItem& item) {

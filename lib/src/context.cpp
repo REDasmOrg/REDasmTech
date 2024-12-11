@@ -121,7 +121,7 @@ bool Context::set_function(MIndex idx, usize flags) {
             this->memory->set(idx, BF_FUNCTION);
 
             if(!this->memory->at(idx).has(BF_CODE))
-                this->disassembler.emulator.qcall.push_back(idx);
+                this->disassembler.emulator.enqueue_call(idx);
 
             return true;
         }
@@ -184,7 +184,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
             if(s && s->type & SEG_HASCODE) {
                 if(!this->memory->at(toidx).has(
                        BF_CODE)) // Check if already decoded
-                    this->disassembler.emulator.qflow.push_back(toidx);
+                    this->disassembler.emulator.enqueue_flow(toidx);
                 this->memory->set(fromidx, BF_FLOW);
             }
             else
@@ -202,7 +202,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
             if(s && s->type & SEG_HASCODE) {
                 if(!this->memory->at(toidx).has(
                        BF_CODE)) // Check if already decoded
-                    this->disassembler.emulator.qjump.push_back(toidx);
+                    this->disassembler.emulator.enqueue_jump(toidx);
             }
             else
                 add_noncodeproblem(s, toidx, type);
@@ -219,7 +219,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
             if(s && s->type & SEG_HASCODE) {
                 if(!this->memory->at(toidx).has(
                        BF_CODE)) // Check if already decoded
-                    this->disassembler.emulator.qcall.push_back(toidx);
+                    this->disassembler.emulator.enqueue_call(toidx);
             }
             else
                 add_noncodeproblem(s, toidx, type);
@@ -289,6 +289,7 @@ bool Context::set_type(MIndex idx, RDType t, usize flags) {
     this->memory->unset_n(idx, len);
     this->memory->set_n(idx, len, BF_DATA);
     this->memory->set(idx, BF_TYPE);
+    this->memory->set_flags(idx, BF_WEAK, flags & ST_WEAK);
     return true;
 }
 

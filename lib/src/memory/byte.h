@@ -15,6 +15,7 @@ struct Byte {
 
     [[nodiscard]] bool is_code() const { return (value & BF_CODE) == BF_CODE; }
     [[nodiscard]] bool is_data() const { return (value & BF_DATA) == BF_DATA; }
+    [[nodiscard]] bool is_weak() const { return this->has(BF_WEAK); }
     [[nodiscard]] bool is_cont() const { return this->has(BF_CONT); }
     [[nodiscard]] bool has_byte() const { return this->has(BF_BYTE); }
     [[nodiscard]] bool has(u32 f) const { return (value & f) == f; }

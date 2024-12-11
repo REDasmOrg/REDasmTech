@@ -44,14 +44,14 @@ def find_wndproc(address, argidx):
 
     for x in func:
         if x.expr.op == redasm.rdil.PUSH:
-            vstack.insert(0, x.expr.u)
+            vstack.insert(0, (x.address, x.expr.u))
         elif x.expr.op == redasm.rdil.CALL:
             if x.address == address and argidx < len(vstack):
-                wndproc = vstack[argidx]
+                f, wndproc = vstack[argidx]
 
                 if wndproc.addr is not None:
                     redasm.set_name(wndproc.addr, f"DialogProc_{redasm.to_hex(wndproc.addr)}")
-                    redasm.add_ref(x.address, wndproc.addr, redasm.CR_CALL)
+                    redasm.add_ref(f, wndproc.addr, redasm.CR_CALL)
 
                 break
             else:

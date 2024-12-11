@@ -30,15 +30,13 @@ bool rdstream_peek_type(RDStream* self, const char* tname, RDValue* v) {
     if(!tname)
         return false;
 
-    // auto res = redasm::api::internal::stream_peek_type(self, tname);
-    // res.map([&](const redasm::typing::Value& x) {
-    //     if(v)
-    //         *v = redasm::api::to_c(&x);
-    // });
-    //
-    // return res.has_value();
+    auto res = redasm::api::internal::stream_peek_type(self, tname);
+    res.map([&](const redasm::typing::Value& x) {
+        if(v)
+            *redasm::api::from_c(v) = x;
+    });
 
-    return false;
+    return res.has_value();
 }
 
 bool rdstream_peek_strz(RDStream* self, const char** v) {
@@ -237,15 +235,13 @@ bool rdstream_read_type(RDStream* self, const char* tname, RDValue* v) {
     if(!tname)
         return false;
 
-    // auto res = redasm::api::internal::stream_read_type(self, tname);
-    // res.map([&](const redasm::typing::Value& x) {
-    //     if(v)
-    //         *v = redasm::api::to_c(&x);
-    // });
-    //
-    // return res.has_value();
+    auto res = redasm::api::internal::stream_read_type(self, tname);
+    res.map([&](const redasm::typing::Value& x) {
+        if(v)
+            *redasm::api::from_c(v) = x;
+    });
 
-    return false;
+    return res.has_value();
 }
 
 bool rdstream_read_strz(RDStream* self, const char** v) {
@@ -444,15 +440,13 @@ bool rdstream_collect_type(RDStream* self, const char* tname, RDValue* v) {
     if(!tname)
         return false;
 
-    // auto res = redasm::api::internal::stream_collect_type(self, tname);
-    // res.map([&](const redasm::typing::Value& x) {
-    //     if(v)
-    //         *v = redasm::api::to_c(&x);
-    // });
-    //
-    // return res.has_value();
+    auto res = redasm::api::internal::stream_collect_type(self, tname);
+    res.map([&](const redasm::typing::Value& x) {
+        if(v)
+            *redasm::api::from_c(v) = x;
+    });
 
-    return false;
+    return res.has_value();
 }
 
 bool rdstream_collect_strz(RDStream* self, const char** v) {
