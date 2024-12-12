@@ -18,6 +18,10 @@ RDThemeKind rdfunction_gettheme(const RDFunction* self,
     return redasm::api::internal::function_gettheme(self, edge);
 }
 
+bool rdfunction_isexport(const RDFunction* self) {
+    return redasm::api::internal::function_isexport(self);
+}
+
 bool rdfunction_contains(const RDFunction* self, RDAddress address) {
     return redasm::api::internal::function_contains(self, address);
 }

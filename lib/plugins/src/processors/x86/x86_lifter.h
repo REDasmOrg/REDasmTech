@@ -5,6 +5,6 @@
 
 namespace x86_lifter {
 
-bool lift(const RDProcessor*, const RDInstruction* instr, RDILList* l);
+bool lift(const RDProcessor*, RDILList* l, const RDInstruction* instr);
 
 }

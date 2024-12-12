@@ -133,20 +133,12 @@ void Renderer::set_current_item(LIndex lidx, const ListingItem& item) {
     this->check_current_segment(item);
 }
 
-RDRendererParams Renderer::create_render_params(const ListingItem& item) {
-    RDRendererParams rp{};
-    rp.renderer = api::to_c(this);
-    rp.address = m_curraddress;
-    rp.byte = state::context->memory->at(item.index).value;
-    return rp;
-}
-
-Renderer& Renderer::instr(const RDRendererParams& rp) {
+Renderer& Renderer::instr() {
     const RDProcessor* p = state::context->processor;
     assume(p);
 
     RDInstruction instr = {
-        .address = rp.address,
+        .address = this->current_address(),
     };
 
     p->decode(p, &instr);
@@ -154,22 +146,25 @@ Renderer& Renderer::instr(const RDRendererParams& rp) {
     if(!instr.length || !p->renderinstruction)
         this->chunk("???");
     else
-        p->renderinstruction(p, &rp, &instr);
+        p->renderinstruction(p, api::to_c(this), &instr);
 
     return *this;
 }
 
-Renderer& Renderer::rdil(const RDRendererParams& rp) {
+Renderer& Renderer::rdil() {
     const RDProcessor* p = state::context->processor;
     assume(p);
 
     rdil::ILExprList el;
 
-    RDInstruction instr{.address = this->current_address()};
+    RDInstruction instr{
+        .address = this->current_address(),
+    };
+
     if(p->decode)
         p->decode(p, &instr);
 
-    if(!instr.length || !p->lift || !p->lift(p, &instr, api::to_c(&el)))
+    if(!instr.length || !p->lift || !p->lift(p, api::to_c(&el), &instr))
         el.clear();
 
     if(el.empty())
@@ -179,7 +174,7 @@ Renderer& Renderer::rdil(const RDRendererParams& rp) {
         if(i)
             this->chunk("; ");
 
-        rdil::render(el.at(i), rp);
+        rdil::render(el.at(i), *this);
     }
 
     return *this;

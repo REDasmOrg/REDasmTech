@@ -17,6 +17,7 @@ REDASM_EXPORT RDAddress rdfunction_getentry(const RDFunction* self);
 REDASM_EXPORT RDGraph* rdfunction_getgraph(RDFunction* self);
 REDASM_EXPORT RDThemeKind rdfunction_gettheme(const RDFunction* self,
                                               const RDGraphEdge* edge);
+REDASM_EXPORT bool rdfunction_isexport(const RDFunction* self);
 REDASM_EXPORT bool rdfunction_contains(const RDFunction* self,
                                        RDAddress address);
 REDASM_EXPORT bool rdfunction_getbasicblock(const RDFunction* self,

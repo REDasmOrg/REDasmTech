@@ -51,16 +51,14 @@ std::optional<RDAddress> calc_addr(const MIPSDecodedInstruction& dec,
     return std::nullopt;
 }
 
-void render_mnemonic(const RDInstruction* instr, const RDRendererParams* rp) {
+void render_mnemonic(const RDInstruction* instr, RDRenderer* r) {
     switch(instr->id) {
         case MIPS_MACRO_NOP:
-            rdrenderer_mnem(rp->renderer, mips_decoder::mnemonic(instr->id),
-                            THEME_NOP);
+            rdrenderer_mnem(r, mips_decoder::mnemonic(instr->id), THEME_NOP);
             return;
 
         case MIPS_MACRO_B:
-            rdrenderer_mnem(rp->renderer, mips_decoder::mnemonic(instr->id),
-                            THEME_JUMP);
+            rdrenderer_mnem(r, mips_decoder::mnemonic(instr->id), THEME_JUMP);
             return;
 
         default: break;
@@ -76,7 +74,7 @@ void render_mnemonic(const RDInstruction* instr, const RDRendererParams* rp) {
         default: break;
     }
 
-    rdrenderer_mnem(rp->renderer, mips_decoder::mnemonic(instr->id), theme);
+    rdrenderer_mnem(r, mips_decoder::mnemonic(instr->id), theme);
 }
 
 void decode_macro(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
@@ -213,39 +211,39 @@ void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
         rdemulator_addref(e, instr->address + instr->length, CR_FLOW);
 }
 
-void render_instruction(const RDProcessor*, const RDRendererParams* rp,
+void render_instruction(const RDProcessor*, RDRenderer* r,
                         const RDInstruction* instr) {
 
-    render_mnemonic(instr, rp);
+    render_mnemonic(instr, r);
 
     foreach_operand(i, op, instr) {
         if(i > 0)
-            rdrenderer_text(rp->renderer, ", ");
+            rdrenderer_text(r, ", ");
 
         switch(op->type) {
             case OP_REG: {
-                rdrenderer_reg(rp->renderer, mips_decoder::reg(op->reg));
+                rdrenderer_reg(r, mips_decoder::reg(op->reg));
                 break;
             }
 
             case OP_IMM: {
                 if(instr->id == MIPS_MACRO_LA)
-                    rdrenderer_addr(rp->renderer, op->imm);
+                    rdrenderer_addr(r, op->imm);
                 else
-                    rdrenderer_cnst(rp->renderer, op->imm);
+                    rdrenderer_cnst(r, op->imm);
                 break;
             };
 
             case OP_MEM: {
-                rdrenderer_addr(rp->renderer, op->mem);
+                rdrenderer_addr(r, op->mem);
                 break;
             }
 
             case OP_DISPL: {
-                rdrenderer_cnst(rp->renderer, op->displ.displ);
-                rdrenderer_text(rp->renderer, "(");
-                rdrenderer_reg(rp->renderer, mips_decoder::reg(op->displ.base));
-                rdrenderer_text(rp->renderer, ")");
+                rdrenderer_cnst(r, op->displ.displ);
+                rdrenderer_text(r, "(");
+                rdrenderer_reg(r, mips_decoder::reg(op->displ.base));
+                rdrenderer_text(r, ")");
                 break;
             }
 

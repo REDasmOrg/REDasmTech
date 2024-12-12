@@ -124,7 +124,7 @@ const RDILExpr* lift_jump(const RDInstruction* instr, RDILPool* pool) {
 
 } // namespace
 
-bool lift(const RDProcessor*, const RDInstruction* instr, RDILList* l) {
+bool lift(const RDProcessor*, RDILList* l, const RDInstruction* instr) {
     RDILPool* pool = rdillist_getpool(l);
 
     switch(instr->id) {

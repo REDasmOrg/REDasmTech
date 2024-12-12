@@ -7,7 +7,11 @@
 #include <redasm/renderer.h>
 #include <string_view>
 
-namespace redasm::rdil {
+namespace redasm {
+
+class Renderer;
+
+namespace rdil {
 
 std::string_view get_op_name(usize t);
 usize get_op_type(std::string_view id);
@@ -16,6 +20,8 @@ std::string get_format(const ILExpr* e);
 
 void generate(const Function& f, ILExprList& res);
 void generate(const Function& f, ILExprList& res, usize maxn);
-void render(const ILExpr* e, const RDRendererParams& rp);
+void render(const ILExpr* e, Renderer& render);
 
-} // namespace redasm::rdil
+} // namespace rdil
+
+} // namespace redasm

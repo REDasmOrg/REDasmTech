@@ -1,47 +1,41 @@
 #include "processor.h"
-#include "../api/internal/byte.h"
+#include "../api/internal/function.h"
 #include "../api/internal/processor.h"
 #include "../api/internal/redasm.h"
 #include "../api/internal/renderer.h"
 #include "../api/internal/utils.h"
-#include "../error.h"
 
 namespace redasm::builtins {
 
 namespace processor {
 
-void render_segment(const RDRendererParams* rp) {
-    assume(rp);
+void render_segment(const RDProcessor*, RDRenderer* r,
+                    const RDSegment* segment) {
+    std::string start = api::internal::to_hex(segment->address);
+    std::string end = api::internal::to_hex(segment->endaddress);
 
-    const RDSegment* segments = nullptr;
-    usize c = api::internal::get_segments(&segments);
-    assume(rp->segment_index < c);
+    std::string s = fmt::format("segment {} (start: {}, end: {})",
+                                segment->name, start, end);
 
-    RDSegment seg;
-    assume(api::internal::address_to_segment(rp->address, &seg));
-
-    std::string start = api::internal::to_hex(seg.address);
-    std::string end = api::internal::to_hex(seg.endaddress);
-
-    std::string s =
-        fmt::format("segment {} (start: {}, end: {})", seg.name, start, end);
-
-    api::internal::renderer_themed(rp->renderer, s, THEME_SEGMENT);
+    api::internal::renderer_themed(r, s, THEME_SEGMENT);
 }
 
-void render_function(const RDRendererParams* rp) {
-    std::string n = api::internal::get_name(rp->address);
+void render_function(const RDProcessor*, RDRenderer* r,
+                     const RDFunction* function) {
+
+    RDAddress ep = api::internal::function_getentry(function);
+    std::string n = api::internal::get_name(ep);
     if(n.empty())
         n = "???";
 
     std::string s;
 
-    if(api::internal::byte_has(rp->byte, BF_EXPORT))
+    if(api::internal::function_isexport(function))
         s = fmt::format("export function {}()", n);
     else
         s = fmt::format("function {}()", n);
 
-    api::internal::renderer_themed(rp->renderer, s, THEME_FUNCTION);
+    api::internal::renderer_themed(r, s, THEME_FUNCTION);
 }
 
 } // namespace processor
@@ -52,16 +46,8 @@ void register_processors() {
         .name = "Null",
     };
 
-    nullprocessor.rendersegment = [](const RDProcessor*,
-                                     const RDRendererParams* rp) {
-        builtins::processor::render_segment(rp);
-    };
-
-    nullprocessor.renderfunction = [](const RDProcessor*,
-                                      const RDRendererParams* rp) {
-        builtins::processor::render_function(rp);
-    };
-
+    nullprocessor.rendersegment = builtins::processor::render_segment;
+    nullprocessor.renderfunction = builtins::processor::render_function;
     api::internal::register_processor(nullprocessor);
 }
 

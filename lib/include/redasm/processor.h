@@ -1,9 +1,11 @@
 #pragma once
 
 #include <redasm/common.h>
+#include <redasm/function.h>
 #include <redasm/instruction.h>
 #include <redasm/rdil.h>
 #include <redasm/renderer.h>
+#include <redasm/segment.h>
 
 RD_HANDLE(RDEmulator);
 
@@ -27,10 +29,10 @@ struct RDProcessor;
 // clang-format off
 typedef void (*RDProcessorDecode)(const RDProcessor*, RDInstruction*);
 typedef void (*RDProcessorEmulate)(const RDProcessor*, RDEmulator*, const RDInstruction*);
-typedef bool (*RDProcessorLift)(const RDProcessor*, const RDInstruction*, RDILList*);
-typedef void (*RDProcessorRenderSegment)(const RDProcessor*, const RDRendererParams*);
-typedef void (*RDProcessorRenderFunction)(const RDProcessor*, const RDRendererParams*);
-typedef void (*RDProcessorRenderInstruction)(const RDProcessor*, const RDRendererParams*, const RDInstruction*);
+typedef bool (*RDProcessorLift)(const RDProcessor*, RDILList*, const RDInstruction*);
+typedef void (*RDProcessorRenderSegment)(const RDProcessor*, RDRenderer*, const RDSegment*);
+typedef void (*RDProcessorRenderFunction)(const RDProcessor*, RDRenderer*, const RDFunction*);
+typedef void (*RDProcessorRenderInstruction)(const RDProcessor*, RDRenderer*, const RDInstruction*);
 typedef void (*RDProcessorFree)(RDProcessor*);
 // clang-format on
 

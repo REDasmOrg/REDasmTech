@@ -568,13 +568,12 @@ void Surface::render_range(LIndex start, usize n) {
             case LISTINGITEM_LABEL: this->render_label(*it); break;
 
             case LISTINGITEM_INSTRUCTION: {
-                RDRendererParams rp = m_renderer->create_render_params(*it);
                 m_renderer->new_row(*it);
 
                 if(this->has_rdil())
-                    m_renderer->rdil(rp);
+                    m_renderer->rdil();
                 else
-                    m_renderer->instr(rp);
+                    m_renderer->instr();
 
                 if(state::context->memory->at(it->index).has(BF_REFSFROM))
                     this->render_refs(*it);
@@ -653,12 +652,16 @@ void Surface::render_segment(const ListingItem& item) {
     const RDProcessor* p = state::context->processor;
     assume(p);
 
-    RDRendererParams rp = m_renderer->create_render_params(item);
+    const Segment* s = state::context->index_to_segment(item.index);
+    assume(s);
+
+    RDSegment cs = api::to_c(*s);
 
     if(p->rendersegment)
-        p->rendersegment(p, &rp);
+        p->rendersegment(p, api::to_c(m_renderer.get()), &cs);
     else
-        builtins::processor::render_segment(&rp);
+        builtins::processor::render_segment(p, api::to_c(m_renderer.get()),
+                                            &cs);
 }
 
 void Surface::render_function(const ListingItem& item) {
@@ -670,12 +673,14 @@ void Surface::render_function(const ListingItem& item) {
     const RDProcessor* p = state::context->processor;
     assume(p);
 
-    RDRendererParams rp = m_renderer->create_render_params(item);
+    const Function* f = state::context->index_to_function(item.index);
+    assume(f);
 
     if(p->renderfunction)
-        p->renderfunction(p, &rp);
+        p->renderfunction(p, api::to_c(m_renderer.get()), api::to_c(f));
     else
-        builtins::processor::render_function(&rp);
+        builtins::processor::render_function(p, api::to_c(m_renderer.get()),
+                                             api::to_c(f));
 }
 
 void Surface::render_type(const ListingItem& item) {

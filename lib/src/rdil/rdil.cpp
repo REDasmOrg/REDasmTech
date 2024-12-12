@@ -391,7 +391,7 @@ void generate(const Function& f, ILExprList& res, usize maxn) {
                 p->decode(p, &instr);
 
             if(!instr.length || !p->lift ||
-               !p->lift(p, &instr, api::to_c(&res))) {
+               !p->lift(p, api::to_c(&res), &instr)) {
                 res.append(res.expr_unknown());
             }
 
@@ -408,27 +408,25 @@ void generate(const Function& f, ILExprList& res, usize maxn) {
     }
 }
 
-void render(const ILExpr* e, const RDRendererParams& rp) {
+void render(const ILExpr* e, Renderer& renderer) {
     rdil::to_string(
         e, [&](const ILExpr* expr, std::string_view s, WalkType wt) {
-            Renderer* renderer = api::from_c(rp.renderer);
-
             if(wt == WalkType::MNEMONIC) {
                 switch(expr->op) {
-                    case RDIL_GOTO: renderer->chunk(s, THEME_JUMP); break;
-                    case RDIL_RET: renderer->chunk(s, THEME_RET); break;
-                    case RDIL_NOP: renderer->chunk(s, THEME_NOP); break;
+                    case RDIL_GOTO: renderer.chunk(s, THEME_JUMP); break;
+                    case RDIL_RET: renderer.chunk(s, THEME_RET); break;
+                    case RDIL_NOP: renderer.chunk(s, THEME_NOP); break;
 
                     case RDIL_UNKNOWN: {
-                        renderer->chunk(s, THEME_NOP)
+                        renderer.chunk(s, THEME_NOP)
                             .ws()
                             .chunk("{")
-                            .instr(rp)
+                            .instr()
                             .chunk("}");
                         break;
                     }
 
-                    default: renderer->chunk(s, THEME_DEFAULT); break;
+                    default: renderer.chunk(s, THEME_DEFAULT); break;
                 }
 
                 return;
@@ -436,13 +434,13 @@ void render(const ILExpr* e, const RDRendererParams& rp) {
 
             switch(expr->op) {
                 case RDIL_CNST:
-                    renderer->constant(expr->u_value, THEME_CONSTANT);
+                    renderer.constant(expr->u_value, THEME_CONSTANT);
                     break;
 
-                case RDIL_VAR: renderer->addr(expr->address); break;
-                case RDIL_REG: renderer->chunk(expr->reg, THEME_REG); break;
-                case RDIL_SYM: renderer->chunk(expr->sym, THEME_ADDRESS); break;
-                default: renderer->chunk(s); break;
+                case RDIL_VAR: renderer.addr(expr->address); break;
+                case RDIL_REG: renderer.chunk(expr->reg, THEME_REG); break;
+                case RDIL_SYM: renderer.chunk(expr->sym, THEME_ADDRESS); break;
+                default: renderer.chunk(s); break;
             }
         });
 }

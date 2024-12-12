@@ -14,6 +14,7 @@
 #include <redasm/processor.h>
 #include <redasm/rdil.h>
 #include <redasm/renderer.h>
+#include <redasm/segment.h>
 #include <redasm/stream.h>
 #include <redasm/surface.h>
 #include <redasm/theme.h>
@@ -54,21 +55,6 @@ typedef struct RDTestResult {
     const RDProcessor* processor;
     RDContext* context;
 } RDTestResult;
-
-typedef enum RDSegmentType {
-    SEG_UNKNOWN = 0,
-    SEG_HASDATA = 1 << 0,
-    SEG_HASCODE = 1 << 1,
-} RDSegmentType;
-
-typedef struct RDSegment {
-    const char* name;
-    usize type;
-    RDAddress address;
-    RDAddress endaddress;
-    RDOffset offset;
-    RDOffset endoffset;
-} RDSegment;
 
 typedef void (*RDLogCallback)(const char*, void*);
 typedef void (*RDStatusCallback)(const char*, void*);

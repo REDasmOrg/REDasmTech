@@ -183,109 +183,104 @@ void X86Processor::decode(RDInstruction* instr) {
 
 namespace {
 
-void render_instruction(const RDProcessor* /*self*/, const RDRendererParams* rp,
+void render_instruction(const RDProcessor* /*self*/, RDRenderer* r,
                         const RDInstruction* instr) {
     const char* mnemonic =
         ZydisMnemonicGetString(static_cast<ZydisMnemonic>(instr->id));
 
     switch(instr->uservalue) {
         case ZYDIS_CATEGORY_COND_BR:
-            rdrenderer_mnem(rp->renderer, mnemonic, THEME_JUMPCOND);
+            rdrenderer_mnem(r, mnemonic, THEME_JUMPCOND);
             break;
         case ZYDIS_CATEGORY_UNCOND_BR:
-            rdrenderer_mnem(rp->renderer, mnemonic, THEME_JUMP);
+            rdrenderer_mnem(r, mnemonic, THEME_JUMP);
             break;
         case ZYDIS_CATEGORY_CALL:
-            rdrenderer_mnem(rp->renderer, mnemonic, THEME_CALL);
+            rdrenderer_mnem(r, mnemonic, THEME_CALL);
             break;
-        case ZYDIS_CATEGORY_RET:
-            rdrenderer_mnem(rp->renderer, mnemonic, THEME_RET);
-            break;
-        case ZYDIS_CATEGORY_NOP:
-            rdrenderer_mnem(rp->renderer, mnemonic, THEME_NOP);
-            break;
-        default: rdrenderer_mnem(rp->renderer, mnemonic, THEME_DEFAULT); break;
+        case ZYDIS_CATEGORY_RET: rdrenderer_mnem(r, mnemonic, THEME_RET); break;
+        case ZYDIS_CATEGORY_NOP: rdrenderer_mnem(r, mnemonic, THEME_NOP); break;
+        default: rdrenderer_mnem(r, mnemonic, THEME_DEFAULT); break;
     }
 
     foreach_operand(i, op, instr) {
         if(i > 0)
-            rdrenderer_text(rp->renderer, ", ");
+            rdrenderer_text(r, ", ");
 
         switch(op->type) {
             case OP_IMM: {
                 if(is_addr_instruction(instr) && rd_isaddress(op->imm))
-                    rdrenderer_addr(rp->renderer, op->imm);
+                    rdrenderer_addr(r, op->imm);
                 else
-                    rdrenderer_cnst(rp->renderer, op->imm);
+                    rdrenderer_cnst(r, op->imm);
                 break;
             }
 
             case OP_MEM: {
-                rdrenderer_text(rp->renderer, "[");
+                rdrenderer_text(r, "[");
 
                 if(op->userdata1 && op->userdata1 != ZYDIS_REGISTER_CS &&
                    op->userdata1 != ZYDIS_REGISTER_DS) {
                     const char* reg = ZydisRegisterGetString(
                         static_cast<ZydisRegister>(op->userdata1));
-                    rdrenderer_reg(rp->renderer, reg);
-                    rdrenderer_text(rp->renderer, ":");
+                    rdrenderer_reg(r, reg);
+                    rdrenderer_text(r, ":");
                 }
 
-                rdrenderer_addr(rp->renderer, op->mem);
-                rdrenderer_text(rp->renderer, "]");
+                rdrenderer_addr(r, op->mem);
+                rdrenderer_text(r, "]");
                 break;
             }
 
             case OP_REG: {
                 const char* reg =
                     ZydisRegisterGetString(static_cast<ZydisRegister>(op->reg));
-                rdrenderer_reg(rp->renderer, reg);
+                rdrenderer_reg(r, reg);
                 break;
             }
 
             case OP_PHRASE: {
-                rdrenderer_text(rp->renderer, "[");
+                rdrenderer_text(r, "[");
 
                 const char* base = ZydisRegisterGetString(
                     static_cast<ZydisRegister>(op->phrase.base));
-                rdrenderer_reg(rp->renderer, base);
+                rdrenderer_reg(r, base);
 
-                rdrenderer_text(rp->renderer, "+");
+                rdrenderer_text(r, "+");
 
                 const char* index = ZydisRegisterGetString(
                     static_cast<ZydisRegister>(op->phrase.index));
-                rdrenderer_reg(rp->renderer, index);
+                rdrenderer_reg(r, index);
 
-                rdrenderer_text(rp->renderer, "]");
+                rdrenderer_text(r, "]");
                 break;
             }
 
             case OP_DISPL: {
-                rdrenderer_text(rp->renderer, "[");
+                rdrenderer_text(r, "[");
 
                 const char* base = ZydisRegisterGetString(
                     static_cast<ZydisRegister>(op->displ.base));
-                rdrenderer_reg(rp->renderer, base);
+                rdrenderer_reg(r, base);
 
                 if(op->displ.index != ZYDIS_REGISTER_NONE) {
-                    rdrenderer_text(rp->renderer, "+");
+                    rdrenderer_text(r, "+");
 
                     const char* index = ZydisRegisterGetString(
                         static_cast<ZydisRegister>(op->displ.index));
-                    rdrenderer_reg(rp->renderer, index);
+                    rdrenderer_reg(r, index);
 
                     if(op->displ.scale > 1) {
-                        rdrenderer_text(rp->renderer, "*");
-                        rdrenderer_cnst(rp->renderer, op->displ.scale);
+                        rdrenderer_text(r, "*");
+                        rdrenderer_cnst(r, op->displ.scale);
                     }
                 }
 
                 if(op->displ.displ != 0) {
-                    rdrenderer_addr_ex(rp->renderer, op->displ.displ,
-                                       RC_NEEDSIGN);
+                    rdrenderer_addr_ex(r, op->displ.displ, RC_NEEDSIGN);
                 }
 
-                rdrenderer_text(rp->renderer, "]");
+                rdrenderer_text(r, "]");
                 break;
             }
 

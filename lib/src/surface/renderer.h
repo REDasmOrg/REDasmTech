@@ -96,9 +96,8 @@ struct Renderer {
     static bool is_char_skippable(char ch);
 
 public: // High level interface
-    RDRendererParams create_render_params(const ListingItem& item);
-    Renderer& instr(const RDRendererParams& rp);
-    Renderer& rdil(const RDRendererParams& rp);
+    Renderer& instr();
+    Renderer& rdil();
     Renderer& addr(RDAddress address, int flags = 0);
 
 public:

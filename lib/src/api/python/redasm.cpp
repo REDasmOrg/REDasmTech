@@ -772,8 +772,8 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
     };
 
     if(rendersegmentfn) {
-        processor.rendersegment = [](const RDProcessor* self,
-                                     const RDRendererParams* rp) {
+        processor.rendersegment = [](const RDProcessor* self, RDRenderer* r,
+                                     const RDSegment* s) {
             auto* userdata =
                 reinterpret_cast<ProcessorUserData*>(self->userdata);
             PyObject* ret = PyObject_CallNoArgs(userdata->rendersegment);
@@ -783,8 +783,8 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
     }
 
     if(renderfunctionfn) {
-        processor.renderfunction = [](const RDProcessor* self,
-                                      const RDRendererParams* rp) {
+        processor.renderfunction = [](const RDProcessor* self, RDRenderer* r,
+                                      const RDFunction* f) {
             auto* userdata =
                 reinterpret_cast<ProcessorUserData*>(self->userdata);
             PyObject* ret = PyObject_CallNoArgs(userdata->renderfunction);
@@ -794,8 +794,7 @@ PyObject* register_processor(PyObject* /*self*/, PyObject* args,
     }
 
     if(renderinstructionfn) {
-        processor.renderinstruction = [](const RDProcessor* self,
-                                         const RDRendererParams* rp,
+        processor.renderinstruction = [](const RDProcessor* self, RDRenderer* r,
                                          const RDInstruction* instr) {
             auto* userdata =
                 reinterpret_cast<ProcessorUserData*>(self->userdata);

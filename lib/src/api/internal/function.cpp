@@ -53,6 +53,17 @@ RDThemeKind function_gettheme(const RDFunction* self, const RDGraphEdge* e) {
     return THEME_DEFAULT;
 }
 
+bool function_isexport(const RDFunction* self) {
+    spdlog::trace("function_isexport({})", fmt::ptr(self));
+
+    if(state::context) {
+        const Function* f = api::from_c(self);
+        return state::context->memory->at(f->index).has(BF_EXPORT);
+    }
+
+    return false;
+}
+
 bool function_getbasicblock(const RDFunction* self, RDGraphNode n,
                             RDFunctionBasicBlock* bb) {
     spdlog::trace("function_getbasicblock({}, {}, {})", fmt::ptr(self), n,
