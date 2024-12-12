@@ -152,13 +152,14 @@ bool decode(RDAddress address, MIPSDecodedInstruction& dec, bool big,
             bool one) {
     bool ok = big ? rd_getu32be(address, &dec.instr.word)
                   : rd_getu32(address, &dec.instr.word);
-    if(!ok)
-        return false;
+    if(ok) {
+        ok = mips_decoder::check_encoding(dec);
 
-    if(mips_decoder::check_encoding(dec) && !one)
-        mips_macrodecoder::check_macro(address, dec, big);
+        if(ok && !one)
+            mips_macrodecoder::check_macro(address, dec, big);
+    }
 
-    return true;
+    return ok;
 }
 
 } // namespace mips_decoder
