@@ -10,7 +10,7 @@
 RD_HANDLE(RDEmulator);
 
 typedef enum RDRefType {
-    DR_READ = 0,
+    DR_READ = 1,
     DR_WRITE,
     DR_ADDRESS,
 
