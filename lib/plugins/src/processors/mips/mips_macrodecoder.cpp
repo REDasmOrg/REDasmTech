@@ -81,7 +81,7 @@ void check_move(MIPSDecodedInstruction& dec) {
 }
 
 void check_nop(MIPSDecodedInstruction& dec) {
-    if((dec.instr.r.rd == MIPS_REG_ZERO) && (dec.instr.r.rt != MIPS_REG_ZERO))
+    if((dec.instr.r.rd == MIPS_REG_ZERO) && (dec.instr.r.rt == MIPS_REG_ZERO))
         apply_macro("nop", dec);
 }
 

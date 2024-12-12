@@ -35,7 +35,7 @@ std::optional<RDAddress> calc_addr(const MIPSDecodedInstruction& dec,
             case MIPS_ENCODING_I: {
                 return address + sizeof(MIPSInstruction) +
                        static_cast<i32>(mips_decoder::sign_ext(
-                           dec.instr.i_s.immediate << 2, 32));
+                           dec.instr.i_u.immediate << 2, 32));
             }
 
             default: {
@@ -66,13 +66,16 @@ void render_mnemonic(const RDInstruction* instr, RDRenderer* r) {
 
     RDThemeKind theme = THEME_DEFAULT;
 
-    switch(instr->uservalue) {
-        case MIPS_CATEGORY_JUMP: theme = THEME_JUMP; break;
-        case MIPS_CATEGORY_JUMPCOND: theme = THEME_JUMPCOND; break;
-        case MIPS_CATEGORY_CALL: theme = THEME_CALL; break;
-        case MIPS_CATEGORY_RET: theme = THEME_RET; break;
-        default: break;
+    if(instr->features & INSTR_JUMP) {
+        theme = THEME_JUMP;
+
+        if(instr->uservalue & MIPS_CATEGORY_JUMPCOND)
+            theme = THEME_JUMPCOND;
     }
+    if(instr->features & INSTR_CALL)
+        theme = THEME_CALL;
+    if(instr->features & INSTR_STOP)
+        theme = THEME_RET;
 
     rdrenderer_mnem(r, mips_decoder::mnemonic(instr->id), theme);
 }
@@ -143,6 +146,84 @@ void decode_macro(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
     }
 }
 
+void decode_r(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
+    switch(instr->id) {
+        case MIPS_INSTR_JALR:
+        case MIPS_INSTR_JR:
+            instr->operands[0].type = OP_REG;
+            instr->operands[0].reg = dec.instr.r.rs;
+            break;
+
+        default: {
+            instr->operands[0].type = OP_REG;
+            instr->operands[0].reg = dec.instr.r.rd;
+            instr->operands[1].type = OP_REG;
+            instr->operands[1].reg = dec.instr.r.rs;
+            instr->operands[2].type = OP_REG;
+            instr->operands[2].reg = dec.instr.r.rt;
+            break;
+        }
+    }
+}
+
+void decode_i(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
+    switch(dec.opcode->category) {
+        case MIPS_CATEGORY_JUMPCOND: {
+            instr->operands[0].type = OP_REG;
+            instr->operands[0].reg = dec.instr.i_u.rt;
+
+            instr->operands[1].type = OP_REG;
+            instr->operands[1].reg = dec.instr.i_u.rs;
+
+            auto addr = calc_addr(dec, instr->address);
+            instr->operands[2].type = OP_IMM;
+            instr->operands[2].imm = addr.value_or(dec.instr.i_u.immediate);
+
+            if(addr.has_value())
+                instr->operands[2].userdata1 = CR_JUMP;
+            return;
+        }
+
+        case MIPS_CATEGORY_LOAD:
+        case MIPS_CATEGORY_STORE: {
+            instr->operands[0].type = OP_REG;
+            instr->operands[0].reg = dec.instr.i_u.rt;
+
+            instr->operands[1].type = OP_DISPL;
+            instr->operands[1].displ.base = dec.instr.i_u.rs;
+            instr->operands[1].displ.displ = dec.instr.i_u.immediate;
+            return;
+        }
+
+        default: break;
+    }
+
+    instr->operands[0].type = OP_REG;
+    instr->operands[0].reg = dec.instr.i_u.rt;
+
+    instr->operands[1].type = OP_REG;
+    instr->operands[1].reg = dec.instr.i_u.rs;
+
+    instr->operands[2].type = OP_IMM;
+    instr->operands[2].imm = dec.instr.i_u.immediate;
+}
+
+void decode_j(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
+    instr->operands[0].type = OP_IMM;
+
+    if(auto addr = calc_addr(dec, instr->address); addr) {
+        instr->operands[0].imm = *addr;
+        instr->operands[0].userdata1 = CR_CALL;
+    }
+    else
+        instr->operands[0].imm = dec.instr.j.target;
+}
+
+void decode_b(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
+    if(dec.opcode->id == MIPS_INSTR_BREAK)
+        instr->features |= INSTR_STOP;
+}
+
 template<bool BigEndian>
 void decode(const RDProcessor*, RDInstruction* instr) {
     MIPSDecodedInstruction dec;
@@ -152,6 +233,19 @@ void decode(const RDProcessor*, RDInstruction* instr) {
     instr->id = dec.opcode->id;
     instr->length = dec.length;
     instr->uservalue = dec.opcode->category;
+
+    if(dec.opcode->category == MIPS_CATEGORY_MACRO) {
+        decode_macro(dec, instr);
+        return;
+    }
+
+    switch(dec.opcode->encoding) {
+        case MIPS_ENCODING_R: decode_r(dec, instr); break;
+        case MIPS_ENCODING_I: decode_i(dec, instr); break;
+        case MIPS_ENCODING_J: decode_j(dec, instr); break;
+        case MIPS_ENCODING_B: decode_b(dec, instr); break;
+        default: break;
+    }
 
     switch(dec.opcode->category) {
         case MIPS_CATEGORY_CALL: instr->features |= INSTR_CALL; break;
@@ -164,42 +258,14 @@ void decode(const RDProcessor*, RDInstruction* instr) {
         case MIPS_CATEGORY_RET: instr->features |= INSTR_STOP; break;
         default: break;
     }
-
-    switch(dec.opcode->id) {
-        case MIPS_INSTR_LB:
-        case MIPS_INSTR_LBU:
-        case MIPS_INSTR_LW:
-        case MIPS_INSTR_LWL:
-        case MIPS_INSTR_LWR:
-        case MIPS_INSTR_SB:
-        case MIPS_INSTR_SH:
-        case MIPS_INSTR_SW: {
-            instr->operands[0].type = OP_REG;
-            instr->operands[1].type = OP_DISPL;
-            instr->operands[1].displ.displ = dec.instr.i_u.immediate;
-            instr->operands[1].displ.base = dec.instr.i_u.rs;
-            return;
-        }
-
-        default: break;
-    }
-
-    if(dec.opcode->category == MIPS_CATEGORY_MACRO) {
-        decode_macro(dec, instr);
-        return;
-    }
 }
 
 void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
     foreach_operand(i, op, instr) {
         switch(op->type) {
             case OP_IMM: {
-                if(instr->features & INSTR_JUMP)
-                    rdemulator_addref(e, instr->operands[0].imm, CR_JUMP);
-                else if(instr->features & INSTR_CALL)
-                    rdemulator_addref(e, instr->operands[0].imm, CR_CALL);
-                else if(op->userdata1)
-                    rdemulator_addref(e, op->imm, DR_ADDRESS);
+                if(op->userdata1)
+                    rdemulator_addref(e, op->imm, op->userdata1);
                 break;
             };
 
@@ -216,6 +282,12 @@ void render_instruction(const RDProcessor*, RDRenderer* r,
 
     render_mnemonic(instr, r);
 
+    switch(instr->id) {
+        case MIPS_INSTR_JAL: rdrenderer_addr(r, instr->operands[0].imm); return;
+
+        default: break;
+    }
+
     foreach_operand(i, op, instr) {
         if(i > 0)
             rdrenderer_text(r, ", ");
@@ -227,7 +299,7 @@ void render_instruction(const RDProcessor*, RDRenderer* r,
             }
 
             case OP_IMM: {
-                if(instr->id == MIPS_MACRO_LA)
+                if(op->userdata1)
                     rdrenderer_addr(r, op->imm);
                 else
                     rdrenderer_cnst(r, op->imm);
