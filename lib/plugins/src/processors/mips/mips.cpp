@@ -2,7 +2,6 @@
 #include <climits>
 #include <optional>
 #include <redasm/redasm.h>
-#include <string>
 
 namespace {
 
@@ -11,9 +10,9 @@ std::optional<RDAddress> calc_addr(const MIPSDecodedInstruction& dec,
     if(dec.opcode->category == MIPS_CATEGORY_MACRO) {
         switch(dec.opcode->id) {
             case MIPS_MACRO_B: {
+                i32 tgt = mips_decoder::signext_16_32(dec.instr.i_s.imm);
                 return address + sizeof(MIPSInstruction) +
-                       static_cast<i32>(mips_decoder::sign_ext(
-                           dec.instr.i_s.immediate << 2, 32));
+                       (static_cast<i32>(tgt * 4));
             }
 
             default: {
@@ -26,16 +25,16 @@ std::optional<RDAddress> calc_addr(const MIPSDecodedInstruction& dec,
         }
     }
     else {
-        switch(dec.opcode->encoding) {
-            case MIPS_ENCODING_J: {
-                return (address & (0xF << ((sizeof(u32) * CHAR_BIT) - 4))) |
-                       (static_cast<u32>(dec.instr.j.target) << 2);
+        switch(dec.opcode->format) {
+            case MIPS_FORMAT_J: {
+                u32 pcupper = (address + sizeof(MIPSInstruction)) & 0xF0000000;
+                return pcupper | static_cast<u32>(dec.instr.j.target) << 2;
             }
 
-            case MIPS_ENCODING_I: {
+            case MIPS_FORMAT_I: {
+                i32 tgt = mips_decoder::signext_16_32(dec.instr.i_s.imm);
                 return address + sizeof(MIPSInstruction) +
-                       static_cast<i32>(mips_decoder::sign_ext(
-                           dec.instr.i_u.immediate << 2, 32));
+                       (static_cast<i32>(tgt * 4));
             }
 
             default: {
@@ -102,7 +101,7 @@ void decode_macro(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
             instr->operands[0].type = OP_REG;
             instr->operands[0].reg = dec.instr.i_u.rt;
             instr->operands[1].type = OP_IMM;
-            instr->operands[1].reg = dec.instr.i_u.immediate;
+            instr->operands[1].reg = dec.instr.i_u.imm;
             break;
         }
 
@@ -177,7 +176,7 @@ void decode_i(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
 
             auto addr = calc_addr(dec, instr->address);
             instr->operands[2].type = OP_IMM;
-            instr->operands[2].imm = addr.value_or(dec.instr.i_u.immediate);
+            instr->operands[2].imm = addr.value_or(dec.instr.i_u.imm);
 
             if(addr.has_value())
                 instr->operands[2].userdata1 = CR_JUMP;
@@ -191,7 +190,7 @@ void decode_i(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
 
             instr->operands[1].type = OP_DISPL;
             instr->operands[1].displ.base = dec.instr.i_u.rs;
-            instr->operands[1].displ.displ = dec.instr.i_u.immediate;
+            instr->operands[1].displ.displ = dec.instr.i_u.imm;
             return;
         }
 
@@ -205,7 +204,7 @@ void decode_i(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
     instr->operands[1].reg = dec.instr.i_u.rs;
 
     instr->operands[2].type = OP_IMM;
-    instr->operands[2].imm = dec.instr.i_u.immediate;
+    instr->operands[2].imm = dec.instr.i_u.imm;
 }
 
 void decode_j(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
@@ -239,11 +238,11 @@ void decode(const RDProcessor*, RDInstruction* instr) {
         return;
     }
 
-    switch(dec.opcode->encoding) {
-        case MIPS_ENCODING_R: decode_r(dec, instr); break;
-        case MIPS_ENCODING_I: decode_i(dec, instr); break;
-        case MIPS_ENCODING_J: decode_j(dec, instr); break;
-        case MIPS_ENCODING_B: decode_b(dec, instr); break;
+    switch(dec.opcode->format) {
+        case MIPS_FORMAT_R: decode_r(dec, instr); break;
+        case MIPS_FORMAT_I: decode_i(dec, instr); break;
+        case MIPS_FORMAT_J: decode_j(dec, instr); break;
+        case MIPS_FORMAT_B: decode_b(dec, instr); break;
         default: break;
     }
 

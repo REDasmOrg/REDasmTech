@@ -127,14 +127,14 @@ struct CFormat {
 };
 
 struct IFormatUnsigned {
-    unsigned immediate : 16;
+    unsigned imm : 16;
     unsigned rt : 5;
     unsigned rs : 5;
     unsigned op : 6;
 };
 
 struct IFormatSigned {
-    signed immediate : 16;
+    signed imm : 16;
     unsigned rt : 5;
     unsigned rs : 5;
     unsigned op : 6;

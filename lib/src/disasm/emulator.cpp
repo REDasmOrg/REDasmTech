@@ -83,8 +83,6 @@ void Emulator::tick() {
                 mem->set(idx, BF_CALL);
         }
     }
-    else
-        ctx->add_problem(idx, "location is not unknown");
 }
 
 bool Emulator::has_pending() const {

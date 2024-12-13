@@ -7,12 +7,7 @@
 
 namespace mips_decoder {
 
-template<typename T>
-std::make_signed_t<T> sign_ext(T val, int valbits) {
-    T m = 1;
-    m <<= valbits - 1;
-    return static_cast<std::make_signed_t<T>>((val ^ m) - m);
-}
+inline i32 signext_16_32(i16 v) { return static_cast<i32>(v); }
 
 const char* mnemonic(usize id);
 const char* reg(u32 r);

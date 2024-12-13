@@ -8,22 +8,22 @@
 
 enum MIPSVersion { MIPS_VERSION_NONE, MIPS_VERSION_I };
 
-enum MIPSEncoding {
-    MIPS_ENCODING_NONE,
-    MIPS_ENCODING_R,
-    MIPS_ENCODING_C,
-    MIPS_ENCODING_I,
-    MIPS_ENCODING_J,
-    MIPS_ENCODING_B,
-    MIPS_ENCODING_C0,
-    MIPS_ENCODING_C1,
-    MIPS_ENCODING_C2,
-    MIPS_ENCODING_CLS,
-    MIPS_ENCODING_COUNT
+enum MIPSFormat {
+    MIPS_FORMAT_NONE = 0,
+    MIPS_FORMAT_R,
+    MIPS_FORMAT_C,
+    MIPS_FORMAT_I,
+    MIPS_FORMAT_J,
+    MIPS_FORMAT_B,
+    MIPS_FORMAT_C0,
+    MIPS_FORMAT_C1,
+    MIPS_FORMAT_C2,
+    MIPS_FORMAT_CLS,
+    MIPS_FORMAT_COUNT
 };
 
 enum MIPSCategory {
-    MIPS_CATEGORY_NONE,
+    MIPS_CATEGORY_NONE = 0,
     MIPS_CATEGORY_MACRO,
 
     MIPS_CATEGORY_LOAD,
@@ -37,7 +37,7 @@ enum MIPSCategory {
 struct MIPSOpcode {
     u32 id;
     int category;
-    int encoding;
+    int format;
     u32 version;
 };
 

@@ -16,10 +16,10 @@ void apply_macro(std::string_view mnemonic, MIPSDecodedInstruction& dec) {
 
 bool can_simplify_lui(const MIPSDecodedInstruction& lui,
                       const MIPSDecodedInstruction& nextdec) {
-    switch(nextdec.opcode->encoding) {
-        case MIPS_ENCODING_I: return lui.instr.i_u.rt == nextdec.instr.i_u.rs;
+    switch(nextdec.opcode->format) {
+        case MIPS_FORMAT_I: return lui.instr.i_u.rt == nextdec.instr.i_u.rs;
 
-        case MIPS_ENCODING_R: {
+        case MIPS_FORMAT_R: {
             if(nextdec.instr.r.rd != nextdec.instr.r.rs)
                 return false;
             return (lui.instr.i_u.rt == MIPS_REG_AT) &&
@@ -46,11 +46,11 @@ void check_lui(RDAddress address, MIPSDecodedInstruction& lui, bool big) {
        !mips_macrodecoder::can_simplify_lui(lui, nextdec))
         return;
 
-    u32 mipsaddress = lui.instr.i_u.immediate << 16;
+    u32 mipsaddress = lui.instr.i_u.imm << 16;
 
     switch(nextdec.opcode->id) {
         case MIPS_INSTR_ORI:
-            mipsaddress |= static_cast<u32>(nextdec.instr.i_u.immediate);
+            mipsaddress |= static_cast<u32>(nextdec.instr.i_s.imm);
             break;
 
         case MIPS_INSTR_ADDIU:
@@ -58,8 +58,7 @@ void check_lui(RDAddress address, MIPSDecodedInstruction& lui, bool big) {
         case MIPS_INSTR_LHU:
         case MIPS_INSTR_SW:
         case MIPS_INSTR_SH:
-            mipsaddress += static_cast<u32>(
-                mips_decoder::sign_ext(nextdec.instr.i_u.immediate, 16));
+            mipsaddress += mips_decoder::signext_16_32(nextdec.instr.i_s.imm);
             break;
 
         default: return;

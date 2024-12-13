@@ -45,70 +45,68 @@ int check_format(const MIPSInstruction& mi) {
     if(!mi.r.op) {
         switch(mi.b.funct) {
             case 0b001100:
-            case 0b001101: return MIPS_ENCODING_B;
+            case 0b001101: return MIPS_FORMAT_B;
 
             case 0b110000:
-            case 0b110100: return MIPS_ENCODING_C;
+            case 0b110100: return MIPS_FORMAT_C;
             default: break;
         }
 
-        return MIPS_ENCODING_R;
+        return MIPS_FORMAT_R;
     }
 
     switch(mi.unk.op) {
-        case 0b010000: return MIPS_ENCODING_C0;
+        case 0b010000: return MIPS_FORMAT_C0;
         // case 0b010001: return MIPSEncoding_C1;
-        case 0b010010: return MIPS_ENCODING_C2;
+        case 0b010010: return MIPS_FORMAT_C2;
 
         case 0b110001:
         case 0b111001:
         case 0b110010:
-        case 0b111010: return MIPS_ENCODING_CLS;
+        case 0b111010: return MIPS_FORMAT_CLS;
 
         default: break;
     }
 
     if(((mi.i_u.op >= 0x04) && (mi.i_u.op <= 0x2e)) || (mi.i_u.op == 0x01))
-        return MIPS_ENCODING_I;
+        return MIPS_FORMAT_I;
     if((mi.j.op == 0x02) || (mi.j.op == 0x03))
-        return MIPS_ENCODING_J;
+        return MIPS_FORMAT_J;
 
-    return MIPS_ENCODING_NONE;
+    return MIPS_FORMAT_NONE;
 }
 
 bool check_encoding(MIPSDecodedInstruction& dec) {
     int f = mips_decoder::check_format(dec.instr);
 
     switch(f) {
-        case MIPS_ENCODING_R:
+        case MIPS_FORMAT_R:
             dec.opcode = &mips_opcodes_r[dec.instr.r.funct];
             break;
 
-        case MIPS_ENCODING_C:
+        case MIPS_FORMAT_C:
             dec.opcode = &mips_opcodes_c[dec.instr.c.funct];
             break;
 
-        case MIPS_ENCODING_I:
+        case MIPS_FORMAT_I:
             dec.opcode = &mips_opcodes_i[dec.instr.i_u.op];
             break;
 
-        case MIPS_ENCODING_J:
-            dec.opcode = &mips_opcodes_j[dec.instr.j.op];
-            break;
+        case MIPS_FORMAT_J: dec.opcode = &mips_opcodes_j[dec.instr.j.op]; break;
 
-        case MIPS_ENCODING_B:
+        case MIPS_FORMAT_B:
             dec.opcode = &mips_opcodes_b[dec.instr.b.funct];
             break;
 
-        case MIPS_ENCODING_C0:
+        case MIPS_FORMAT_C0:
             dec.opcode = &mips_opcodes_c0[dec.instr.c0sel.code];
             break;
 
-        case MIPS_ENCODING_C2:
+        case MIPS_FORMAT_C2:
             dec.opcode = &mips_opcodes_c2[dec.instr.c2impl.code];
             break;
 
-        case MIPS_ENCODING_CLS:
+        case MIPS_FORMAT_CLS:
             dec.opcode = &mips_opcodes_cls[dec.instr.cls.op];
             break;
 
@@ -118,7 +116,7 @@ bool check_encoding(MIPSDecodedInstruction& dec) {
             return false;
     }
 
-    return f != MIPS_ENCODING_NONE;
+    return f != MIPS_FORMAT_NONE;
 }
 
 } // namespace
