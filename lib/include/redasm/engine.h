@@ -8,8 +8,9 @@ typedef enum RDAnalysisStep {
     STEP_EMULATE,
     STEP_PROCESS,
     STEP_ANALYZE,
+    STEP_TYPES,
     STEP_DONE,
-    STEP_LAST
+    STEP_COUNT,
 } RDAnalysisStep;
 
 typedef struct RDAnalysisStatus {

@@ -237,7 +237,7 @@ def read_debuginfo(pe):
 
         if dbgdir.Type == PEH.IMAGE_DEBUG_TYPE_CODEVIEW:
             redasm.log("Debug info type: CODEVIEW")
-            pe.classifier.check_visualstudio()
+            # pe.classifier.check_visualstudio()
 
             cvheader = redasm.get_type(dbgva, "CV_HEADER")
 

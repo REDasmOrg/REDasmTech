@@ -20,6 +20,7 @@ bool Disassembler::execute(const RDAnalysisStatus** s) {
             case STEP_EMULATE: this->emulate_step(); break;
             case STEP_PROCESS: this->process_step(); break;
             case STEP_ANALYZE: this->analyze_step(); break;
+            case STEP_TYPES: this->types_step(); break;
             default: unreachable;
         }
     }
@@ -41,15 +42,15 @@ void Disassembler::execute(usize step) {
 }
 
 void Disassembler::next_step() {
-    if(emulator.has_pending())
+    if(emulator.has_pending_code())
         m_currentstep = STEP_EMULATE; // Repeat emulation
     else
         m_currentstep = std::min<usize>(m_currentstep + 1, STEP_DONE);
 }
 
 void Disassembler::init_step() {
-    static constexpr std::array<const char*, STEP_LAST> STEPS_LIST = {
-        "Init", "Emulate", "CFG", "Analyze", "Done",
+    static constexpr std::array<const char*, STEP_COUNT> STEPS_LIST = {
+        "Init", "Emulate", "Process", "Analyze", "Types", "Done",
     };
 
     m_status->filepath = state::context->file->source.c_str();
@@ -68,9 +69,9 @@ void Disassembler::init_step() {
 }
 
 void Disassembler::emulate_step() {
-    if(emulator.has_pending()) {
+    if(emulator.has_pending_code()) {
         emulator.tick();
-        auto a = state::context->index_to_address(emulator.pc);
+        auto a = state::context->index_to_address(emulator.current);
         a.map([&](RDAddress address) { m_status->address.value = address; });
         m_status->address.valid = a.has_value();
     }
@@ -90,6 +91,19 @@ void Disassembler::analyze_step() {
     }
 
     this->next_step();
+}
+
+void Disassembler::types_step() {
+    spdlog::info("Propagating types...");
+
+    if(emulator.has_pending_types()) {
+        emulator.tick_type();
+        auto a = state::context->index_to_address(emulator.current);
+        a.map([&](RDAddress address) { m_status->address.value = address; });
+        m_status->address.valid = a.has_value();
+    }
+    else
+        this->next_step();
 }
 
 void Disassembler::process_step() {

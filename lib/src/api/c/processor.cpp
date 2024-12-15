@@ -4,6 +4,10 @@ void rdemulator_addref(RDEmulator* e, RDAddress toaddr, usize type) {
     redasm::api::internal::emulator_addref(e, toaddr, type);
 }
 
+void rdemulator_settype(RDEmulator* e, RDAddress addr, const RDType* type) {
+    redasm::api::internal::emulator_settype(e, addr, type);
+}
+
 usize rd_getprocessors(const RDProcessor** processors) {
     return redasm::api::internal::get_processors(processors);
 }

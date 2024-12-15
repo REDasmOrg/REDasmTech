@@ -1,8 +1,8 @@
 #include "mips_format.h"
 
-#define MIPS_MACRO(name, type, size)                                           \
+#define MIPS_MACRO(type, size)                                                 \
     {                                                                          \
-        name,                                                                  \
+        type,                                                                  \
         {                                                                      \
             {                                                                  \
                 type,                                                          \
@@ -25,16 +25,18 @@ MIPSOpcodeArray mips_opcodes_c2{};
 MIPSOpcodeArray mips_opcodes_cls{};
 
 const MIPSMacroMap MIPS_OPCODES_MACRO = {
-    MIPS_MACRO("la", MIPS_MACRO_LA, sizeof(MIPSInstruction) * 2),
-    MIPS_MACRO("lw", MIPS_MACRO_LW, sizeof(MIPSInstruction) * 2),
-    MIPS_MACRO("lhu", MIPS_MACRO_LHU, sizeof(MIPSInstruction) * 2),
-    MIPS_MACRO("sw", MIPS_MACRO_SW, sizeof(MIPSInstruction) * 2),
-    MIPS_MACRO("sh", MIPS_MACRO_SH, sizeof(MIPSInstruction) * 2),
+    MIPS_MACRO(MIPS_MACRO_LA, sizeof(MIPSInstruction) * 2),
+    MIPS_MACRO(MIPS_MACRO_LW, sizeof(MIPSInstruction) * 2),
+    MIPS_MACRO(MIPS_MACRO_LHU, sizeof(MIPSInstruction) * 2),
+    MIPS_MACRO(MIPS_MACRO_SW, sizeof(MIPSInstruction) * 2),
+    MIPS_MACRO(MIPS_MACRO_SH, sizeof(MIPSInstruction) * 2),
 
-    MIPS_MACRO("li", MIPS_MACRO_LI, sizeof(MIPSInstruction)),
-    MIPS_MACRO("b", MIPS_MACRO_B, sizeof(MIPSInstruction)),
-    MIPS_MACRO("nop", MIPS_MACRO_NOP, sizeof(MIPSInstruction)),
-    MIPS_MACRO("move", MIPS_MACRO_MOVE, sizeof(MIPSInstruction)),
+    MIPS_MACRO(MIPS_MACRO_LI, sizeof(MIPSInstruction)),
+    MIPS_MACRO(MIPS_MACRO_B, sizeof(MIPSInstruction)),
+    MIPS_MACRO(MIPS_MACRO_BEQZ, sizeof(MIPSInstruction)),
+    MIPS_MACRO(MIPS_MACRO_BNEZ, sizeof(MIPSInstruction)),
+    MIPS_MACRO(MIPS_MACRO_NOP, sizeof(MIPSInstruction)),
+    MIPS_MACRO(MIPS_MACRO_MOVE, sizeof(MIPSInstruction)),
 };
 
 void mips_initialize_formats() {

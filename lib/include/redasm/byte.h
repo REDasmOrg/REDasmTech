@@ -8,10 +8,10 @@ typedef u32 RDByte;
 typedef enum RDByteFlags {
     // Internal Use
     BF_MBYTE = 0x000000ff, // Mask for byte extraction
-    BF_MUNKN = 0x30000000, // Mask for unknown flags
+    BF_MUNKN = 0x8c000000, // Mask for unknown flags
     BF_MMASK = 0x0001ffff, // Mask for Byte and Common
 
-    // Common Flags
+    // Common Flags (non-volatile)
     BF_BYTE = 1U << 8,      // Indicates the presence of a byte
     BF_NAME = 1U << 9,      // Named entity
     BF_COMMENT = 1U << 10,  // Comment flag
@@ -22,11 +22,6 @@ typedef enum RDByteFlags {
     BF_EXPORT = 1U << 15,   // Export flag
     BF_FUNCTION = 1U << 16, // Function flag
 
-    // Type Flags (28..29)
-    BF_UNKNOWN = 0U << 28, // Unknown type
-    BF_DATA = 1U << 28,    // Data type
-    BF_CODE = 2U << 28,    // Code type
-
     // Data-Specific Flags
     BF_TYPE = 1U << 17, // Type
 
@@ -36,9 +31,16 @@ typedef enum RDByteFlags {
     BF_FLOW = 1U << 20,    // Flow control instruction
     BF_JUMPDST = 1U << 21, // Jump destination
 
+    // Type Flags (26..27)
+    BF_UNKNOWN = 0U << 26, // Unknown type
+    BF_DATA = 1U << 26,    // Data type
+    BF_CODE = 2U << 26,    // Code type
+
     // Special Flags
-    BF_WEAK = 1U << 30, // Weak flag
-    BF_CONT = 1U << 31, // Continuation flag
+    BF_WEAK = 1U << 28,  // Weak flag
+    BF_START = 1U << 29, // Start of Range
+    BF_END = 1U << 30,   // End of Range
+    BF_CONT = 1U << 31,  // Continuation of Range
 } RDByteFlags;
 
 REDASM_EXPORT bool rdbyte_isunknown(RDByte self);

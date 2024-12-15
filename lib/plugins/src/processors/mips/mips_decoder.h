@@ -3,7 +3,6 @@
 #include "mips_format.h"
 #include <redasm/redasm.h>
 #include <string_view>
-#include <type_traits>
 
 namespace mips_decoder {
 

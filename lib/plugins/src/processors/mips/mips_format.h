@@ -3,7 +3,6 @@
 #include "mips_instruction.h"
 #include <array>
 #include <redasm/redasm.h>
-#include <string_view>
 #include <unordered_map>
 
 enum MIPSVersion { MIPS_VERSION_NONE, MIPS_VERSION_I };
@@ -46,16 +45,24 @@ union MIPSMacroOpCode {
         unsigned reg : 5;
         union {
             RDAddress address;
-            u64 u_value;
-            i64 s_value;
+            u64 u_imm64;
+            i64 s_imm64;
+            u32 u_imm32;
+            i32 s_imm32;
+            u16 u_imm16;
+            i16 s_imm16;
         };
     } regimm; // opcode reg, imm
 
     struct {
         union {
             RDAddress address;
-            u64 u_value;
-            i64 s_value;
+            u64 u_imm64;
+            i64 s_imm64;
+            u32 u_imm32;
+            i32 s_imm32;
+            u16 u_imm16;
+            i16 s_imm16;
         };
         unsigned base : 5;
         unsigned rt : 5;
@@ -71,7 +78,7 @@ struct MIPSDecodedInstruction {
 
 using MIPSOpcodeArray = std::array<MIPSOpcode, 1 << MIPS_OP_BITS>;
 using MIPSMacro = std::pair<MIPSOpcode, size_t>;
-using MIPSMacroMap = std::unordered_map<std::string_view, MIPSMacro>;
+using MIPSMacroMap = std::unordered_map<MIPSInstructionId, MIPSMacro>;
 
 extern const MIPSMacroMap MIPS_OPCODES_MACRO;
 extern MIPSOpcodeArray mips_opcodes_r;

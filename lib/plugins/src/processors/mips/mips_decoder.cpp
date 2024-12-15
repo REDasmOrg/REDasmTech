@@ -9,37 +9,39 @@ namespace mips_decoder {
 
 namespace {
 
-constexpr std::array<std::string_view, 85> MIPS_INSTR_MNEMONICS = {
-    // R-Type
-    "add", "addu", "and", "div", "divu", "mult", "multu", "nor", "or", "sll",
-    "sra", "srl", "sub", "subu", "xor", "slt", "sltu", "jr", "mfhi", "mflo",
-    "mthi", "mtlo", "sllv", "srav", "srlv", "xori", "jalr",
+constexpr std::array<std::string_view, MIPS_MAX_INSTRUCTIONS>
+    MIPS_INSTR_MNEMONICS = {
+        // R-Type
+        "add", "addu", "and", "div", "divu", "mult", "multu", "nor", "or",
+        "sll", "sra", "srl", "sub", "subu", "xor", "slt", "sltu", "jr", "mfhi",
+        "mflo", "mthi", "mtlo", "sllv", "srav", "srlv", "xori", "jalr",
 
-    // C-Type
-    "teq", "tge",
+        // C-Type
+        "teq", "tge",
 
-    // I-Type
-    "addi", "addiu", "andi", "ori", "lui", "beq", "bgez", "bgtz", "blez", "bne",
-    "lb", "lbu", "lh", "lhu", "lw", "lwl", "lwr", "sb", "sh", "sw", "swl",
-    "swr", "lhi", "llo", "slti", "sltiu",
+        // I-Type
+        "addi", "addiu", "andi", "ori", "lui", "beq", "bgez", "bgtz", "blez",
+        "bne", "lb", "lbu", "lh", "lhu", "lw", "lwl", "lwr", "sb", "sh", "sw",
+        "swl", "swr", "lhi", "llo", "slti", "sltiu",
 
-    // J-Type
-    "j", "jal",
+        // J-Type
+        "j", "jal",
 
-    // B-Type
-    "break", "syscall",
+        // B-Type
+        "break", "syscall",
 
-    // C0-Type
-    "mfc0", "mtc0",
+        // C0-Type
+        "mfc0", "mtc0",
 
-    // C2-Type
-    "mfc2", "mtc2", "cfc2", "ctc2",
+        // C2-Type
+        "mfc2", "mtc2", "cfc2", "ctc2",
 
-    // CLS-Type
-    "lwc1", "swc1", "lwc2", "swc2",
+        // CLS-Type
+        "lwc1", "swc1", "lwc2", "swc2",
 
-    // Macro Instructions
-    "la", "li", "move", "lhu", "lw", "sw", "sh", "b", "nop"};
+        // Macro Instructions
+        "la", "li", "move", "lhu", "lw", "sw", "sh", "b", "beqz", "bnez",
+        "nop"};
 
 int check_format(const MIPSInstruction& mi) {
     if(!mi.r.op) {

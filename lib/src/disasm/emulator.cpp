@@ -7,15 +7,49 @@ namespace redasm {
 
 namespace {
 
-void do_enqueue(std::deque<MIndex>& q, MIndex index) {
-    if(q.empty() || q.front() != index)
-        q.push_front(index);
+void do_enqueue(std::deque<MIndex>& q, MIndex idx) {
+    if(q.empty() || q.front() != idx)
+        q.push_front(idx);
 }
 
 } // namespace
 
+bool Emulator::set_typename(MIndex idx, typing::FullTypeName tname) {
+    typing::ParsedType pt = state::context->types.parse(tname);
+    return this->set_type(idx, pt.to_type());
+}
+
+bool Emulator::set_type(MIndex idx, RDType type) {
+    const Context* ctx = state::context;
+    if(idx >= ctx->memory->size())
+        return false;
+
+    const typing::TypeDef* newtd = ctx->types.get_typedef(type);
+    usize newsz = newtd->size * std::max<usize>(type.n, 1);
+
+    if(idx + newsz >= ctx->memory->size())
+        return false;
+
+    auto it = m_ptypes.find(idx);
+
+    if(it == m_ptypes.end()) {
+        m_ptypes[idx] = type;
+        return true;
+    }
+
+    const typing::TypeDef* oldtd = ctx->types.get_typedef(it->second);
+    usize oldsz = oldtd->size * std::max<usize>(it->second.n, 1);
+
+    if(newsz < oldsz) {
+        m_ptypes[idx] = type;
+        return true;
+    }
+
+    return false;
+}
+
 void Emulator::add_ref(MIndex toidx, usize type) { // NOLINT
-    state::context->add_ref(this->pc, toidx, type);
+    state::context->add_ref(this->current, toidx, type);
 }
 
 void Emulator::enqueue_flow(MIndex index) { do_enqueue(m_qflow, index); }
@@ -47,14 +81,8 @@ void Emulator::tick() {
 
     Byte& b = ctx->memory->at(idx);
 
-    // Weak bytes can be overriden
-    if(b.is_weak() && !b.is_unknown()) {
-        usize len = ctx->memory->get_length(idx);
-        ctx->memory->unset_n(idx, len);
-    }
-
-    if(b.is_unknown()) {
-        this->pc = idx;
+    if(!b.is_code()) {
+        this->current = idx;
 
         auto address = ctx->index_to_address(idx);
         assume(address.has_value());
@@ -73,8 +101,11 @@ void Emulator::tick() {
         }
 
         if(instr.length) {
+            mem->unset_n(idx, instr.length);
+
             if(p->emulate)
                 p->emulate(p, api::to_c(this), &instr);
+
             mem->set_n(idx, instr.length, BF_CODE);
 
             if(instr.features & INSTR_JUMP)
@@ -85,9 +116,31 @@ void Emulator::tick() {
     }
 }
 
-bool Emulator::has_pending() const {
+void Emulator::tick_type() {
+    assume(!m_ptypes.empty());
+    auto [index, type] = *m_ptypes.begin();
+    m_ptypes.erase(m_ptypes.begin());
+    this->current = index;
+
+    Context* ctx = state::context;
+    const typing::TypeDef* td = ctx->types.get_typedef(type);
+    usize sz = td->size * std::max<usize>(type.n, 1);
+
+    for(usize i = index; i < index + sz; i++) {
+        Byte b = ctx->memory->at(i);
+        if(b.is_code() || b.has(BF_SEGMENT))
+            return;
+    }
+
+    // TODO(davide): Move string classifier here?
+    ctx->set_type(index, type, ST_WEAK);
+}
+
+bool Emulator::has_pending_code() const {
     return state::context->processor->emulate &&
            (!m_qflow.empty() || !m_qjump.empty() || !m_qcall.empty());
 }
+
+bool Emulator::has_pending_types() const { return !m_ptypes.empty(); }
 
 } // namespace redasm

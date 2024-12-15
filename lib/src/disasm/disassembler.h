@@ -17,8 +17,9 @@ private:
     void next_step();
     void init_step();
     void emulate_step();
-    void analyze_step();
     void process_step();
+    void analyze_step();
+    void types_step();
 
 public:
     Emulator emulator;

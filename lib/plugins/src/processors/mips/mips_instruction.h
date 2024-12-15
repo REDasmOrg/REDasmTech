@@ -99,7 +99,11 @@ enum MIPSInstructionId {
     MIPS_MACRO_SW,
     MIPS_MACRO_SH,
     MIPS_MACRO_B,
-    MIPS_MACRO_NOP
+    MIPS_MACRO_BEQZ,
+    MIPS_MACRO_BNEZ,
+    MIPS_MACRO_NOP,
+
+    MIPS_MAX_INSTRUCTIONS
 };
 
 #pragma pack(push, 1)

@@ -306,13 +306,13 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
                     rdemulator_addref(e, op->imm, DR_ADDRESS);
 
                     if(!rd_istypenull(&op->dtype))
-                        rd_settype_ex(op->mem, &op->dtype, ST_WEAK);
+                        rdemulator_settype(e, op->mem, &op->dtype);
                 }
                 else {
                     rdemulator_addref(e, op->imm, DR_READ);
 
                     if(!rd_istypenull(&op->dtype))
-                        rd_settype_ex(op->mem, &op->dtype, ST_WEAK);
+                        rdemulator_settype(e, op->mem, &op->dtype);
                 }
 
                 break;
@@ -330,7 +330,7 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
                 }
 
                 if(!rd_istypenull(&op->dtype))
-                    rd_settype_ex(op->mem, &op->dtype, ST_WEAK);
+                    rdemulator_settype(e, op->mem, &op->dtype);
 
                 rdemulator_addref(e, op->mem, DR_READ);
                 break;

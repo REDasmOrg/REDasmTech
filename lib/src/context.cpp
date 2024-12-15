@@ -1,7 +1,6 @@
 #include "context.h"
 #include "api/marshal.h"
 #include "error.h"
-#include "memory/stringfinder.h"
 #include "state.h"
 #include "utils/utils.h"
 #include <climits>
@@ -169,10 +168,10 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         case DR_READ:
         case DR_WRITE:
         case DR_ADDRESS: {
-            stringfinder::classify(toidx).map([&](const RDStringResult& x) {
-                this->memory->unset_n(toidx, x.totalsize);
-                this->set_type(toidx, x.type, ST_WEAK);
-            });
+            // stringfinder::classify(toidx).map([&](const RDStringResult& x) {
+            //     this->memory->unset_n(toidx, x.totalsize);
+            //     this->set_type(toidx, x.type, ST_WEAK);
+            // });
 
             this->m_database.add_ref(fromidx, toidx, type);
             this->memory->set(fromidx, BF_REFSFROM);
@@ -182,8 +181,8 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
 
         case CR_FLOW: {
             if(s && s->type & SEG_HASCODE) {
-                if(!this->memory->at(toidx).has(
-                       BF_CODE)) // Check if already decoded
+                // Check if already decoded
+                if(!this->memory->at(toidx).is_code())
                     this->disassembler.emulator.enqueue_flow(toidx);
                 this->memory->set(fromidx, BF_FLOW);
             }
@@ -200,8 +199,8 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
             }
 
             if(s && s->type & SEG_HASCODE) {
-                if(!this->memory->at(toidx).has(
-                       BF_CODE)) // Check if already decoded
+                // Check if already decoded
+                if(!this->memory->at(toidx).is_code())
                     this->disassembler.emulator.enqueue_jump(toidx);
             }
             else
@@ -217,8 +216,8 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
             }
 
             if(s && s->type & SEG_HASCODE) {
-                if(!this->memory->at(toidx).has(
-                       BF_CODE)) // Check if already decoded
+                // Check if already decoded
+                if(!this->memory->at(toidx).is_code())
                     this->disassembler.emulator.enqueue_call(toidx);
             }
             else
@@ -252,12 +251,6 @@ bool Context::set_type(MIndex idx, typing::FullTypeName tname, usize flags) {
 bool Context::set_type(MIndex idx, RDType t, usize flags) {
     if(idx >= this->memory->size()) {
         spdlog::warn("set_type: Invalid address");
-        return false;
-    }
-
-    if((flags & ST_WEAK) && !this->memory->at(idx).is_unknown()) {
-        this->add_problem(
-            idx, fmt::format("Cannot set type '{}'", this->types.to_string(t)));
         return false;
     }
 
@@ -590,22 +583,22 @@ void Context::process_listing() {
 
     if(this->memory) {
         for(usize idx = 0; idx < this->memory->size();) {
-            Byte membyte = this->memory->at(idx);
+            Byte b = this->memory->at(idx);
 
-            if(membyte.has(BF_SEGMENT))
+            if(b.has(BF_SEGMENT))
                 this->listing.segment(idx);
 
-            if(membyte.is_unknown()) {
+            if(b.is_unknown()) {
                 this->process_listing_unknown(idx);
                 continue;
             }
 
-            if(membyte.is_data()) {
+            if(b.is_data()) {
                 this->process_listing_data(idx);
                 continue;
             }
 
-            if(membyte.is_code()) {
+            if(b.is_code()) {
                 this->listing.push_indent(4);
                 this->process_listing_code(idx);
                 this->listing.pop_indent(4);
@@ -636,7 +629,7 @@ void Context::process_listing_data(MIndex& idx) {
             this->process_listing_type(idx, *type);
     }
     else {
-        except("Unhandled data byte @ index {}, value {}", idx,
+        except("Unhandled data byte @ index {:x}, value {}", idx,
                rd_tohex_n(b.value, 8));
     }
 }
@@ -662,7 +655,10 @@ void Context::process_listing_code(MIndex& idx) {
     }
 
     this->listing.instruction(idx);
-    idx += this->memory->get_length(idx);
+
+    usize l = this->memory->get_length(idx);
+    assume(l > 0);
+    idx += l;
 }
 
 void Context::process_listing_array(MIndex& idx, RDType t) {
@@ -747,6 +743,7 @@ LIndex Context::process_listing_type(MIndex& idx, RDType t) {
 void Context::process_function_graph(MIndex idx) {
     auto address = this->index_to_address(idx);
     assume(address.has_value());
+
     spdlog::info("Creating function graph @ {}", this->to_hex(*address));
 
     const auto& mem = this->memory;

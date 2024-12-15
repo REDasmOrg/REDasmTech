@@ -53,6 +53,9 @@ typedef struct RDProcessor {
 REDASM_EXPORT void rdemulator_addref(RDEmulator* e, RDAddress toaddr,
                                      usize type);
 
+REDASM_EXPORT void rdemulator_settype(RDEmulator* e, RDAddress addr,
+                                      const RDType* type);
+
 REDASM_EXPORT usize rd_getprocessors(const RDProcessor** processors);
 REDASM_EXPORT void rd_registerprocessor(const RDProcessor* proc);
 REDASM_EXPORT void rd_setprocessor(const char* name);

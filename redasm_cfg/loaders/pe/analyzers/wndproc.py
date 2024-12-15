@@ -40,6 +40,9 @@ def wndproc_isenabled():
 
 def find_wndproc(address, argidx):
     func = redasm.rdil.create_function(address)
+    if not func:
+        return
+
     vstack = []
 
     for x in func:
