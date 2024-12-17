@@ -3,8 +3,8 @@
 #include <array>
 #include <string_view>
 
-enum MIPSRegisters {
-    MIPS_REG_ZERO,
+enum MIPSRegisterId {
+    MIPS_REG_ZERO = 0,
     MIPS_REG_AT,
     MIPS_REG_V0,
     MIPS_REG_V1,
@@ -40,7 +40,7 @@ enum MIPSRegisters {
     MIPS_REG_MAX,
 };
 
-enum MIPSCOP0Registers {
+enum MIPSCOP0RegisterId {
     MIPS_REG_COP0_INDEX,
     MIPS_REG_COP0_RANDOM,
     MIPS_REG_COP0_ENTRY_LO0,
@@ -71,14 +71,14 @@ enum MIPSCOP0Registers {
     MIPS_REG_COP0_MAX = 32,
 };
 
-constexpr std::array<std::string_view, MIPS_REG_MAX> GPR_REGS = {
+constexpr std::array<std::string_view, MIPS_REG_MAX> GPR_NAMES = {
     "$zero", "$at", "$v0", "$v1", "$a0", "$a1", "$a2", "$a3",
     "$t0",   "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7",
     "$s0",   "$s1", "$s2", "$s3", "$s4", "$s5", "$s6", "$s7",
     "$t8",   "$t9", "$k0", "$k1", "$gp", "$sp", "$fp", "$ra",
 };
 
-constexpr std::array<std::string_view, MIPS_REG_COP0_MAX> COP0_REGS = {
+constexpr std::array<std::string_view, MIPS_REG_COP0_MAX> COP0R_NAMES = {
     "$Index",    "$Random",   "$EntryLo0", "$EntryLo1", "$Context", "$PageMask",
     "$Wired",    "$Reserved", "$BadVAddr", "$Count",    "$EntryHi", "$Compare",
     "$Status",   "$Cause",    "$EPC",      "PRId",      "$Config",  "$LLAddr",

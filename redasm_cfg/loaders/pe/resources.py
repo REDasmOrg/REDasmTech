@@ -51,11 +51,13 @@ class PEResourceDir:
 
     def get_entries(self):
         resdir = self.get_resource_dir()
-        c = resdir.NumberOfIdEntries + resdir.NumberOfNamedEntries
 
-        if c > 0:
-            return redasm.get_type(self.address + redasm.size_of("IMAGE_RESOURCE_DIRECTORY"),
-                                   f"IMAGE_RESOURCE_DIRECTORY_ENTRY[{c}]")
+        if resdir:
+            c = resdir.NumberOfIdEntries + resdir.NumberOfNamedEntries
+
+            if c > 0:
+                return redasm.get_type(self.address + redasm.size_of("IMAGE_RESOURCE_DIRECTORY"),
+                                       f"IMAGE_RESOURCE_DIRECTORY_ENTRY[{c}]")
 
         return []
 
@@ -81,6 +83,9 @@ class PEResources:
 
     def read_resource_dir(self, address):
         resdir = redasm.set_type(address, "IMAGE_RESOURCE_DIRECTORY")
+        if not resdir:
+            return
+
         c = resdir.NumberOfIdEntries + resdir.NumberOfNamedEntries
         if c == 0:
             return

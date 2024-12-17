@@ -17,6 +17,7 @@ typedef enum RDOperandType {
     OP_NULL = 0,
     OP_REG,
     OP_IMM,
+    OP_ADDR,   // Address immediate
     OP_MEM,    // [Address]
     OP_PHRASE, // [BaseReg + IndexReg]
     OP_DISPL,  // [BaseReg + IndexReg + Displ]
@@ -25,22 +26,22 @@ typedef enum RDOperandType {
 } RDOperandType;
 
 typedef enum RDInstructionFeatures {
-    INSTR_NONE = 0,
-    INSTR_STOP = (1 << 0),
-    INSTR_JUMP = (1 << 1),
-    INSTR_CALL = (1 << 2),
+    IF_NONE = 0,
+    IF_STOP = (1 << 0),
+    IF_JUMP = (1 << 1),
+    IF_CALL = (1 << 2),
 } RDInstructionFeatures;
 
-typedef usize RDRegister;
+typedef usize RDRegisterOperand;
 
 typedef struct _RDPhraseOperand {
-    RDRegister base;
-    RDRegister index;
+    RDRegisterOperand base;
+    RDRegisterOperand index;
 } _RDPhraseOperand;
 
 typedef struct _RDDisplOperand {
-    RDRegister base;
-    RDRegister index;
+    RDRegisterOperand base;
+    RDRegisterOperand index;
 
     union {
         u64 displ;
@@ -51,8 +52,8 @@ typedef struct _RDDisplOperand {
 } _RDDisplOperand;
 
 typedef struct _RDUserOperand {
-    RDRegister reg1;
-    RDRegister reg2;
+    RDRegisterOperand reg1;
+    RDRegisterOperand reg2;
 
     union {
         usize val;
@@ -62,11 +63,11 @@ typedef struct _RDUserOperand {
 
 typedef struct RDOperand {
     usize type;
-    usize features;
     RDType dtype;
 
     union {
-        RDRegister reg;
+        RDRegisterOperand reg;
+        u64 addr;
         u64 imm;
         i64 s_imm;
         RDAddress mem;

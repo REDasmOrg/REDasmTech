@@ -8,7 +8,7 @@ namespace redasm::api::internal {
 
 void renderer_themed(RDRenderer* self, std::string_view s, RDThemeKind kind);
 void renderer_mnem(RDRenderer* self, std::string_view s, RDThemeKind kind);
-void renderer_reg(RDRenderer* self, std::string_view s);
+void renderer_reg(RDRenderer* self, int regid);
 void renderer_text(RDRenderer* self, std::string_view s);
 void renderer_ws(RDRenderer* self);
 void renderer_addr_ex(RDRenderer* self, RDAddress address, int flags);

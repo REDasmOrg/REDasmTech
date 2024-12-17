@@ -260,6 +260,24 @@ Renderer& Renderer::constant(u64 c, int base, int flags, RDThemeKind fg) {
     return *this;
 }
 
+Renderer& Renderer::reg(int regid) {
+    const RDProcessor* p = state::context->processor;
+    assume(p);
+
+    std::string_view regname;
+
+    if(p->getregistername) {
+        const char* res = p->getregistername(p, regid);
+        if(res)
+            regname = res;
+    }
+
+    if(regname.empty())
+        regname = utils::to_string(regid, 10);
+
+    return this->chunk(regname, THEME_REG);
+}
+
 Renderer& Renderer::character(SurfaceRow& row, char ch, RDThemeKind fg,
                               RDThemeKind bg) {
     row.cells.emplace_back(RDSurfaceCell{ch, fg, bg});

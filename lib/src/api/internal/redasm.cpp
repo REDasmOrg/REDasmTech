@@ -425,20 +425,10 @@ bool map_segment(const std::string& name, RDAddress address,
     spdlog::trace("map_segment('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
                   address, endaddress, offset, endoffset, type);
 
-    auto start = state::context->address_to_index(address);
-    if(!start) {
-        spdlog::error("map_segment: start address {:x} out of bounds", address);
-        return false;
-    }
-
-    auto end = state::context->address_to_index(endaddress);
-    if(!end) {
-        spdlog::error("map_segment: end address {:x} out of bounds",
-                      endaddress);
-        return false;
-    }
-
-    state::context->map_segment(name, *start, *end, offset, endoffset, type);
+    MIndex startidx = address - state::context->baseaddress;
+    MIndex endidx = endaddress - state::context->baseaddress;
+    state::context->map_segment(name, startidx, endidx, offset, endoffset,
+                                type);
     return true;
 }
 
@@ -447,22 +437,9 @@ bool map_segment_n(const std::string& name, RDAddress address, usize asize,
     spdlog::trace("map_segment_n('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
                   address, asize, offset, osize, type);
 
-    auto start = state::context->address_to_index(address);
-    if(!start) {
-        spdlog::error("map_segment_n: start address {:x} out of bounds",
-                      address);
-        return false;
-    }
-
-    RDAddress endaddress = address + asize;
-
-    auto end = state::context->address_to_index(endaddress);
-    if(!end) {
-        spdlog::error("map_segment_n: end address {:x} out of bounds", address);
-        return false;
-    }
-
-    state::context->map_segment(name, *start, *end, offset, offset + osize,
+    MIndex startidx = address - state::context->baseaddress;
+    MIndex endidx = (address + asize) - state::context->baseaddress;
+    state::context->map_segment(name, startidx, endidx, offset, offset + osize,
                                 type);
     return true;
 }

@@ -1,4 +1,5 @@
 #include "mips_decoder.h"
+// #include "mips_registers.h"
 #include <climits>
 #include <redasm/redasm.h>
 
@@ -29,15 +30,15 @@ void render_mnemonic(const RDInstruction* instr, RDRenderer* r) {
 
     RDThemeKind theme = THEME_DEFAULT;
 
-    if(instr->features & INSTR_JUMP) {
+    if(instr->features & IF_JUMP) {
         theme = THEME_JUMP;
 
         if(instr->uservalue & MIPS_CATEGORY_JUMPCOND)
             theme = THEME_JUMPCOND;
     }
-    if(instr->features & INSTR_CALL)
+    if(instr->features & IF_CALL)
         theme = THEME_CALL;
-    if(instr->features & INSTR_STOP)
+    if(instr->features & IF_STOP)
         theme = THEME_RET;
 
     rdrenderer_mnem(r, mips_decoder::mnemonic(instr->id), theme);
@@ -54,24 +55,22 @@ void decode_macro(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
         }
 
         case MIPS_MACRO_B: {
-            instr->features = INSTR_JUMP | INSTR_STOP;
-            instr->operands[0].type = OP_IMM;
-            instr->operands[0].imm =
+            instr->features = IF_JUMP | IF_STOP;
+            instr->operands[0].type = OP_ADDR;
+            instr->operands[0].addr =
                 calc_addr16(instr->address, dec.instr.i_s.imm);
-            instr->operands[0].userdata1 = CR_JUMP;
             break;
         }
 
         case MIPS_MACRO_BEQZ:
         case MIPS_MACRO_BNEZ: {
-            instr->features = INSTR_JUMP;
+            instr->features = IF_JUMP;
 
             instr->operands[0].type = OP_REG;
             instr->operands[0].reg = dec.macro.regimm.reg;
-            instr->operands[1].type = OP_IMM;
-            instr->operands[1].imm =
+            instr->operands[1].type = OP_ADDR;
+            instr->operands[1].addr =
                 calc_addr16(instr->address, dec.macro.regimm.s_imm16);
-            instr->operands[1].userdata1 = CR_JUMP;
             break;
         }
 
@@ -86,10 +85,8 @@ void decode_macro(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
         case MIPS_MACRO_LA: {
             instr->operands[0].type = OP_REG;
             instr->operands[0].reg = dec.macro.regimm.reg;
-            instr->operands[1].type = OP_IMM;
-            instr->operands[1].reg = dec.macro.regimm.address;
-            instr->operands[1].dtype.id = TID_U32;
-            instr->operands[1].userdata1 = DR_ADDRESS;
+            instr->operands[1].type = OP_ADDR;
+            instr->operands[1].addr = dec.macro.regimm.address;
             break;
         }
 
@@ -98,8 +95,7 @@ void decode_macro(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
             instr->operands[0].type = OP_REG;
             instr->operands[0].reg = dec.macro.regimm.reg;
             instr->operands[1].type = OP_MEM;
-            instr->operands[1].reg = dec.macro.regimm.address;
-            instr->operands[1].dtype.id = TID_U32;
+            instr->operands[1].mem = dec.macro.regimm.address;
             break;
         }
 
@@ -145,23 +141,18 @@ void decode_r(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
 }
 
 void decode_i(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
-    switch(dec.opcode->category) {
-        case MIPS_CATEGORY_JUMPCOND: {
-            instr->operands[0].type = OP_REG;
-            instr->operands[0].reg = dec.instr.i_u.rt;
-
-            instr->operands[1].type = OP_REG;
-            instr->operands[1].reg = dec.instr.i_u.rs;
-
-            instr->operands[2].type = OP_IMM;
-            instr->operands[2].imm =
-                calc_addr16(instr->address, dec.instr.i_s.imm);
-            instr->operands[2].userdata1 = CR_JUMP;
-            return;
-        }
-
-        case MIPS_CATEGORY_LOAD:
-        case MIPS_CATEGORY_STORE: {
+    switch(dec.opcode->id) {
+        case MIPS_INSTR_LB:
+        case MIPS_INSTR_LBU:
+        case MIPS_INSTR_LH:
+        case MIPS_INSTR_LHU:
+        case MIPS_INSTR_LW:
+        case MIPS_INSTR_LWL:
+        case MIPS_INSTR_LWR:
+        case MIPS_INSTR_SB:
+        case MIPS_INSTR_SH:
+        case MIPS_INSTR_SWL:
+        case MIPS_INSTR_SWR:
             instr->operands[0].type = OP_REG;
             instr->operands[0].reg = dec.instr.i_u.rt;
 
@@ -169,7 +160,13 @@ void decode_i(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
             instr->operands[1].displ.base = dec.instr.i_u.rs;
             instr->operands[1].displ.displ = dec.instr.i_u.imm;
             return;
-        }
+
+        case MIPS_INSTR_LUI:
+            instr->operands[0].type = OP_REG;
+            instr->operands[0].reg = dec.instr.i_u.rt;
+            instr->operands[1].type = OP_IMM;
+            instr->operands[1].imm = dec.instr.i_u.imm;
+            return;
 
         default: break;
     }
@@ -180,20 +177,26 @@ void decode_i(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
     instr->operands[1].type = OP_REG;
     instr->operands[1].reg = dec.instr.i_u.rs;
 
-    instr->operands[2].type = OP_IMM;
-    instr->operands[2].imm = dec.instr.i_u.imm;
+    if(dec.opcode->category == MIPS_CATEGORY_JUMPCOND) {
+        instr->operands[2].type = OP_ADDR;
+        instr->operands[2].addr =
+            calc_addr16(instr->address, dec.instr.i_s.imm);
+    }
+    else {
+        instr->operands[2].type = OP_IMM;
+        instr->operands[2].imm = dec.instr.i_u.imm;
+    }
 }
 
 void decode_j(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
-    instr->operands[0].type = OP_IMM;
-    instr->operands[0].imm =
+    instr->operands[0].type = OP_ADDR;
+    instr->operands[0].addr =
         calc_addr26(instr->address, static_cast<u32>(dec.instr.j.target));
-    instr->operands[0].userdata1 = CR_CALL;
 }
 
 void decode_b(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
     if(dec.opcode->id == MIPS_INSTR_BREAK)
-        instr->features |= INSTR_STOP;
+        instr->features |= IF_STOP;
 }
 
 template<bool BigEndian>
@@ -220,14 +223,10 @@ void decode(const RDProcessor*, RDInstruction* instr) {
     }
 
     switch(dec.opcode->category) {
-        case MIPS_CATEGORY_CALL: instr->features |= INSTR_CALL; break;
-
-        case MIPS_CATEGORY_JUMP:
-            instr->features |= INSTR_JUMP | INSTR_STOP;
-            break;
-
-        case MIPS_CATEGORY_JUMPCOND: instr->features |= INSTR_JUMP; break;
-        case MIPS_CATEGORY_RET: instr->features |= INSTR_STOP; break;
+        case MIPS_CATEGORY_CALL: instr->features |= IF_CALL; break;
+        case MIPS_CATEGORY_JUMP: instr->features |= IF_JUMP | IF_STOP; break;
+        case MIPS_CATEGORY_JUMPCOND: instr->features |= IF_JUMP; break;
+        case MIPS_CATEGORY_RET: instr->features |= IF_STOP; break;
         default: break;
     }
 }
@@ -235,13 +234,11 @@ void decode(const RDProcessor*, RDInstruction* instr) {
 void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
     foreach_operand(i, op, instr) {
         switch(op->type) {
-            case OP_IMM: {
-                if(op->userdata1) {
-                    rdemulator_addref(e, op->imm, op->userdata1);
-
-                    if(!rd_istypenull(&op->dtype))
-                        rdemulator_settype(e, op->imm, &op->dtype);
-                }
+            case OP_ADDR: {
+                if(instr->features & IF_JUMP)
+                    rdemulator_addref(e, op->imm, CR_JUMP);
+                else if(instr->features & IF_CALL)
+                    rdemulator_addref(e, op->imm, CR_CALL);
                 break;
             };
 
@@ -249,8 +246,8 @@ void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
         }
     }
 
-    if(!(instr->features & INSTR_STOP))
-        rdemulator_addref(e, instr->address + instr->length, CR_FLOW);
+    if(!(instr->features & IF_STOP))
+        rdemulator_flow(e, instr->address + instr->length);
 }
 
 void render_instruction(const RDProcessor*, RDRenderer* r,
@@ -263,36 +260,40 @@ void render_instruction(const RDProcessor*, RDRenderer* r,
             rdrenderer_text(r, ", ");
 
         switch(op->type) {
-            case OP_REG: {
-                rdrenderer_reg(r, mips_decoder::reg(op->reg));
-                break;
-            }
+            case OP_REG: rdrenderer_reg(r, op->reg); break;
+            case OP_ADDR: rdrenderer_addr(r, op->addr); break;
+            case OP_IMM: rdrenderer_cnst(r, op->imm); break;
+            case OP_MEM: rdrenderer_addr(r, op->mem); break;
 
-            case OP_IMM: {
-                if(op->userdata1)
-                    rdrenderer_addr(r, op->imm);
-                else
-                    rdrenderer_cnst(r, op->imm);
-                break;
-            };
-
-            case OP_MEM: {
-                rdrenderer_addr(r, op->mem);
-                break;
-            }
-
-            case OP_DISPL: {
+            case OP_DISPL:
                 rdrenderer_cnst(r, op->displ.displ);
                 rdrenderer_text(r, "(");
-                rdrenderer_reg(r, mips_decoder::reg(op->displ.base));
+                rdrenderer_reg(r, op->displ.base);
                 rdrenderer_text(r, ")");
                 break;
-            }
 
             default: break;
         }
     }
 }
+
+const char* get_register_name(const RDProcessor*, int regid) {
+    return mips_decoder::reg(regid);
+}
+
+template<typename T>
+struct MIPSRegisters {
+    T zero{0}, at;
+    T v0, v1;
+    T a0, a1, a2, a3;
+    T t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
+    T s0, s1, s2, s3, s4, s5, s6, s7;
+    T k0, k1;
+    T gp, sp, fp, ra;
+};
+
+using MIPSRegisters32 = MIPSRegisters<u32>;
+using MIPSRegisters64 = MIPSRegisters<u64>;
 
 } // namespace
 
@@ -300,18 +301,38 @@ void rdplugin_init() {
     mips_initialize_formats();
 
     RDProcessor mips32le{};
+    // mips32le.state.init = [](const RDProcessor*) -> void* {
+    //     return new MIPSRegisters32{};
+    // };
+    //
+    // mips32le.state.fini = [](const RDProcessor*, void* state) {
+    //     delete reinterpret_cast<MIPSRegisters32*>(state);
+    // };
+    //
+    // mips32le.state.copy = [](const RDProcessor*, const void* state) -> void*
+    // {
+    //     return new MIPSRegisters<u32>{
+    //         *reinterpret_cast<const MIPSRegisters32*>(state)};
+    // };
+
     mips32le.id = "mips32le";
     mips32le.name = "MIPS32 (Little Endian)";
+    mips32le.address_size = 4;
+    mips32le.integer_size = 4;
     mips32le.decode = decode<false>;
     mips32le.emulate = emulate;
+    mips32le.getregistername = get_register_name;
     mips32le.renderinstruction = render_instruction;
     rd_registerprocessor(&mips32le);
 
     RDProcessor mips32be{};
     mips32be.id = "mips32be";
     mips32be.name = "MIPS32 (Big Endian)";
+    mips32be.address_size = 8;
+    mips32be.integer_size = 4;
     mips32be.decode = decode<true>;
     mips32be.emulate = emulate;
+    mips32be.getregistername = get_register_name;
     mips32be.renderinstruction = render_instruction;
     rd_registerprocessor(&mips32be);
 

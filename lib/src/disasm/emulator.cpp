@@ -14,6 +14,31 @@ void do_enqueue(std::deque<MIndex>& q, MIndex idx) {
 
 } // namespace
 
+// Emulator::~Emulator() {
+//     const Context* ctx = state::context;
+//
+//     if(m_state && ctx->processor->state.fini)
+//         ctx->processor->state.fini(ctx->processor, m_state);
+// }
+
+// void Emulator::activate() {
+//     const Context* ctx = state::context;
+//
+//     if(ctx->processor->state.init)
+//         m_state = ctx->processor->state.init(ctx->processor);
+// }
+
+void Emulator::flow(MIndex index) {
+    const Segment* fromseg = state::context->index_to_segment(this->current);
+    assume(fromseg);
+    assume(fromseg->type & SEG_HASCODE);
+
+    if(index >= fromseg->index && index < fromseg->endindex) {
+        state::context->memory->set(this->current, BF_FLOW);
+        this->enqueue_flow(index);
+    }
+}
+
 bool Emulator::set_typename(MIndex idx, typing::FullTypeName tname) {
     typing::ParsedType pt = state::context->types.parse(tname);
     return this->set_type(idx, pt.to_type());
@@ -32,18 +57,18 @@ bool Emulator::set_type(MIndex idx, RDType type) {
 
     auto it = m_ptypes.find(idx);
 
-    if(it == m_ptypes.end()) {
-        m_ptypes[idx] = type;
-        return true;
-    }
+    // if(it == m_ptypes.end()) {
+    // m_ptypes[idx] = type;
+    // return true;
+    // }
 
-    const typing::TypeDef* oldtd = ctx->types.get_typedef(it->second);
-    usize oldsz = oldtd->size * std::max<usize>(it->second.n, 1);
+    // const typing::TypeDef* oldtd = ctx->types.get_typedef(it->second);
+    // usize oldsz = oldtd->size * std::max<usize>(it->second.n, 1);
 
-    if(newsz < oldsz) {
-        m_ptypes[idx] = type;
-        return true;
-    }
+    // if(newsz < oldsz) {
+    // m_ptypes[idx] = type;
+    // return true;
+    // }
 
     return false;
 }
@@ -53,8 +78,16 @@ void Emulator::add_ref(MIndex toidx, usize type) { // NOLINT
 }
 
 void Emulator::enqueue_flow(MIndex index) { do_enqueue(m_qflow, index); }
-void Emulator::enqueue_jump(MIndex index) { do_enqueue(m_qjump, index); }
-void Emulator::enqueue_call(MIndex index) { do_enqueue(m_qcall, index); }
+
+void Emulator::enqueue_jump(MIndex index) {
+    // TODO(davide): Snapshot State
+    do_enqueue(m_qjump, index);
+}
+
+void Emulator::enqueue_call(MIndex index) {
+    // TODO(davide): Snapshot State
+    do_enqueue(m_qcall, index);
+}
 
 void Emulator::tick() {
     MIndex idx;
@@ -108,9 +141,9 @@ void Emulator::tick() {
 
             mem->set_n(idx, instr.length, BF_CODE);
 
-            if(instr.features & INSTR_JUMP)
+            if(instr.features & IF_JUMP)
                 mem->set(idx, BF_JUMP);
-            if(instr.features & INSTR_CALL)
+            if(instr.features & IF_CALL)
                 mem->set(idx, BF_CALL);
         }
     }
@@ -123,17 +156,17 @@ void Emulator::tick_type() {
     this->current = index;
 
     Context* ctx = state::context;
-    const typing::TypeDef* td = ctx->types.get_typedef(type);
-    usize sz = td->size * std::max<usize>(type.n, 1);
+    // const typing::TypeDef* td = ctx->types.get_typedef(type);
+    // usize sz = td->size * std::max<usize>(type.n, 1);
 
-    for(usize i = index; i < index + sz; i++) {
-        Byte b = ctx->memory->at(i);
-        if(b.is_code() || b.has(BF_SEGMENT))
-            return;
-    }
+    // for(usize i = index; i < index + sz; i++) {
+    // Byte b = ctx->memory->at(i);
+    // if(b.is_code() || b.has(BF_SEGMENT))
+    // return;
+    // }
 
     // TODO(davide): Move string classifier here?
-    ctx->set_type(index, type, ST_WEAK);
+    // ctx->set_type(index, type, ST_WEAK);
 }
 
 bool Emulator::has_pending_code() const {

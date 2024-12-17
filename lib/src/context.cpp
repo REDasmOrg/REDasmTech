@@ -32,7 +32,6 @@ std::string_view get_refname(usize reftype) {
         case DR_READ: return "READ";
         case DR_WRITE: return "WRITE";
         case DR_ADDRESS: return "ADDRESS";
-        case CR_FLOW: return "FLOW";
         case CR_JUMP: return "JUMP";
         case CR_CALL: return "CALL";
         default: break;
@@ -108,6 +107,7 @@ bool Context::activate() {
                 this->selectedanalyzers.insert(a.name);
         }
 
+        // this->disassembler.emulator.activate();
         return true;
     }
 
@@ -176,18 +176,6 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
             this->m_database.add_ref(fromidx, toidx, type);
             this->memory->set(fromidx, BF_REFSFROM);
             this->memory->set(toidx, BF_REFSTO);
-            break;
-        }
-
-        case CR_FLOW: {
-            if(s && s->type & SEG_HASCODE) {
-                // Check if already decoded
-                if(!this->memory->at(toidx).is_code())
-                    this->disassembler.emulator.enqueue_flow(toidx);
-                this->memory->set(fromidx, BF_FLOW);
-            }
-            else
-                add_noncodeproblem(s, toidx, type);
             break;
         }
 
@@ -318,7 +306,7 @@ tl::optional<MIndex> Context::address_to_index(RDAddress address) const {
         return tl::nullopt;
 
     usize idx = address - this->baseaddress;
-    if(idx > this->memory->size())
+    if(idx >= this->memory->size())
         return tl::nullopt;
 
     return idx;
@@ -345,9 +333,15 @@ const Segment* Context::index_to_segment(MIndex index) const {
     if(index >= this->memory->size())
         return nullptr;
 
+    const Segment* ls = m_lastsegment;
+    if(ls && (index >= ls->index && index < ls->endindex))
+        return ls;
+
     for(const Segment& s : this->segments) {
-        if(index >= s.index && index < s.endindex)
-            return &s;
+        if(index >= s.index && index < s.endindex) {
+            ls = &s;
+            return ls;
+        }
     }
 
     return nullptr;
@@ -389,8 +383,39 @@ RDAddress Context::memory_copy(MIndex idx, RDOffset start, RDOffset end) const {
 
 void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
                           RDOffset offset, RDOffset endoffset, usize type) {
-    if(offset && endoffset)
+    if(idx >= endidx) {
+        spdlog::error("Invalid address range for segment '{}'", name);
+        return;
+    }
+
+    if(idx >= this->memory->size()) {
+        spdlog::error("Start address out of range for segment '{}'", name);
+        return;
+    }
+
+    if(endidx > this->memory->size()) {
+        spdlog::error("End offset out of range for segment '{}'", name);
+        return;
+    }
+
+    if(offset && endoffset) {
+        if(offset >= endoffset) {
+            spdlog::error("Invalid offset range for segment '{}'", name);
+            return;
+        }
+
+        if(offset >= this->file->size()) {
+            spdlog::error("Start offset out of range for segment '{}'", name);
+            return;
+        }
+
+        if(endoffset > this->file->size()) {
+            spdlog::error("End offset out of range for segment '{}'", name);
+            return;
+        }
+
         this->memory_copy(idx, offset, endoffset);
+    }
 
     this->memory->at(idx).set(BF_SEGMENT);
 
@@ -405,9 +430,8 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
 
     m_database.add_segment(name, idx, endidx, offset, endoffset, type);
 
-    auto v = this->index_to_address(endidx);
-    assume(v);
-    this->bits = std::max(this->bits.value_or(0), calculate_bits(*v));
+    this->bits = std::max(this->bits.value_or(0),
+                          calculate_bits(this->baseaddress + endidx));
 }
 
 tl::optional<MIndex> Context::get_index(std::string_view name) const {

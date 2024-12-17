@@ -50,7 +50,6 @@ void init_constants(PyObject* m) {
     assume(PyModule_AddIntConstant(m, "DR_READ", DR_READ) == 0);
     assume(PyModule_AddIntConstant(m, "DR_WRITE", DR_WRITE) == 0);
     assume(PyModule_AddIntConstant(m, "DR_ADDRESS", DR_ADDRESS) == 0);
-    assume(PyModule_AddIntConstant(m, "CR_FLOW", CR_FLOW) == 0);
     assume(PyModule_AddIntConstant(m, "CR_CALL", CR_CALL) == 0);
     assume(PyModule_AddIntConstant(m, "CR_JUMP", CR_JUMP) == 0);
 

@@ -27,6 +27,13 @@ bool emulator_settype(RDEmulator* e, RDAddress address, const RDType* type) {
     return false;
 }
 
+void emulator_flow(RDEmulator* e, RDAddress flowaddr) {
+    spdlog::trace("emulator_flow({}, {:x})", fmt::ptr(e), flowaddr);
+
+    state::context->address_to_index(flowaddr).map(
+        [&](MIndex idx) { api::from_c(e)->flow(idx); });
+}
+
 usize get_processors(const RDProcessor** processors) {
     spdlog::trace("get_processors({})", fmt::ptr(processors));
 
@@ -39,6 +46,22 @@ usize get_processors(const RDProcessor** processors) {
 void register_processor(const RDProcessor& processor) {
     spdlog::trace("register_processor('{}', '{}')", processor.id,
                   processor.name);
+
+    if(!processor.address_size) {
+        state::error(fmt::format(
+            "register_processor: invalid address-size for processor '{}'",
+            processor.id));
+
+        return;
+    }
+
+    if(!processor.integer_size) {
+        state::error(fmt::format(
+            "register_processor: invalid integer-size for processor '{}'",
+            processor.id));
+
+        return;
+    }
 
     if(processor.id)
         state::processors.push_back(processor);

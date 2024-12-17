@@ -131,15 +131,15 @@ const char* mnemonic(usize id) {
 }
 
 const char* reg(u32 r) {
-    if(r >= GPR_REGS.size())
+    if(r >= GPR_NAMES.size())
         return "???";
-    return GPR_REGS[r].data(); // NOLINT
+    return GPR_NAMES[r].data(); // NOLINT
 }
 
 std::string_view cop0_reg(u32 r) {
-    if(r >= COP0_REGS.size())
+    if(r >= COP0R_NAMES.size())
         return {};
-    return COP0_REGS[r];
+    return COP0R_NAMES[r];
 }
 
 std::string_view copn_reg(u32 r) {

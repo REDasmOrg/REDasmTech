@@ -94,11 +94,11 @@ void X86Processor::decode(RDInstruction* instr) {
     instr->uservalue = zinstr.meta.category;
 
     switch(zinstr.meta.category) {
-        case ZYDIS_CATEGORY_CALL: instr->features |= INSTR_CALL; break;
-        case ZYDIS_CATEGORY_COND_BR: instr->features |= INSTR_JUMP; break;
+        case ZYDIS_CATEGORY_CALL: instr->features |= IF_CALL; break;
+        case ZYDIS_CATEGORY_COND_BR: instr->features |= IF_JUMP; break;
 
         case ZYDIS_CATEGORY_UNCOND_BR:
-            instr->features |= INSTR_JUMP | INSTR_STOP;
+            instr->features |= IF_JUMP | IF_STOP;
             break;
 
         default: break;
@@ -107,7 +107,7 @@ void X86Processor::decode(RDInstruction* instr) {
     switch(zinstr.mnemonic) {
         case ZYDIS_MNEMONIC_HLT:
         case ZYDIS_MNEMONIC_INT3:
-        case ZYDIS_MNEMONIC_RET: instr->features |= INSTR_STOP; break;
+        case ZYDIS_MNEMONIC_RET: instr->features |= IF_STOP; break;
         default: break;
     }
 
@@ -126,18 +126,18 @@ void X86Processor::decode(RDInstruction* instr) {
                 break;
 
             case ZYDIS_OPERAND_TYPE_IMMEDIATE: {
-                op.type = OP_IMM;
-
                 ZyanU64 addr = 0;
 
-                if((instr->features & INSTR_JUMP ||
-                    instr->features & INSTR_CALL) &&
+                if(is_addr_instruction(instr) &&
                    ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(
                        &zinstr, &zop, instr->address, &addr))) {
-                    op.imm = addr;
+                    op.type = OP_ADDR;
+                    op.addr = addr;
                 }
-                else
+                else {
+                    op.type = OP_IMM;
                     op.imm = zop.imm.value.u;
+                }
                 break;
             }
 
@@ -156,8 +156,8 @@ void X86Processor::decode(RDInstruction* instr) {
 
                     ZyanU64 addr;
 
-                    if((instr->features & INSTR_JUMP ||
-                        instr->features & INSTR_CALL) &&
+                    if((instr->features & IF_JUMP ||
+                        instr->features & IF_CALL) &&
                        ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(
                            &zinstr, &zop, instr->address, &addr))) {
                         op.mem = addr;
@@ -208,22 +208,15 @@ void render_instruction(const RDProcessor* /*self*/, RDRenderer* r,
             rdrenderer_text(r, ", ");
 
         switch(op->type) {
-            case OP_IMM: {
-                if(is_addr_instruction(instr) && rd_isaddress(op->imm))
-                    rdrenderer_addr(r, op->imm);
-                else
-                    rdrenderer_cnst(r, op->imm);
-                break;
-            }
+            case OP_ADDR: rdrenderer_addr(r, op->addr); break;
+            case OP_IMM: rdrenderer_cnst(r, op->imm); break;
 
             case OP_MEM: {
                 rdrenderer_text(r, "[");
 
                 if(op->userdata1 && op->userdata1 != ZYDIS_REGISTER_CS &&
                    op->userdata1 != ZYDIS_REGISTER_DS) {
-                    const char* reg = ZydisRegisterGetString(
-                        static_cast<ZydisRegister>(op->userdata1));
-                    rdrenderer_reg(r, reg);
+                    rdrenderer_reg(r, op->userdata1);
                     rdrenderer_text(r, ":");
                 }
 
@@ -232,43 +225,24 @@ void render_instruction(const RDProcessor* /*self*/, RDRenderer* r,
                 break;
             }
 
-            case OP_REG: {
-                const char* reg =
-                    ZydisRegisterGetString(static_cast<ZydisRegister>(op->reg));
-                rdrenderer_reg(r, reg);
-                break;
-            }
+            case OP_REG: rdrenderer_reg(r, op->reg); break;
 
             case OP_PHRASE: {
                 rdrenderer_text(r, "[");
-
-                const char* base = ZydisRegisterGetString(
-                    static_cast<ZydisRegister>(op->phrase.base));
-                rdrenderer_reg(r, base);
-
+                rdrenderer_reg(r, op->phrase.base);
                 rdrenderer_text(r, "+");
-
-                const char* index = ZydisRegisterGetString(
-                    static_cast<ZydisRegister>(op->phrase.index));
-                rdrenderer_reg(r, index);
-
+                rdrenderer_reg(r, op->phrase.index);
                 rdrenderer_text(r, "]");
                 break;
             }
 
             case OP_DISPL: {
                 rdrenderer_text(r, "[");
-
-                const char* base = ZydisRegisterGetString(
-                    static_cast<ZydisRegister>(op->displ.base));
-                rdrenderer_reg(r, base);
+                rdrenderer_reg(r, op->displ.base);
 
                 if(op->displ.index != ZYDIS_REGISTER_NONE) {
                     rdrenderer_text(r, "+");
-
-                    const char* index = ZydisRegisterGetString(
-                        static_cast<ZydisRegister>(op->displ.index));
-                    rdrenderer_reg(r, index);
+                    rdrenderer_reg(r, op->displ.index);
 
                     if(op->displ.scale > 1) {
                         rdrenderer_text(r, "*");
@@ -297,40 +271,27 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
              const RDInstruction* instr) {
     foreach_operand(i, op, instr) {
         switch(op->type) {
-            case OP_IMM: {
-                if(instr->features & INSTR_JUMP)
+            case OP_ADDR: {
+                if(instr->features & IF_JUMP)
                     rdemulator_addref(e, op->imm, CR_JUMP);
-                else if(instr->features & INSTR_CALL)
+                else if(instr->features & IF_CALL)
                     rdemulator_addref(e, op->imm, CR_CALL);
-                else if(is_addr_instruction(instr) && rd_isaddress(op->imm)) {
+                else
                     rdemulator_addref(e, op->imm, DR_ADDRESS);
-
-                    if(!rd_istypenull(&op->dtype))
-                        rdemulator_settype(e, op->mem, &op->dtype);
-                }
-                else {
-                    rdemulator_addref(e, op->imm, DR_READ);
-
-                    if(!rd_istypenull(&op->dtype))
-                        rdemulator_settype(e, op->mem, &op->dtype);
-                }
-
                 break;
             }
+
             case OP_MEM: {
-                if(instr->features & INSTR_JUMP) {
+                if(instr->features & IF_JUMP) {
                     auto addr = x86_common::read_address(op->mem);
                     if(addr)
                         rdemulator_addref(e, *addr, CR_JUMP);
                 }
-                else if(instr->features & INSTR_CALL) {
+                else if(instr->features & IF_CALL) {
                     auto addr = x86_common::read_address(op->mem);
                     if(addr)
                         rdemulator_addref(e, *addr, CR_CALL);
                 }
-
-                if(!rd_istypenull(&op->dtype))
-                    rdemulator_settype(e, op->mem, &op->dtype);
 
                 rdemulator_addref(e, op->mem, DR_READ);
                 break;
@@ -340,8 +301,12 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
         }
     }
 
-    if(!(instr->features & INSTR_STOP))
-        rdemulator_addref(e, instr->address + instr->length, CR_FLOW);
+    if(!(instr->features & IF_STOP))
+        rdemulator_flow(e, instr->address + instr->length);
+}
+
+const char* get_register_name(const RDProcessor*, int regid) {
+    return ZydisRegisterGetString(static_cast<ZydisRegister>(regid));
 }
 
 RDProcessor x86_32{};
@@ -352,7 +317,10 @@ RDProcessor x86_64{};
 void rdplugin_init() {
     x86_32.id = "x86_32";
     x86_32.name = "X86";
+    x86_32.address_size = 4;
+    x86_32.integer_size = 4;
     x86_32.userdata = new X86Processor(32);
+    x86_32.getregistername = get_register_name;
     x86_32.renderinstruction = render_instruction;
     x86_32.decode = decode;
     x86_32.emulate = emulate;
@@ -361,7 +329,10 @@ void rdplugin_init() {
 
     x86_64.id = "x86_64";
     x86_64.name = "X64";
+    x86_64.address_size = 8;
+    x86_64.integer_size = 4;
     x86_64.userdata = new X86Processor(64);
+    x86_64.getregistername = get_register_name;
     x86_64.renderinstruction = render_instruction;
     x86_64.decode = decode;
     x86_64.emulate = emulate;
