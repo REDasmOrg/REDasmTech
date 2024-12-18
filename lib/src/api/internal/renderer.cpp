@@ -23,9 +23,9 @@ void renderer_mnem(RDRenderer* self, std::string_view s, RDThemeKind kind) {
     renderer->prevmnemonic = true;
 }
 
-void renderer_reg(RDRenderer* self, int regid) {
-    spdlog::trace("renderer_reg({}, {})", fmt::ptr(self), regid);
-    api::from_c(self)->reg(regid);
+void renderer_reg(RDRenderer* self, int reg) {
+    spdlog::trace("renderer_reg({}, {})", fmt::ptr(self), reg);
+    api::from_c(self)->reg(reg);
 }
 
 void renderer_text(RDRenderer* self, std::string_view s) {

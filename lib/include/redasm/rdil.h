@@ -76,7 +76,7 @@ typedef enum RDILOp {
     u64 u_value;                                                               \
     i64 s_value;                                                               \
     union {                                                                    \
-        const char* reg;                                                       \
+        int reg;                                                               \
         const char* sym;                                                       \
     };
 
@@ -88,7 +88,7 @@ typedef struct RDILValue {
 REDASM_EXPORT const RDILExpr* rdil_unknown(RDILPool* self);
 REDASM_EXPORT const RDILExpr* rdil_nop(RDILPool* self);
 REDASM_EXPORT const RDILExpr* rdil_var(RDILPool* self, RDAddress address);
-REDASM_EXPORT const RDILExpr* rdil_reg(RDILPool* self, const char* reg);
+REDASM_EXPORT const RDILExpr* rdil_reg(RDILPool* self, int reg);
 REDASM_EXPORT const RDILExpr* rdil_sym(RDILPool* self, const char* sym);
 REDASM_EXPORT const RDILExpr* rdil_cnst(RDILPool* self, u64 value);
 REDASM_EXPORT const RDILExpr* rdil_add(RDILPool* self, const RDILExpr* l,

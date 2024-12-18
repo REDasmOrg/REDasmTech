@@ -107,7 +107,7 @@ PyObject* ilexpr_to_pyobject(const rdil::ILExpr* e) {
         }
 
         case RDIL_REG: {
-            PyObject* reg = PyUnicode_FromString(e->reg);
+            PyObject* reg = PyLong_FromLong(e->reg);
             PyObject_SetAttrString(obj, "reg", reg);
             Py_DECREF(reg);
             break;

@@ -46,7 +46,7 @@ void apply_optype(const ZydisDecodedOperand& zop, RDOperand& op) {
         op.dtype.n = zop.element_count;
 }
 
-bool is_addr_instruction(const RDInstruction* instr) {
+bool is_branch_instruction(const RDInstruction* instr) {
     switch(instr->uservalue) {
         case ZYDIS_CATEGORY_UNCOND_BR:
         case ZYDIS_CATEGORY_COND_BR:
@@ -55,6 +55,10 @@ bool is_addr_instruction(const RDInstruction* instr) {
         default: break;
     }
 
+    return false;
+}
+
+bool is_addr_instruction(const RDInstruction* instr) {
     switch(instr->id) {
         case ZYDIS_MNEMONIC_PUSH:
         case ZYDIS_MNEMONIC_MOV: return true;
@@ -128,11 +132,16 @@ void X86Processor::decode(RDInstruction* instr) {
             case ZYDIS_OPERAND_TYPE_IMMEDIATE: {
                 ZyanU64 addr = 0;
 
-                if(is_addr_instruction(instr) &&
+                if(is_branch_instruction(instr) &&
                    ZYAN_SUCCESS(ZydisCalcAbsoluteAddress(
                        &zinstr, &zop, instr->address, &addr))) {
                     op.type = OP_ADDR;
                     op.addr = addr;
+                }
+                else if(is_addr_instruction(instr) &&
+                        rd_isaddress(zop.imm.value.u)) {
+                    op.type = OP_ADDR;
+                    op.addr = zop.imm.value.u;
                 }
                 else {
                     op.type = OP_IMM;
@@ -273,11 +282,11 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
         switch(op->type) {
             case OP_ADDR: {
                 if(instr->features & IF_JUMP)
-                    rdemulator_addref(e, op->imm, CR_JUMP);
+                    rdemulator_addref(e, op->addr, CR_JUMP);
                 else if(instr->features & IF_CALL)
-                    rdemulator_addref(e, op->imm, CR_CALL);
+                    rdemulator_addref(e, op->addr, CR_CALL);
                 else
-                    rdemulator_addref(e, op->imm, DR_ADDRESS);
+                    rdemulator_addref(e, op->addr, DR_ADDRESS);
                 break;
             }
 
@@ -300,13 +309,10 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
             default: break;
         }
     }
-
-    if(!(instr->features & IF_STOP))
-        rdemulator_flow(e, instr->address + instr->length);
 }
 
-const char* get_register_name(const RDProcessor*, int regid) {
-    return ZydisRegisterGetString(static_cast<ZydisRegister>(regid));
+const char* get_register_name(const RDProcessor*, int reg) {
+    return ZydisRegisterGetString(static_cast<ZydisRegister>(reg));
 }
 
 RDProcessor x86_32{};
@@ -317,8 +323,8 @@ RDProcessor x86_64{};
 void rdplugin_init() {
     x86_32.id = "x86_32";
     x86_32.name = "X86";
-    x86_32.address_size = 4;
-    x86_32.integer_size = 4;
+    x86_32.address_type = TID_U32;
+    x86_32.integer_type = TID_U32;
     x86_32.userdata = new X86Processor(32);
     x86_32.getregistername = get_register_name;
     x86_32.renderinstruction = render_instruction;
@@ -329,8 +335,8 @@ void rdplugin_init() {
 
     x86_64.id = "x86_64";
     x86_64.name = "X64";
-    x86_64.address_size = 8;
-    x86_64.integer_size = 4;
+    x86_64.address_type = TID_U64;
+    x86_64.integer_type = TID_U32;
     x86_64.userdata = new X86Processor(64);
     x86_64.getregistername = get_register_name;
     x86_64.renderinstruction = render_instruction;

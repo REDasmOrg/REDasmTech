@@ -21,6 +21,18 @@ public:
     void unset_n(MIndex idx, usize len);
     void set_flags(MIndex idx, u32 flags, bool b);
 
+    template<typename Function>
+    bool range_is(MIndex idx, usize len, Function f) const {
+        MIndex endidx = std::min(idx + len, this->size());
+
+        for(MIndex i = idx; i < endidx; i++) {
+            if(!f(this->at(i)))
+                return false;
+        }
+
+        return true;
+    }
+
 private:
     tl::optional<std::pair<MIndex, MIndex>> find_range(MIndex idx) const;
 };

@@ -8,7 +8,7 @@ typedef enum RDAnalysisStep {
     STEP_EMULATE,
     STEP_PROCESS,
     STEP_ANALYZE,
-    STEP_TYPES,
+    STEP_REFS,
     STEP_DONE,
     STEP_COUNT,
 } RDAnalysisStep;

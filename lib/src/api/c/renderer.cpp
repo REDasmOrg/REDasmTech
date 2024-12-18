@@ -16,8 +16,8 @@ void rdrenderer_mnem(RDRenderer* self, const char* s, RDThemeKind kind) {
         spdlog::error("rdrenderer_mnemonic: invalid string");
 }
 
-void rdrenderer_reg(RDRenderer* self, int regid) {
-    redasm::api::internal::renderer_reg(self, regid);
+void rdrenderer_reg(RDRenderer* self, int reg) {
+    redasm::api::internal::renderer_reg(self, reg);
 }
 
 void rdrenderer_text(RDRenderer* self, const char* s) {

@@ -72,7 +72,7 @@ public:
     }
 
     [[nodiscard]] std::string to_hex(usize v, int n = -1) const;
-    void process_segments();
+    void process_segments(bool refs);
     void process_listing();
 
 private:
@@ -82,6 +82,7 @@ private:
     void process_listing_array(MIndex& idx, RDType t);
     LIndex process_listing_type(MIndex& idx, RDType t);
     void process_function_graph(MIndex idx);
+    void process_refsto(MIndex idx);
 
     template<typename Function>
     void process_hex_dump(MIndex& idx, Function f) {

@@ -17,7 +17,7 @@ const RDILExpr* rdilpool_var(RDILPool* self, RDAddress address) {
     return api::to_c(api::from_c(self)->expr_var(address));
 }
 
-const RDILExpr* rdilpool_reg(RDILPool* self, const char* reg) {
+const RDILExpr* rdilpool_reg(RDILPool* self, int reg) {
     return api::to_c(api::from_c(self)->expr_reg(reg));
 }
 

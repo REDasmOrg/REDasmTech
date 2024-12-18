@@ -64,7 +64,12 @@ usize Types::size_of(FullTypeName tname, ParsedType* res) const {
     if(res)
         *res = pt;
 
-    return pt.n ? pt.type->size * pt.n : pt.type->size;
+    return pt.type->size * std::max<usize>(pt.n, 1);
+}
+
+usize Types::size_of(RDType t) const {
+    const TypeDef* td = this->get_typedef(t);
+    return td->size * std::max<usize>(t.n, 1);
 }
 
 const TypeDef* Types::get_typedef(RDType t, std::string_view namehint) const {

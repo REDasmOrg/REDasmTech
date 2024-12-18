@@ -33,7 +33,7 @@ public:
     const ILExpr* expr_nop();
     const ILExpr* expr_pop(const ILExpr* e);
     const ILExpr* expr_push(const ILExpr* e);
-    const ILExpr* expr_reg(const char* reg);
+    const ILExpr* expr_reg(int reg);
     const ILExpr* expr_sym(const char* sym);
     const ILExpr* expr_cnst(u64 value);
     const ILExpr* expr_var(RDAddress address);

@@ -31,7 +31,7 @@ struct RDProcessor;
 // typedef void (*RDProcessorStateFini)(const RDProcessor*, void*);
 // typedef void* (*RDProcessorStateCopy)(const RDProcessor*, const void*);
 
-typedef const char* (*RDProcessorGetRegisterName)(const RDProcessor*, int regid);
+typedef const char* (*RDProcessorGetRegisterName)(const RDProcessor*, int);
 typedef void (*RDProcessorDecode)(const RDProcessor*, RDInstruction*);
 typedef void (*RDProcessorEmulate)(const RDProcessor*, RDEmulator*, const RDInstruction*);
 typedef bool (*RDProcessorLift)(const RDProcessor*, RDILList*, const RDInstruction*);
@@ -52,8 +52,8 @@ typedef struct RDProcessor {
     const char* name;
 
     void* userdata;
-    int address_size;
-    TypeId integer_size;
+    TypeId address_type;
+    TypeId integer_type;
     // RDProcessorState state;
 
     RDProcessorGetRegisterName getregistername;
@@ -70,7 +70,6 @@ REDASM_EXPORT void rdemulator_addref(RDEmulator* e, RDAddress toaddr,
                                      usize type);
 REDASM_EXPORT void rdemulator_settype(RDEmulator* e, RDAddress addr,
                                       const RDType* type);
-REDASM_EXPORT void rdemulator_flow(RDEmulator* e, RDAddress flowaddr);
 REDASM_EXPORT usize rd_getprocessors(const RDProcessor** processors);
 REDASM_EXPORT void rd_registerprocessor(const RDProcessor* proc);
 REDASM_EXPORT void rd_setprocessor(const char* name);

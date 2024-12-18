@@ -2,11 +2,7 @@
 
 #include <redasm/redasm.h>
 
-namespace redasm {
-
-struct Processor;
-
-namespace builtins {
+namespace redasm::builtins {
 
 namespace processor {
 
@@ -19,5 +15,4 @@ void render_function(const RDProcessor*, RDRenderer* r,
 
 void register_processors();
 
-} // namespace builtins
-} // namespace redasm
+} // namespace redasm::builtins

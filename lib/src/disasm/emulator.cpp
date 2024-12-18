@@ -33,6 +33,7 @@ void Emulator::flow(MIndex index) {
     assume(fromseg);
     assume(fromseg->type & SEG_HASCODE);
 
+    // Avoid inter-segment flow
     if(index >= fromseg->index && index < fromseg->endindex) {
         state::context->memory->set(this->current, BF_FLOW);
         this->enqueue_flow(index);
@@ -136,8 +137,12 @@ void Emulator::tick() {
         if(instr.length) {
             mem->unset_n(idx, instr.length);
 
-            if(p->emulate)
+            if(p->emulate) {
                 p->emulate(p, api::to_c(this), &instr);
+
+                if(!(instr.features & IF_STOP))
+                    this->flow(idx + instr.length);
+            }
 
             mem->set_n(idx, instr.length, BF_CODE);
 

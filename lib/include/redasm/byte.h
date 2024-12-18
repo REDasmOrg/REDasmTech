@@ -26,9 +26,9 @@ typedef enum RDByteFlags {
     BF_TYPE = 1U << 17, // Type
 
     // Code-Specific Flags
-    BF_CALL = 1U << 18,    // Call
-    BF_JUMP = 1U << 19,    // Jump
-    BF_FLOW = 1U << 20,    // Flow control instruction
+    BF_CALL = 1U << 18,    // Call instruction
+    BF_JUMP = 1U << 19,    // Jump instruction
+    BF_FLOW = 1U << 20,    // Flow instruction
     BF_JUMPDST = 1U << 21, // Jump destination
 
     // Type Flags (26..27)

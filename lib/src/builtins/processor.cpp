@@ -44,8 +44,8 @@ void register_processors() {
     RDProcessor nullprocessor{
         .id = "null",
         .name = "Null",
-        .address_size = sizeof(uptr),
-        .integer_size = sizeof(int),
+        .address_type = sizeof(uptr),
+        .integer_type = sizeof(int),
     };
 
     nullprocessor.rendersegment = builtins::processor::render_segment;

@@ -22,7 +22,7 @@ const ILExpr* ILExprPool::expr_push(const ILExpr* e) {
     return this->expr_u(RDIL_PUSH, e);
 }
 
-const ILExpr* ILExprPool::expr_reg(const char* reg) {
+const ILExpr* ILExprPool::expr_reg(int reg) {
     ILExpr* expr = this->expr(RDIL_REG);
     expr->reg = reg;
     return expr;

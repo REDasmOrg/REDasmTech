@@ -7,7 +7,7 @@
 
 // Syntatic Sugar
 #define foreach_operand(i, op, instr)                                          \
-    for(usize i = 0, _break_ = 1u; _break_; _break_ = !_break_)                \
+    for(int i = 0, _break_ = 1; _break_; _break_ = !_break_)                   \
         for(const RDOperand* op = (instr)->operands;                           \
             ((op) < (instr)->operands + RD_OPERANDCOUNT) &&                    \
             ((op)->type != OP_NULL);                                           \

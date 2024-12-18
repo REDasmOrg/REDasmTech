@@ -16,7 +16,6 @@ public:
     void activate();
     [[nodiscard]] bool has_pending_types() const;
     [[nodiscard]] bool has_pending_code() const;
-    void flow(MIndex idx);
     bool set_typename(MIndex idx, typing::FullTypeName tname);
     bool set_type(MIndex idx, RDType type);
     void add_ref(MIndex toidx, usize type);
@@ -25,6 +24,9 @@ public:
     void enqueue_call(MIndex index);
     void tick_type();
     void tick();
+
+private:
+    void flow(MIndex idx);
 
 public:
     MIndex current{};

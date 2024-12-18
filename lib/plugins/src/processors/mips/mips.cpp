@@ -15,6 +15,21 @@ RDAddress calc_addr26(RDAddress pc, u32 imm) {
     return pcupper | imm << 2;
 }
 
+bool is_jump_cond(const RDInstruction* instr) {
+    switch(instr->id) {
+        case MIPS_INSTR_BEQ:
+        case MIPS_INSTR_BNE:
+        case MIPS_INSTR_BGEZ:
+        case MIPS_INSTR_BGTZ:
+        case MIPS_MACRO_BEQZ:
+        case MIPS_MACRO_BNEZ: return true;
+
+        default: break;
+    }
+
+    return false;
+}
+
 void render_mnemonic(const RDInstruction* instr, RDRenderer* r) {
     switch(instr->id) {
         case MIPS_MACRO_NOP:
@@ -30,12 +45,8 @@ void render_mnemonic(const RDInstruction* instr, RDRenderer* r) {
 
     RDThemeKind theme = THEME_DEFAULT;
 
-    if(instr->features & IF_JUMP) {
-        theme = THEME_JUMP;
-
-        if(instr->uservalue & MIPS_CATEGORY_JUMPCOND)
-            theme = THEME_JUMPCOND;
-    }
+    if(instr->features & IF_JUMP)
+        theme = is_jump_cond(instr) ? THEME_JUMPCOND : THEME_JUMP;
     if(instr->features & IF_CALL)
         theme = THEME_CALL;
     if(instr->features & IF_STOP)
@@ -207,7 +218,7 @@ void decode(const RDProcessor*, RDInstruction* instr) {
 
     instr->id = dec.opcode->id;
     instr->length = dec.length;
-    instr->uservalue = dec.opcode->category;
+    instr->uservalue = dec.opcode->format;
 
     if(dec.opcode->category == MIPS_CATEGORY_MACRO) {
         decode_macro(dec, instr);
@@ -231,23 +242,41 @@ void decode(const RDProcessor*, RDInstruction* instr) {
     }
 }
 
+void handle_operand(int index, const RDOperand* op) {}
+
 void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
+    switch(instr->id) {
+        case MIPS_MACRO_LA:
+            rdemulator_addref(e, instr->operands[1].addr, DR_ADDRESS);
+            return;
+
+        case MIPS_MACRO_LW:
+            rdemulator_addref(e, instr->operands[1].addr, DR_READ);
+            return;
+
+        case MIPS_MACRO_SW:
+        case MIPS_MACRO_SH:
+            rdemulator_addref(e, instr->operands[1].addr, DR_WRITE);
+            return;
+
+        default: break;
+    }
+
     foreach_operand(i, op, instr) {
         switch(op->type) {
             case OP_ADDR: {
-                if(instr->features & IF_JUMP)
-                    rdemulator_addref(e, op->imm, CR_JUMP);
-                else if(instr->features & IF_CALL)
-                    rdemulator_addref(e, op->imm, CR_CALL);
+                if(instr->features & IF_CALL)
+                    rdemulator_addref(e, op->addr, CR_CALL);
+                else if(instr->features & IF_JUMP)
+                    rdemulator_addref(e, op->addr, CR_JUMP);
+                else
+                    handle_operand(i, op);
                 break;
             };
 
             default: break;
         }
     }
-
-    if(!(instr->features & IF_STOP))
-        rdemulator_flow(e, instr->address + instr->length);
 }
 
 void render_instruction(const RDProcessor*, RDRenderer* r,
@@ -277,8 +306,8 @@ void render_instruction(const RDProcessor*, RDRenderer* r,
     }
 }
 
-const char* get_register_name(const RDProcessor*, int regid) {
-    return mips_decoder::reg(regid);
+const char* get_register_name(const RDProcessor*, int reg) {
+    return mips_decoder::reg(reg);
 }
 
 template<typename T>
@@ -317,8 +346,8 @@ void rdplugin_init() {
 
     mips32le.id = "mips32le";
     mips32le.name = "MIPS32 (Little Endian)";
-    mips32le.address_size = 4;
-    mips32le.integer_size = 4;
+    mips32le.address_type = TID_U32;
+    mips32le.integer_type = TID_U32;
     mips32le.decode = decode<false>;
     mips32le.emulate = emulate;
     mips32le.getregistername = get_register_name;
@@ -328,8 +357,8 @@ void rdplugin_init() {
     RDProcessor mips32be{};
     mips32be.id = "mips32be";
     mips32be.name = "MIPS32 (Big Endian)";
-    mips32be.address_size = 8;
-    mips32be.integer_size = 4;
+    mips32be.address_type = TID_U64;
+    mips32be.integer_type = TID_U32;
     mips32be.decode = decode<true>;
     mips32be.emulate = emulate;
     mips32be.getregistername = get_register_name;

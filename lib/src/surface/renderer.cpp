@@ -260,20 +260,20 @@ Renderer& Renderer::constant(u64 c, int base, int flags, RDThemeKind fg) {
     return *this;
 }
 
-Renderer& Renderer::reg(int regid) {
+Renderer& Renderer::reg(int reg) {
     const RDProcessor* p = state::context->processor;
     assume(p);
 
     std::string_view regname;
 
     if(p->getregistername) {
-        const char* res = p->getregistername(p, regid);
+        const char* res = p->getregistername(p, reg);
         if(res)
             regname = res;
     }
 
     if(regname.empty())
-        regname = utils::to_string(regid, 10);
+        regname = utils::to_string(reg, 10);
 
     return this->chunk(regname, THEME_REG);
 }

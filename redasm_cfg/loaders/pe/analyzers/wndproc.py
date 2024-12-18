@@ -52,7 +52,7 @@ def find_wndproc(address, argidx):
             if x.address == address and argidx < len(vstack):
                 f, wndproc = vstack[argidx]
 
-                if wndproc.addr is not None:
+                if hasattr(wndproc, "addr"):
                     redasm.set_name(wndproc.addr, f"DialogProc_{redasm.to_hex(wndproc.addr)}")
                     redasm.add_ref(f, wndproc.addr, redasm.CR_CALL)
 

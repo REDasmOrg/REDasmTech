@@ -1,6 +1,7 @@
 #include "context.h"
 #include "api/marshal.h"
 #include "error.h"
+#include "memory/stringfinder.h"
 #include "state.h"
 #include "utils/utils.h"
 #include <climits>
@@ -168,11 +169,6 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         case DR_READ:
         case DR_WRITE:
         case DR_ADDRESS: {
-            // stringfinder::classify(toidx).map([&](const RDStringResult& x) {
-            //     this->memory->unset_n(toidx, x.totalsize);
-            //     this->set_type(toidx, x.type, ST_WEAK);
-            // });
-
             this->m_database.add_ref(fromidx, toidx, type);
             this->memory->set(fromidx, BF_REFSFROM);
             this->memory->set(toidx, BF_REFSTO);
@@ -582,7 +578,7 @@ std::string Context::to_hex(usize v, int n) const {
     return hexstr;
 }
 
-void Context::process_segments() {
+void Context::process_segments(bool refs) {
     spdlog::info("Processing segments...");
     this->functions.clear();
 
@@ -596,6 +592,8 @@ void Context::process_segments() {
 
             if(b.has(BF_FUNCTION))
                 this->process_function_graph(idx);
+            else if(b.has(BF_REFSTO) && refs)
+                this->process_refsto(idx);
         }
     }
 }
@@ -848,6 +846,59 @@ void Context::process_function_graph(MIndex idx) {
                 bb->end = curridx;
                 break;
             }
+        }
+    }
+}
+
+void Context::process_refsto(MIndex idx) {
+    const Byte& b = this->memory->at(idx);
+    if(!b.is_unknown())
+        return;
+
+    auto is_range_unknown = [&](MIndex ridx, usize sz) {
+        return this->memory->range_is(ridx, sz,
+                                      [](Byte b) { return b.is_unknown(); });
+    };
+
+    Database::RefList refs = m_database.get_refs_to(idx);
+    RDType addrtype{.id = this->processor->address_type, .n = 0};
+    RDType inttype{.id = this->processor->integer_type, .n = 0};
+    usize addrsize = this->types.size_of(addrtype);
+    usize intsize = this->types.size_of(inttype);
+
+    for(const Database::Ref& r : refs) {
+        if(!b.is_unknown())
+            break;
+
+        switch(r.type) {
+            case DR_READ:
+            case DR_WRITE: {
+                stringfinder::classify(idx)
+                    .map([&](const RDStringResult& x) {
+                        if(is_range_unknown(idx, x.totalsize))
+                            this->set_type(idx, x.type, ST_WEAK);
+                    })
+                    .or_else([&]() {
+                        if(is_range_unknown(idx, intsize))
+                            this->set_type(idx, inttype, ST_WEAK);
+                    });
+                break;
+            }
+
+            case DR_ADDRESS: {
+                stringfinder::classify(idx)
+                    .map([&](const RDStringResult& x) {
+                        if(is_range_unknown(idx, x.totalsize))
+                            this->set_type(idx, x.type, ST_WEAK);
+                    })
+                    .or_else([&]() {
+                        if(is_range_unknown(idx, addrsize))
+                            this->set_type(idx, addrtype, ST_WEAK);
+                    });
+                break;
+            }
+
+            default: break;
         }
     }
 }

@@ -10,34 +10,14 @@ const RDILExpr* lift_op(const RDInstruction* instr, usize idx, RDILPool* pool) {
     const RDILExpr* e = nullptr;
 
     switch(op.type) {
-        case OP_REG: {
-            e = rdil_reg(pool, ZydisRegisterGetString(
-                                   static_cast<ZydisRegister>(op.reg)));
-            break;
-        }
-
-        case OP_IMM: {
-            if(rd_isaddress(op.imm))
-                e = rdil_var(pool, op.imm);
-            else
-                e = rdil_cnst(pool, op.imm);
-            break;
-        }
-
-        case OP_MEM: {
-            e = rdil_var(pool, op.mem);
-            break;
-        }
+        case OP_REG: e = rdil_reg(pool, op.reg); break;
+        case OP_ADDR: e = rdil_var(pool, op.addr); break;
+        case OP_IMM: e = rdil_cnst(pool, op.imm); break;
+        case OP_MEM: e = rdil_var(pool, op.mem); break;
 
         case OP_PHRASE: {
-            const RDILExpr* base =
-                rdil_reg(pool, ZydisRegisterGetString(
-                                   static_cast<ZydisRegister>(op.phrase.base)));
-
-            const RDILExpr* index = rdil_reg(
-                pool, ZydisRegisterGetString(
-                          static_cast<ZydisRegister>(op.phrase.index)));
-
+            const RDILExpr* base = rdil_reg(pool, op.phrase.base);
+            const RDILExpr* index = rdil_reg(pool, op.phrase.index);
             e = rdil_add(pool, base, index);
             break;
         }
@@ -46,17 +26,11 @@ const RDILExpr* lift_op(const RDInstruction* instr, usize idx, RDILPool* pool) {
             const RDILExpr *base = nullptr, *index = nullptr, *scale = nullptr,
                            *disp = nullptr;
 
-            if(op.displ.base != ZYDIS_REGISTER_NONE) {
-                base = rdil_reg(pool,
-                                ZydisRegisterGetString(
-                                    static_cast<ZydisRegister>(op.displ.base)));
-            }
+            if(op.displ.base != ZYDIS_REGISTER_NONE)
+                base = rdil_reg(pool, op.displ.base);
 
-            if(op.displ.index != ZYDIS_REGISTER_NONE) {
-                index = rdil_reg(
-                    pool, ZydisRegisterGetString(
-                              static_cast<ZydisRegister>(op.displ.index)));
-            }
+            if(op.displ.index != ZYDIS_REGISTER_NONE)
+                index = rdil_reg(pool, op.displ.index);
 
             if(op.displ.scale > 1)
                 scale = rdil_cnst(pool, op.displ.scale);
@@ -175,22 +149,20 @@ bool lift(const RDProcessor*, RDILList* l, const RDInstruction* instr) {
         }
 
         case ZYDIS_MNEMONIC_ENTER: {
-            const char* bpreg = ZydisRegisterGetString(x86_common::get_bp());
-            const char* spreg = ZydisRegisterGetString(x86_common::get_sp());
-            rdillist_append(l, rdil_push(pool, rdil_reg(pool, bpreg)));
-            rdillist_append(l, rdil_copy(pool, rdil_reg(pool, bpreg),
-                                         rdil_reg(pool, spreg)));
+            rdillist_append(
+                l, rdil_push(pool, rdil_reg(pool, x86_common::get_bp())));
+            rdillist_append(l, rdil_copy(pool,
+                                         rdil_reg(pool, x86_common::get_bp()),
+                                         rdil_reg(pool, x86_common::get_sp())));
             break;
         }
 
         case ZYDIS_MNEMONIC_LEAVE: {
-            const RDILExpr* sp =
-                rdil_reg(pool, ZydisRegisterGetString(x86_common::get_sp()));
-            const RDILExpr* bp =
-                rdil_reg(pool, ZydisRegisterGetString(x86_common::get_bp()));
+            const RDILExpr* sp = rdil_reg(pool, x86_common::get_sp());
+            const RDILExpr* bp = rdil_reg(pool, x86_common::get_bp());
             rdillist_append(l, rdil_copy(pool, sp, bp));
 
-            bp = rdil_reg(pool, ZydisRegisterGetString(x86_common::get_bp()));
+            bp = rdil_reg(pool, x86_common::get_bp());
             rdillist_append(l, rdil_pop(pool, bp));
             break;
         }
@@ -199,8 +171,7 @@ bool lift(const RDProcessor*, RDILList* l, const RDInstruction* instr) {
             rdillist_append(l, rdil_pop(pool, rdil_sym(pool, "result")));
 
             if(instr->operands[0].type == OP_IMM) {
-                const RDILExpr* sp = rdil_reg(
-                    pool, ZydisRegisterGetString(x86_common::get_sp()));
+                const RDILExpr* sp = rdil_reg(pool, x86_common::get_sp());
 
                 rdillist_append(
                     l, rdil_add(pool, sp,

@@ -19,7 +19,7 @@ private:
     void emulate_step();
     void process_step();
     void analyze_step();
-    void types_step();
+    void refs_step();
 
 public:
     Emulator emulator;

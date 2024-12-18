@@ -293,22 +293,24 @@ void to_string(const ILExpr* e, ToStringCallback cb) {
 }
 
 void get_text_impl(const ILExpr* e, std::string& res) {
-    rdil::to_string(e,
-                    [&res](const ILExpr* expr, const std::string& s, WalkType) {
-                        Context* ctx = state::context;
+    rdil::to_string(e, [&res](const ILExpr* expr, const std::string& s,
+                              WalkType) {
+        Context* ctx = state::context;
 
-                        switch(expr->op) {
-                            case RDIL_CNST:
-                                res += ctx->to_hex(expr->u_value, -1);
-                                break;
-                            case RDIL_VAR:
-                                res += ctx->to_hex(expr->address);
-                                break;
-                            case RDIL_REG: res += expr->reg; break;
-                            case RDIL_SYM: res += expr->sym; break;
-                            default: res += s; break;
-                        }
-                    });
+        switch(expr->op) {
+            case RDIL_CNST: res += ctx->to_hex(expr->u_value, -1); break;
+            case RDIL_VAR: res += ctx->to_hex(expr->address); break;
+
+            case RDIL_REG: {
+                res +=
+                    ctx->processor->getregistername(ctx->processor, expr->reg);
+                break;
+            }
+
+            case RDIL_SYM: res += expr->sym; break;
+            default: res += s; break;
+        }
+    });
 }
 
 } // namespace
@@ -438,7 +440,7 @@ void render(const ILExpr* e, Renderer& renderer) {
                     break;
 
                 case RDIL_VAR: renderer.addr(expr->address); break;
-                case RDIL_REG: renderer.chunk(expr->reg, THEME_REG); break;
+                case RDIL_REG: renderer.reg(expr->reg); break;
                 case RDIL_SYM: renderer.chunk(expr->sym, THEME_ADDRESS); break;
                 default: renderer.chunk(s); break;
             }

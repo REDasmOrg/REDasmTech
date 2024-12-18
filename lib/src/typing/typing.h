@@ -125,6 +125,8 @@ struct Types {
     [[nodiscard]] usize size_of(FullTypeName tn,
                                 ParsedType* res = nullptr) const;
 
+    [[nodiscard]] usize size_of(RDType t) const;
+
     [[nodiscard]] TypeId type_id(TypeName tn) const {
         return hash::murmur3(tn);
     }

@@ -20,7 +20,7 @@ bool Disassembler::execute(const RDAnalysisStatus** s) {
             case STEP_EMULATE: this->emulate_step(); break;
             case STEP_PROCESS: this->process_step(); break;
             case STEP_ANALYZE: this->analyze_step(); break;
-            case STEP_TYPES: this->types_step(); break;
+            case STEP_REFS: this->refs_step(); break;
             default: unreachable;
         }
     }
@@ -93,21 +93,13 @@ void Disassembler::analyze_step() {
     this->next_step();
 }
 
-void Disassembler::types_step() {
-    spdlog::info("Propagating types...");
-
-    if(emulator.has_pending_types()) {
-        emulator.tick_type();
-        auto a = state::context->index_to_address(emulator.current);
-        a.map([&](RDAddress address) { m_status->address.value = address; });
-        m_status->address.valid = a.has_value();
-    }
-    else
-        this->next_step();
+void Disassembler::process_step() {
+    state::context->process_segments(false);
+    this->next_step();
 }
 
-void Disassembler::process_step() {
-    state::context->process_segments();
+void Disassembler::refs_step() {
+    state::context->process_segments(true);
     this->next_step();
 }
 

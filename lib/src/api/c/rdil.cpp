@@ -13,7 +13,7 @@ const RDILExpr* rdil_var(RDILPool* self, RDAddress address) {
     return redasm::api::internal::rdilpool_var(self, address);
 }
 
-const RDILExpr* rdil_reg(RDILPool* self, const char* reg) {
+const RDILExpr* rdil_reg(RDILPool* self, int reg) {
     return redasm::api::internal::rdilpool_reg(self, reg);
 }
 

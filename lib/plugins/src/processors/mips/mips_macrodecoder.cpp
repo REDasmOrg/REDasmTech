@@ -1,7 +1,6 @@
 #include "mips_macrodecoder.h"
 #include "mips_decoder.h"
 #include "mips_registers.h"
-#include <string_view>
 #include <unordered_map>
 
 namespace mips_macrodecoder {
