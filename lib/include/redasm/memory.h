@@ -15,7 +15,6 @@ struct RDMemoryInfo {
     };
 
     usize size;
-    int bits;
 };
 
 typedef struct RDStringResult {

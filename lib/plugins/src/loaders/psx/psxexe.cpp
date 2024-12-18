@@ -34,7 +34,6 @@ bool init(RDLoader*) {
        !rdvalue_getstr(psxheader, "id", &id) || id != PSXEXE_SIGNATURE)
         return false;
 
-    rd_setbits(32);
     rd_setprocessor("mips32le");
     rd_map(PSX_USERRAM_START, PSX_USERRAM_END);
 

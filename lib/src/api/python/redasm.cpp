@@ -900,18 +900,6 @@ PyObject* get_entries(PyObject* /*self*/, PyObject* /*args*/) {
     return tuple;
 }
 
-PyObject* get_bits(PyObject* /*self*/, PyObject* /*args*/) {
-    return PyLong_FromLong(redasm::api::internal::get_bits());
-}
-
-PyObject* set_bits(PyObject* /*self*/, PyObject* args) {
-    if(!PyLong_Check(args))
-        return python::type_error(args, "int");
-
-    redasm::api::internal::set_bits(PyLong_AsLong(args));
-    Py_RETURN_NONE;
-}
-
 PyObject* memory_info(PyObject* /*self*/, PyObject* /*args*/) {
     RDMemoryInfo mi;
     internal::memory_info(&mi);
@@ -920,14 +908,11 @@ PyObject* memory_info(PyObject* /*self*/, PyObject* /*args*/) {
     PyObject* ba = PyLong_FromUnsignedLongLong(mi.baseaddress);
     PyObject* endba = PyLong_FromUnsignedLongLong(mi.end_baseaddress);
     PyObject* size = PyLong_FromUnsignedLongLong(mi.size);
-    PyObject* bits = PyLong_FromUnsignedLongLong(mi.bits);
 
     PyObject_SetAttrString(res, "baseaddress", ba);
     PyObject_SetAttrString(res, "end_baseaddress", endba);
     PyObject_SetAttrString(res, "size", size);
-    PyObject_SetAttrString(res, "bits", bits);
 
-    Py_DECREF(bits);
     Py_DECREF(size);
     Py_DECREF(endba);
     Py_DECREF(ba);

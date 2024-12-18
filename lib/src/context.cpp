@@ -4,8 +4,6 @@
 #include "memory/stringfinder.h"
 #include "state.h"
 #include "utils/utils.h"
-#include <climits>
-#include <limits>
 #include <redasm/redasm.h>
 
 #if !defined(__has_feature)
@@ -58,16 +56,6 @@ constexpr std::array<char, 16> INTHEX_TABLE = {
     '0', '1', '2', '3', '4', '5', '6', '7',
     '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
 };
-
-int calculate_bits(RDAddress address) {
-    if(address <= std::numeric_limits<u8>::max())
-        return 8;
-    if(address <= std::numeric_limits<u16>::max())
-        return 16;
-    if(address <= std::numeric_limits<u32>::max())
-        return 32;
-    return 64;
-}
 
 } // namespace
 
@@ -278,7 +266,6 @@ bool Context::memory_map(RDAddress base, usize size) {
 
     this->baseaddress = base;
     this->memory = std::make_unique<Memory>(size);
-    this->bits = calculate_bits(this->end_baseaddress());
 
     // Create collected types
     for(const auto& [idx, tname] : this->collectedtypes) {
@@ -425,9 +412,6 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
     });
 
     m_database.add_segment(name, idx, endidx, offset, endoffset, type);
-
-    this->bits = std::max(this->bits.value_or(0),
-                          calculate_bits(this->baseaddress + endidx));
 }
 
 tl::optional<MIndex> Context::get_index(std::string_view name) const {
@@ -557,10 +541,12 @@ Database::RefList Context::get_refs_to(MIndex toidx) const {
 }
 
 std::string Context::to_hex(usize v, int n) const {
-    if(n == -1 || !this->bits)
+    assume(this->processor);
+
+    if(n == -1)
         n = 0;
     else if(!n)
-        n = (*this->bits / CHAR_BIT) * 2;
+        n = this->processor->integer_size * 2;
 
     std::string hexstr;
     hexstr.reserve(n);
@@ -860,11 +846,10 @@ void Context::process_refsto(MIndex idx) {
                                       [](Byte b) { return b.is_unknown(); });
     };
 
+    assume(this->processor);
     Database::RefList refs = m_database.get_refs_to(idx);
-    RDType addrtype{.id = this->processor->address_type, .n = 0};
-    RDType inttype{.id = this->processor->integer_type, .n = 0};
-    usize addrsize = this->types.size_of(addrtype);
-    usize intsize = this->types.size_of(inttype);
+    RDType addrtype = this->types.int_from_bytes(this->processor->address_size);
+    RDType inttype = this->types.int_from_bytes(this->processor->integer_size);
 
     for(const Database::Ref& r : refs) {
         if(!b.is_unknown())
@@ -879,7 +864,7 @@ void Context::process_refsto(MIndex idx) {
                             this->set_type(idx, x.type, ST_WEAK);
                     })
                     .or_else([&]() {
-                        if(is_range_unknown(idx, intsize))
+                        if(is_range_unknown(idx, this->processor->integer_size))
                             this->set_type(idx, inttype, ST_WEAK);
                     });
                 break;
@@ -892,7 +877,7 @@ void Context::process_refsto(MIndex idx) {
                             this->set_type(idx, x.type, ST_WEAK);
                     })
                     .or_else([&]() {
-                        if(is_range_unknown(idx, addrsize))
+                        if(is_range_unknown(idx, this->processor->address_size))
                             this->set_type(idx, addrtype, ST_WEAK);
                     });
                 break;

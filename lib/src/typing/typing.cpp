@@ -58,6 +58,18 @@ void parse(FullTypeName tn, std::string_view& name, usize& n) {
 
 } // namespace
 
+RDType Types::int_from_bytes(usize n, bool sign) const {
+    for(const auto& [id, td] : this->registered) {
+        if(!td.is_int() || td.is_big())
+            continue;
+
+        if(td.size == n && sign == td.is_signed())
+            return {.id = id, .n = 0};
+    }
+
+    except("Cannot find a compatible {}-bytes integer", n);
+}
+
 usize Types::size_of(FullTypeName tname, ParsedType* res) const {
     ParsedType pt = this->parse(tname);
 
@@ -92,7 +104,7 @@ ParsedType Types::parse(FullTypeName tname) const {
 
     const TypeDef* td = this->get_typedef(name);
 
-    if(td->isvar && n)
+    if(td->is_var() && n)
         except("Cannot create an array of variable sized type '{}'", tname);
 
     return ParsedType{
@@ -103,25 +115,25 @@ ParsedType Types::parse(FullTypeName tname) const {
 
 Types::Types() {
     // clang-format off
-    this->registered[ids::BOOL]  = {.name = names::BOOL,  .size = sizeof(bool)};
-    this->registered[ids::CHAR]  = {.name = names::CHAR,  .size = sizeof(char)};
-    this->registered[ids::WCHAR] = {.name = names::WCHAR, .size = sizeof(char16_t)};
-    this->registered[ids::U8]    = {.name = names::U8,    .size = sizeof(u8)};
-    this->registered[ids::U16]   = {.name = names::U16,   .size = sizeof(u16)};
-    this->registered[ids::U32]   = {.name = names::U32,   .size = sizeof(u32)};
-    this->registered[ids::U64]   = {.name = names::U64,   .size = sizeof(u64)};
-    this->registered[ids::I8]    = {.name = names::I8,    .size = sizeof(i8)};
-    this->registered[ids::I16]   = {.name = names::I16,   .size = sizeof(i16)};
-    this->registered[ids::I32]   = {.name = names::I32,   .size = sizeof(i32)};
-    this->registered[ids::I64]   = {.name = names::I64,   .size = sizeof(i64)};
-    this->registered[ids::U16BE] = {.name = names::U16,   .size = sizeof(u16),      .isbig = true};
-    this->registered[ids::U32BE] = {.name = names::U32,   .size = sizeof(u32),      .isbig = true};
-    this->registered[ids::U64BE] = {.name = names::U64,   .size = sizeof(u64),      .isbig = true};
-    this->registered[ids::I16BE] = {.name = names::I16,   .size = sizeof(i16),      .isbig = true};
-    this->registered[ids::I32BE] = {.name = names::I32,   .size = sizeof(i32),      .isbig = true};
-    this->registered[ids::I64BE] = {.name = names::I64,   .size = sizeof(i64),      .isbig = true};
-    this->registered[ids::STR]   = {.name = names::STR,   .size = sizeof(char),     .isvar = true};
-    this->registered[ids::WSTR]  = {.name = names::WSTR,  .size = sizeof(char16_t), .isvar = true};
+    this->registered[ids::BOOL]  = {.name = names::BOOL,  .size = sizeof(bool),     .flags = TD_NONE };
+    this->registered[ids::CHAR]  = {.name = names::CHAR,  .size = sizeof(char),     .flags = TD_NONE };
+    this->registered[ids::WCHAR] = {.name = names::WCHAR, .size = sizeof(char16_t), .flags = TD_NONE };
+    this->registered[ids::U8]    = {.name = names::U8,    .size = sizeof(u8),       .flags = TD_INT };       
+    this->registered[ids::U16]   = {.name = names::U16,   .size = sizeof(u16),      .flags = TD_INT };
+    this->registered[ids::U32]   = {.name = names::U32,   .size = sizeof(u32),      .flags = TD_INT };
+    this->registered[ids::U64]   = {.name = names::U64,   .size = sizeof(u64),      .flags = TD_INT };
+    this->registered[ids::I8]    = {.name = names::I8,    .size = sizeof(i8),       .flags = TD_INT | TD_SIGNED };       
+    this->registered[ids::I16]   = {.name = names::I16,   .size = sizeof(i16),      .flags = TD_INT | TD_SIGNED };
+    this->registered[ids::I32]   = {.name = names::I32,   .size = sizeof(i32),      .flags = TD_INT | TD_SIGNED };
+    this->registered[ids::I64]   = {.name = names::I64,   .size = sizeof(i64),      .flags = TD_INT | TD_SIGNED };
+    this->registered[ids::U16BE] = {.name = names::U16,   .size = sizeof(u16),      .flags = TD_INT | TD_BIG };
+    this->registered[ids::U32BE] = {.name = names::U32,   .size = sizeof(u32),      .flags = TD_INT | TD_BIG };
+    this->registered[ids::U64BE] = {.name = names::U64,   .size = sizeof(u64),      .flags = TD_INT | TD_BIG };
+    this->registered[ids::I16BE] = {.name = names::I16,   .size = sizeof(i16),      .flags = TD_INT | TD_SIGNED | TD_BIG };
+    this->registered[ids::I32BE] = {.name = names::I32,   .size = sizeof(i32),      .flags = TD_INT | TD_SIGNED | TD_BIG };
+    this->registered[ids::I64BE] = {.name = names::I64,   .size = sizeof(i64),      .flags = TD_INT | TD_SIGNED | TD_BIG };
+    this->registered[ids::STR]   = {.name = names::STR,   .size = sizeof(char),     .flags = TD_VAR };
+    this->registered[ids::WSTR]  = {.name = names::WSTR,  .size = sizeof(char16_t), .flags = TD_VAR };
     // clang-format on
 }
 
@@ -160,7 +172,7 @@ const TypeDef* Types::declare(const std::string& name, const StructBody& arg) {
         ParsedType pt;
         type.size += this->size_of(tname, &pt);
 
-        if(pt.type->isvar) {
+        if(pt.type->is_var()) {
             except("Type '{}' size is variable and is not supported in structs",
                    tname);
         }

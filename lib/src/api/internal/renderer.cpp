@@ -1,6 +1,4 @@
 #include "renderer.h"
-#include "../../context.h"
-#include "../../state.h"
 #include "../../surface/renderer.h"
 #include "../marshal.h"
 #include <spdlog/spdlog.h>

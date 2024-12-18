@@ -346,8 +346,8 @@ void rdplugin_init() {
 
     mips32le.id = "mips32le";
     mips32le.name = "MIPS32 (Little Endian)";
-    mips32le.address_type = TID_U32;
-    mips32le.integer_type = TID_U32;
+    mips32le.address_size = 4;
+    mips32le.integer_size = 4;
     mips32le.decode = decode<false>;
     mips32le.emulate = emulate;
     mips32le.getregistername = get_register_name;
@@ -357,8 +357,8 @@ void rdplugin_init() {
     RDProcessor mips32be{};
     mips32be.id = "mips32be";
     mips32be.name = "MIPS32 (Big Endian)";
-    mips32be.address_type = TID_U64;
-    mips32be.integer_type = TID_U32;
+    mips32be.address_size = 8;
+    mips32be.integer_size = 4;
     mips32be.decode = decode<true>;
     mips32be.emulate = emulate;
     mips32be.getregistername = get_register_name;

@@ -53,8 +53,6 @@ std::vector<RDRef> get_refsfromtype(RDAddress fromaddr, usize type);
 std::vector<RDRef> get_refsto(RDAddress toaddr);
 std::vector<RDRef> get_refstotype(RDAddress toaddr, usize type);
 usize get_bytes(const RDByte** bytes);
-void set_bits(int bits);
-int get_bits();
 
 bool map_segment(const std::string& name, RDAddress address,
                  RDAddress endaddress, RDOffset offset, RDOffset endoffset,

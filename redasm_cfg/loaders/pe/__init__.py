@@ -33,17 +33,17 @@ def check_header():
     magic = stream.peek_u16()
 
     if magic == PEH.IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-        redasm.set_bits(32)
+        pe.bits = 32
         redasm.create_struct("IMAGE_OPTIONAL_HEADER",
                              PEH.IMAGE_OPTIONAL_HEADER32)
     elif magic == PEH.IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-        redasm.set_bits(64)
+        pe.bits = 64
         redasm.create_struct("IMAGE_OPTIONAL_HEADER",
                              PEH.IMAGE_OPTIONAL_HEADER64)
     else:
         raise "Invalid OptionalHeader Magic"
 
-    pe.integertype = "u32" if redasm.get_bits() == 32 else "u64"
+    pe.integertype = "u64" if pe.bits == 64 else "u32"
     pe.optionalheader = stream.collect_type("IMAGE_OPTIONAL_HEADER")
     pe.imagebase = pe.optionalheader.ImageBase
     return pe
@@ -129,7 +129,7 @@ def read_imports(pe):
     if not va:
         return
 
-    ORDINAL_FLAG = PEH.IMAGE_ORDINAL_FLAG64 if redasm.get_bits() == 64 else PEH.IMAGE_ORDINAL_FLAG32
+    ORDINAL_FLAG = PEH.IMAGE_ORDINAL_FLAG64 if pe.bits == 64 else PEH.IMAGE_ORDINAL_FLAG32
     entry = redasm.set_type(va, "IMAGE_IMPORT_DESCRIPTOR")
 
     while entry and (entry.FirstThunk != 0 or entry.OriginalFirstThunk != 0):

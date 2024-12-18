@@ -37,8 +37,6 @@ PyObject* index_to_address(PyObject* self, PyObject* args);
 PyObject* check_string(PyObject* self, PyObject* args);
 
 PyObject* get_entries(PyObject* self, PyObject* args);
-PyObject* get_bits(PyObject* self, PyObject* args);
-PyObject* set_bits(PyObject* self, PyObject* args);
 PyObject* memory_info(PyObject* self, PyObject* args);
 PyObject* map_segment(PyObject* self, PyObject* args);
 PyObject* map_segment_n(PyObject* self, PyObject* args);

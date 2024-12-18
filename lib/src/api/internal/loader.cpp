@@ -1,8 +1,18 @@
 #include "loader.h"
+#include "../../context.h"
 #include "../../state.h"
 #include <spdlog/spdlog.h>
 
 namespace redasm::api::internal {
+
+const RDLoader* get_loader() {
+    spdlog::trace("get_loader()");
+
+    if(state::context)
+        return state::context->loader;
+
+    return nullptr;
+}
 
 usize get_loaders(const RDLoader** loaders) {
     spdlog::trace("get_loaders({})", fmt::ptr(loaders));

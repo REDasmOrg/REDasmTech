@@ -66,7 +66,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::U16: {
-                if(auto b = this->get_u16(pos, t->isbig); b) {
+                if(auto b = this->get_u16(pos, t->is_big()); b) {
                     v.u16_v = *b;
                     pos += t->size;
                 }
@@ -77,7 +77,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::U32: {
-                if(auto b = this->get_u32(pos, t->isbig); b) {
+                if(auto b = this->get_u32(pos, t->is_big()); b) {
                     v.u32_v = *b;
                     pos += t->size;
                 }
@@ -88,7 +88,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::U64: {
-                if(auto b = this->get_u64(pos, t->isbig); b) {
+                if(auto b = this->get_u64(pos, t->is_big()); b) {
                     v.u64_v = *b;
                     pos += t->size;
                 }
@@ -110,7 +110,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::I16: {
-                if(auto b = this->get_i16(pos, t->isbig); b) {
+                if(auto b = this->get_i16(pos, t->is_big()); b) {
                     v.i16_v = *b;
                     pos += t->size;
                 }
@@ -121,7 +121,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::I32: {
-                if(auto b = this->get_i32(pos, t->isbig); b) {
+                if(auto b = this->get_i32(pos, t->is_big()); b) {
                     v.i32_v = *b;
                     pos += t->size;
                 }
@@ -132,7 +132,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::I64: {
-                if(auto b = this->get_i64(pos, t->isbig); b) {
+                if(auto b = this->get_i64(pos, t->is_big()); b) {
                     v.i64_v = *b;
                     pos += t->size;
                 }

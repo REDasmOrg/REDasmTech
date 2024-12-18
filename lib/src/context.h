@@ -105,7 +105,6 @@ private:
 
 public:
     mutable Segment* m_lastsegment{nullptr};
-    tl::optional<int> bits;
     int minstring{DEFAULT_MIN_STRING};
     std::vector<std::pair<MIndex, std::string>> problems;
     std::vector<RDAnalyzer> analyzers;

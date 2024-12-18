@@ -82,8 +82,6 @@ REDASM_EXPORT void rd_discard(void);
 REDASM_EXPORT bool rd_destroy(void);
 REDASM_EXPORT usize rd_getsegments(const RDSegment** segments);
 REDASM_EXPORT usize rd_getbytes(const RDByte** bytes);
-REDASM_EXPORT int rd_getbits(void);
-REDASM_EXPORT void rd_setbits(int bits);
 REDASM_EXPORT const char* rd_rendertext(RDAddress address);
 
 REDASM_EXPORT bool rd_mapsegment(const char* name, RDAddress address,

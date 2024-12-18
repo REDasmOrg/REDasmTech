@@ -111,9 +111,6 @@ usize rd_getbytes(const RDByte** bytes) {
     return redasm::api::internal::get_bytes(bytes);
 }
 
-int rd_getbits(void) { return redasm::api::internal::get_bits(); }
-void rd_setbits(int bits) { redasm::api::internal::set_bits(bits); }
-
 const char* rd_rendertext(RDAddress address) {
     static std::string s;
     s = redasm::api::internal::render_text(address);

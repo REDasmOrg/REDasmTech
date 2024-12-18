@@ -323,8 +323,8 @@ RDProcessor x86_64{};
 void rdplugin_init() {
     x86_32.id = "x86_32";
     x86_32.name = "X86";
-    x86_32.address_type = TID_U32;
-    x86_32.integer_type = TID_U32;
+    x86_32.address_size = 4;
+    x86_32.integer_size = 4;
     x86_32.userdata = new X86Processor(32);
     x86_32.getregistername = get_register_name;
     x86_32.renderinstruction = render_instruction;
@@ -335,8 +335,8 @@ void rdplugin_init() {
 
     x86_64.id = "x86_64";
     x86_64.name = "X64";
-    x86_64.address_type = TID_U64;
-    x86_64.integer_type = TID_U32;
+    x86_64.address_size = 8;
+    x86_64.integer_size = 4;
     x86_64.userdata = new X86Processor(64);
     x86_64.getregistername = get_register_name;
     x86_64.renderinstruction = render_instruction;
