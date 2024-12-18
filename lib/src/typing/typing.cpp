@@ -162,7 +162,7 @@ const TypeDef* Types::declare(const std::string& name, const StructBody& arg) {
     if(arg.empty())
         except("Struct cannot be empty");
 
-    TypeDef type;
+    TypeDef type{};
     type.name = name;
 
     if(this->registered.contains(type.get_id()))
