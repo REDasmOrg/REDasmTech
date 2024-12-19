@@ -163,7 +163,41 @@ void Disassembler::mergecode_step() {
         m_currentstep++;
 }
 
-void Disassembler::mergedata_step() { m_currentstep++; }
+void Disassembler::mergedata_step() {
+    Context* ctx = state::context;
+    auto& mem = ctx->memory;
+
+    for(usize idx = 0; idx < mem->size();) {
+        Byte lastb = mem->at(idx);
+
+        if(lastb.is_unknown() && !lastb.has(BF_REFSTO | BF_REFSFROM)) {
+            usize startidx = idx++;
+
+            while(idx < mem->size()) {
+                Byte b = mem->at(idx);
+
+                // Don't merge inter-segment bytes
+                if((idx > startidx && b.has(BF_SEGMENT)) || !b.is_unknown() ||
+                   b.has_common() || (b.has_byte() != lastb.has_byte()) ||
+                   (b.has_byte() && (b.byte() != lastb.byte())))
+                    break;
+
+                idx++;
+            }
+
+            usize len = idx - startidx;
+
+            if(len > static_cast<usize>(ctx->processor->integer_size)) {
+                mem->set_n(startidx, len, BF_DATA);
+                mem->set(startidx, BF_FILL);
+            }
+        }
+        else
+            idx++;
+    }
+
+    m_currentstep++;
+}
 
 void Disassembler::finalize_step() {
     state::context->process_segments(true);

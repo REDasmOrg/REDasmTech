@@ -20,6 +20,7 @@ struct Byte {
     [[nodiscard]] bool is_end() const { return this->has(BF_END); }
     [[nodiscard]] bool is_cont() const { return this->has(BF_CONT); }
     [[nodiscard]] bool has_byte() const { return this->has(BF_BYTE); }
+    [[nodiscard]] bool has_common() const { return this->has(BF_MCOMM); }
     [[nodiscard]] bool has(u32 f) const { return (value & f) == f; }
 
     [[nodiscard]] u32 category() const {

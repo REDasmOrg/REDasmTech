@@ -116,6 +116,11 @@ void Listing::hex_dump(MIndex startindex, MIndex endindex) {
     m_items[lidx].end_index = endindex;
 }
 
+void Listing::fill(MIndex startindex, MIndex endindex) {
+    usize lidx = this->push_item(LISTINGITEM_FILL, startindex);
+    m_items[lidx].end_index = endindex;
+}
+
 usize Listing::push_item(RDListingItemType type, MIndex index) {
     usize idx = m_items.size();
 

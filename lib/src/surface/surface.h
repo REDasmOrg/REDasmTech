@@ -77,6 +77,7 @@ private:
     void render_finalize();
     void render_range(LIndex start, usize n);
     void render_hexdump(const ListingItem& item);
+    void render_fill(const ListingItem& item);
     void render_label(const ListingItem& item);
     void render_segment(const ListingItem& item);
     void render_function(const ListingItem& item);

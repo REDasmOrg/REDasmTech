@@ -563,6 +563,7 @@ void Surface::render_range(LIndex start, usize n) {
         switch(it->type) {
             case LISTINGITEM_EMPTY: m_renderer->new_row(*it); break;
             case LISTINGITEM_HEX_DUMP: this->render_hexdump(*it); break;
+            case LISTINGITEM_FILL: this->render_fill(*it); break;
             case LISTINGITEM_SEGMENT: this->render_segment(*it); break;
             case LISTINGITEM_FUNCTION: this->render_function(*it); break;
             case LISTINGITEM_LABEL: this->render_label(*it); break;
@@ -636,6 +637,23 @@ void Surface::render_hexdump(const ListingItem& item) {
 
     if(c < HEX_WIDTH)
         m_renderer->chunk(std::string(HEX_WIDTH - c, ' '));
+}
+
+void Surface::render_fill(const ListingItem& item) {
+    const Context* ctx = state::context;
+    Byte b = ctx->memory->at(item.index);
+
+    m_renderer->new_row(item).chunk(".fill", THEME_FUNCTION).ws();
+
+    if(b.has_byte())
+        m_renderer->chunk(ctx->to_hex(b.byte(), 2), THEME_CONSTANT);
+    else
+        m_renderer->chunk("??", THEME_NOP);
+
+    m_renderer->ws()
+        .chunk("(")
+        .constant(item.end_index - item.start_index, 16)
+        .chunk(")");
 }
 
 void Surface::render_label(const ListingItem& item) {

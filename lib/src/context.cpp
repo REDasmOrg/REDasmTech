@@ -639,6 +639,12 @@ void Context::process_listing_data(MIndex& idx) {
         else
             this->process_listing_type(idx, *type);
     }
+    else if(b.has(BF_FILL)) {
+        usize len = this->memory->get_length(idx);
+        assume(len > 1);
+        this->listing.fill(idx, idx + len);
+        idx += len;
+    }
     else {
         except("Unhandled data byte @ index {:x}, value {}", idx,
                rd_tohex_n(b.value, 8));

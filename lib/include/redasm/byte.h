@@ -9,6 +9,7 @@ typedef enum RDByteFlags {
     // Internal Use
     BF_MBYTE = 0x000000ff, // Mask for byte extraction
     BF_MUNKN = 0x8c000000, // Mask for unknown flags
+    BF_MCOMM = 0x0001fe00, // Mask for common flags
     BF_MMASK = 0x0001ffff, // Mask for Byte and Common
 
     // Common Flags (non-volatile)
@@ -23,13 +24,14 @@ typedef enum RDByteFlags {
     BF_FUNCTION = 1U << 16, // Function flag
 
     // Data-Specific Flags
-    BF_TYPE = 1U << 17, // Type
+    BF_TYPE = 1U << 17, // Type declaration
+    BF_FILL = 1U << 18, // Fill bytes
 
     // Code-Specific Flags
-    BF_CALL = 1U << 18,    // Call instruction
-    BF_JUMP = 1U << 19,    // Jump instruction
-    BF_FLOW = 1U << 20,    // Flow instruction
-    BF_JUMPDST = 1U << 21, // Jump destination
+    BF_CALL = 1U << 19,    // Call instruction
+    BF_JUMP = 1U << 20,    // Jump instruction
+    BF_FLOW = 1U << 21,    // Flow instruction
+    BF_JUMPDST = 1U << 22, // Jump destination
 
     // Type Flags (26..27)
     BF_UNKNOWN = 0U << 26, // Unknown type

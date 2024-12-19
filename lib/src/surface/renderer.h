@@ -82,8 +82,9 @@ struct Renderer {
         return this->chunk(arg, THEME_FUNCTION);
     }
 
-    Renderer& word(std::string_view arg) {
-        return this->chunk(" ").chunk(arg).chunk(" ");
+    Renderer& word(std::string_view arg, RDThemeKind fg = THEME_DEFAULT,
+                   RDThemeKind bg = THEME_DEFAULT) {
+        return this->chunk(" ").chunk(arg, fg, bg).chunk(" ");
     }
 
     Renderer& quote(std::string_view arg, std::string_view q = "\"",

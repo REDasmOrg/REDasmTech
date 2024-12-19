@@ -66,6 +66,7 @@ public:
     ConstIterator lower_bound(MIndex idx) const;
     ConstIterator upper_bound(MIndex idx, ConstIterator begin) const;
     void hex_dump(MIndex startindex, MIndex endindex);
+    void fill(MIndex index, MIndex endindex);
     usize type(MIndex index, RDType t);
     usize instruction(MIndex index);
     usize label(MIndex index);
