@@ -1,5 +1,6 @@
 #include "../internal/redasm.h"
 #include "../internal/graph.h"
+#include "../marshal.h"
 #include <algorithm>
 #include <redasm/redasm.h>
 
@@ -72,19 +73,19 @@ void rd_status(const char* s) {
 }
 
 bool rd_gettype(RDAddress address, const char* tname, RDValue* v) {
-    // static redasm::typing::Value res;
+    static redasm::typing::Value res;
 
-    // if(tname) {
-    //     return redasm::api::internal::get_type(address, tname)
-    //         .map_or(
-    //             [&](const redasm::typing::Value& x) {
-    //                 res = x;
-    //                 if(v)
-    //                     *v = redasm::api::to_c(&res);
-    //                 return true;
-    //             },
-    //             false);
-    // }
+    if(tname) {
+        return redasm::api::internal::get_type(address, tname)
+            .map_or(
+                [&](const redasm::typing::Value& x) {
+                    res = x;
+                    if(v)
+                        *redasm::api::from_c(v) = x;
+                    return true;
+                },
+                false);
+    }
 
     return false;
 }
