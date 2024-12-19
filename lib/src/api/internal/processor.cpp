@@ -14,19 +14,6 @@ void emulator_addref(RDEmulator* e, RDAddress toaddr, usize type) {
     });
 }
 
-bool emulator_settype(RDEmulator* e, RDAddress address, const RDType* type) {
-    spdlog::trace("emulator_settype({}, {:x}, {})", fmt::ptr(e), address,
-                  fmt::ptr(type));
-
-    if(type) {
-        return state::context->address_to_index(address).map_or(
-            [&](MIndex idx) { return api::from_c(e)->set_type(idx, *type); },
-            false);
-    }
-
-    return false;
-}
-
 const RDProcessor* get_processor() {
     spdlog::trace("get_processor()");
 

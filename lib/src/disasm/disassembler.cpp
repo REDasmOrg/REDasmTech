@@ -2,35 +2,74 @@
 #include "../context.h"
 #include "../error.h"
 #include "../state.h"
-#include <algorithm>
 #include <ctime>
 
 namespace redasm {
 
-Disassembler::Disassembler() { m_status = std::make_unique<RDEngineStatus>(); }
+namespace {
+
+// clang-format off
+enum Steps {
+    STEP_INIT = 0,
+    STEP_EMULATE1, STEP_ANALYZE1, // First pass
+    STEP_MERGECODE,
+    STEP_EMULATE2, STEP_ANALYZE2, // Second pass
+    STEP_MERGEDATA,
+    STEP_FINALIZE,
+    STEP_DONE,
+    STEP_COUNT,
+};
+// clang-format on
+
+constexpr std::array<const char*, STEP_COUNT> STEP_NAMES = {
+    "Init",
+    "Emulate #1",
+    "Analyze #1",
+    "Merge Code",
+    "Emulate #2",
+    "Analyze #2"
+    "Merge Data"
+    "Finalize",
+    "Done",
+};
+
+} // namespace
+
+Disassembler::Disassembler(): m_currentstep{STEP_INIT} {
+    m_status = std::make_unique<RDEngineStatus>();
+}
 
 bool Disassembler::execute(const RDAnalysisStatus** s) {
-    bool busy = m_currentstep < STEP_DONE;
-    m_status->step = m_currentstep;
+    m_status->busy = m_currentstep < STEP_DONE;
+    m_status->currentstep = STEP_NAMES.at(m_currentstep);
     m_status->address.valid = false;
+    m_status->listingchanged = false;
 
-    if(busy) {
+    if(m_status->busy) {
         switch(m_currentstep) {
             case STEP_INIT: this->init_step(); break;
-            case STEP_EMULATE: this->emulate_step(); break;
-            case STEP_PROCESS: this->process_step(); break;
-            case STEP_ANALYZE: this->analyze_step(); break;
-            case STEP_REFS: this->refs_step(); break;
+
+            case STEP_EMULATE1:
+            case STEP_EMULATE2: this->emulate_step(); break;
+
+            case STEP_ANALYZE1:
+            case STEP_ANALYZE2: this->analyze_step(); break;
+
+            case STEP_MERGECODE: this->mergecode_step(); break;
+            case STEP_MERGEDATA: this->mergedata_step(); break;
+            case STEP_FINALIZE: this->finalize_step(); break;
             default: unreachable;
         }
     }
-    else
+    else {
         state::context->process_listing();
+        m_status->listingchanged = true;
+    }
 
     if(s)
         *s = m_status.get();
 
-    return busy;
+    return m_status->busy;
 }
 
 void Disassembler::execute(usize step) {
@@ -41,31 +80,18 @@ void Disassembler::execute(usize step) {
     this->execute(nullptr);
 }
 
-void Disassembler::next_step() {
-    if(emulator.has_pending_code())
-        m_currentstep = STEP_EMULATE; // Repeat emulation
-    else
-        m_currentstep = std::min<usize>(m_currentstep + 1, STEP_DONE);
-}
+void Disassembler::reset() { m_currentstep = STEP_INIT; }
 
 void Disassembler::init_step() {
-    static constexpr std::array<const char*, STEP_COUNT> STEPS_LIST = {
-        "Init", "Emulate", "Process", "Analyze", "Types", "Done",
-    };
-
     m_status->filepath = state::context->file->source.c_str();
     m_status->filesize = state::context->file->size();
-
     m_status->loader = state::context->loader->name;
     m_status->processor = state::context->processor->name;
-
     m_status->analysisstart = std::time(nullptr);
 
-    m_status->stepslist = STEPS_LIST.data();
-    m_status->stepscount = STEPS_LIST.size();
-
-    state::context->process_listing();
-    this->next_step();
+    state::context->process_listing(); // Show pre-analysis listing
+    m_status->listingchanged = true;
+    m_currentstep++;
 }
 
 void Disassembler::emulate_step() {
@@ -76,10 +102,13 @@ void Disassembler::emulate_step() {
         m_status->address.valid = a.has_value();
     }
     else
-        m_currentstep = STEP_PROCESS;
+        m_currentstep++;
 }
 
 void Disassembler::analyze_step() {
+    state::context->process_segments(false); // Show pre-analysis listing
+    m_status->listingchanged = true;
+
     for(const RDAnalyzer& a : state::context->analyzers) {
         if((a.flags & ANA_RUNONCE) && (m_analyzerruns[a.name] > 0))
             continue;
@@ -90,17 +119,57 @@ void Disassembler::analyze_step() {
             a.execute(&a);
     }
 
-    this->next_step();
+    if(this->emulator.has_pending_code()) {
+        if(m_currentstep == STEP_ANALYZE1)
+            m_currentstep = STEP_EMULATE1;
+        else if(m_currentstep == STEP_ANALYZE2)
+            m_currentstep = STEP_EMULATE2;
+        else
+            unreachable;
+    }
+    else
+        m_currentstep++;
 }
 
-void Disassembler::process_step() {
-    state::context->process_segments(false);
-    this->next_step();
+void Disassembler::mergecode_step() {
+    const Context* ctx = state::context;
+    const auto& mem = ctx->memory;
+
+    for(const Segment& seg : ctx->segments) {
+        if(!(seg.type & SEG_HASCODE) || seg.offset == seg.endoffset)
+            continue;
+
+        usize idx = seg.index;
+
+        while(idx < seg.endindex && idx < mem->size()) {
+            Byte b = mem->at(idx);
+
+            if(b.has_byte() && b.is_unknown()) {
+                this->emulator.enqueue_flow(idx++);
+
+                // Move after the unknown range
+                while(idx < seg.endindex && idx < mem->size() &&
+                      mem->at(idx).is_unknown())
+                    idx++;
+            }
+            else
+                idx++;
+        }
+    }
+
+    if(this->emulator.has_pending_code())
+        m_currentstep = STEP_EMULATE2;
+    else
+        m_currentstep++;
 }
 
-void Disassembler::refs_step() {
+void Disassembler::mergedata_step() { m_currentstep++; }
+
+void Disassembler::finalize_step() {
     state::context->process_segments(true);
-    this->next_step();
+    state::context->process_listing();
+    m_status->listingchanged = true;
+    m_currentstep++;
 }
 
 } // namespace redasm

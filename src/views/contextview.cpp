@@ -22,12 +22,11 @@ ContextView::ContextView(QWidget* parent): QWidget{parent}, m_ui{this} {
 ContextView::~ContextView() { rd_destroy(); }
 
 void ContextView::tick(const RDEngineStatus* s) {
-    if(s->step == STEP_EMULATE)
-        return;
+    if(s->listingchanged) {
+        m_functionsmodel->resync();
+        m_ui.splitview->invalidate();
+    }
 
-    m_functionsmodel->resync();
-    m_ui.splitview->invalidate();
-
-    if(s->step == STEP_DONE)
+    if(!s->busy)
         m_ui.splitview->surface_view()->jump_to_ep();
 }

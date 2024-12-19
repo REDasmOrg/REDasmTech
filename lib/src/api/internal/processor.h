@@ -6,7 +6,6 @@
 namespace redasm::api::internal {
 
 void emulator_addref(RDEmulator* e, RDAddress toaddr, usize type);
-bool emulator_settype(RDEmulator* e, RDAddress address, const RDType* type);
 
 const RDProcessor* get_processor();
 usize get_processors(const RDProcessor** processors);

@@ -72,7 +72,7 @@ public:
     }
 
     [[nodiscard]] std::string to_hex(usize v, int n = -1) const;
-    void process_segments(bool refs);
+    void process_segments(bool finalize);
     void process_listing();
 
 private:

@@ -564,7 +564,7 @@ std::string Context::to_hex(usize v, int n) const {
     return hexstr;
 }
 
-void Context::process_segments(bool refs) {
+void Context::process_segments(bool finalize) {
     spdlog::info("Processing segments...");
     this->functions.clear();
 
@@ -578,8 +578,11 @@ void Context::process_segments(bool refs) {
 
             if(b.has(BF_FUNCTION))
                 this->process_function_graph(idx);
-            else if(b.has(BF_REFSTO) && refs)
-                this->process_refsto(idx);
+
+            if(finalize) {
+                if(b.has(BF_REFSTO))
+                    this->process_refsto(idx);
+            }
         }
     }
 }

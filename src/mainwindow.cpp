@@ -266,7 +266,7 @@ bool MainWindow::loop() {
         m_busy = rd_tick(&m_status);
         cv->tick(m_status);
 
-        if(m_status->step == STEP_DONE)
+        if(!m_status->busy)
             statusbar::set_ready_status();
         else if(cv->active()) {
             statusbar::set_busy_status();
@@ -379,7 +379,7 @@ void MainWindow::report_status() {
     QString s;
 
     s += QString::fromWCharArray(L"<b>State: </b>%1\u00A0\u00A0")
-             .arg(m_status->stepslist[m_status->step]);
+             .arg(m_status->currentstep);
 
     if(m_status->address.valid)
         s += QString::fromWCharArray(L"<b>Address: </b>%1\u00A0\u00A0")

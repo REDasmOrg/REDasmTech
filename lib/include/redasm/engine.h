@@ -3,16 +3,6 @@
 #include <redasm/types.h>
 #include <time.h>
 
-typedef enum RDAnalysisStep {
-    STEP_INIT = 0,
-    STEP_EMULATE,
-    STEP_PROCESS,
-    STEP_ANALYZE,
-    STEP_REFS,
-    STEP_DONE,
-    STEP_COUNT,
-} RDAnalysisStep;
-
 typedef struct RDAnalysisStatus {
     // General
     const char* filepath;
@@ -21,6 +11,7 @@ typedef struct RDAnalysisStatus {
     // Context
     const char* loader;
     const char* processor;
+    bool listingchanged;
     bool busy;
 
     struct {
@@ -33,12 +24,10 @@ typedef struct RDAnalysisStatus {
     time_t analysisend;
 
     // Steps
-    const char* const* stepslist;
-    usize stepscount;
-    usize step;
+    const char* currentstep;
 
     // Analyzers
-    const char* const* analyzerslist;
+    const char* analyzerslist;
     usize* analyzersdone;
     usize analyzerscount;
     usize analyzerscurrent;
