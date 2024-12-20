@@ -3,10 +3,15 @@
 #include "../database/database.h"
 #include "../disasm/function.h"
 #include "../memory/byte.h"
-#include "../typing/typing.h"
 #include <redasm/redasm.h>
 
 namespace redasm {
+
+namespace typing {
+
+struct Value;
+
+};
 
 namespace rdil {
 
@@ -68,6 +73,10 @@ inline Renderer* from_c(RDRenderer* arg) {
 
 inline Emulator* from_c(RDEmulator* arg) {
     return reinterpret_cast<Emulator*>(arg);
+}
+
+inline const Emulator* from_c(const RDEmulator* arg) {
+    return reinterpret_cast<const Emulator*>(arg);
 }
 
 inline const AbstractStream* from_c(const RDStream* arg) {

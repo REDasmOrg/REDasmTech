@@ -2,6 +2,7 @@
 #include "../api/marshal.h"
 #include "../context.h"
 #include "../state.h"
+#include "../utils/utils.h"
 
 namespace redasm {
 
@@ -12,21 +13,32 @@ void do_enqueue(std::deque<MIndex>& q, MIndex idx) {
         q.push_front(idx);
 }
 
+[[noreturn]] void reg_notfound(const RDProcessor* p, int regid) {
+    std::string_view regname;
+
+    if(p && p->getregistername) {
+        const char* s = p->getregistername(p, regid);
+        if(s)
+            regname = s;
+    }
+
+    if(regname.empty())
+        regname = utils::to_string(regid, 10);
+
+    except("Register '{}' not found", regname);
+}
+
 } // namespace
 
-// Emulator::~Emulator() {
-//     const Context* ctx = state::context;
-//
-//     if(m_state && ctx->processor->state.fini)
-//         ctx->processor->state.fini(ctx->processor, m_state);
-// }
+void Emulator::setup() {
+    assume(state::context);
+    assume(m_state.registers.empty());
+    assume(m_state.states.empty());
+    const Context* ctx = state::context;
 
-// void Emulator::activate() {
-//     const Context* ctx = state::context;
-//
-//     if(ctx->processor->state.init)
-//         m_state = ctx->processor->state.init(ctx->processor);
-// }
+    if(ctx->processor && ctx->processor->setup)
+        ctx->processor->setup(ctx->processor, api::to_c(this));
+}
 
 void Emulator::flow(MIndex index) {
     const Segment* fromseg = state::context->index_to_segment(this->current);
@@ -42,6 +54,52 @@ void Emulator::flow(MIndex index) {
 
 void Emulator::add_ref(MIndex toidx, usize type) { // NOLINT
     state::context->add_ref(this->current, toidx, type);
+}
+
+u64 Emulator::get_reg(int regid) const {
+    auto it = m_state.registers.find(regid);
+
+    if(it != m_state.registers.end())
+        return it->second;
+
+    reg_notfound(state::context->processor, regid);
+}
+
+void Emulator::set_reg(int regid, u64 val) { m_state.registers[regid] = val; }
+
+u64 Emulator::upd_reg(int regid, u64 val, u64 mask) {
+    auto it = m_state.registers.find(regid);
+
+    if(it != m_state.registers.end()) {
+        it->second = (it->second & ~mask) | (val & mask);
+        return it->second;
+    }
+
+    reg_notfound(state::context->processor, regid);
+}
+
+u64 Emulator::get_state(std::string_view s) const {
+    auto it = m_state.states.find(s);
+
+    if(it != m_state.states.end())
+        return it->second;
+
+    return {};
+}
+
+void Emulator::set_state(const std::string& s, u64 val) {
+    m_state.states[s] = val;
+}
+
+u64 Emulator::upd_state(std::string_view s, u64 val, u64 mask) {
+    auto it = m_state.states.find(s);
+
+    if(it != m_state.states.end()) {
+        it->second = (it->second & ~mask) | (val & mask);
+        return it->second;
+    }
+
+    except("State '{}' not found", s);
 }
 
 void Emulator::enqueue_flow(MIndex index) { do_enqueue(m_qflow, index); }

@@ -96,7 +96,7 @@ bool Context::activate() {
                 this->selectedanalyzers.insert(a.name);
         }
 
-        // this->disassembler.emulator.activate();
+        this->worker.emulator.setup();
         return true;
     }
 

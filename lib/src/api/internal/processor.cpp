@@ -6,12 +6,46 @@
 
 namespace redasm::api::internal {
 
-void emulator_addref(RDEmulator* e, RDAddress toaddr, usize type) {
-    spdlog::trace("emulator_addref({}, {:x}, {})", fmt::ptr(e), toaddr, type);
+void emulator_addref(RDEmulator* self, RDAddress toaddr, usize type) {
+    spdlog::trace("emulator_addref({}, {:x}, {})", fmt::ptr(self), toaddr,
+                  type);
 
-    state::context->address_to_index(toaddr).map([&](MIndex idx) {
-        state::context->worker.emulator.add_ref(idx, type);
-    });
+    state::context->address_to_index(toaddr).map(
+        [&](MIndex idx) { api::from_c(self)->add_ref(idx, type); });
+}
+
+u64 emulator_getreg(const RDEmulator* self, int regid) {
+    spdlog::trace("emulator_getreg({}, {})", fmt::ptr(self), regid);
+    return api::from_c(self)->get_reg(regid);
+}
+
+void emulator_setreg(RDEmulator* self, int regid, u64 val) {
+    spdlog::trace("emulator_setreg({}, {}, {:x})", fmt::ptr(self), regid, val);
+    api::from_c(self)->set_reg(regid, val);
+}
+
+u64 emulator_updreg(RDEmulator* self, int regid, u64 val, u64 mask) {
+    spdlog::trace("emulator_updreg({}, {}, {:x}, {:x})", fmt::ptr(self), regid,
+                  val, mask);
+    return api::from_c(self)->upd_reg(regid, val, mask);
+}
+
+u64 emulator_getstate(const RDEmulator* self, std::string_view state) {
+    spdlog::trace("emulator_getstate({}, '{}')", fmt::ptr(self), state);
+    return api::from_c(self)->get_state(state);
+}
+
+void emulator_setstate(RDEmulator* self, const std::string& state, u64 val) {
+    spdlog::trace("emulator_setstate({}, '{}', {:x})", fmt::ptr(self), state,
+                  val);
+    api::from_c(self)->set_state(state, val);
+}
+
+u64 emulator_updstate(RDEmulator* self, std::string_view state, u64 val,
+                      u64 mask) {
+    spdlog::trace("emulator_updstate({}, '{}', {:x}, {:x})", fmt::ptr(self),
+                  state, val, mask);
+    return api::from_c(self)->upd_state(state, val, mask);
 }
 
 const RDProcessor* get_processor() {

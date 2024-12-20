@@ -310,19 +310,7 @@ const char* get_register_name(const RDProcessor*, int reg) {
     return mips_decoder::reg(reg);
 }
 
-template<typename T>
-struct MIPSRegisters {
-    T zero{0}, at;
-    T v0, v1;
-    T a0, a1, a2, a3;
-    T t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;
-    T s0, s1, s2, s3, s4, s5, s6, s7;
-    T k0, k1;
-    T gp, sp, fp, ra;
-};
-
-using MIPSRegisters32 = MIPSRegisters<u32>;
-using MIPSRegisters64 = MIPSRegisters<u64>;
+void setup(const RDProcessor*, RDEmulator* e) {}
 
 } // namespace
 
@@ -330,24 +318,11 @@ void rdplugin_init() {
     mips_initialize_formats();
 
     RDProcessor mips32le{};
-    // mips32le.state.init = [](const RDProcessor*) -> void* {
-    //     return new MIPSRegisters32{};
-    // };
-    //
-    // mips32le.state.fini = [](const RDProcessor*, void* state) {
-    //     delete reinterpret_cast<MIPSRegisters32*>(state);
-    // };
-    //
-    // mips32le.state.copy = [](const RDProcessor*, const void* state) -> void*
-    // {
-    //     return new MIPSRegisters<u32>{
-    //         *reinterpret_cast<const MIPSRegisters32*>(state)};
-    // };
-
     mips32le.id = "mips32le";
     mips32le.name = "MIPS32 (Little Endian)";
     mips32le.address_size = 4;
     mips32le.integer_size = 4;
+    mips32le.setup = setup;
     mips32le.decode = decode<false>;
     mips32le.emulate = emulate;
     mips32le.getregistername = get_register_name;
@@ -359,6 +334,7 @@ void rdplugin_init() {
     mips32be.name = "MIPS32 (Big Endian)";
     mips32be.address_size = 8;
     mips32be.integer_size = 4;
+    mips32le.setup = setup;
     mips32be.decode = decode<true>;
     mips32be.emulate = emulate;
     mips32be.getregistername = get_register_name;

@@ -27,10 +27,7 @@ typedef struct RDRef {
 struct RDProcessor;
 
 // clang-format off
-// typedef void* (*RDProcessorStateInit)(const RDProcessor*);
-// typedef void (*RDProcessorStateFini)(const RDProcessor*, void*);
-// typedef void* (*RDProcessorStateCopy)(const RDProcessor*, const void*);
-
+typedef void (*RDProcessorSetup)(const RDProcessor*, RDEmulator*);
 typedef const char* (*RDProcessorGetRegisterName)(const RDProcessor*, int);
 typedef void (*RDProcessorDecode)(const RDProcessor*, RDInstruction*);
 typedef void (*RDProcessorEmulate)(const RDProcessor*, RDEmulator*, const RDInstruction*);
@@ -41,12 +38,6 @@ typedef void (*RDProcessorRenderInstruction)(const RDProcessor*, RDRenderer*, co
 typedef void (*RDProcessorFree)(RDProcessor*);
 // clang-format on
 
-// typedef struct RDProcessorState {
-//     RDProcessorStateInit init;
-//     RDProcessorStateFini fini;
-//     RDProcessorStateCopy copy;
-// } RDProcessorState;
-
 typedef struct RDProcessor {
     const char* id;
     const char* name;
@@ -54,9 +45,9 @@ typedef struct RDProcessor {
     void* userdata;
     int address_size;
     int integer_size;
-    // RDProcessorState state;
 
     RDProcessorGetRegisterName getregistername;
+    RDProcessorSetup setup;
     RDProcessorDecode decode;
     RDProcessorEmulate emulate;
     RDProcessorLift lift;
@@ -66,8 +57,20 @@ typedef struct RDProcessor {
     RDProcessorFree free;
 } RDProcessor;
 
-REDASM_EXPORT void rdemulator_addref(RDEmulator* e, RDAddress toaddr,
+REDASM_EXPORT void rdemulator_addref(RDEmulator* self, RDAddress toaddr,
                                      usize type);
+
+REDASM_EXPORT u64 rdemulator_getreg(const RDEmulator* self, int regid);
+REDASM_EXPORT void rdemulator_setreg(RDEmulator* self, int regid, u64 val);
+REDASM_EXPORT u64 rdemulator_updreg(RDEmulator* self, int regid, u64 val,
+                                    u64 mask);
+REDASM_EXPORT u64 rdemulator_getstate(const RDEmulator* self,
+                                      const char* state);
+REDASM_EXPORT void rdemulator_setstate(RDEmulator* self, const char* state,
+                                       u64 val);
+REDASM_EXPORT u64 rdemulator_updstate(RDEmulator* self, const char* state,
+                                      u64 val, u64 mask);
+
 REDASM_EXPORT const RDProcessor* rd_getprocessor(void);
 REDASM_EXPORT usize rd_getprocessors(const RDProcessor** processors);
 REDASM_EXPORT void rd_registerprocessor(const RDProcessor* proc);
