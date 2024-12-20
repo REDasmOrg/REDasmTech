@@ -45,4 +45,6 @@ struct Function {
     Blocks blocks;
 };
 
+using FunctionList = std::vector<Function>;
+
 } // namespace redasm

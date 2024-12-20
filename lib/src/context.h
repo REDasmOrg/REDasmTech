@@ -72,39 +72,11 @@ public:
     }
 
     [[nodiscard]] std::string to_hex(usize v, int n = -1) const;
-    void process_segments(bool finalize);
-    void process_listing();
-
-private:
-    void process_listing_unknown(MIndex& idx);
-    void process_listing_data(MIndex& idx);
-    void process_listing_code(MIndex& idx);
-    void process_listing_array(MIndex& idx, RDType t);
-    LIndex process_listing_type(MIndex& idx, RDType t);
-    void process_function_graph(MIndex idx);
-    void process_refsto(MIndex idx);
-
-    template<typename Function>
-    void process_hex_dump(MIndex& idx, Function f) {
-        usize l = 0, start = idx;
-
-        for(; idx < this->memory->size() && f(this->memory->at(idx));
-            l++, idx++) {
-            if(idx != start && this->memory->at(idx).has(BF_SEGMENT))
-                break; // Split inter-segment unknowns
-
-            if(l && !(l % 0x10)) {
-                this->listing.hex_dump(start, idx);
-                start = idx;
-            }
-        }
-
-        if(idx > start)
-            this->listing.hex_dump(start, idx);
-    }
 
 public:
     mutable Segment* m_lastsegment{nullptr};
+    RDLoader* loader;
+    const RDProcessor* processor;
     int minstring{DEFAULT_MIN_STRING};
     std::vector<std::pair<MIndex, std::string>> problems;
     std::vector<RDAnalyzer> analyzers;
@@ -112,12 +84,10 @@ public:
     std::vector<std::string> availableprocessors;
     std::vector<std::pair<usize, std::string>> collectedtypes;
     std::vector<Segment> segments;
-    std::vector<Function> functions;
     std::vector<MIndex> entrypoints;
     Worker worker;
     RDAddress baseaddress{};
-    RDLoader* loader;
-    const RDProcessor* processor;
+    FunctionList functions;
     Listing listing;
     typing::Types types;
     std::unique_ptr<Memory> memory;

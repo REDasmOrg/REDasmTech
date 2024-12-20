@@ -43,6 +43,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/disasm/worker.cpp
         src/disasm/emulator.cpp
         src/disasm/function.cpp
+        src/disasm/memprocess.cpp
         src/graph/graph.cpp
         src/graph/datagraph.cpp
         src/graph/styledgraph.cpp

@@ -2,6 +2,7 @@
 #include "../context.h"
 #include "../error.h"
 #include "../state.h"
+#include "memprocess.h"
 #include <ctime>
 
 namespace redasm {
@@ -62,7 +63,7 @@ bool Worker::execute(const RDWorkerStatus** s) {
         }
     }
     else {
-        state::context->process_listing();
+        mem::process_listing();
         m_status->listingchanged = true;
     }
 
@@ -89,7 +90,7 @@ void Worker::init_step() {
     m_status->processor = state::context->processor->name;
     m_status->analysisstart = std::time(nullptr);
 
-    state::context->process_listing(); // Show pre-analysis listing
+    mem::process_listing(); // Show pre-analysis listing
     m_status->listingchanged = true;
     m_currentstep++;
 }
@@ -106,7 +107,7 @@ void Worker::emulate_step() {
 }
 
 void Worker::analyze_step() {
-    state::context->process_segments(false); // Show pre-analysis listing
+    mem::process_segments(false); // Show pre-analysis listing
     m_status->listingchanged = true;
 
     for(const RDAnalyzer& a : state::context->analyzers) {
@@ -200,8 +201,8 @@ void Worker::mergedata_step() {
 }
 
 void Worker::finalize_step() {
-    state::context->process_segments(true);
-    state::context->process_listing();
+    mem::process_segments(true);
+    mem::process_listing();
     m_status->listingchanged = true;
     m_currentstep++;
 }
