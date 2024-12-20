@@ -100,7 +100,7 @@ usize rd_getentries(RDAddress** entries) {
     return res.size();
 }
 
-bool rd_tick(const RDEngineStatus** s) {
+bool rd_tick(const RDWorkerStatus** s) {
     return redasm::api::internal::tick(s);
 }
 

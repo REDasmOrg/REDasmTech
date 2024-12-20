@@ -46,7 +46,7 @@ Q_SIGNALS:
     void closed();
 
 private:
-    const RDEngineStatus* m_status{nullptr};
+    const RDWorkerStatus* m_status{nullptr};
     QPushButton* m_pbrdilswitch;
     ui::MainWindow m_ui;
     QString m_filepath;

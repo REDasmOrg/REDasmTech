@@ -10,7 +10,7 @@ public:
     explicit ContextView(QWidget* parent = nullptr);
     ~ContextView() override;
     [[nodiscard]] bool active() const { return m_active; }
-    void tick(const RDEngineStatus* s);
+    void tick(const RDWorkerStatus* s);
     [[nodiscard]] bool has_rdil() const { return m_ui.splitview->has_rdil(); }
     void set_rdil(bool b) { m_ui.splitview->set_rdil(b); } // NOLINT
 

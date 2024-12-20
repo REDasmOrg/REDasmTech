@@ -40,7 +40,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/surface/renderer.cpp
         src/modulemanager.cpp
         src/typing/typing.cpp
-        src/disasm/disassembler.cpp
+        src/disasm/worker.cpp
         src/disasm/emulator.cpp
         src/disasm/function.cpp
         src/graph/graph.cpp

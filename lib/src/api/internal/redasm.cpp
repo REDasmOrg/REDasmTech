@@ -261,13 +261,13 @@ void disassemble() {
         ;
 }
 
-bool tick(const RDAnalysisStatus** s) {
+bool tick(const RDWorkerStatus** s) {
     spdlog::trace("tick({})", fmt::ptr(s));
 
     if(!state::context)
         return false;
 
-    return state::context->disassembler.execute(s);
+    return state::context->worker.execute(s);
 }
 
 std::vector<RDAddress> get_entries() {

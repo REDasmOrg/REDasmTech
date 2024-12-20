@@ -3,7 +3,7 @@
 #include <redasm/types.h>
 #include <time.h>
 
-typedef struct RDAnalysisStatus {
+typedef struct RDWorkerStatus {
     // General
     const char* filepath;
     usize filesize;
@@ -31,4 +31,4 @@ typedef struct RDAnalysisStatus {
     usize* analyzersdone;
     usize analyzerscount;
     usize analyzerscurrent;
-} RDEngineStatus;
+} RDWorkerStatus;

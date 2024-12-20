@@ -109,7 +109,7 @@ bool Context::set_function(MIndex idx, usize flags) {
             this->memory->set(idx, BF_FUNCTION);
 
             if(!this->memory->at(idx).has(BF_CODE))
-                this->disassembler.emulator.enqueue_call(idx);
+                this->worker.emulator.enqueue_call(idx);
 
             return true;
         }
@@ -173,7 +173,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
             if(s && s->type & SEG_HASCODE) {
                 // Check if already decoded
                 if(!this->memory->at(toidx).is_code())
-                    this->disassembler.emulator.enqueue_jump(toidx);
+                    this->worker.emulator.enqueue_jump(toidx);
             }
             else
                 add_noncodeproblem(s, toidx, type);
@@ -190,7 +190,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
             if(s && s->type & SEG_HASCODE) {
                 // Check if already decoded
                 if(!this->memory->at(toidx).is_code())
-                    this->disassembler.emulator.enqueue_call(toidx);
+                    this->worker.emulator.enqueue_call(toidx);
             }
             else
                 add_noncodeproblem(s, toidx, type);

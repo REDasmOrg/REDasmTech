@@ -42,7 +42,7 @@ void discard();
 void enqueue(RDAddress address);
 void schedule(RDAddress address);
 void disassemble();
-bool tick(const RDAnalysisStatus** s);
+bool tick(const RDWorkerStatus** s);
 std::vector<RDAddress> get_entries();
 std::vector<RDProblem> get_problems();
 

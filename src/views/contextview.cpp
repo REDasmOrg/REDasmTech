@@ -21,7 +21,7 @@ ContextView::ContextView(QWidget* parent): QWidget{parent}, m_ui{this} {
 
 ContextView::~ContextView() { rd_destroy(); }
 
-void ContextView::tick(const RDEngineStatus* s) {
+void ContextView::tick(const RDWorkerStatus* s) {
     if(s->listingchanged) {
         m_functionsmodel->resync();
         m_ui.splitview->invalidate();

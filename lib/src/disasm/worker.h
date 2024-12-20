@@ -2,15 +2,15 @@
 
 #include "emulator.h"
 #include <memory>
-#include <redasm/engine.h>
+#include <redasm/worker.h>
 
 namespace redasm {
 
-class Disassembler {
+class Worker {
 
 public:
-    Disassembler();
-    bool execute(const RDAnalysisStatus** s);
+    Worker();
+    bool execute(const RDWorkerStatus** s);
     void execute(usize step);
     void reset();
 
@@ -27,7 +27,7 @@ public:
 
 private:
     std::unordered_map<std::string_view, usize> m_analyzerruns;
-    std::unique_ptr<RDAnalysisStatus> m_status;
+    std::unique_ptr<RDWorkerStatus> m_status;
     usize m_currentstep;
 };
 

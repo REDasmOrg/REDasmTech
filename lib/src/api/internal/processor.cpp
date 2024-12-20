@@ -10,7 +10,7 @@ void emulator_addref(RDEmulator* e, RDAddress toaddr, usize type) {
     spdlog::trace("emulator_addref({}, {:x}, {})", fmt::ptr(e), toaddr, type);
 
     state::context->address_to_index(toaddr).map([&](MIndex idx) {
-        state::context->disassembler.emulator.add_ref(idx, type);
+        state::context->worker.emulator.add_ref(idx, type);
     });
 }
 

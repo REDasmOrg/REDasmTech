@@ -1,4 +1,4 @@
-#include "disassembler.h"
+#include "worker.h"
 #include "../context.h"
 #include "../error.h"
 #include "../state.h"
@@ -11,17 +11,17 @@ namespace {
 // clang-format off
 enum WorkerSteps {
     WS_INIT = 0,
-    WS_EMULATE1, STEP_ANALYZE1, // First pass
-    STEP_MERGECODE,
-    STEP_EMULATE2, STEP_ANALYZE2, // Second pass
-    STEP_MERGEDATA,
-    STEP_FINALIZE,
-    STEP_DONE,
-    STEP_COUNT,
+    WS_EMULATE1, WS_ANALYZE1, // First pass
+    WS_MERGECODE,
+    WS_EMULATE2, WS_ANALYZE2, // Second pass
+    WS_MERGEDATA,
+    WS_FINALIZE,
+    WS_DONE,
+    WS_COUNT,
 };
 // clang-format on
 
-constexpr std::array<const char*, STEP_COUNT> STEP_NAMES = {
+constexpr std::array<const char*, WS_COUNT> WS_NAMES = {
     "Init",
     "Emulate #1",
     "Analyze #1",
@@ -36,12 +36,12 @@ constexpr std::array<const char*, STEP_COUNT> STEP_NAMES = {
 } // namespace
 
 Worker::Worker(): m_currentstep{WS_INIT} {
-    m_status = std::make_unique<RDEngineStatus>();
+    m_status = std::make_unique<RDWorkerStatus>();
 }
 
 bool Worker::execute(const RDWorkerStatus** s) {
-    m_status->busy = m_currentstep < STEP_DONE;
-    m_status->currentstep = STEP_NAMES.at(m_currentstep);
+    m_status->busy = m_currentstep < WS_DONE;
+    m_status->currentstep = WS_NAMES.at(m_currentstep);
     m_status->address.valid = false;
     m_status->listingchanged = false;
 
@@ -50,14 +50,14 @@ bool Worker::execute(const RDWorkerStatus** s) {
             case WS_INIT: this->init_step(); break;
 
             case WS_EMULATE1:
-            case STEP_EMULATE2: this->emulate_step(); break;
+            case WS_EMULATE2: this->emulate_step(); break;
 
-            case STEP_ANALYZE1:
-            case STEP_ANALYZE2: this->analyze_step(); break;
+            case WS_ANALYZE1:
+            case WS_ANALYZE2: this->analyze_step(); break;
 
-            case STEP_MERGECODE: this->mergecode_step(); break;
-            case STEP_MERGEDATA: this->mergedata_step(); break;
-            case STEP_FINALIZE: this->finalize_step(); break;
+            case WS_MERGECODE: this->mergecode_step(); break;
+            case WS_MERGEDATA: this->mergedata_step(); break;
+            case WS_FINALIZE: this->finalize_step(); break;
             default: unreachable;
         }
     }
@@ -120,10 +120,10 @@ void Worker::analyze_step() {
     }
 
     if(this->emulator.has_pending_code()) {
-        if(m_currentstep == STEP_ANALYZE1)
+        if(m_currentstep == WS_ANALYZE1)
             m_currentstep = WS_EMULATE1;
-        else if(m_currentstep == STEP_ANALYZE2)
-            m_currentstep = STEP_EMULATE2;
+        else if(m_currentstep == WS_ANALYZE2)
+            m_currentstep = WS_EMULATE2;
         else
             unreachable;
     }
@@ -158,7 +158,7 @@ void Worker::mergecode_step() {
     }
 
     if(this->emulator.has_pending_code())
-        m_currentstep = STEP_EMULATE2;
+        m_currentstep = WS_EMULATE2;
     else
         m_currentstep++;
 }

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "database/database.h"
-#include "disasm/disassembler.h"
 #include "disasm/function.h"
+#include "disasm/worker.h"
 #include "listing.h"
 #include "memory/abstractbuffer.h"
 #include "memory/memory.h"
@@ -114,7 +114,7 @@ public:
     std::vector<Segment> segments;
     std::vector<Function> functions;
     std::vector<MIndex> entrypoints;
-    Disassembler disassembler;
+    Worker worker;
     RDAddress baseaddress{};
     RDLoader* loader;
     const RDProcessor* processor;

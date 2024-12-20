@@ -4,7 +4,6 @@
 #include <redasm/buffer.h>
 #include <redasm/byte.h>
 #include <redasm/common.h>
-#include <redasm/engine.h>
 #include <redasm/function.h>
 #include <redasm/graph.h>
 #include <redasm/instruction.h>
@@ -22,6 +21,7 @@
 #include <redasm/typing.h>
 #include <redasm/utils.h>
 #include <redasm/version.h>
+#include <redasm/worker.h>
 
 typedef enum RDLogLevel {
     LOGLEVEL_TRACE,
@@ -110,7 +110,7 @@ REDASM_EXPORT bool rd_geti32be(RDAddress address, i32* v);
 REDASM_EXPORT bool rd_geti64be(RDAddress address, i64* v);
 REDASM_EXPORT bool rd_gettype(RDAddress address, const char* tname, RDValue* v);
 REDASM_EXPORT usize rd_getentries(RDAddress** entries);
-REDASM_EXPORT bool rd_tick(const RDEngineStatus** s);
+REDASM_EXPORT bool rd_tick(const RDWorkerStatus** s);
 
 REDASM_EXPORT void rd_addsearchpath(const char* path);
 REDASM_EXPORT RDBuffer* rd_loadfile(const char* filepath);
