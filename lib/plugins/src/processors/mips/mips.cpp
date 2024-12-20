@@ -1,5 +1,5 @@
 #include "mips_decoder.h"
-// #include "mips_registers.h"
+#include "mips_registers.h"
 #include <climits>
 #include <redasm/redasm.h>
 
@@ -310,7 +310,9 @@ const char* get_register_name(const RDProcessor*, int reg) {
     return mips_decoder::reg(reg);
 }
 
-void setup(const RDProcessor*, RDEmulator* e) {}
+void setup(const RDProcessor*, RDEmulator* e) {
+    rdemulator_setreg(e, MIPS_REG_ZERO, 0);
+}
 
 } // namespace
 

@@ -2,7 +2,6 @@
 #include "../api/marshal.h"
 #include "../context.h"
 #include "../state.h"
-#include "../utils/utils.h"
 
 namespace redasm {
 
@@ -11,21 +10,6 @@ namespace {
 void do_enqueue(std::deque<MIndex>& q, MIndex idx) {
     if(q.empty() || q.front() != idx)
         q.push_front(idx);
-}
-
-[[noreturn]] void reg_notfound(const RDProcessor* p, int regid) {
-    std::string_view regname;
-
-    if(p && p->getregistername) {
-        const char* s = p->getregistername(p, regid);
-        if(s)
-            regname = s;
-    }
-
-    if(regname.empty())
-        regname = utils::to_string(regid, 10);
-
-    except("Register '{}' not found", regname);
 }
 
 } // namespace
@@ -62,7 +46,7 @@ u64 Emulator::get_reg(int regid) const {
     if(it != m_state.registers.end())
         return it->second;
 
-    reg_notfound(state::context->processor, regid);
+    return {};
 }
 
 void Emulator::set_reg(int regid, u64 val) { m_state.registers[regid] = val; }
@@ -75,7 +59,9 @@ u64 Emulator::upd_reg(int regid, u64 val, u64 mask) {
         return it->second;
     }
 
-    reg_notfound(state::context->processor, regid);
+    val &= mask;
+    this->set_reg(regid, val);
+    return val;
 }
 
 u64 Emulator::get_state(std::string_view s) const {
