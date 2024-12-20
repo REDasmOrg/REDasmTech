@@ -1,6 +1,10 @@
 #include "../internal/processor.h"
 #include "../../error.h"
 
+void rdemulator_flow(RDEmulator* self, RDAddress flowaddr) {
+    redasm::api::internal::emulator_flow(self, flowaddr);
+}
+
 void rdemulator_addref(RDEmulator* self, RDAddress toaddr, usize type) {
     redasm::api::internal::emulator_addref(self, toaddr, type);
 }
@@ -22,6 +26,20 @@ u64 rdemulator_getstate(const RDEmulator* self, const char* state) {
         return redasm::api::internal::emulator_getstate(self, state);
 
     except("rdemulator_getstate(): 'state' argument is null");
+}
+
+u64 rdemulator_takestate(RDEmulator* self, const char* state) {
+    if(state)
+        return redasm::api::internal::emulator_takestate(self, state);
+
+    except("rdemulator_takestate(): 'state' argument is null");
+}
+
+void rdemulator_delstate(RDEmulator* self, const char* state) {
+    if(state)
+        redasm::api::internal::emulator_delstate(self, state);
+    else
+        except("rdemulator_delstate(): 'state' argument is null");
 }
 
 void rdemulator_setstate(RDEmulator* self, const char* state, u64 val) {

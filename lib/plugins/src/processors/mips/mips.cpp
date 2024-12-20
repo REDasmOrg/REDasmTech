@@ -1,9 +1,10 @@
 #include "mips_decoder.h"
-#include "mips_registers.h"
 #include <climits>
 #include <redasm/redasm.h>
 
 namespace {
+
+constexpr const char* DSLOT_STATE = "dslot";
 
 RDAddress calc_addr16(RDAddress pc, u16 imm) {
     i32 tgt = mips_decoder::signext_16_32(imm);
@@ -242,28 +243,7 @@ void decode(const RDProcessor*, RDInstruction* instr) {
     }
 }
 
-void handle_operand(int index, const RDOperand* op) {}
-
-void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
-    rdemulator_setreg(e, MIPS_REG_ZERO, 0); // Force register $zero
-
-    switch(instr->id) {
-        case MIPS_MACRO_LA:
-            rdemulator_addref(e, instr->operands[1].addr, DR_ADDRESS);
-            return;
-
-        case MIPS_MACRO_LW:
-            rdemulator_addref(e, instr->operands[1].addr, DR_READ);
-            return;
-
-        case MIPS_MACRO_SW:
-        case MIPS_MACRO_SH:
-            rdemulator_addref(e, instr->operands[1].addr, DR_WRITE);
-            return;
-
-        default: break;
-    }
-
+void handle_operands(RDEmulator* e, const RDInstruction* instr) {
     foreach_operand(i, op, instr) {
         switch(op->type) {
             case OP_ADDR: {
@@ -271,14 +251,48 @@ void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
                     rdemulator_addref(e, op->addr, CR_CALL);
                 else if(instr->features & IF_JUMP)
                     rdemulator_addref(e, op->addr, CR_JUMP);
-                else
-                    handle_operand(i, op);
                 break;
             };
 
             default: break;
         }
     }
+}
+
+void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
+    switch(instr->id) {
+        case MIPS_MACRO_LA:
+            rdemulator_addref(e, instr->operands[1].addr, DR_ADDRESS);
+            break;
+
+        case MIPS_MACRO_LW:
+            rdemulator_addref(e, instr->operands[1].addr, DR_READ);
+            break;
+
+        case MIPS_MACRO_SW:
+        case MIPS_MACRO_SH:
+            rdemulator_addref(e, instr->operands[1].addr, DR_WRITE);
+            break;
+
+        default: handle_operands(e, instr); break;
+    }
+
+    if(mips_decoder::has_delayslot(instr->id)) {
+        if(!(instr->features & IF_STOP)) {
+            // Flow after delay-slot
+            rdemulator_flow(e, instr->address +
+                                   (instr->length + sizeof(MIPSInstruction)));
+        }
+
+        // Mark and decode delay-slot
+        rdemulator_setstate(e, DSLOT_STATE, 1);
+        rdemulator_flow(e, instr->address + instr->length);
+        return;
+    }
+
+    // Reset delat slot state
+    if(!rdemulator_takestate(e, DSLOT_STATE) && !(instr->features & IF_STOP))
+        rdemulator_flow(e, instr->address + instr->length);
 }
 
 void render_instruction(const RDProcessor*, RDRenderer* r,

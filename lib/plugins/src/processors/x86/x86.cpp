@@ -309,6 +309,9 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
             default: break;
         }
     }
+
+    if(!(instr->features & IF_STOP))
+        rdemulator_flow(e, instr->address + instr->length);
 }
 
 const char* get_register_name(const RDProcessor*, int reg) {

@@ -12,6 +12,8 @@ const char* mnemonic(usize id);
 const char* reg(u32 r);
 std::string_view cop0_reg(u32 r);
 std::string_view copn_reg(u32 r);
+bool has_delayslot(usize id);
+
 bool decode(RDAddress address, MIPSDecodedInstruction& dec, bool big,
             bool one = false);
 

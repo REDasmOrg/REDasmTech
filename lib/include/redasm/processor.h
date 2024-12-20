@@ -57,19 +57,21 @@ typedef struct RDProcessor {
     RDProcessorFree free;
 } RDProcessor;
 
-REDASM_EXPORT void rdemulator_addref(RDEmulator* self, RDAddress toaddr,
-                                     usize type);
-
+REDASM_EXPORT void rdemulator_flow(RDEmulator* self, RDAddress flowaddr);
 REDASM_EXPORT u64 rdemulator_getreg(const RDEmulator* self, int regid);
 REDASM_EXPORT void rdemulator_setreg(RDEmulator* self, int regid, u64 val);
 REDASM_EXPORT u64 rdemulator_updreg(RDEmulator* self, int regid, u64 val,
                                     u64 mask);
 REDASM_EXPORT u64 rdemulator_getstate(const RDEmulator* self,
                                       const char* state);
+REDASM_EXPORT u64 rdemulator_takestate(RDEmulator* self, const char* state);
+REDASM_EXPORT void rdemulator_delstate(RDEmulator* self, const char* state);
 REDASM_EXPORT void rdemulator_setstate(RDEmulator* self, const char* state,
                                        u64 val);
 REDASM_EXPORT u64 rdemulator_updstate(RDEmulator* self, const char* state,
                                       u64 val, u64 mask);
+REDASM_EXPORT void rdemulator_addref(RDEmulator* self, RDAddress toaddr,
+                                     usize type);
 
 REDASM_EXPORT const RDProcessor* rd_getprocessor(void);
 REDASM_EXPORT usize rd_getprocessors(const RDProcessor** processors);

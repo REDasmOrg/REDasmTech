@@ -25,15 +25,15 @@ public:
     u64 upd_reg(int regid, u64 val, u64 mask);
     u64 get_state(std::string_view s) const;
     void set_state(const std::string& s, u64 val);
+    void del_state(std::string_view s);
+    u64 take_state(std::string_view s);
     u64 upd_state(std::string_view s, u64 val, u64 mask);
+    void flow(MIndex idx);
     void add_ref(MIndex toidx, usize type);
     void enqueue_flow(MIndex index);
     void enqueue_jump(MIndex index);
     void enqueue_call(MIndex index);
     void tick();
-
-private:
-    void flow(MIndex idx);
 
 public:
     MIndex current{};

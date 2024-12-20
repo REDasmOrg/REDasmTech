@@ -148,6 +148,27 @@ std::string_view copn_reg(u32 r) {
     return copreg;
 }
 
+bool has_delayslot(usize id) {
+    switch(id) {
+        case MIPS_MACRO_B:
+        case MIPS_MACRO_BEQZ:
+        case MIPS_MACRO_BNEZ:
+        case MIPS_INSTR_BEQ:
+        case MIPS_INSTR_BGEZ:
+        case MIPS_INSTR_BGTZ:
+        case MIPS_INSTR_BLEZ:
+        case MIPS_INSTR_BNE:
+        case MIPS_INSTR_J:
+        case MIPS_INSTR_JAL:
+        case MIPS_INSTR_JALR:
+        case MIPS_INSTR_JR: return true;
+
+        default: break;
+    }
+
+    return false;
+}
+
 bool decode(RDAddress address, MIPSDecodedInstruction& dec, bool big,
             bool one) {
     bool ok = big ? rd_getu32be(address, &dec.instr.word)

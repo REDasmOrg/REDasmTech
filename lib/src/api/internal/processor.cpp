@@ -14,6 +14,13 @@ void emulator_addref(RDEmulator* self, RDAddress toaddr, usize type) {
         [&](MIndex idx) { api::from_c(self)->add_ref(idx, type); });
 }
 
+void emulator_flow(RDEmulator* self, RDAddress flowaddr) {
+    spdlog::trace("emulator_flow({}, {:x})", fmt::ptr(self), flowaddr);
+
+    state::context->address_to_index(flowaddr).map(
+        [&](MIndex idx) { api::from_c(self)->flow(idx); });
+}
+
 u64 emulator_getreg(const RDEmulator* self, int regid) {
     spdlog::trace("emulator_getreg({}, {})", fmt::ptr(self), regid);
     return api::from_c(self)->get_reg(regid);
@@ -33,6 +40,16 @@ u64 emulator_updreg(RDEmulator* self, int regid, u64 val, u64 mask) {
 u64 emulator_getstate(const RDEmulator* self, std::string_view state) {
     spdlog::trace("emulator_getstate({}, '{}')", fmt::ptr(self), state);
     return api::from_c(self)->get_state(state);
+}
+
+u64 emulator_takestate(RDEmulator* self, std::string_view state) {
+    spdlog::trace("emulator_takestate({}, '{}')", fmt::ptr(self), state);
+    return api::from_c(self)->take_state(state);
+}
+
+void emulator_delstate(RDEmulator* self, std::string_view state) {
+    spdlog::trace("emulator_delstate({}, '{}')", fmt::ptr(self), state);
+    api::from_c(self)->del_state(state);
 }
 
 void emulator_setstate(RDEmulator* self, const std::string& state, u64 val) {

@@ -77,6 +77,25 @@ void Emulator::set_state(const std::string& s, u64 val) {
     m_state.states[s] = val;
 }
 
+void Emulator::del_state(std::string_view s) {
+    auto it = m_state.states.find(s);
+
+    if(it != m_state.states.end())
+        m_state.states.erase(it);
+}
+
+u64 Emulator::take_state(std::string_view s) {
+    auto it = m_state.states.find(s);
+
+    if(it != m_state.states.end()) {
+        u64 val = it->second;
+        m_state.states.erase(it);
+        return val;
+    }
+
+    return {};
+}
+
 u64 Emulator::upd_state(std::string_view s, u64 val, u64 mask) {
     auto it = m_state.states.find(s);
 
@@ -147,12 +166,8 @@ void Emulator::tick() {
         if(instr.length) {
             mem->unset_n(idx, instr.length);
 
-            if(p->emulate) {
+            if(p->emulate)
                 p->emulate(p, api::to_c(this), &instr);
-
-                if(!(instr.features & IF_STOP))
-                    this->flow(idx + instr.length);
-            }
 
             mem->set_n(idx, instr.length, BF_CODE);
 
