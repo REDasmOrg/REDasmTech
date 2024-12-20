@@ -245,6 +245,8 @@ void decode(const RDProcessor*, RDInstruction* instr) {
 void handle_operand(int index, const RDOperand* op) {}
 
 void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
+    rdemulator_setreg(e, MIPS_REG_ZERO, 0); // Force register $zero
+
     switch(instr->id) {
         case MIPS_MACRO_LA:
             rdemulator_addref(e, instr->operands[1].addr, DR_ADDRESS);
@@ -310,10 +312,6 @@ const char* get_register_name(const RDProcessor*, int reg) {
     return mips_decoder::reg(reg);
 }
 
-void setup(const RDProcessor*, RDEmulator* e) {
-    rdemulator_setreg(e, MIPS_REG_ZERO, 0);
-}
-
 } // namespace
 
 void rdplugin_init() {
@@ -324,7 +322,6 @@ void rdplugin_init() {
     mips32le.name = "MIPS32 (Little Endian)";
     mips32le.address_size = 4;
     mips32le.integer_size = 4;
-    mips32le.setup = setup;
     mips32le.decode = decode<false>;
     mips32le.emulate = emulate;
     mips32le.getregistername = get_register_name;
@@ -336,7 +333,6 @@ void rdplugin_init() {
     mips32be.name = "MIPS32 (Big Endian)";
     mips32be.address_size = 8;
     mips32be.integer_size = 4;
-    mips32le.setup = setup;
     mips32be.decode = decode<true>;
     mips32be.emulate = emulate;
     mips32be.getregistername = get_register_name;
