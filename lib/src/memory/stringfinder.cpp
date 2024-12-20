@@ -1,6 +1,7 @@
 #include "stringfinder.h"
 #include "../context.h"
 #include "../state.h"
+#include "../typing/base.h"
 #include <cmath>
 #include <string_view>
 #include <unordered_map>

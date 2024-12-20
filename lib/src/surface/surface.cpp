@@ -3,6 +3,7 @@
 #include "../builtins/processor.h"
 #include "../context.h"
 #include "../state.h"
+#include "../typing/base.h"
 #include "../utils/utils.h"
 #include <algorithm>
 #include <redasm/listing.h>

@@ -1,6 +1,7 @@
 #include "common.h"
 #include "../../error.h"
 #include "../../state.h"
+#include "../../typing/base.h"
 
 namespace redasm::api::python {
 

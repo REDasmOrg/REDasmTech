@@ -3,6 +3,7 @@
 #include "error.h"
 #include "memory/stringfinder.h"
 #include "state.h"
+#include "typing/base.h"
 #include "utils/utils.h"
 #include <redasm/redasm.h>
 
@@ -589,6 +590,7 @@ void Context::process_segments(bool finalize) {
 
 void Context::process_listing() {
     spdlog::info("Processing listing...");
+
     this->listing.clear();
     this->functions.clear();
 

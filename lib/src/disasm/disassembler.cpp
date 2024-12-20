@@ -1,7 +1,7 @@
-#include "disassembler.h"
 #include "../context.h"
 #include "../error.h"
 #include "../state.h"
+#include "worker.h"
 #include <ctime>
 
 namespace redasm {
@@ -36,7 +36,7 @@ constexpr std::array<const char*, STEP_COUNT> STEP_NAMES = {
 } // namespace
 
 Worker::Worker(): m_currentstep{WS_INIT} {
-    m_status = std::make_unique<RDEngineStatus>();
+    m_status = std::make_unique<RDWorkerStatus>();
 }
 
 bool Worker::execute(const RDWorkerStatus** s) {

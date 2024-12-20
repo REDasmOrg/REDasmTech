@@ -1,4 +1,5 @@
 #include "../internal/typing.h"
+#include "../../typing/base.h"
 #include "../../utils/utils.h"
 #include "../marshal.h"
 #include <redasm/typing.h>

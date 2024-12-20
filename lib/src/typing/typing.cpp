@@ -1,6 +1,7 @@
 #include "typing.h"
 #include "../error.h"
 #include "../utils/utils.h"
+#include "base.h"
 #include <fmt/core.h>
 #include <spdlog/spdlog.h>
 

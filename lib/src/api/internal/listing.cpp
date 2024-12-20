@@ -2,6 +2,7 @@
 #include "../../context.h"
 #include "../../listing.h"
 #include "../../state.h"
+#include "../../typing/base.h"
 #include <spdlog/spdlog.h>
 
 namespace redasm::api::internal {
