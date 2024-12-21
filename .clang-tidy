@@ -22,6 +22,7 @@ Checks: >
   -misc-no-recursion,
   -modernize-use-trailing-return-type,
   -modernize-avoid-c-arrays,
+  -performance-enum-size,
   -readability-named-parameter,
   -readability-braces-around-statements,
   -readability-convert-member-functions-to-static,
