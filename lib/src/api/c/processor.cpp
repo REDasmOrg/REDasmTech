@@ -74,3 +74,7 @@ void rd_setprocessor(const char* id) {
     if(id)
         redasm::api::internal::set_processor(id);
 }
+
+bool rd_decode(RDAddress address, RDInstruction* instr) {
+    return redasm::api::internal::decode(address, instr);
+}

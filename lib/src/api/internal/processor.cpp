@@ -129,4 +129,19 @@ void set_processor(std::string_view id) {
     spdlog::error("set_processor: '{}' not found", id);
 }
 
+bool decode(RDAddress address, RDInstruction* instr) {
+    spdlog::trace("decode({:x}, {})", address, fmt::ptr(instr));
+
+    const Context* ctx = state::context;
+    if(!instr || (ctx && !ctx->is_address(address)))
+        return false;
+
+    *instr = {
+        .address = address,
+    };
+
+    ctx->processor->decode(ctx->processor, instr);
+    return instr->length > 0;
+}
+
 } // namespace redasm::api::internal

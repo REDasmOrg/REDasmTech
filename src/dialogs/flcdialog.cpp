@@ -34,7 +34,7 @@ void FLCDialog::on_address_changed(const QString& s) {
         if(ok) {
             RDOffset offset{};
 
-            if(rd_addresstoffset(val, &offset)) {
+            if(rd_addresstooffset(val, &offset)) {
                 m_ui.leoffset->setText(rd_tohex(offset));
 
                 RDSegment seg;

@@ -1,5 +1,6 @@
 #include "utils.h"
 #include "actions.h"
+#include "dialogs/detaildialog.h"
 #include "settings.h"
 #include "themeprovider.h"
 #include <QKeyEvent>
@@ -34,6 +35,12 @@ float cell_height() {
     }
 
     return utils::cellh;
+}
+
+void show_detail(const QString& html, QWidget* parent) {
+    auto* dlg = new DetailDialog(parent);
+    dlg->set_html(html);
+    dlg->show();
 }
 
 usize draw_surface(RDSurface* s, QTextDocument* doc, usize start, usize n) {
@@ -84,6 +91,8 @@ QMenu* create_surface_menu(RDSurface* s, QWidget* w) {
     menu->addSeparator();
     menu->addAction(actcomment);
     menu->addAction(actions::get(actions::GOTO));
+    menu->addSeparator();
+    menu->addAction(actions::get(actions::OPEN_DETAILS));
 
     QObject::connect(menu, &QMenu::aboutToShow, w, [=]() {
         RDSurfaceLocation loc{};

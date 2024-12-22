@@ -77,3 +77,4 @@ REDASM_EXPORT const RDProcessor* rd_getprocessor(void);
 REDASM_EXPORT usize rd_getprocessors(const RDProcessor** processors);
 REDASM_EXPORT void rd_registerprocessor(const RDProcessor* proc);
 REDASM_EXPORT void rd_setprocessor(const char* name);
+REDASM_EXPORT bool rd_decode(RDAddress address, RDInstruction* instr);

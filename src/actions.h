@@ -13,6 +13,8 @@ enum Type : quint8 {
     RENAME,
     COMMENT,
 
+    OPEN_DETAILS,
+
     OPEN_HOME,
     OPEN_TELEGRAM,
     OPEN_REDDIT,

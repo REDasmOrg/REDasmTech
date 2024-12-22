@@ -35,8 +35,8 @@ typedef enum RDByteFlags {
 
     // Type Flags (26..27)
     BF_UNKNOWN = 0U << 26, // Unknown type
-    BF_DATA = 1U << 26,    // Data type
-    BF_CODE = 2U << 26,    // Code type
+    BF_DATA = 1U << 26,    // Data type (26)
+    BF_CODE = 2U << 26,    // Code type (27)
 
     // Special Flags
     BF_WEAK = 1U << 28,  // Weak flag

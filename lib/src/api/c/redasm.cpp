@@ -308,13 +308,24 @@ bool rd_offsettosegment(RDOffset offset, RDSegment* s) {
     return redasm::api::internal::offset_to_segment(offset, s);
 }
 
-bool rd_addresstoffset(RDAddress address, RDOffset* offset) {
+bool rd_addresstooffset(RDAddress address, RDOffset* offset) {
     auto v = redasm::api::internal::to_offset(address);
     if(!v)
         return false;
 
     if(offset)
         *offset = *v;
+    return true;
+}
+
+bool rd_addresstoindex(RDAddress address, MIndex* index) {
+    auto v = redasm::api::internal::address_to_index(address);
+    if(!v)
+        return false;
+
+    if(index)
+        *index = *v;
+
     return true;
 }
 

@@ -83,7 +83,6 @@ typedef struct RDOperand {
 typedef struct RDInstruction {
     RDAddress address;
     usize id;
-    usize type;
     usize features;
     usize length;
     RDOperand operands[RD_OPERANDCOUNT];

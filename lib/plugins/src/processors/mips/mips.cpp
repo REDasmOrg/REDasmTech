@@ -290,7 +290,7 @@ void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
         return;
     }
 
-    // Reset delat slot state
+    // Reset delay-slot state
     if(!rdemulator_takestate(e, DSLOT_STATE) && !(instr->features & IF_STOP))
         rdemulator_flow(e, instr->address + instr->length);
 }

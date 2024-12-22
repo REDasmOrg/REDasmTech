@@ -146,7 +146,8 @@ REDASM_EXPORT usize rd_getrefstotype(RDAddress toaddr, usize type,
                                      const RDRef** refs);
 REDASM_EXPORT bool rd_addresstosegment(RDAddress address, RDSegment* s);
 REDASM_EXPORT bool rd_offsettosegment(RDOffset offset, RDSegment* s);
-REDASM_EXPORT bool rd_addresstoffset(RDAddress address, RDOffset* offset);
+REDASM_EXPORT bool rd_addresstooffset(RDAddress address, RDOffset* offset);
+REDASM_EXPORT bool rd_addresstoindex(RDAddress address, MIndex* index);
 REDASM_EXPORT bool rd_offsettoaddress(RDOffset offset, RDAddress* address);
 REDASM_EXPORT bool rd_isaddress(RDAddress address);
 

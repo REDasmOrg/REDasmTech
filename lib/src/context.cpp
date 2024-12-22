@@ -47,8 +47,8 @@ void add_noncodeproblem(const Segment* s, MIndex index, usize type) {
     }
     else {
         state::context->add_problem(
-            index, fmt::format("Trying to {} in outside of segments",
-                               get_refname(type)));
+            index,
+            fmt::format("Trying to {} outside of segments", get_refname(type)));
     }
 }
 
@@ -176,7 +176,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
                     this->worker.emulator.enqueue_jump(toidx);
             }
             else
-                add_noncodeproblem(s, toidx, type);
+                add_noncodeproblem(s, fromidx, type);
             break;
         }
 
@@ -193,7 +193,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
                     this->worker.emulator.enqueue_call(toidx);
             }
             else
-                add_noncodeproblem(s, toidx, type);
+                add_noncodeproblem(s, fromidx, type);
             break;
         }
 

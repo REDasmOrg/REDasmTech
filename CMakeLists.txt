@@ -47,6 +47,7 @@ target_sources(${PROJECT_NAME}
         src/dialogs/flcdialog.cpp
         src/dialogs/gotodialog.cpp
         src/dialogs/tabledialog.cpp
+        src/dialogs/detaildialog.cpp
         src/dialogs/loaderdialog.cpp
         src/dialogs/analyzerdialog.cpp
         src/dialogs/memorymapdialog.cpp

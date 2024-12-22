@@ -22,5 +22,6 @@ const RDProcessor* get_processor();
 usize get_processors(const RDProcessor** processors);
 void register_processor(const RDProcessor& processor);
 void set_processor(std::string_view id);
+bool decode(RDAddress address, RDInstruction* instr);
 
 } // namespace redasm::api::internal
