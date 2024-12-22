@@ -397,8 +397,8 @@ usize get_bytes(const RDByte** bytes) {
     if(!m)
         return 0;
 
-    if(*bytes)
-        *bytes = reinterpret_cast<const RDByte*>(m->data());
+    if(bytes)
+        *bytes = api::to_c(m->data());
 
     return m->size();
 }

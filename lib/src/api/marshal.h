@@ -117,6 +117,10 @@ inline typing::Value* from_c(RDValue* arg) {
 
 inline RDByte to_c(Byte arg) { return arg.value; }
 
+inline const RDByte* to_c(const Byte* arg) {
+    return reinterpret_cast<const RDByte*>(arg);
+}
+
 inline const RDGraph* to_c(const StyledGraph* arg) {
     return reinterpret_cast<const RDGraph*>(arg);
 }
