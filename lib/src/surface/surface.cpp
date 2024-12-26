@@ -160,7 +160,7 @@ void Surface::render_function(const Function& f) {
         auto startit = listing.lower_bound(bb.start);
         assume(startit != listing.end());
         auto endit = listing.upper_bound(bb.end, startit);
-        assume(endit != listing.end());
+        assume(startit < endit);
 
         LIndex startidx = std::distance(listing.begin(), startit);
         LIndex n = std::distance(startit, endit);
