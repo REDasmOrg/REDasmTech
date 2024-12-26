@@ -39,8 +39,6 @@ void Memory::set_flags(MIndex idx, u32 flags, bool b) {
         m_buffer.at(idx).set_flag(flags, b);
 }
 
-void Memory::set(MIndex idx, u32 flags) { this->set_flags(idx, flags, true); }
-
 void Memory::set_n(MIndex idx, usize len, u32 flags) {
     if(idx >= m_buffer.size() || !len)
         return;

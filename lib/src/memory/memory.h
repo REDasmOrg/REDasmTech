@@ -16,10 +16,12 @@ public:
     tl::optional<u8> get_byte(usize idx) const override;
     usize get_length(MIndex idx) const;
     tl::optional<MIndex> get_next(MIndex idx) const;
-    void set(MIndex idx, u32 flags);
     void set_n(MIndex idx, usize len, u32 flags);
     void unset_n(MIndex idx, usize len);
     void set_flags(MIndex idx, u32 flags, bool b);
+
+    void set(MIndex idx, u32 flags) { this->set_flags(idx, flags, true); }
+    void unset(MIndex idx, u32 flags) { this->set_flags(idx, flags, false); }
 
     template<typename Function>
     bool range_is(MIndex idx, usize len, Function f) const {
