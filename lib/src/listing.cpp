@@ -7,9 +7,10 @@
 
 namespace redasm {
 
-Listing::ConstIterator Listing::lower_bound(MIndex idx) const {
+Listing::ConstIterator Listing::lower_bound(MIndex idx,
+                                            ConstIterator begin) const {
     auto it = std::lower_bound(
-        m_items.begin(), m_items.end(), idx,
+        std::move(begin), m_items.end(), idx,
         [](const ListingItem& x, MIndex index) { return x.index < index; });
 
     if(it != m_items.end() && it->index == idx)

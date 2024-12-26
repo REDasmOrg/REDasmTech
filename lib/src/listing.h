@@ -59,11 +59,15 @@ public:
         return this->upper_bound(idx, m_items.begin());
     }
 
+    ConstIterator lower_bound(MIndex idx) const {
+        return this->lower_bound(idx, m_items.begin());
+    }
+
     const IndexList& symbols() const { return m_symbols; }
     const IndexList& imports() const { return m_imports; }
     const IndexList& exports() const { return m_exports; }
 
-    ConstIterator lower_bound(MIndex idx) const;
+    ConstIterator lower_bound(MIndex idx, ConstIterator begin) const;
     ConstIterator upper_bound(MIndex idx, ConstIterator begin) const;
     void hex_dump(MIndex startindex, MIndex endindex);
     void fill(MIndex index, MIndex endindex);
