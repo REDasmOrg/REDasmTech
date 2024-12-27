@@ -32,8 +32,7 @@ typedef enum RDByteFlags {
     BF_JUMP = 1U << 20,    // Jump instruction
     BF_FLOW = 1U << 21,    // Flow instruction (ordinary)
     BF_JUMPDST = 1U << 22, // Jump destination
-    BF_DSLOT = 1U << 23,   // Instruction has delay slot(s)
-    BF_DFLOW = 1U << 24,   // Flow instruction (delay slot)
+    BF_DFLOW = 1U << 23,   // Flow instruction (delay slot)
 
     // Type Flags (26..27)
     BF_UNKNOWN = 0U << 26, // Unknown type

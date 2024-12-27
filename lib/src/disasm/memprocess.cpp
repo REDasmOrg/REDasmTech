@@ -209,18 +209,14 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
                     }
                 }
 
-                if(b.has(BF_DSLOT)) { // Consume delay slot(s)
+                if(b.has(BF_DFLOW)) { // Consume delay slot(s)
                     Function::BasicBlock* bb = f.get_basic_block(n);
                     assume(bb);
-                    usize len = mem->get_length(curridx);
-                    assume(len > 0);
-                    curridx += len;
 
-                    while(curridx < mem->size()) {
+                    while(curridx < mem->size() &&
+                          mem->at(curridx).has(BF_DFLOW)) {
                         bb->end = curridx;
-                        if(!mem->at(curridx).has(BF_DFLOW))
-                            break;
-                        len = mem->get_length(curridx);
+                        usize len = mem->get_length(curridx);
                         assume(len > 0);
                         curridx += len;
                     }

@@ -195,7 +195,7 @@ void Emulator::execute_delayslots(const RDInstruction& instr) {
     auto& mem = ctx->memory;
 
     // Continue through delay slot(s)
-    mem->set(this->pc, BF_DSLOT);
+    mem->set(this->pc, BF_DFLOW);
 
     for(this->ndslot = 1; this->ndslot <= instr.delayslots; this->ndslot++) {
         u32 len = this->tick();
