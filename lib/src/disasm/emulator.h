@@ -2,6 +2,7 @@
 
 #include <deque>
 #include <map>
+#include <memory>
 #include <redasm/instruction.h>
 #include <redasm/processor.h>
 #include <redasm/types.h>
@@ -33,10 +34,15 @@ public:
     void enqueue_flow(MIndex index);
     void enqueue_jump(MIndex index);
     void enqueue_call(MIndex index);
-    void tick();
+    u32 tick();
+
+private:
+    void execute_delayslots(const RDInstruction& instr);
 
 public:
-    MIndex current{};
+    MIndex pc{};
+    std::unique_ptr<RDInstruction> dslotinstr;
+    u32 ndslot{0}; // =0 no delay slot
 
 private:
     EmulatorState m_state;

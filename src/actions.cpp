@@ -35,7 +35,8 @@ const QString INSTR_TEMPLATE = QString{R"(
         <b>Id:</b> %2<br>
         <b>Features:</b> %3<br>
         <b>Length:</b> %4<br>
-        <b>Uservalue:</b> %5<br>
+        <b>Delayslots:</b> %5<br>
+        <b>Uservalue:</b> %6<br>
         <br>
         )"};
 
@@ -78,6 +79,9 @@ QString instrfeatures_tostring(const RDInstruction* instr) {
 
     if(instr->features & IF_STOP)
         append_separated(f, "IF_STOP");
+
+    if(instr->features & IF_DSLOT)
+        append_separated(f, "IF_DSLOT");
 
     if(f.isEmpty())
         f = "IF_NONE";
@@ -151,6 +155,7 @@ void show_details() {
                                .arg(rd_tohex(instr.id))
                                .arg(instrfeatures_tostring(&instr))
                                .arg(rd_tohex(instr.length))
+                               .arg(instr.delayslots)
                                .arg(rd_tohex(instr.uservalue));
 
         foreach_operand(i, op, &instr) {

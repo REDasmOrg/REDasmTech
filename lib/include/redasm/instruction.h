@@ -27,9 +27,10 @@ typedef enum RDOperandType {
 
 typedef enum RDInstructionFeatures {
     IF_NONE = 0,
-    IF_STOP = (1 << 0),
-    IF_JUMP = (1 << 1),
-    IF_CALL = (1 << 2),
+    IF_STOP = (1 << 0),  // Stops flow
+    IF_JUMP = (1 << 1),  // Can branch
+    IF_CALL = (1 << 2),  // Call a function
+    IF_DSLOT = (1 << 3), // Is a delay slot
 } RDInstructionFeatures;
 
 typedef usize RDRegisterOperand;
@@ -82,9 +83,10 @@ typedef struct RDOperand {
 
 typedef struct RDInstruction {
     RDAddress address;
-    usize id;
-    usize features;
-    usize length;
+    u32 id;
+    u32 features;
+    u32 length;
+    u32 delayslots;
     RDOperand operands[RD_OPERANDCOUNT];
 
     union {

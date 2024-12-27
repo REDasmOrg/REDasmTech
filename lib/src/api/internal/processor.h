@@ -6,6 +6,7 @@
 
 namespace redasm::api::internal {
 
+u32 emulator_getdslotinfo(const RDEmulator* self, const RDInstruction** dslot);
 void emulator_addref(RDEmulator* self, RDAddress toaddr, usize type);
 void emulator_flow(RDEmulator* self, RDAddress flowaddr);
 u64 emulator_getreg(const RDEmulator* self, int regid);

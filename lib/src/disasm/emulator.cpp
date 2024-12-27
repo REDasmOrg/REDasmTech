@@ -18,26 +18,32 @@ void Emulator::setup() {
     assume(state::context);
     assume(m_state.registers.empty());
     assume(m_state.states.empty());
-    const Context* ctx = state::context;
 
+    this->dslotinstr = std::make_unique<RDInstruction>();
+
+    const Context* ctx = state::context;
     if(ctx->processor && ctx->processor->setup)
         ctx->processor->setup(ctx->processor, api::to_c(this));
 }
 
 void Emulator::flow(MIndex index) {
-    const Segment* fromseg = state::context->index_to_segment(this->current);
+    const Segment* fromseg = state::context->index_to_segment(this->pc);
     assume(fromseg);
     assume(fromseg->type & SEG_HASCODE);
 
     // Avoid inter-segment flow
     if(index >= fromseg->index && index < fromseg->endindex) {
-        state::context->memory->set(this->current, BF_FLOW);
+        state::context->memory->set(this->pc, BF_FLOW);
+
+        if(this->ndslot) // Set delay flow too
+            state::context->memory->set(this->pc, BF_DFLOW);
+
         this->enqueue_flow(index);
     }
 }
 
 void Emulator::add_ref(MIndex toidx, usize type) { // NOLINT
-    state::context->add_ref(this->current, toidx, type);
+    state::context->add_ref(this->pc, toidx, type);
 }
 
 u64 Emulator::get_reg(int regid) const {
@@ -119,10 +125,8 @@ void Emulator::enqueue_call(MIndex index) {
     do_enqueue(m_qcall, index);
 }
 
-void Emulator::tick() {
+u32 Emulator::tick() {
     MIndex idx;
-    Context* ctx = state::context;
-    auto& mem = ctx->memory;
 
     if(!m_qflow.empty()) {
         idx = m_qflow.front();
@@ -137,46 +141,74 @@ void Emulator::tick() {
         m_qcall.pop_front();
     }
     else
-        return;
+        return 0;
+
+    Context* ctx = state::context;
+    auto& mem = ctx->memory;
 
     const RDProcessor* p = ctx->processor;
     assume(p);
 
-    Byte& b = ctx->memory->at(idx);
+    if(ctx->memory->at(idx).is_code())
+        return ctx->memory->get_length(idx);
 
-    if(!b.is_code()) {
-        this->current = idx;
+    this->pc = idx;
 
-        auto address = ctx->index_to_address(idx);
-        assume(address.has_value());
+    auto address = ctx->index_to_address(idx);
+    assume(address.has_value());
 
-        RDInstruction instr = {
-            .address = *address,
-        };
+    RDInstruction instr = {
+        .address = *address,
+        .features = this->ndslot ? IF_DSLOT : IF_NONE,
+    };
 
-        if(p->decode)
-            p->decode(p, &instr);
-        else {
+    if(p->decode)
+        p->decode(p, &instr);
+    else {
+        ctx->add_problem(
+            idx, fmt::format("decode() not implemented for processor '{}'",
+                             p->name));
+        return 0;
+    }
+
+    if(instr.length) {
+        mem->unset_n(idx, instr.length);
+        if(p->emulate)
+            p->emulate(p, api::to_c(this), &instr);
+        mem->set_n(idx, instr.length, BF_CODE);
+
+        if(instr.features & IF_JUMP)
+            mem->set(idx, BF_JUMP);
+        if(instr.features & IF_CALL)
+            mem->set(idx, BF_CALL);
+        if(instr.delayslots)
+            this->execute_delayslots(instr);
+    }
+
+    return instr.length;
+}
+
+void Emulator::execute_delayslots(const RDInstruction& instr) {
+    *this->dslotinstr = instr;
+
+    Context* ctx = state::context;
+    auto& mem = ctx->memory;
+
+    // Continue through delay slot(s)
+    mem->set(this->pc, BF_DSLOT);
+
+    for(this->ndslot = 1; this->ndslot <= instr.delayslots; this->ndslot++) {
+        u32 len = this->tick();
+
+        if(!len) {
             ctx->add_problem(
-                idx, fmt::format("decode() not implemented for processor '{}'",
-                                 p->name));
-            return;
-        }
-
-        if(instr.length) {
-            mem->unset_n(idx, instr.length);
-
-            if(p->emulate)
-                p->emulate(p, api::to_c(this), &instr);
-
-            mem->set_n(idx, instr.length, BF_CODE);
-
-            if(instr.features & IF_JUMP)
-                mem->set(idx, BF_JUMP);
-            if(instr.features & IF_CALL)
-                mem->set(idx, BF_CALL);
+                this->pc,
+                fmt::format("Cannot decode delay slot #{}", this->ndslot));
+            break;
         }
     }
+
+    this->ndslot = 0;
 }
 
 bool Emulator::has_pending_code() const {

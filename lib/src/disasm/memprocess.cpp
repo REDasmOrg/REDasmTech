@@ -189,8 +189,9 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
                 break;
             }
 
-            // FIXME: ?Delay slots? can have both FLOW and JUMP
-            if(b.has(BF_JUMP)) {
+            bool isjump = b.has(BF_JUMP);
+
+            if(isjump) {
                 Function::BasicBlock* bb = f.get_basic_block(n);
                 assume(bb);
                 bb->end = curridx;
@@ -207,27 +208,50 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
                         f.jmp_true(n, f.try_add_block(r.index));
                     }
                 }
-            }
 
-            Function::BasicBlock* bb = f.get_basic_block(n);
-            assume(bb);
+                if(b.has(BF_DSLOT)) { // Consume delay slot(s)
+                    Function::BasicBlock* bb = f.get_basic_block(n);
+                    assume(bb);
+                    usize len = mem->get_length(curridx);
+                    assume(len > 0);
+                    curridx += len;
+
+                    while(curridx < mem->size()) {
+                        bb->end = curridx;
+                        if(!mem->at(curridx).has(BF_DFLOW))
+                            break;
+                        len = mem->get_length(curridx);
+                        assume(len > 0);
+                        curridx += len;
+                    }
+
+                    if(curridx < mem->size())
+                        b = mem->at(curridx);
+                    else
+                        break;
+                }
+            }
 
             if(b.has(BF_FLOW)) {
                 usize len = mem->get_length(curridx);
+                assume(len > 0);
                 MIndex flow = curridx + len;
-                assume(flow > curridx);
 
-                if(b.has(BF_JUMP)) {
+                if(isjump) {
                     pending.push_back(flow);
                     f.jmp_false(n, f.try_add_block(flow));
                     break;
                 }
 
+                Function::BasicBlock* bb = f.get_basic_block(n);
+                assume(bb);
                 bb->end = curridx;
                 curridx = flow;
                 b = mem->at(curridx);
             }
             else {
+                Function::BasicBlock* bb = f.get_basic_block(n);
+                assume(bb);
                 bb->end = curridx;
                 break;
             }

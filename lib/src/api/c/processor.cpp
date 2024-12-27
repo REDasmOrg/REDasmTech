@@ -1,6 +1,11 @@
 #include "../internal/processor.h"
 #include "../../error.h"
 
+u32 rdemulator_getdslotinfo(const RDEmulator* self,
+                            const RDInstruction** dslot) {
+    return redasm::api::internal::emulator_getdslotinfo(self, dslot);
+}
+
 void rdemulator_flow(RDEmulator* self, RDAddress flowaddr) {
     redasm::api::internal::emulator_flow(self, flowaddr);
 }

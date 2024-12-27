@@ -4,8 +4,6 @@
 
 namespace {
 
-constexpr const char* DSLOT_STATE = "dslot";
-
 RDAddress calc_addr16(RDAddress pc, u16 imm) {
     i32 tgt = mips_decoder::signext_16_32(imm);
     return pc + sizeof(MIPSInstruction) + (static_cast<i32>(tgt * 4));
@@ -214,12 +212,16 @@ void decode_b(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
 template<bool BigEndian>
 void decode(const RDProcessor*, RDInstruction* instr) {
     MIPSDecodedInstruction dec;
-    if(!mips_decoder::decode(instr->address, dec, BigEndian))
+    if(!mips_decoder::decode(instr->address, dec, BigEndian,
+                             instr->features & IF_DSLOT))
         return;
 
     instr->id = dec.opcode->id;
     instr->length = dec.length;
     instr->uservalue = dec.opcode->format;
+
+    if(mips_decoder::has_delayslot(instr->id))
+        instr->delayslots = 1;
 
     if(dec.opcode->category == MIPS_CATEGORY_MACRO) {
         decode_macro(dec, instr);
@@ -277,27 +279,20 @@ void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
         default: handle_operands(e, instr); break;
     }
 
-    if(mips_decoder::has_delayslot(instr->id)) {
-        if(!(instr->features & IF_STOP)) {
-            // Flow after delay-slot
-            rdemulator_flow(e, instr->address +
-                                   (instr->length + sizeof(MIPSInstruction)));
-        }
+    if(instr->features & IF_DSLOT) {
+        const RDInstruction* dslot = nullptr;
+        u32 n = rdemulator_getdslotinfo(e, &dslot);
 
-        // Mark and decode delay-slot
-        rdemulator_setstate(e, DSLOT_STATE, 1);
-        rdemulator_flow(e, instr->address + instr->length);
-        return;
+        if(n == dslot->delayslots && (dslot->features & IF_STOP))
+            return;
     }
 
-    // Reset delay-slot state
-    if(!rdemulator_takestate(e, DSLOT_STATE) && !(instr->features & IF_STOP))
+    if(!(instr->features & IF_STOP) || instr->delayslots)
         rdemulator_flow(e, instr->address + instr->length);
 }
 
 void render_instruction(const RDProcessor*, RDRenderer* r,
                         const RDInstruction* instr) {
-
     render_mnemonic(instr, r);
 
     foreach_operand(i, op, instr) {

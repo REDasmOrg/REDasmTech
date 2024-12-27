@@ -98,7 +98,7 @@ void Worker::init_step() {
 void Worker::emulate_step() {
     if(emulator.has_pending_code()) {
         emulator.tick();
-        auto a = state::context->index_to_address(emulator.current);
+        auto a = state::context->index_to_address(emulator.pc);
         a.map([&](RDAddress address) { m_status->address.value = address; });
         m_status->address.valid = a.has_value();
     }
