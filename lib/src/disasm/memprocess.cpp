@@ -163,39 +163,32 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
         MIndex startidx = pending.front();
         pending.pop_front();
 
-        // Ignore loops
-        if(done.contains(startidx))
+        if(done.contains(startidx)) // Ignore loops
             continue;
-
         done.insert(startidx);
 
         RDGraphNode n = f.try_add_block(startidx);
-
         if(startidx == idx)
             f.graph.set_root(n);
 
-        MIndex curridx = startidx;
-        Byte b = mem->at(curridx);
+        MIndex endidx = startidx;
 
-        while(curridx < mem->size()) {
-            // Don't overlap functions & blocks
-            if((startidx != curridx) && b.has(BF_FUNCTION))
-                break;
+        // Find basic block end
+        for(MIndex curridx = startidx; curridx < mem->size();) {
+            Byte b = mem->at(curridx);
 
-            // Break loop and connect basic blocks
-            if((startidx != curridx) && b.has(BF_JUMPDST)) {
-                pending.push_back(curridx);
-                f.jmp(n, f.try_add_block(curridx));
-                break;
+            if(curridx != startidx) {
+                if(b.has(BF_FUNCTION))
+                    break;
+
+                if(b.has(BF_JUMPDST)) {
+                    pending.push_back(curridx);
+                    f.jmp_true(n, f.try_add_block(curridx));
+                    break;
+                }
             }
 
-            bool isjump = b.has(BF_JUMP);
-
-            if(isjump) {
-                Function::BasicBlock* bb = f.get_basic_block(n);
-                assume(bb);
-                bb->end = curridx;
-
+            if(b.has(BF_JUMP)) {
                 for(Database::Ref r :
                     ctx->get_refs_from_type(curridx, CR_JUMP)) {
                     const Segment* seg = ctx->index_to_segment(r.index);
@@ -209,49 +202,43 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
                     }
                 }
 
-                if(b.has(BF_DFLOW)) { // Consume delay slot(s)
-                    Function::BasicBlock* bb = f.get_basic_block(n);
-                    assume(bb);
+                // Consume delay slot(s), if any
+                while(curridx < mem->size() && b.has(BF_DFLOW)) {
+                    usize len = mem->get_length(curridx);
+                    assume(len > 0);
+                    curridx += len;
+                    b = mem->at(curridx);
+                }
 
-                    while(curridx < mem->size() &&
-                          mem->at(curridx).has(BF_DFLOW)) {
-                        bb->end = curridx;
-                        usize len = mem->get_length(curridx);
-                        assume(len > 0);
-                        curridx += len;
+                endidx = curridx;
+
+                // Conditional Jump
+                if(curridx < mem->size() && b.has(BF_FLOW)) {
+                    usize len = mem->get_length(curridx);
+                    assume(len > 0);
+                    curridx += len;
+
+                    if(curridx < mem->size()) {
+                        pending.push_back(curridx);
+                        f.jmp_false(n, f.try_add_block(curridx));
                     }
-
-                    if(curridx < mem->size())
-                        b = mem->at(curridx);
-                    else
-                        break;
-                }
-            }
-
-            if(b.has(BF_FLOW)) {
-                usize len = mem->get_length(curridx);
-                assume(len > 0);
-                MIndex flow = curridx + len;
-
-                if(isjump) {
-                    pending.push_back(flow);
-                    f.jmp_false(n, f.try_add_block(flow));
-                    break;
                 }
 
-                Function::BasicBlock* bb = f.get_basic_block(n);
-                assume(bb);
-                bb->end = curridx;
-                curridx = flow;
-                b = mem->at(curridx);
-            }
-            else {
-                Function::BasicBlock* bb = f.get_basic_block(n);
-                assume(bb);
-                bb->end = curridx;
                 break;
             }
+
+            endidx = curridx;
+            usize len = mem->get_length(curridx);
+            assume(len > 0);
+            curridx += len;
+
+            if(!b.has(BF_FLOW))
+                break;
         }
+
+        Function::BasicBlock* bb = f.get_basic_block(n);
+        assume(bb);
+        bb->end = std::min<usize>(endidx, mem->size() - 1);
     }
 }
 

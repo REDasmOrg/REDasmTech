@@ -35,8 +35,13 @@ void Emulator::flow(MIndex index) {
     if(index >= fromseg->index && index < fromseg->endindex) {
         state::context->memory->set(this->pc, BF_FLOW);
 
-        if(this->ndslot) // Set delay flow too
-            state::context->memory->set(this->pc, BF_DFLOW);
+        if(this->ndslot) { // Set delay flow too
+            assume(this->dslotinstr->delayslots > 0);
+
+            // D-Flow until last delay slot
+            if(this->ndslot < this->dslotinstr->delayslots)
+                state::context->memory->set(this->pc, BF_DFLOW);
+        }
 
         this->enqueue_flow(index);
     }
