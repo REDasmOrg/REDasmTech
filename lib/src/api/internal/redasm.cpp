@@ -251,6 +251,15 @@ void discard() {
     state::contextlist.clear();
 }
 
+bool tick(const RDWorkerStatus** s) {
+    spdlog::trace("tick({})", fmt::ptr(s));
+
+    if(state::context)
+        return state::context->worker.execute(s);
+
+    return false;
+}
+
 void disassemble() {
     spdlog::trace("disassemble()");
 
@@ -259,15 +268,6 @@ void disassemble() {
 
     while(tick(nullptr))
         ;
-}
-
-bool tick(const RDWorkerStatus** s) {
-    spdlog::trace("tick({})", fmt::ptr(s));
-
-    if(!state::context)
-        return false;
-
-    return state::context->worker.execute(s);
 }
 
 std::vector<RDAddress> get_entries() {

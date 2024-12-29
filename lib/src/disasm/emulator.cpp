@@ -178,8 +178,8 @@ u32 Emulator::tick() {
 
     if(instr.length) {
         mem->unset_n(idx, instr.length);
-        if(p->emulate)
-            p->emulate(p, api::to_c(this), &instr);
+        assume(p->emulate);
+        p->emulate(p, api::to_c(this), &instr);
         mem->set_n(idx, instr.length, BF_CODE);
 
         if(instr.features & IF_JUMP)
@@ -217,7 +217,7 @@ void Emulator::execute_delayslots(const RDInstruction& instr) {
 }
 
 bool Emulator::has_pending_code() const {
-    return state::context->processor->emulate &&
+    return state::context->memory && state::context->processor->emulate &&
            (!m_qflow.empty() || !m_qjump.empty() || !m_qcall.empty());
 }
 

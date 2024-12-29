@@ -94,9 +94,13 @@ void Worker::init_step() {
     m_status->processor = state::context->processor->name;
     m_status->analysisstart = std::time(nullptr);
 
-    mem::process_listing(); // Show pre-analysis listing
-    m_status->listingchanged = true;
-    m_currentstep++;
+    if(state::context->memory) {
+        mem::process_listing(); // Show pre-analysis listing
+        m_status->listingchanged = true;
+        m_currentstep++;
+    }
+    else
+        m_currentstep = WS_DONE;
 }
 
 void Worker::emulate_step() {
