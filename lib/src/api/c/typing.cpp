@@ -170,7 +170,13 @@ bool rdvalue_query_n(const RDValue* self, const char* q, usize n,
                 return false;
 
             inindex = false;
-            kstart = q + 2; // Skip ']'
+
+            if(++q == endq) // Skip ']'
+                break;
+            if(*q == '.')
+                q++; // Skip '.'
+
+            kstart = q;
         }
 
         q++;

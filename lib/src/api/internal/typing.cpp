@@ -33,7 +33,7 @@ bool create_type(std::string_view tname, RDType* t) {
 
 std::string create_struct(const std::string& name,
                           const typing::StructBody& fields) {
-    spdlog::trace("create_struct('{}', {} fields)", name, fields.size());
+    spdlog::trace("create_struct('{}', <{} fields>)", name, fields.size());
     if(state::context) {
         assume(state::context->types.declare(name, fields));
         return name;
