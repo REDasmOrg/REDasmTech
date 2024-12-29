@@ -65,6 +65,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/marshal.cpp
         src/api/internal/utils.cpp
         src/api/internal/redasm.cpp
+        src/api/internal/byteorder.cpp
         src/api/internal/rdil.cpp
         src/api/internal/byte.cpp
         src/api/internal/loader.cpp
@@ -85,6 +86,7 @@ target_sources(${PROJECT_NAME_LIB}
     PRIVATE # C
         src/api/c/utils.cpp
         src/api/c/redasm.cpp
+        src/api/c/byteorder.cpp
         src/api/c/buffer.cpp
         src/api/c/memory.cpp
         src/api/c/stream.cpp
@@ -103,6 +105,7 @@ target_sources(${PROJECT_NAME_LIB}
 
     PRIVATE # Python
         src/api/python/utils.cpp
+        src/api/python/byteorder.cpp
         src/api/python/rdil.cpp
         src/api/python/buffer.cpp
         src/api/python/stream.cpp

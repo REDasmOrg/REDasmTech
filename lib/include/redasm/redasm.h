@@ -3,6 +3,7 @@
 #include <redasm/analyzer.h>
 #include <redasm/buffer.h>
 #include <redasm/byte.h>
+#include <redasm/byteorder.h>
 #include <redasm/common.h>
 #include <redasm/function.h>
 #include <redasm/graph.h>

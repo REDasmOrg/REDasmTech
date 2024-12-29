@@ -36,34 +36,3 @@ u32 rd_ror32(u32 val, u32 amt) {
 u64 rd_ror64(u64 val, u64 amt) {
     return redasm::api::internal::ror64(val, amt);
 }
-
-u16 rd_fromle16(u16 hostval) {
-    return redasm::api::internal::from_le16(hostval);
-}
-
-u32 rd_fromle32(u32 hostval) {
-    return redasm::api::internal::from_le32(hostval);
-}
-
-u64 rd_fromle64(u64 hostval) {
-    return redasm::api::internal::from_le64(hostval);
-}
-
-u16 rd_frombe16(u16 hostval) {
-    return redasm::api::internal::from_be16(hostval);
-}
-
-u32 rd_frombe32(u32 hostval) {
-    return redasm::api::internal::from_be32(hostval);
-}
-
-u64 rd_frombe64(u64 hostval) {
-    return redasm::api::internal::from_be64(hostval);
-}
-
-u16 rd_tole16(u16 hostval) { return redasm::api::internal::to_le16(hostval); }
-u32 rd_tole32(u32 hostval) { return redasm::api::internal::to_le32(hostval); }
-u64 rd_tole64(u64 hostval) { return redasm::api::internal::to_le64(hostval); }
-u16 rd_tobe16(u16 hostval) { return redasm::api::internal::to_be16(hostval); }
-u32 rd_tobe2(u32 hostval) { return redasm::api::internal::to_be32(hostval); }
-u64 rd_tobe64(u64 hostval) { return redasm::api::internal::to_be64(hostval); }

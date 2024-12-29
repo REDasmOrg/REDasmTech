@@ -1,5 +1,6 @@
 #pragma once
 
+#include "byteorder.h"
 #include "common.h"
 #include "redasm.h"
 #include "typing.h"

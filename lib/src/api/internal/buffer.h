@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../typing/typing.h"
+#include "../../typing/value.h"
 #include <redasm/redasm.h>
 #include <string>
 #include <string_view>

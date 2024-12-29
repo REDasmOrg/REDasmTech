@@ -1,36 +1,13 @@
 #pragma once
 
-#include <redasm/types.h>
 #include <array>
-#include <sys/param.h>
-
-#if defined(__BYTE_ORDER)
-#if defined(__BIG_ENDIAN) && (__BYTE_ORDER == __BIG_ENDIAN)
-#define REDASM_BIG_ENDIAN
-#elif defined(__LITTLE_ENDIAN) && (__BYTE_ORDER == __LITTLE_ENDIAN)
-#define REDASM_LITTLE_ENDIAN
-#else
-static_assert(false, "ByteOrder: Unsupported endianness")
-#endif
-#else
-static_assert(false, "ByteOrder: Cannot detect byte order")
-#endif
+#include <redasm/byteorder.h>
+#include <redasm/types.h>
 
 namespace redasm::byteorder {
 
-enum class Endian : usize {
-    LITTLE = 0,
-    BIG,
-
-#if defined(REDASM_BIG_ENDIAN)
-    PLATFORM = big,
-#else
-        PLATFORM = LITTLE
-#endif
-};
-
-constexpr bool is_littleendian() { return Endian::PLATFORM == Endian::LITTLE; }
-constexpr bool is_bigendian() { return Endian::PLATFORM == Endian::BIG; }
+constexpr bool is_littleendian() { return BO_PLATFORM == BO_LITTLE; }
+constexpr bool is_bigendian() { return BO_PLATFORM == BO_BIG; }
 
 template<typename T>
 T swap(T hostval) noexcept {
