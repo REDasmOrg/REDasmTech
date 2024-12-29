@@ -38,6 +38,20 @@ bool rd_createtype(const char* tname, RDType* t) {
     return redasm::api::internal::create_type(tname, t);
 }
 
+const char* rd_typename(const RDType* t) {
+    static std::string s;
+
+    if(t)
+        s = redasm::api::internal::type_name(*t);
+    else
+        s.clear();
+
+    if(!s.empty())
+        return s.c_str();
+
+    return nullptr;
+}
+
 const char* rd_createstruct(const char* name, const RDStructField* fields) {
     if(!name || !fields)
         return nullptr;
@@ -69,6 +83,38 @@ const char* rdvalue_tostring(const RDValue* self) {
         return redasm::api::from_c(self)->str.c_str();
 
     return nullptr;
+}
+
+usize rdvalue_getlength(const RDValue* self) {
+    const redasm::typing::Value* v = redasm::api::from_c(self);
+
+    if(v->is_list())
+        return v->list.size();
+    if(v->is_struct())
+        return v->dict.size();
+
+    if(v->type.id == redasm::typing::ids::STR ||
+       v->type.id == redasm::typing::ids::WSTR)
+        return v->str.size();
+
+    except("Cannot get value-length of type '{}'",
+           redasm::api::internal::type_name(v->type));
+}
+
+bool rdvalue_at(const RDValue* self, usize idx, const RDValue** v) {
+    const redasm::typing::Value* val = redasm::api::from_c(self);
+
+    if(val->is_list()) {
+        if(idx < val->list.size()) {
+            if(v)
+                *v = redasm::api::to_c(&val->list[idx]);
+            return true;
+        }
+
+        return false;
+    }
+
+    return false;
 }
 
 bool rdvalue_get(const RDValue* self, const char* key, const RDValue** v) {
@@ -145,12 +191,14 @@ bool rdvalue_query_n(const RDValue* self, const char* q, usize n,
 
     while(q <= endq) {
         if(*q == '.' || *q == '[' || q == endq) {
-            usize klen = q - kstart;
-            if(klen == 0)
-                return set_error("Invalid key: empty segment detected");
+            if(!curr->is_list()) {
+                usize klen = q - kstart;
+                if(!klen)
+                    return set_error("Invalid key: empty segment detected");
 
-            if(!inindex && !traverse_key(std::string_view{kstart, klen}))
-                return false;
+                if(!inindex && !traverse_key(std::string_view{kstart, klen}))
+                    return false;
+            }
 
             if(*q == '[') {
                 inindex = true;

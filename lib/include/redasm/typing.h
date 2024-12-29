@@ -41,6 +41,7 @@ typedef struct RDType {
 
 REDASM_EXPORT usize rd_sizeof(const char* tname);
 REDASM_EXPORT bool rd_createtype(const char* tname, RDType* t);
+REDASM_EXPORT const char* rd_typename(const RDType* t);
 REDASM_EXPORT const char* rd_createstruct(const char* name,
                                           const RDStructField* fields);
 
@@ -49,6 +50,10 @@ inline bool rd_istypenull(const RDType* t) { return t && !t->id; }
 REDASM_EXPORT RDValue* rdvalue_create();
 REDASM_EXPORT const RDType* rdvalue_gettype(const RDValue* self);
 REDASM_EXPORT const char* rdvalue_tostring(const RDValue* self);
+REDASM_EXPORT usize rdvalue_getlength(const RDValue* self);
+
+REDASM_EXPORT bool rdvalue_at(const RDValue* self, usize idx,
+                              const RDValue** v);
 
 REDASM_EXPORT bool rdvalue_get(const RDValue* self, const char* key,
                                const RDValue** v);

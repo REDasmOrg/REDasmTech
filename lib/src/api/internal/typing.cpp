@@ -20,6 +20,13 @@ typing::Value* create_value() {
     return nullptr;
 }
 
+std::string type_name(RDType t) {
+    if(state::context)
+        return state::context->types.to_string(t);
+
+    return {};
+}
+
 bool create_type(std::string_view tname, RDType* t) {
     spdlog::trace("create_type('{}', {})", tname, fmt::ptr(t));
 

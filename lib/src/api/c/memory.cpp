@@ -12,5 +12,5 @@ bool rd_map(RDAddress startaddr, RDAddress endaddr) {
 }
 
 bool rd_map_n(RDAddress baseaddress, usize size) {
-    return redasm::api::internal::memory_map(baseaddress, size);
+    return redasm::api::internal::memory_map_n(baseaddress, size);
 }
