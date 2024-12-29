@@ -13,26 +13,27 @@ namespace {
 enum WorkerSteps {
     WS_INIT = 0,
     WS_EMULATE1, WS_ANALYZE1, // First pass
+    WS_MERGEDATA1,
     WS_MERGECODE,
     WS_EMULATE2, WS_ANALYZE2, // Second pass
-    WS_MERGEDATA,
+    WS_MERGEDATA2,
     WS_FINALIZE,
     WS_DONE,
     WS_COUNT,
 };
-// clang-format on
 
 constexpr std::array<const char*, WS_COUNT> WS_NAMES = {
     "Init",
-    "Emulate #1",
-    "Analyze #1",
+    "Emulate #1", "Analyze #1", 
+    "Merge Data #1",
     "Merge Code",
-    "Emulate #2",
-    "Analyze #2"
-    "Merge Data"
-    "Finalize",
+    "Emulate #2", "Analyze #2", 
+    "Merge Data #2",
+    "Finalize", 
     "Done",
 };
+
+// clang-format on
 
 } // namespace
 
@@ -57,7 +58,10 @@ bool Worker::execute(const RDWorkerStatus** s) {
             case WS_ANALYZE2: this->analyze_step(); break;
 
             case WS_MERGECODE: this->mergecode_step(); break;
-            case WS_MERGEDATA: this->mergedata_step(); break;
+
+            case WS_MERGEDATA1:
+            case WS_MERGEDATA2: this->mergedata_step(); break;
+
             case WS_FINALIZE: this->finalize_step(); break;
             default: unreachable;
         }
