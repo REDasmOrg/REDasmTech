@@ -1,5 +1,8 @@
 #include "elf_common.h"
 #include "elf_header.h"
+#include "elf_sections.h"
+#include "elf_state.h"
+#include "elf_types.h"
 #include <redasm/redasm.h>
 #include <string>
 
@@ -21,123 +24,102 @@
 
 namespace {
 
-struct ValidateResult {
-    RDBuffer* file;
-    int byteorder;
-    int bits;
-};
+template<int bits>
+void map_memory(const std::vector<ElfPhdr<bits>>& phdr, usize& phdridx) {
+    RDAddress start = -1ULL, end = 0;
 
-bool validate_elf(ValidateResult& vr) {
-    vr.file = rdbuffer_getfile();
-    RDValue* ident = rdvalue_create();
+    for(usize i = 0; i < phdr.size(); i++) {
+        const auto& p = phdr[i];
 
-    if(!rdbuffer_gettype(vr.file, 0, "u8[16]", ident))
-        return false;
+        switch(p.p_type) {
+            case PT_LOAD: {
+                start = std::min<RDAddress>(start, p.p_vaddr);
 
-    u8 val, byteorder, bits;
+                u64 asize = p.p_memsz; // Align size
+                if(usize diff = asize % p.p_align; diff)
+                    asize += (p.p_align - diff);
 
-    if(!rdvalue_getu8(ident, "[0]", &val) || val != ELFMAG0 ||
-       !rdvalue_getu8(ident, "[1]", &val) || val != ELFMAG1 ||
-       !rdvalue_getu8(ident, "[2]", &val) || val != ELFMAG2 ||
-       !rdvalue_getu8(ident, "[3]", &val) || val != ELFMAG3 ||
-       !rdvalue_getu8(ident, "[6]", &val) || val != EV_CURRENT ||
-       !rdvalue_getu8(ident, "[4]", &bits) ||
-       !rdvalue_getu8(ident, "[5]", &byteorder))
-        return false;
+                RDAddress pend = p.p_vaddr + asize;
+                end = std::max<RDAddress>(end, pend);
+                break;
+            }
 
-    switch(byteorder) {
-        case ELFDATA2MSB: vr.byteorder = BO_BIG; break;
-        case ELFDATA2LSB: vr.byteorder = BO_LITTLE; break;
-        default: return false;
-    }
-
-    switch(bits) {
-        case ELFCLASS32: vr.bits = 32; break;
-        case ELFCLASS64: vr.bits = 64; break;
-        default: return false;
-    }
-
-    return true;
-}
-
-void register_types(const ValidateResult& vr) {
-    if(vr.byteorder == BO_BIG) {
-        rd_createstruct("ELF_EHDR",
-                        vr.bits == 64 ? ELF_EHDR_64BE : ELF_EHDR_32BE);
-        rd_createstruct("ELF_SHDR",
-                        vr.bits == 64 ? ELF_SHDR_64BE : ELF_SHDR_32BE);
-        rd_createstruct("ELF_PHDR",
-                        vr.bits == 64 ? ELF_PHDR_64BE : ELF_PHDR_32BE);
-    }
-    else {
-        rd_createstruct("ELF_EHDR",
-                        vr.bits == 64 ? ELF_EHDR_64LE : ELF_EHDR_32LE);
-        rd_createstruct("ELF_SHDR",
-                        vr.bits == 64 ? ELF_SHDR_64LE : ELF_SHDR_32LE);
-        rd_createstruct("ELF_PHDR",
-                        vr.bits == 64 ? ELF_PHDR_64LE : ELF_PHDR_32LE);
-    }
-}
-
-bool memory_map(RDBuffer* file, const RDValue* ehdr) {
-    u64 phoff, phnum;
-    RDValue* phdr = rdvalue_create();
-
-    if(!rdvalue_getu64(ehdr, "e_phoff", &phoff) ||
-       !rdvalue_getu64(ehdr, "e_phnum", &phnum))
-        return false;
-
-    // TODO(davide): Implement string formatting
-    const std::string T = "ELF_PHDR[" + std::to_string(phnum) + "]";
-
-    if(!rdbuffer_collecttype(file, phoff, T.c_str(), phdr))
-        return false;
-
-    u64 base = -1U, size = 0;
-    const RDValue* item = rdvalue_create();
-
-    for(u64 i = 0; i < phnum; i++) {
-        if(!rdvalue_at(phdr, i, &item))
-            return false;
-
-        u64 itype, ibase, isize;
-
-        if(!rdvalue_getu64(item, "p_type", &itype) ||
-           !rdvalue_getu64(item, "p_vaddr", &ibase) ||
-           !rdvalue_getu64(item, "p_memsz", &isize))
-            return false;
-
-        if(itype == PT_LOAD) {
-            base = std::min<u64>(base, ibase);
-            size += isize;
+            case PT_PHDR: phdridx = i; break;
+            default: break;
         }
     }
 
-    rd_map_n(base, size);
+    rd_map(start, end);
+}
+
+template<int bits>
+bool load_elf(ElfState& pr) {
+    ElfEhdr<bits> ehdr;
+    if(!rdbuffer_read(pr.file, 0, &ehdr, sizeof(ehdr)) ||
+       ehdr.e_shstrndx >= ehdr.e_shnum)
+        return false;
+
+    std::vector<ElfPhdr<bits>> phdr(ehdr.e_phnum);
+    if(!rdbuffer_read(pr.file, ehdr.e_phoff, phdr.data(),
+                      sizeof(ElfPhdr<bits>) * phdr.size()))
+        return false;
+
+    std::vector<ElfShdr<bits>> shdr(ehdr.e_shnum);
+    if(!rdbuffer_read(pr.file, ehdr.e_shoff, shdr.data(),
+                      sizeof(ElfShdr<bits>) * shdr.size()))
+        return false;
+
+    pr.stroff = shdr[ehdr.e_shstrndx].sh_offset;
+
+    usize phdridx = phdr.size();
+    map_memory<bits>(phdr, phdridx);
+
+    for(usize i = 0; i < shdr.size(); i++) {
+        const auto& s = shdr[i];
+
+        if(!(s.sh_flags & SHF_ALLOC))
+            continue;
+
+        usize type = SEG_UNKNOWN;
+        RDOffset offset = s.sh_offset;
+        usize size = s.sh_size;
+        std::string name =
+            elf_state::get_string(pr, s.sh_name, "seg_" + std::to_string(i));
+
+        switch(s.sh_type) {
+            case SHT_PROGBITS:
+                type = s.sh_flags & SHF_EXECINSTR ? SEG_HASCODE : SEG_HASDATA;
+                break;
+
+            case SHT_NOBITS: offset = size = 0; break;
+            default: type = SEG_HASDATA; break;
+        }
+
+        rd_mapsegment_n(name.c_str(), s.sh_addr, s.sh_size, offset, size, type);
+        elf_sections::parse(name, s.sh_addr);
+    }
+
+    if(phdridx < phdr.size()) { // Map ELF_ProgramHeader
+        RDType t;
+        if(rd_createtype_n("ELF_PHDR", phdr.size(), &t))
+            rd_maptype(ehdr.e_phoff, phdr[phdridx].p_vaddr, &t);
+    }
+
     return true;
 }
 
 bool init(RDLoader*) {
-    ValidateResult vr{};
-    if(!validate_elf(vr))
+    ElfState s{};
+    if(!elf_state::validate(s))
         return false;
 
-    register_types(vr);
-    RDValue* ehdr = rdvalue_create();
+    elf_types::register_all(s);
 
-    if(!rdbuffer_collecttype(vr.file, 0, "ELF_EHDR", ehdr))
-        return false;
-
-    memory_map(vr.file, ehdr);
-
-    // u64 shoff, phoff;
-
-    // if(!rdvalue_getu64(ehdr, "e_shoff", &shoff) ||
-    //    !rdvalue_getu64(ehdr, "e_phoff", &phoff) ||
-    //    !rdbuffer_collecttype(vr.file, shoff, "ELF_SHDR", shdr) ||
-    //    !rdbuffer_collecttype(vr.file, phoff, "ELF_PHDR", phdr) ||
-    //    !prepare_mapping(ehdr, phdr))
-    //     return false;
+    switch(s.bits()) {
+        case 32: load_elf<32>(s); break;
+        case 64: load_elf<64>(s); break;
+        default: return false;
+    }
 
     return true;
 }

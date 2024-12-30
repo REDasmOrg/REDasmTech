@@ -9,18 +9,6 @@ template<typename T> T elf_st_info(T b, T t) { return (b << 4) | (t & 0xF); }
 template<typename T> T elf_st_visibility(T o) { return o >> 0x3; }
 // clang-format on
 
-constexpr int EI_NIDENT = 16;
-
-constexpr int EI_MAG0 = 0;
-constexpr int EI_MAG1 = 1;
-constexpr int EI_MAG2 = 2;
-constexpr int EI_MAG3 = 3;
-constexpr int EI_CLASS = 4;
-constexpr int EI_DATA = 5;
-constexpr int EI_VERSION = 6;
-constexpr int EI_OSABI = 7;
-constexpr int EI_PAD = 8;
-
 constexpr u8 ELFMAG0 = 0x7f;
 constexpr char ELFMAG1 = 'E';
 constexpr char ELFMAG2 = 'L';
