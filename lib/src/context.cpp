@@ -268,16 +268,16 @@ bool Context::memory_map(RDAddress base, usize size) {
     this->memory = std::make_unique<Memory>(size);
 
     // Create collected types
-    for(const auto& [idx, tname] : this->collectedtypes) {
+    for(const auto& [idx, t] : this->collectedtypes) {
         if(idx >= size) {
             spdlog::warn("Context::mem_map({:#x}, {:#x}): Ignoring type '{}', "
                          "out of bounds",
-                         base, size, tname);
+                         base, size, this->types.to_string(t));
             continue;
         }
 
-        this->memory_copy_n(idx, idx, this->types.size_of(tname));
-        this->set_type(idx, tname, 0);
+        this->memory_copy_n(idx, idx, this->types.size_of(t));
+        this->set_type(idx, t, 0);
     }
 
     this->collectedtypes.clear();

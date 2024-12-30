@@ -21,6 +21,10 @@ RDBuffer* rdbuffer_getmemory(void) {
     return redasm::api::internal::buffer_getmemory();
 }
 
+bool rdbuffer_read(const RDBuffer* self, usize idx, void* dst, usize n) {
+    return redasm::api::internal::buffer_read(self, idx, dst, n);
+}
+
 bool rdbuffer_getbool(const RDBuffer* self, usize idx, bool* v) {
     return rdbuffer_getvalue(self, idx, v,
                              redasm::api::internal::buffer_getbool);

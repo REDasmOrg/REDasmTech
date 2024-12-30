@@ -3,6 +3,7 @@
 #include "../../memory/memorystream.h"
 #include "../../memory/stream.h"
 #include "../../state.h"
+#include "../../typing/base.h"
 #include "../marshal.h"
 #include <spdlog/spdlog.h>
 
@@ -186,7 +187,7 @@ tl::optional<typing::Value> stream_collect_type(RDStream* self,
     auto t = obj->read_type(tname);
 
     if(t)
-        state::context->collectedtypes.emplace_back(pos, tname);
+        state::context->collectedtypes.emplace_back(pos, t->type);
 
     return t;
 }
@@ -196,8 +197,11 @@ tl::optional<std::string> stream_collect_strz(RDStream* self) {
     usize pos = obj->position;
     auto s = obj->read_str();
 
-    if(s)
-        state::context->collectedtypes.emplace_back(pos, "str");
+    if(s) {
+        Context* ctx = state::context;
+        RDType t = ctx->types.from_string(typing::names::STR);
+        ctx->collectedtypes.emplace_back(pos, t);
+    }
 
     return s;
 }
@@ -208,8 +212,9 @@ tl::optional<std::string> stream_collect_str(RDStream* self, usize n) {
     auto s = obj->read_str(n);
 
     if(s) {
-        state::context->collectedtypes.emplace_back(
-            pos, fmt::format("char[{}]", s->size()));
+        Context* ctx = state::context;
+        RDType t = {.id = typing::ids::CHAR, .n = s->size()};
+        ctx->collectedtypes.emplace_back(pos, t);
     }
 
     return s;
@@ -220,8 +225,11 @@ tl::optional<std::string> stream_collect_wstrz(RDStream* self) {
     usize pos = obj->position;
     auto s = obj->read_wstr();
 
-    if(s)
-        state::context->collectedtypes.emplace_back(pos, "wstr");
+    if(s) {
+        Context* ctx = state::context;
+        RDType t = ctx->types.from_string(typing::names::WSTR);
+        state::context->collectedtypes.emplace_back(pos, t);
+    }
 
     return s;
 }
@@ -232,8 +240,9 @@ tl::optional<std::string> stream_collect_wstr(RDStream* self, usize n) {
     auto s = obj->read_wstr(n);
 
     if(s) {
-        state::context->collectedtypes.emplace_back(
-            pos, fmt::format("wchar[{}]", s->size()));
+        Context* ctx = state::context;
+        RDType t = {.id = typing::ids::WCHAR, .n = s->size()};
+        ctx->collectedtypes.emplace_back(pos, t);
     }
 
     return s;

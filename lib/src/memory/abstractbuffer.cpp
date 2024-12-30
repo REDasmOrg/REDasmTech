@@ -6,6 +6,24 @@
 
 namespace redasm {
 
+usize AbstractBuffer::read(usize idx, void* dst, usize n) const {
+    if(!dst || (idx + n > this->size()))
+        return 0;
+
+    usize i = 0;
+    auto* p = reinterpret_cast<u8*>(dst);
+
+    for(; i < n; i++, p++) {
+        auto b = this->get_byte(idx++);
+        if(b)
+            *p = *b;
+        else
+            break;
+    }
+
+    return i;
+}
+
 tl::optional<typing::Value>
 AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
     typing::Value v;
@@ -199,9 +217,6 @@ AbstractBuffer::get_str_impl(usize& idx, typing::TypeName tname) const {
 tl::optional<std::string>
 AbstractBuffer::get_str_impl(usize& idx, usize n,
                              std::string_view tname) const {
-    if(idx >= this->size())
-        return tl::nullopt;
-
     std::string s;
     s.reserve(n);
 

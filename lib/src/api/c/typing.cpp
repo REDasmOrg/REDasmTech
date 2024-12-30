@@ -38,6 +38,13 @@ bool rd_createtype(const char* tname, RDType* t) {
     return redasm::api::internal::create_type(tname, t);
 }
 
+bool rd_createtype_n(const char* tname, usize n, RDType* t) {
+    if(!tname)
+        return false;
+
+    return redasm::api::internal::create_type_n(tname, n, t);
+}
+
 const char* rd_typename(const RDType* t) {
     static std::string s;
 

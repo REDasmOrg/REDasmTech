@@ -126,6 +126,15 @@ REDASM_EXPORT bool rd_settype_ex(RDAddress address, const RDType* type,
 REDASM_EXPORT bool rd_settypename(RDAddress address, const char* tname);
 REDASM_EXPORT bool rd_settypename_ex(RDAddress address, const char* tname,
                                      usize flags);
+
+REDASM_EXPORT bool rd_maptype(RDOffset offset, RDAddress address,
+                              const RDType* t);
+REDASM_EXPORT bool rd_maptypename(RDOffset offset, RDAddress address,
+                                  const char* tname);
+REDASM_EXPORT bool rd_maptype_ex(RDOffset offset, RDAddress address,
+                                 const RDType* t, usize flags);
+REDASM_EXPORT bool rd_maptypename_ex(RDOffset offset, RDAddress address,
+                                     const char* tname, usize flags);
 REDASM_EXPORT bool rd_setfunction(RDAddress address);
 REDASM_EXPORT bool rd_setfunction_ex(RDAddress address, usize flags);
 REDASM_EXPORT bool rd_setentry(RDAddress address, const char* name);

@@ -21,6 +21,13 @@ RDBuffer* buffer_getmemory() {
     return nullptr;
 }
 
+bool buffer_read(const RDBuffer* self, usize idx, void* dst, usize n) {
+    spdlog::trace("buffer_read({}, {}, {}, {})", fmt::ptr(self), idx,
+                  fmt::ptr(dst), n);
+    const AbstractBuffer* b = api::from_c(self);
+    return b->read(idx, dst, n) == n;
+}
+
 tl::optional<bool> buffer_getbool(const RDBuffer* self, usize idx) {
     spdlog::trace("buffer_getbool({}, {})", fmt::ptr(self), idx);
     return api::from_c(self)->get_bool(idx);
@@ -135,8 +142,8 @@ tl::optional<typing::Value> buffer_collecttype(const RDBuffer* self, usize idx,
                   tname);
     auto v = api::from_c(self)->get_type(idx, tname);
 
-    v.map([idx, tname](const typing::Value&) {
-        state::context->collectedtypes.emplace_back(idx, tname);
+    v.map([idx](const typing::Value& v) {
+        state::context->collectedtypes.emplace_back(idx, v.type);
     });
 
     return v;

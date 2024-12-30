@@ -71,6 +71,13 @@ tl::optional<typing::Value> set_type_ex(RDAddress address, const RDType* t,
 tl::optional<typing::Value>
 set_typename_ex(RDAddress address, typing::FullTypeName tname, usize flags);
 
+tl::optional<typing::Value> map_type_ex(RDOffset offset, RDAddress address,
+                                        const RDType* t, usize flags);
+
+tl::optional<typing::Value> map_typename_ex(RDOffset offset, RDAddress address,
+                                            typing::FullTypeName tname,
+                                            usize flags);
+
 bool set_comment(RDAddress address, std::string_view comment);
 bool set_name_ex(RDAddress address, const std::string& name, usize flags);
 bool set_function_ex(RDAddress address, usize flags);
@@ -122,6 +129,16 @@ inline tl::optional<typing::Value> set_type(RDAddress address,
 inline tl::optional<typing::Value> set_typename(RDAddress address,
                                                 typing::FullTypeName tname) {
     return api::internal::set_typename_ex(address, tname, 0);
+}
+
+inline tl::optional<typing::Value> map_type(RDOffset offset, RDAddress address,
+                                            const RDType* t) {
+    return api::internal::map_type_ex(offset, address, t, 0);
+}
+
+inline tl::optional<typing::Value>
+map_typename(RDOffset offset, RDAddress address, typing::FullTypeName tname) {
+    return api::internal::map_typename_ex(offset, address, tname, 0);
 }
 
 } // namespace redasm::api::internal

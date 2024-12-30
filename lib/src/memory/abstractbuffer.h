@@ -23,6 +23,7 @@ public:
 
     [[nodiscard]] tl::optional<std::string> get_wstr(usize idx) const;
     [[nodiscard]] tl::optional<std::string> get_wstr(usize idx, usize n) const;
+    usize read(usize idx, void* dst, usize n) const;
 
     [[nodiscard]] tl::optional<u8> get_u8(usize idx) const {
         return this->get_byte(idx);
@@ -103,7 +104,7 @@ private:
                                              bool big = false) const {
         static constexpr usize N = sizeof(U);
 
-        if(idx + N >= this->size())
+        if(idx + N > this->size())
             return tl::nullopt;
 
         U num = 0;
@@ -151,13 +152,14 @@ public:
     auto end() { return m_buffer.end(); }
     void resize(usize sz) { m_buffer.resize(sz); }
     [[nodiscard]] usize size() const final { return m_buffer.size(); }
+    const T* data() const { return m_buffer.data(); }
+    T* data() { return m_buffer.data(); }
 
     explicit AbstractBufferT(std::string src): AbstractBuffer{std::move(src)} {}
     T& at(usize idx) { return m_buffer.at(idx); }
     T at(usize idx) const { return m_buffer.at(idx); }
     T operator[](usize idx) const { return m_buffer.at(idx); }
     T& operator[](usize idx) { return m_buffer.at(idx); }
-    const T* data() const { return m_buffer.data(); }
 
 protected:
     Type m_buffer;

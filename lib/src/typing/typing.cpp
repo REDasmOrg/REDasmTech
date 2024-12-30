@@ -156,6 +156,11 @@ std::string Types::to_string(RDType t) const {
     return td->name;
 }
 
+[[nodiscard]] RDType Types::from_string(FullTypeName tn) const {
+    ParsedType pt = this->parse(tn);
+    return pt.to_type();
+}
+
 const TypeDef* Types::declare(const std::string& name, const StructBody& arg) {
     if(name.empty())
         except("Struct name is empty");

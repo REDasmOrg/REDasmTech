@@ -38,6 +38,18 @@ bool create_type(std::string_view tname, RDType* t) {
     return false;
 }
 
+bool create_type_n(std::string_view tname, usize n, RDType* t) {
+    spdlog::trace("create_type_n('{}', {}, {})", tname, n, fmt::ptr(t));
+
+    if(t && state::context) {
+        *t = state::context->types.parse(tname).to_type();
+        t->n = n;
+        return true;
+    }
+
+    return false;
+}
+
 std::string create_struct(const std::string& name,
                           const typing::StructBody& fields) {
     spdlog::trace("create_struct('{}', <{} fields>)", name, fields.size());

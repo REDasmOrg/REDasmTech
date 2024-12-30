@@ -518,6 +518,43 @@ set_typename_ex(RDAddress address, typing::FullTypeName tname, usize flags) {
     return tl::nullopt;
 }
 
+tl::optional<typing::Value> map_type_ex(RDOffset offset, RDAddress address,
+                                        const RDType* t, usize flags) {
+    spdlog::trace("map_type_ex({:x}, {:x}, {}, {})", offset, address,
+                  fmt::ptr(t), flags);
+    if(!t)
+        return tl::nullopt;
+
+    auto idx = state::context->address_to_index(address);
+    if(!idx)
+        return tl::nullopt;
+
+    usize sz = state::context->types.size_of(*t);
+    state::context->memory_copy(*idx, offset, offset + sz);
+
+    if(!state::context->set_type(*idx, *t, 0))
+        return tl::nullopt;
+    return state::context->file->get_type(*idx, *t);
+}
+
+tl::optional<typing::Value> map_typename_ex(RDOffset offset, RDAddress address,
+                                            typing::FullTypeName tname,
+                                            usize flags) {
+    spdlog::trace("map_typename_ex({:x}, {:x}, '{}', {})", offset, address,
+                  tname, flags);
+
+    auto idx = state::context->address_to_index(address);
+    if(!idx)
+        return tl::nullopt;
+
+    usize sz = state::context->types.size_of(tname);
+    state::context->memory_copy(*idx, offset, offset + sz);
+
+    if(!state::context->set_type(*idx, tname, 0))
+        return tl::nullopt;
+    return state::context->file->get_type(*idx, tname);
+}
+
 bool set_comment(RDAddress address, std::string_view comment) {
     spdlog::trace("set_comment({:x}, {})", address, comment);
 

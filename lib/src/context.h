@@ -82,7 +82,7 @@ public:
     std::vector<RDAnalyzer> analyzers;
     std::unordered_set<std::string_view> selectedanalyzers;
     std::vector<std::string> availableprocessors;
-    std::vector<std::pair<usize, std::string>> collectedtypes;
+    std::vector<std::pair<usize, RDType>> collectedtypes;
     std::vector<Segment> segments;
     std::vector<MIndex> entrypoints;
     Worker worker;

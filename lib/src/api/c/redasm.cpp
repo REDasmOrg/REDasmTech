@@ -190,9 +190,40 @@ bool rd_settypename(RDAddress address, const char* tname) {
 }
 
 bool rd_settypename_ex(RDAddress address, const char* tname, usize flags) {
-    if(tname)
+    if(tname) {
         return redasm::api::internal::set_typename_ex(address, tname, flags)
             .has_value();
+    }
+
+    return false;
+}
+
+bool rd_maptype(RDOffset offset, RDAddress address, const RDType* t) {
+    return redasm::api::internal::map_type(offset, address, t).has_value();
+}
+
+bool rd_maptypename(RDOffset offset, RDAddress address, const char* tname) {
+    if(tname) {
+        return redasm::api::internal::map_typename(offset, address, tname)
+            .has_value();
+    }
+
+    return false;
+}
+
+bool rd_maptype_ex(RDOffset offset, RDAddress address, const RDType* t,
+                   usize flags) {
+    return redasm::api::internal::map_type_ex(offset, address, t, flags)
+        .has_value();
+}
+
+bool rd_maptypename_ex(RDOffset offset, RDAddress address, const char* tname,
+                       usize flags) {
+    if(tname) {
+        return redasm::api::internal::map_typename_ex(offset, address, tname,
+                                                      flags)
+            .has_value();
+    }
 
     return false;
 }
