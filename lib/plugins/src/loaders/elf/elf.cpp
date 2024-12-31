@@ -56,7 +56,7 @@ template<int bits>
 bool load_elf(ElfState& s) {
     ElfEhdr<bits> ehdr;
     if(!rdbuffer_read(s.file, 0, &ehdr, sizeof(ehdr)) ||
-       ehdr.e_shstrndx >= ehdr.e_shnum)
+       (ehdr.e_shstrndx && ehdr.e_shstrndx >= ehdr.e_shnum))
         return false;
 
     std::vector<ElfPhdr<bits>> phdr(ehdr.e_phnum);
@@ -128,12 +128,12 @@ bool init(RDLoader*) {
     elf_types::register_all(s);
 
     switch(s.bits()) {
-        case 32: load_elf<32>(s); break;
-        case 64: load_elf<64>(s); break;
-        default: return false;
+        case 32: return load_elf<32>(s);
+        case 64: return load_elf<64>(s);
+        default: break;
     }
 
-    return true;
+    return false;
 }
 
 } // namespace
