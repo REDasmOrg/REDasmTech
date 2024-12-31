@@ -38,16 +38,17 @@ bool validate(ElfState& s) {
            s.ident.ei_version == EV_CURRENT;
 }
 
-std::string get_string(const ElfState& s, int idx, const std::string& fb) {
+std::string get_string(const ElfState& s, int idx, usize shidx,
+                       const std::string& fb) {
     const char* p = nullptr;
-    if(rdbuffer_getstrz(s.file, s.stroff + idx, &p))
+    if(rdbuffer_getstrz(s.file, s.shstrings.at(shidx) + idx, &p))
         return p;
     return fb;
 }
 
-std::string_view get_stringv(const ElfState& s, int idx) {
+std::string_view get_stringv(const ElfState& s, int idx, usize shidx) {
     const char* p = nullptr;
-    if(rdbuffer_getstrz(s.file, s.stroff + idx, &p))
+    if(rdbuffer_getstrz(s.file, s.shstrings.at(shidx) + idx, &p))
         return p;
     return {};
 }

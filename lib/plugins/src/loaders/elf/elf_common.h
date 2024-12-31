@@ -4,7 +4,7 @@
 
 // clang-format off
 template<typename T> T elf_st_bind(T i) { return i >> 4; }
-template<typename T> T elf_st_type(T i) { return i >> 0xF; }
+template<typename T> T elf_st_type(T i) { return i & 0xF; }
 template<typename T> T elf_st_info(T b, T t) { return (b << 4) | (t & 0xF); }
 template<typename T> T elf_st_visibility(T o) { return o >> 0x3; }
 // clang-format on
@@ -92,19 +92,18 @@ constexpr int EM_JAVELIN = 77;    /* Infineon Technologies 32-bit emb.proc */
 constexpr int EM_FIREPATH = 78;   /* Element 14 64-bit DSP Processor */
 constexpr int EM_ZSP = 79;        /* LSI Logic 16-bit DSP Processor */
 constexpr int EM_MMIX = 80;       /* Donald Knuth's educational 64-bit proc */
-constexpr int EM_HUANY =
-    81; /* Harvard University machine-independent object files */
-constexpr int EM_PRISM = 82;       /* SiTera Prism */
-constexpr int EM_AVR = 83;         /* Atmel AVR 8-bit microcontroller */
-constexpr int EM_FR30 = 84;        /* Fujitsu FR30 */
-constexpr int EM_D10V = 85;        /* Mitsubishi D10V */
-constexpr int EM_D30V = 86;        /* Mitsubishi D30V */
-constexpr int EM_V850 = 87;        /* NEC v850 */
-constexpr int EM_M32R = 88;        /* Mitsubishi M32R */
-constexpr int EM_MN10300 = 89;     /* Matsushita MN10300 */
-constexpr int EM_MN10200 = 90;     /* Matsushita MN10200 */
-constexpr int EM_PJ = 91;          /* picoJava */
-constexpr int EM_OPENRISC = 92;    /* OpenRISC 32-bit embedded processor */
+constexpr int EM_HUANY = 81;      /* Harvard machine-independent object files */
+constexpr int EM_PRISM = 82;      /* SiTera Prism */
+constexpr int EM_AVR = 83;        /* Atmel AVR 8-bit microcontroller */
+constexpr int EM_FR30 = 84;       /* Fujitsu FR30 */
+constexpr int EM_D10V = 85;       /* Mitsubishi D10V */
+constexpr int EM_D30V = 86;       /* Mitsubishi D30V */
+constexpr int EM_V850 = 87;       /* NEC v850 */
+constexpr int EM_M32R = 88;       /* Mitsubishi M32R */
+constexpr int EM_MN10300 = 89;    /* Matsushita MN10300 */
+constexpr int EM_MN10200 = 90;    /* Matsushita MN10200 */
+constexpr int EM_PJ = 91;         /* picoJava */
+constexpr int EM_OPENRISC = 92;   /* OpenRISC 32-bit embedded processor */
 constexpr int EM_ARC_COMPACT = 93; /* ARC International ARCompact */
 constexpr int EM_XTENSA = 94;      /* Tensilica Xtensa Architecture */
 constexpr int EM_VIDEOCORE = 95;   /* Alphamosaic VideoCore */
@@ -325,6 +324,9 @@ constexpr int SHT_INIT_ARRAY = 14;
 constexpr int SHT_FINI_ARRAY = 15;
 constexpr int SHT_PREINIT_ARRAY = 16;
 constexpr int SHT_GROUP = 17;
+constexpr int SHT_GNU_VERDEF = 0x6ffffffd;
+constexpr int SHT_GNU_VERNEED = 0x6ffffffe;
+constexpr int SHT_GNU_VERSYM = 0x6fffffff;
 constexpr int SHT_SYMTAB_SHNDX = 0x60000000;
 constexpr int SHT_LOPROC = 0x70000000;
 constexpr int SHT_HIPROC = 0x7fffffff;

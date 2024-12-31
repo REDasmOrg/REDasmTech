@@ -69,23 +69,32 @@ bool load_elf(ElfState& s) {
                       sizeof(ElfShdr<bits>) * shdr.size()))
         return false;
 
-    s.stroff = shdr[ehdr.e_shstrndx].sh_offset;
-
     usize phdridx = phdr.size();
     map_memory<bits>(phdr, phdridx);
     elf_state::set_processor(s, ehdr.e_machine, ehdr.e_flags);
 
+    // Search string tables
     for(usize i = 0; i < shdr.size(); i++) {
         const auto& seg = shdr[i];
 
-        if(!(seg.sh_flags & SHF_ALLOC))
-            continue;
+        if(seg.sh_type == SHT_STRTAB)
+            s.shstrings[i] = seg.sh_offset;
+    }
 
+    for(usize i = 0; i < shdr.size(); i++) {
+        const auto& seg = shdr[i];
+
+        if(!(seg.sh_flags & SHF_ALLOC)) {
+            elf_sections::parse_offset(s, seg.sh_type, seg.sh_offset,
+                                       seg.sh_size, seg.sh_link);
+            continue;
+        }
+
+        std::string name = elf_state::get_string(
+            s, seg.sh_name, ehdr.e_shstrndx, "seg_" + std::to_string(i));
         usize type = SEG_UNKNOWN;
         RDOffset offset = seg.sh_offset;
         usize size = seg.sh_size;
-        std::string name =
-            elf_state::get_string(s, seg.sh_name, "seg_" + std::to_string(i));
 
         switch(seg.sh_type) {
             case SHT_PROGBITS:
@@ -97,7 +106,8 @@ bool load_elf(ElfState& s) {
         }
 
         rd_mapsegment_n(name.c_str(), seg.sh_addr, size, offset, size, type);
-        elf_sections::parse(s, name, seg.sh_addr, size);
+        elf_sections::parse_address(s, name, seg.sh_type, seg.sh_addr, size,
+                                    seg.sh_link);
     }
 
     if(phdridx < phdr.size()) { // Map ELF_ProgramHeader

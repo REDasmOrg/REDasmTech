@@ -30,42 +30,7 @@ template<> struct ElfSignedT<32> { using type = i32; };
 template<> struct ElfSignedT<64> { using type = i64; };
 // clang-format on
 
-template<int bits>
-auto elf_r_sym(typename ElfUnsignedT<bits>::type info) {
-    if constexpr(bits == 64)
-        return info >> 32;
-    else
-        return info >> 8;
-}
-
-template<int bits>
-auto elf_r_type(typename ElfUnsignedT<bits>::type info) {
-    if constexpr(bits == 64)
-        return static_cast<u32>(info);
-    else
-        return static_cast<u8>(info);
-}
-
-template<typename T>
-T e_val_t(T t, int e) {
-    if constexpr(sizeof(T) == 2) {
-        if(e == BO_BIG)
-            return RD_FromBigEndian16(t);
-        return RD_FromLittleEndian16(t);
-    }
-    else if constexpr(sizeof(T) == 4) {
-        if(e == BO_BIG)
-            return RD_FromBigEndian32(t);
-        return RD_FromLittleEndian32(t);
-    }
-    else if constexpr(sizeof(T) == 8) {
-        if(e == BO_BIG)
-            return RD_FromBigEndian64(t);
-        return RD_FromLittleEndian64(t);
-    }
-    else
-        return t;
-}
+#pragma pack(push, 1)
 
 struct ElfIdent {
     u8 ei_magic[4];
@@ -135,16 +100,6 @@ struct ElfShdr {
 };
 
 template<int bits>
-struct ElfDyn {
-    typename ElfSignedT<bits>::type d_tag;
-
-    union {
-        typename ElfUnsignedT<bits>::type d_val;
-        typename ElfUnsignedT<bits>::type d_ptr;
-    };
-};
-
-template<int bits>
 struct ElfRel {
     typename ElfUnsignedT<bits>::type r_offset;
     typename ElfUnsignedT<bits>::type r_info;
@@ -175,18 +130,7 @@ struct Elf64Sym {
     u64 st_size;
 };
 
-struct ElfVerneed {
-    u16 vn_version;
-    u16 vn_cnt;
-    u32 vn_file;
-    u32 vn_aux;
-    u32 vn_next;
-};
+template<int bits>
+using ElfSym = std::conditional_t<bits == 64, Elf64Sym, Elf32Sym>;
 
-struct ElfVernaux {
-    u32 vna_hash;
-    u16 vna_flags;
-    u16 vna_other;
-    u32 vna_name;
-    u32 vna_next;
-};
+#pragma pack(pop)
