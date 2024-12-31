@@ -174,25 +174,48 @@ bool rd_setcomment(RDAddress address, const char* comment) {
     return false;
 }
 
-bool rd_settype(RDAddress address, const RDType* type) {
-    return redasm::api::internal::set_type(address, type).has_value();
+bool rd_settype(RDAddress address, const RDType* type, RDValue* v) {
+    auto res = redasm::api::internal::set_type(address, type);
+    res.map([&](const redasm::typing::Value& x) {
+        if(v)
+            *redasm::api::from_c(v) = x;
+    });
+    return res.has_value();
 }
 
-bool rd_settype_ex(RDAddress address, const RDType* type, usize flags) {
-    return redasm::api::internal::set_type_ex(address, type, flags).has_value();
+bool rd_settype_ex(RDAddress address, const RDType* type, usize flags,
+                   RDValue* v) {
+    auto res = redasm::api::internal::set_type_ex(address, type, flags);
+    res.map([&](const redasm::typing::Value& x) {
+        if(v)
+            *redasm::api::from_c(v) = x;
+    });
+    return res.has_value();
 }
 
-bool rd_settypename(RDAddress address, const char* tname) {
-    if(tname)
-        return redasm::api::internal::set_typename(address, tname).has_value();
+bool rd_settypename(RDAddress address, const char* tname, RDValue* v) {
+    if(tname) {
+        auto res = redasm::api::internal::set_typename(address, tname);
+        res.map([&](const redasm::typing::Value& x) {
+            if(v)
+                *redasm::api::from_c(v) = x;
+        });
+        return res.has_value();
+    }
 
     return false;
 }
 
-bool rd_settypename_ex(RDAddress address, const char* tname, usize flags) {
+bool rd_settypename_ex(RDAddress address, const char* tname, usize flags,
+                       RDValue* v) {
     if(tname) {
-        return redasm::api::internal::set_typename_ex(address, tname, flags)
-            .has_value();
+        auto res =
+            redasm::api::internal::set_typename_ex(address, tname, flags);
+        res.map([&](const redasm::typing::Value& x) {
+            if(v)
+                *redasm::api::from_c(v) = x;
+        });
+        return res.has_value();
     }
 
     return false;

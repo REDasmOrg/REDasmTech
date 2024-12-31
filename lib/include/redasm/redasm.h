@@ -120,12 +120,14 @@ REDASM_EXPORT void rd_disassemble(void);
 REDASM_EXPORT usize rd_getproblems(const RDProblem** problems);
 
 REDASM_EXPORT bool rd_setcomment(RDAddress address, const char* comment);
-REDASM_EXPORT bool rd_settype(RDAddress address, const RDType* type);
+REDASM_EXPORT bool rd_settype(RDAddress address, const RDType* type,
+                              RDValue* v);
 REDASM_EXPORT bool rd_settype_ex(RDAddress address, const RDType* type,
-                                 usize flags);
-REDASM_EXPORT bool rd_settypename(RDAddress address, const char* tname);
+                                 usize flags, RDValue* v);
+REDASM_EXPORT bool rd_settypename(RDAddress address, const char* tname,
+                                  RDValue* v);
 REDASM_EXPORT bool rd_settypename_ex(RDAddress address, const char* tname,
-                                     usize flags);
+                                     usize flags, RDValue* v);
 
 REDASM_EXPORT bool rd_maptype(RDOffset offset, RDAddress address,
                               const RDType* t);
