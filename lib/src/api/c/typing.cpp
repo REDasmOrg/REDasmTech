@@ -153,9 +153,7 @@ bool rdvalue_get(const RDValue* self, const char* key, const RDValue** v) {
 
 bool rdvalue_query(const RDValue* self, const char* q, const RDValue** v,
                    const char** error) {
-    if(q)
-        return rdvalue_query_n(self, q, std::strlen(q), v, error);
-    return false;
+    return rdvalue_query_n(self, q, q ? std::strlen(q) : 0, v, error);
 }
 
 bool rdvalue_query_n(const RDValue* self, const char* q, usize n,
@@ -172,8 +170,10 @@ bool rdvalue_query_n(const RDValue* self, const char* q, usize n,
     if(!self || !v)
         return false;
 
-    if(!q)
+    if(!q) {
         q = ".";
+        n = 1;
+    }
 
     if(*q == '.' && *(q + 1) == '\0') {
         if(v)
