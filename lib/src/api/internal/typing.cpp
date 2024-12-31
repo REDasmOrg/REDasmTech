@@ -50,6 +50,19 @@ bool create_type_n(std::string_view tname, usize n, RDType* t) {
     return false;
 }
 
+bool int_from_bytes(usize b, bool sign, RDType* t) {
+    spdlog::trace("int_from_bytes({}, {}, {})", b, sign, fmt::ptr(t));
+
+    if(t && state::context) {
+        auto inttype = state::context->types.int_from_bytes(b, sign);
+        if(inttype)
+            *t = *inttype;
+        return inttype.has_value();
+    }
+
+    return false;
+}
+
 std::string create_struct(const std::string& name,
                           const typing::StructBody& fields) {
     spdlog::trace("create_struct('{}', <{} fields>)", name, fields.size());

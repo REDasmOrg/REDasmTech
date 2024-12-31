@@ -42,6 +42,7 @@ typedef struct RDType {
 REDASM_EXPORT usize rd_sizeof(const char* tname);
 REDASM_EXPORT bool rd_createtype(const char* tname, RDType* t);
 REDASM_EXPORT bool rd_createtype_n(const char* tname, usize n, RDType* t);
+REDASM_EXPORT bool rd_intfrombytes(usize bytes, bool sign, RDType* t);
 REDASM_EXPORT const char* rd_typename(const RDType* t);
 REDASM_EXPORT const char* rd_createstruct(const char* name,
                                           const RDStructField* fields);

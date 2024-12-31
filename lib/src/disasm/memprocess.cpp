@@ -282,8 +282,10 @@ void process_refsto(Context* ctx, MIndex idx) {
 
     assume(ctx->processor);
     Database::RefList refs = ctx->get_refs_to(idx);
-    RDType addrtype = ctx->types.int_from_bytes(ctx->processor->address_size);
-    RDType inttype = ctx->types.int_from_bytes(ctx->processor->integer_size);
+    auto addrtype = ctx->types.int_from_bytes(ctx->processor->address_size);
+    assume(addrtype.has_value());
+    auto inttype = ctx->types.int_from_bytes(ctx->processor->integer_size);
+    assume(inttype.has_value());
 
     for(const Database::Ref& r : refs) {
         if(!b.is_unknown())
@@ -299,7 +301,7 @@ void process_refsto(Context* ctx, MIndex idx) {
                     })
                     .or_else([&]() {
                         if(is_range_unknown(idx, ctx->processor->integer_size))
-                            ctx->set_type(idx, inttype, ST_WEAK);
+                            ctx->set_type(idx, *inttype, ST_WEAK);
                     });
                 break;
             }
@@ -312,7 +314,7 @@ void process_refsto(Context* ctx, MIndex idx) {
                     })
                     .or_else([&]() {
                         if(is_range_unknown(idx, ctx->processor->address_size))
-                            ctx->set_type(idx, addrtype, ST_WEAK);
+                            ctx->set_type(idx, *addrtype, ST_WEAK);
                     });
                 break;
             }

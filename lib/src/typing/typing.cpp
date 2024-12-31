@@ -59,16 +59,16 @@ void parse(FullTypeName tn, std::string_view& name, usize& n) {
 
 } // namespace
 
-RDType Types::int_from_bytes(usize n, bool sign) const {
+tl::optional<RDType> Types::int_from_bytes(usize n, bool sign) const {
     for(const auto& [id, td] : this->registered) {
         if(!td.is_int() || td.is_big())
             continue;
 
         if(td.size == n && sign == td.is_signed())
-            return {.id = id, .n = 0};
+            return RDType{.id = id, .n = 0};
     }
 
-    except("Cannot find a compatible {}-bytes integer", n);
+    return tl::nullopt;
 }
 
 usize Types::size_of(FullTypeName tname, ParsedType* res) const {

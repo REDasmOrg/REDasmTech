@@ -36,7 +36,8 @@ struct Types {
     [[nodiscard]] std::string to_string(ParsedType pt) const;
     [[nodiscard]] std::string to_string(RDType t) const;
     [[nodiscard]] RDType from_string(FullTypeName tn) const;
-    [[nodiscard]] RDType int_from_bytes(usize n, bool sign = false) const;
+    [[nodiscard]] tl::optional<RDType> int_from_bytes(usize n,
+                                                      bool sign = false) const;
     [[nodiscard]] usize size_of(RDType t) const;
 
     [[nodiscard]] usize size_of(FullTypeName tn,

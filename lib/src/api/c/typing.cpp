@@ -45,6 +45,10 @@ bool rd_createtype_n(const char* tname, usize n, RDType* t) {
     return redasm::api::internal::create_type_n(tname, n, t);
 }
 
+bool rd_intfrombytes(usize b, bool sign, RDType* t) {
+    return redasm::api::internal::int_from_bytes(b, sign, t);
+}
+
 const char* rd_typename(const RDType* t) {
     static std::string s;
 
@@ -165,8 +169,11 @@ bool rdvalue_query_n(const RDValue* self, const char* q, usize n,
     if(error)
         *error = nullptr;
 
-    if(!self || !q || !v)
+    if(!self || !v)
         return false;
+
+    if(!q)
+        q = ".";
 
     if(*q == '.' && *(q + 1) == '\0') {
         if(v)
