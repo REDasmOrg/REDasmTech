@@ -60,6 +60,38 @@ const RDStructField ELF_SYM_64BE[] = {
     {nullptr, nullptr},
 };
 
+const RDStructField ELF_REL_32LE[] = {
+    {"u32", "r_offset"}, {"u32", "r_info"}, {nullptr, nullptr}};
+
+const RDStructField ELF_REL_64LE[] = {
+    {"u64", "r_offset"}, {"u64", "r_info"}, {nullptr, nullptr}};
+
+const RDStructField ELF_REL_32BE[] = {
+    {"u32be", "r_offset"}, {"u32be", "r_info"}, {nullptr, nullptr}};
+
+const RDStructField ELF_REL_64BE[] = {
+    {"u64be", "r_offset"}, {"u64be", "r_info"}, {nullptr, nullptr}};
+
+const RDStructField ELF_RELA_32LE[] = {{"u32", "r_offset"},
+                                       {"u32", "r_info"},
+                                       {"i32", "r_addend"},
+                                       {nullptr, nullptr}};
+
+const RDStructField ELF_RELA_64LE[] = {{"u64", "r_offset"},
+                                       {"u64", "r_info"},
+                                       {"i64", "r_addend"},
+                                       {nullptr, nullptr}};
+
+const RDStructField ELF_RELA_32BE[] = {{"u32be", "r_offset"},
+                                       {"u32be", "r_info"},
+                                       {"i32be", "r_addend"},
+                                       {nullptr, nullptr}};
+
+const RDStructField ELF_RELA_64BE[] = {{"u64be", "r_offset"},
+                                       {"u64be", "r_info"},
+                                       {"i64be", "r_addend"},
+                                       {nullptr, nullptr}};
+
 const RDStructField ELF_VERNEED_LE[] = {
     {"u16", "vn_version"}, {"u16", "vn_cnt"},  {"u32", "vn_file"},
     {"u32", "vn_aux"},     {"u32", "vn_next"}, {nullptr, nullptr}};
@@ -80,6 +112,10 @@ void register_all(const ElfState& s) {
                         s.bits() == 64 ? ELF_DYN_64BE : ELF_DYN_32BE);
         rd_createstruct("ELF_SYM",
                         s.bits() == 64 ? ELF_SYM_64BE : ELF_SYM_32BE);
+        rd_createstruct("ELF_REL",
+                        s.bits() == 64 ? ELF_REL_64BE : ELF_REL_32BE);
+        rd_createstruct("ELF_RELA",
+                        s.bits() == 64 ? ELF_RELA_64BE : ELF_RELA_32BE);
     }
     else {
         rd_createstruct("ELF_VERNEED", ELF_VERNEED_LE);
@@ -90,6 +126,10 @@ void register_all(const ElfState& s) {
                         s.bits() == 64 ? ELF_DYN_64LE : ELF_DYN_32LE);
         rd_createstruct("ELF_SYM",
                         s.bits() == 64 ? ELF_SYM_64LE : ELF_SYM_32LE);
+        rd_createstruct("ELF_REL",
+                        s.bits() == 64 ? ELF_REL_64LE : ELF_REL_32LE);
+        rd_createstruct("ELF_RELA",
+                        s.bits() == 64 ? ELF_RELA_64LE : ELF_RELA_32LE);
     }
 }
 

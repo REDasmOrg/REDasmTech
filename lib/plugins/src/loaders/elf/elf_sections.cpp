@@ -5,8 +5,8 @@ namespace elf_sections {
 namespace {
 
 template<typename T>
-bool value_getint(const ElfState& s, const RDValue* v, T& val) {
-    if(s.bits() == 64) {
+bool value_getint(int bits, const RDValue* v, T& val) {
+    if(bits == 64) {
         u64 temp;
         if(!rdvalue_getu64(v, nullptr, &temp))
             return false;
@@ -45,7 +45,8 @@ void process_init_fini(const ElfState& s, RDAddress address, u64 size,
             continue;
 
         RDAddress addr;
-        if(elf_sections::value_getint(s, v, addr) || !addr || addr == -1ULL)
+        if(elf_sections::value_getint(s.bits(), v, addr) || !addr ||
+           addr == -1ULL)
             continue;
 
         std::string fn = prefix + rd_tohex_n(addr, 0);
@@ -122,10 +123,49 @@ void process_symtab_addr(const ElfState& s, RDAddress address, u64 size,
     }
 }
 
-void process_strings(RDAddress address, u64 size) {
-    RDAddress endaddress = address + size;
-    address++; // First is always 00
+template<int bits>
+void process_rel(const ElfState& s, RDAddress address, u64 size, u32 shlink) {
+    RDValue* v = rdvalue_create();
+    elf_sections::apply_type("ELF_REL", address, size, v);
 
+    for(usize i = 0; i < rdvalue_getlength(v); i++) {
+        const RDValue* item;
+        if(!rdvalue_at(v, i, &item))
+            break;
+
+        const RDValue *roffset = nullptr, *rinfo = nullptr;
+        RDAddress iaddr;
+        u64 iinfo;
+
+        if(!rdvalue_get(item, "r_offset", &roffset) ||
+           !rdvalue_get(item, "r_info", &rinfo) ||
+           !elf_sections::value_getint(bits, roffset, iaddr) ||
+           !elf_sections::value_getint(bits, rinfo, iinfo))
+            continue;
+
+        auto itype = elf_r_type<bits>(iinfo);
+        auto sym = elf_r_sym<bits>(iinfo);
+
+        switch(itype) {
+            case R_386_JMP_SLOT: {
+                // std::string_view n = elf_state::get_stringv(s, sym, shlink);
+                // if(!n.empty())
+                // rd_setname(iaddr, n.data());
+                break;
+            }
+
+            default: break;
+        }
+    }
+}
+
+void process_rela(RDAddress address, u64 size, u32 shlink) {
+    RDValue* v = rdvalue_create();
+    elf_sections::apply_type("ELF_RELA", address, size, v);
+}
+
+void process_strings(RDAddress address, u64 size) {
+    RDAddress endaddress = address++ + size; // First is always 00
     RDValue* v = rdvalue_create();
 
     while(address < endaddress) {
@@ -156,9 +196,23 @@ void parse_address(const ElfState& s, std::string_view name, u32 shtype,
             elf_sections::apply_type("ELF_DYN", address, size, nullptr);
             return;
 
+        case SHT_DYNSYM:
         case SHT_SYMTAB:
             elf_sections::process_symtab_addr(s, address, size, shlink);
             return;
+
+        case SHT_RELA: {
+            elf_sections::process_rela(address, size, shlink);
+            return;
+        }
+
+        case SHT_REL: {
+            if(s.bits() == 64)
+                elf_sections::process_rel<64>(s, address, size, shlink);
+            else
+                elf_sections::process_rel<32>(s, address, size, shlink);
+            return;
+        }
 
         case SHT_STRTAB: elf_sections::process_strings(address, size); return;
         default: break;

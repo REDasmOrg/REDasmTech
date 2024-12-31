@@ -28,6 +28,23 @@ template<> struct ElfUnsignedT<64> { using type = u64; };
 template<int bits> struct ElfSignedT { };
 template<> struct ElfSignedT<32> { using type = i32; };
 template<> struct ElfSignedT<64> { using type = i64; };
+
+template<int bits>
+auto elf_r_sym(typename ElfUnsignedT<bits>::type info) {
+    if constexpr(bits == 64)
+        return info >> 32;
+    else
+        return info >> 8;
+}
+
+template<int bits>
+auto elf_r_type(typename ElfUnsignedT<bits>::type info) {
+    if constexpr(bits == 64)
+        return static_cast<u32>(info);
+    else
+        return static_cast<u8>(info);
+}
+
 // clang-format on
 
 #pragma pack(push, 1)
@@ -97,19 +114,6 @@ struct ElfShdr {
     u32 sh_info;
     typename ElfUnsignedT<bits>::type sh_addralign;
     typename ElfUnsignedT<bits>::type sh_entsize;
-};
-
-template<int bits>
-struct ElfRel {
-    typename ElfUnsignedT<bits>::type r_offset;
-    typename ElfUnsignedT<bits>::type r_info;
-};
-
-template<int bits>
-struct ElfRela {
-    typename ElfUnsignedT<bits>::type r_offset;
-    typename ElfUnsignedT<bits>::type r_info;
-    typename ElfSignedT<bits>::type r_addend;
 };
 
 struct Elf32Sym {
