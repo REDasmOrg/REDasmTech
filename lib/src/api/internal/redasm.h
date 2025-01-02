@@ -50,7 +50,8 @@ std::vector<RDRef> get_refsfrom(RDAddress fromaddr);
 std::vector<RDRef> get_refsfromtype(RDAddress fromaddr, usize type);
 std::vector<RDRef> get_refsto(RDAddress toaddr);
 std::vector<RDRef> get_refstotype(RDAddress toaddr, usize type);
-usize get_bytes(const RDByte** bytes);
+usize get_memory(const RDByte** bytes);
+usize get_file(const u8** bytes);
 
 tl::optional<RDAddress> get_address(std::string_view name);
 std::string get_comment(RDAddress address);

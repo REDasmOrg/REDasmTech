@@ -88,6 +88,8 @@ constexpr u32 murmur3(const char* key, usize len) {
     return impl::fmix32(h1 ^ len);
 }
 
+u32 adler32(const void* data, usize size);
+
 constexpr u32 static_murmur3(std::string_view arg) {
     return hash::murmur3(arg.data(), arg.size());
 }

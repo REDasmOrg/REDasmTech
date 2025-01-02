@@ -16,6 +16,9 @@ setup_dependencies()
 add_library(${PROJECT_NAME_LIB} SHARED)
 
 target_compile_definitions(${PROJECT_NAME_LIB}
+    PUBLIC
+        MINIZ_NO_ZLIB_COMPATIBLE_NAMES
+
     PRIVATE
       SHARED_OBJECT_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}"
 )
@@ -27,6 +30,7 @@ target_sources(${PROJECT_NAME_LIB}
     PRIVATE
         src/utils/process/process_unix.cpp
         src/utils/process/process.cpp
+        src/utils/hash.cpp
         src/utils/utils.cpp
         src/memory/abstractbuffer.cpp
         src/memory/abstractstream.cpp
@@ -63,6 +67,7 @@ target_sources(${PROJECT_NAME_LIB}
 
     PRIVATE # Internal
         src/api/marshal.cpp
+        src/api/internal/hash.cpp
         src/api/internal/utils.cpp
         src/api/internal/redasm.cpp
         src/api/internal/byteorder.cpp
@@ -84,6 +89,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/internal/function.cpp
 
     PRIVATE # C
+        src/api/c/hash.cpp
         src/api/c/utils.cpp
         src/api/c/redasm.cpp
         src/api/c/byteorder.cpp
@@ -122,6 +128,7 @@ target_link_libraries(${PROJECT_NAME_LIB}
         expected
         optional
         fmt
+        miniz
         sqlite3
         spdlog::spdlog_header_only
         Python3::Python

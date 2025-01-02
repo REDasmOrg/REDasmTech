@@ -331,16 +331,27 @@ std::vector<RDRef> get_refstotype(RDAddress toaddr, usize type) {
         std::vector<RDRef>{});
 }
 
-usize get_bytes(const RDByte** bytes) {
-    spdlog::trace("get_bytes({})", fmt::ptr(bytes));
+usize get_memory(const RDByte** data) {
+    spdlog::trace("get_memory({})", fmt::ptr(data));
 
+    if(!state::context) return 0;
     const auto& m = state::context->memory;
-
     if(!m) return 0;
 
-    if(bytes) *bytes = api::to_c(m->data());
-
+    if(data) *data = api::to_c(m->data());
     return m->size();
+}
+
+usize get_file(const u8** data) {
+    spdlog::trace("get_file({})", fmt::ptr(data));
+
+    if(!state::context) return 0;
+    const auto& f = state::context->file;
+    if(!f) return 0;
+
+    // HACK: static_cast<> shouldn't be used
+    if(data) *data = static_cast<const File*>(f.get())->data();
+    return f->size();
 }
 
 tl::optional<RDAddress> get_address(std::string_view name) {

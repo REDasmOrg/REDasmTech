@@ -2,9 +2,9 @@
 #include <redasm/redasm.h>
 
 void rdplugin_init() {
-    RDLoader ldrpsxexe{};
-    ldrpsxexe.id = "psxexe";
-    ldrpsxexe.name = "PS-X Executable";
-    ldrpsxexe.init = psxexe::init;
-    rd_registerloader(&ldrpsxexe);
+    RDLoader lpsxexe{};
+    lpsxexe.id = "psxexe";
+    lpsxexe.name = "PS-X Executable";
+    lpsxexe.init = psxexe::init;
+    rd_registerloader(&lpsxexe);
 }

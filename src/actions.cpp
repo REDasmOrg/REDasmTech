@@ -48,8 +48,7 @@ const QString OP_TEMPLATE = QString{R"(
         )"};
 
 void append_separated(QString& s, const QString& arg) {
-    if(!s.isEmpty())
-        s.append(" | ");
+    if(!s.isEmpty()) s.append(" | ");
 
     s.append(arg);
 }
@@ -71,28 +70,22 @@ QString optype_tostring(const RDOperand* op) {
 QString instrfeatures_tostring(const RDInstruction* instr) {
     QString f;
 
-    if(instr->features & IF_JUMP)
-        append_separated(f, "IF_JUMP");
+    if(instr->features & IF_JUMP) append_separated(f, "IF_JUMP");
 
-    if(instr->features & IF_CALL)
-        append_separated(f, "IF_CALL");
+    if(instr->features & IF_CALL) append_separated(f, "IF_CALL");
 
-    if(instr->features & IF_STOP)
-        append_separated(f, "IF_STOP");
+    if(instr->features & IF_STOP) append_separated(f, "IF_STOP");
 
-    if(instr->features & IF_DSLOT)
-        append_separated(f, "IF_DSLOT");
+    if(instr->features & IF_DSLOT) append_separated(f, "IF_DSLOT");
 
-    if(f.isEmpty())
-        f = "IF_NONE";
+    if(f.isEmpty()) f = "IF_NONE";
 
     return f;
 }
 
 void show_goto() {
     ContextView* cv = g_mainwindow->context_view();
-    if(!cv)
-        return;
+    if(!cv) return;
 
     auto* dlggoto = new GotoDialog(cv);
 
@@ -104,16 +97,14 @@ void show_goto() {
 
 void copy() {
     ContextView* cv = g_mainwindow->context_view();
-    if(!cv)
-        return;
+    if(!cv) return;
 
     qApp->clipboard()->setText(rdsurface_getselectedtext(cv->handle()));
 }
 
 void show_details() {
     ContextView* cv = g_mainwindow->context_view();
-    if(!cv)
-        return;
+    if(!cv) return;
 
     RDSurfaceLocation loc{};
     rdsurface_getlocation(cv->handle(), &loc);
@@ -129,14 +120,12 @@ void show_details() {
 
     MIndex index;
 
-    if(!rd_addresstoindex(address, &index))
-        return;
+    if(!rd_addresstoindex(address, &index)) return;
 
     const RDByte* bytes;
-    usize nbytes = rd_getbytes(&bytes);
+    usize nbytes = rd_getmemory(&bytes);
 
-    if(index >= nbytes)
-        return;
+    if(index >= nbytes) return;
 
     RDByte b = bytes[index];
 
@@ -230,13 +219,11 @@ void show_details() {
 
 void comment() {
     ContextView* cv = g_mainwindow->context_view();
-    if(!cv)
-        return;
+    if(!cv) return;
 
     RDSurfaceLocation loc{};
     rdsurface_getlocation(cv->handle(), &loc);
-    if(!loc.address.valid)
-        return;
+    if(!loc.address.valid) return;
 
     bool ok = false;
     const char* cmt = rd_getcomment(loc.address.value);
@@ -251,12 +238,10 @@ void comment() {
 
 void refs_to() {
     ContextView* cv = g_mainwindow->context_view();
-    if(!cv)
-        return;
+    if(!cv) return;
 
     RDAddress address;
-    if(!rdsurface_getaddressundercursor(cv->handle(), &address))
-        return;
+    if(!rdsurface_getaddressundercursor(cv->handle(), &address)) return;
 
     auto* dlg =
         new TableDialog(QString("References to %1").arg(rd_tohex(address)), cv);
@@ -274,25 +259,21 @@ void refs_to() {
 
 void rename() {
     ContextView* cv = g_mainwindow->context_view();
-    if(!cv)
-        return;
+    if(!cv) return;
 
     RDAddress address;
-    if(!rdsurface_getaddressundercursor(cv->handle(), &address))
-        return;
+    if(!rdsurface_getaddressundercursor(cv->handle(), &address)) return;
 
     QString name;
 
-    if(const char* s = rd_getname(address); s)
-        name = s;
+    if(const char* s = rd_getname(address); s) name = s;
 
     bool ok = false;
     QString s = QInputDialog::getText(
         g_mainwindow, QString("Rename @ %1").arg(rd_tohex(address)), "New Name",
         QLineEdit::Normal, name, &ok);
 
-    if(ok && rd_setname(address, qUtf8Printable(s)))
-        cv->invalidate();
+    if(ok && rd_setname(address, qUtf8Printable(s))) cv->invalidate();
 }
 
 } // namespace
@@ -359,8 +340,7 @@ void init(QMainWindow* mw) {
 }
 
 QAction* get(Type t) {
-    if(auto it = g_actions.find(t); it != g_actions.end())
-        return it.value();
+    if(auto it = g_actions.find(t); it != g_actions.end()) return it.value();
 
     return nullptr;
 }

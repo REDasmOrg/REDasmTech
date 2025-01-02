@@ -345,8 +345,12 @@ bool rd_tick(const RDWorkerStatus** s) {
     return redasm::api::internal::tick(s);
 }
 
-usize rd_getbytes(const RDByte** bytes) {
-    return redasm::api::internal::get_bytes(bytes);
+usize rd_getmemory(const RDByte** data) {
+    return redasm::api::internal::get_memory(data);
+}
+
+usize rd_getfile(const u8** data) {
+    return redasm::api::internal::get_file(data);
 }
 
 const char* rd_rendertext(RDAddress address) {

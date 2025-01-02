@@ -2,14 +2,13 @@
 
 FlagsBuffer::FlagsBuffer(QObject* parent): QHexBuffer{parent} {
     rd_memoryinfo(&m_meminfo);
-    m_size = rd_getbytes(&m_bytes);
+    m_size = rd_getmemory(&m_bytes);
 }
 
 qint64 FlagsBuffer::length() const { return m_size; }
 
 bool FlagsBuffer::accept(qint64 idx) const {
-    if(static_cast<quint64>(idx) < m_size)
-        return rdbyte_hasbyte(m_bytes[idx]);
+    if(static_cast<quint64>(idx) < m_size) return rdbyte_hasbyte(m_bytes[idx]);
     return false;
 }
 
