@@ -8,8 +8,8 @@ RD_HANDLE(RDBuffer);
 
 REDASM_EXPORT RDBuffer* rdbuffer_getfile(void);
 REDASM_EXPORT RDBuffer* rdbuffer_getmemory(void);
-REDASM_EXPORT bool rdbuffer_read(const RDBuffer* self, usize idx, void* dst,
-                                 usize n);
+REDASM_EXPORT usize rdbuffer_read(const RDBuffer* self, usize idx, void* dst,
+                                  usize n);
 REDASM_EXPORT bool rdbuffer_getbool(const RDBuffer* self, usize idx, bool* v);
 REDASM_EXPORT bool rdbuffer_getchar(const RDBuffer* self, usize idx, char* v);
 REDASM_EXPORT bool rdbuffer_getu8(const RDBuffer* self, usize idx, u8* v);

@@ -10,7 +10,7 @@ namespace redasm::api::internal {
 
 RDBuffer* buffer_getfile();
 RDBuffer* buffer_getmemory();
-bool buffer_read(const RDBuffer* self, usize idx, void* dst, usize n);
+usize buffer_read(const RDBuffer* self, usize idx, void* dst, usize n);
 tl::optional<bool> buffer_getbool(const RDBuffer* self, usize idx);
 tl::optional<char> buffer_getchar(const RDBuffer* self, usize idx);
 tl::optional<u8> buffer_getu8(const RDBuffer* self, usize idx);

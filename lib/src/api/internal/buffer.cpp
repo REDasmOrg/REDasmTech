@@ -19,11 +19,11 @@ RDBuffer* buffer_getmemory() {
     return nullptr;
 }
 
-bool buffer_read(const RDBuffer* self, usize idx, void* dst, usize n) {
+usize buffer_read(const RDBuffer* self, usize idx, void* dst, usize n) {
     spdlog::trace("buffer_read({}, {:x}, {}, {})", fmt::ptr(self), idx,
                   fmt::ptr(dst), n);
     const AbstractBuffer* b = api::from_c(self);
-    return b->read(idx, dst, n) == n;
+    return b->read(idx, dst, n);
 }
 
 tl::optional<bool> buffer_getbool(const RDBuffer* self, usize idx) {
