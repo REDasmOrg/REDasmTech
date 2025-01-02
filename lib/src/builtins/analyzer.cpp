@@ -35,9 +35,6 @@ void do_autorename(const RDAnalyzer*) {
     Context* ctx = state::context;
 
     for(const Function& f : ctx->functions) {
-        if(f.blocks.size() != 1)
-            continue;
-
         if(Byte b = ctx->memory->at(f.index); !b.has(BF_FLOW)) {
             if(b.has(BF_JUMP)) {
                 Database::RefList refs =
