@@ -651,7 +651,7 @@ PyObject* get_type(PyObject* /*self*/, PyObject* args) {
     if(!PyArg_ParseTuple(args, "Ks*", &address, &tname))
         return nullptr;
 
-    if(auto v = internal::get_type(address, tname); v)
+    if(auto v = internal::get_typename(address, tname); v)
         return python::to_object(*v);
 
     Py_RETURN_NONE;

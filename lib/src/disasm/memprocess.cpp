@@ -28,8 +28,7 @@ void process_hexdump(const Context* ctx, Listing& listing, MIndex& idx,
         }
     }
 
-    if(idx > start)
-        listing.hex_dump(start, idx);
+    if(idx > start) listing.hex_dump(start, idx);
 }
 
 void process_listing_unknown(const Context* ctx, Listing& listing,
@@ -136,7 +135,7 @@ void process_listing_data(const Context* ctx, Listing& listing, MIndex& idx) {
     }
     else if(b.has(BF_FILL)) {
         usize len = ctx->memory->get_length(idx);
-        assume(len > 1);
+        if(len <= 1) except("Invalid length @ {:x} (FILL)", idx);
         listing.fill(idx, idx + len);
         idx += len;
     }
@@ -168,8 +167,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
         done.insert(startidx);
 
         RDGraphNode n = f.try_add_block(startidx);
-        if(startidx == idx)
-            f.graph.set_root(n);
+        if(startidx == idx) f.graph.set_root(n);
 
         MIndex endidx = startidx;
 
@@ -178,8 +176,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
             Byte b = mem->at(curridx);
 
             if(curridx != startidx) {
-                if(b.has(BF_FUNCTION))
-                    break;
+                if(b.has(BF_FUNCTION)) break;
 
                 if(b.has(BF_JUMPDST)) {
                     pending.push_back(curridx);
@@ -194,8 +191,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
                     const Segment* seg = ctx->index_to_segment(r.index);
 
                     if(seg && seg->type & SEG_HASCODE) {
-                        if(!mem->at(r.index).has(BF_CODE))
-                            continue;
+                        if(!mem->at(r.index).has(BF_CODE)) continue;
 
                         pending.push_back(r.index);
                         f.jmp_true(n, f.try_add_block(r.index));
@@ -205,7 +201,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
                 // Consume delay slot(s), if any
                 while(curridx < mem->size() && b.has(BF_DFLOW)) {
                     usize len = mem->get_length(curridx);
-                    assume(len > 0);
+                    if(!len) except("Invalid length @ {:x} (DS)", curridx);
                     curridx += len;
                     b = mem->at(curridx);
                 }
@@ -215,7 +211,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
                 // Conditional Jump
                 if(curridx < mem->size() && b.has(BF_FLOW)) {
                     usize len = mem->get_length(curridx);
-                    assume(len > 0);
+                    if(!len) except("Invalid length @ {:x} (CJ)", curridx);
                     curridx += len;
 
                     if(curridx < mem->size()) {
@@ -229,11 +225,10 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
 
             endidx = curridx;
             usize len = mem->get_length(curridx);
-            assume(len > 0);
+            if(!len) except("Invalid length @ {:x} (END)", curridx);
             curridx += len;
 
-            if(!b.has(BF_FLOW))
-                break;
+            if(!b.has(BF_FLOW)) break;
         }
 
         Function::BasicBlock* bb = f.get_basic_block(n);
@@ -265,15 +260,14 @@ void process_listing_code(const Context* ctx, Listing& listing,
 
     listing.instruction(idx);
 
-    usize l = ctx->memory->get_length(idx);
-    assume(l > 0);
-    idx += l;
+    usize len = ctx->memory->get_length(idx);
+    if(!len) except("Invalid length @ {:x} (CODE)", idx);
+    idx += len;
 }
 
 void process_refsto(Context* ctx, MIndex idx) {
     const Byte& b = ctx->memory->at(idx);
-    if(!b.is_unknown())
-        return;
+    if(!b.is_unknown()) return;
 
     auto is_range_unknown = [&](MIndex ridx, usize sz) {
         return ctx->memory->range_is(ridx, sz,
@@ -288,8 +282,7 @@ void process_refsto(Context* ctx, MIndex idx) {
     assume(inttype.has_value());
 
     for(const Database::Ref& r : refs) {
-        if(!b.is_unknown())
-            break;
+        if(!b.is_unknown()) break;
 
         switch(r.type) {
             case DR_READ:
@@ -336,8 +329,7 @@ void process_listing() {
         for(usize idx = 0; idx < ctx->memory->size();) {
             Byte b = ctx->memory->at(idx);
 
-            if(b.has(BF_SEGMENT))
-                l.segment(idx);
+            if(b.has(BF_SEGMENT)) l.segment(idx);
 
             if(b.is_unknown()) {
                 mem::process_listing_unknown(ctx, l, idx);
@@ -377,12 +369,10 @@ void process_segments(bool finalize) {
                 idx < seg.endindex && idx < ctx->memory->size(); idx++) {
                 Byte b = ctx->memory->at(idx);
 
-                if(b.has(BF_FUNCTION))
-                    mem::process_function_graph(ctx, f, idx);
+                if(b.has(BF_FUNCTION)) mem::process_function_graph(ctx, f, idx);
 
                 if(finalize) {
-                    if(b.has(BF_REFSTO))
-                        mem::process_refsto(ctx, idx);
+                    if(b.has(BF_REFSTO)) mem::process_refsto(ctx, idx);
                 }
             }
         }

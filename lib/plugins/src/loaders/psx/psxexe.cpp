@@ -28,19 +28,16 @@ bool init(RDLoader*) {
 
     RDBuffer* file = rdbuffer_getfile();
     RDValue* psxheader = rdvalue_create();
-    const char* id = nullptr;
 
-    if(!rdbuffer_collecttype(file, 0, "PSX_EXE_HEADER", psxheader) ||
-       !rdvalue_getstr(psxheader, "id", &id) || id != PSXEXE_SIGNATURE)
+    if(!rdbuffer_collecttypename(file, 0, "PSX_EXE_HEADER", psxheader) ||
+       rdvalue_getstr(psxheader, "id", nullptr) != PSXEXE_SIGNATURE)
         return false;
 
     rd_setprocessor("mips32le");
     rd_map(PSX_USERRAM_START, PSX_USERRAM_END);
-
-    u32 taddr{}, tsize{}, pc0{};
-    rdvalue_getu32(psxheader, "t_addr", &taddr);
-    rdvalue_getu32(psxheader, "t_size", &tsize);
-    rdvalue_getu32(psxheader, "pc0", &pc0);
+    u32 taddr = rdvalue_getu32(psxheader, "t_addr", nullptr);
+    u32 tsize = rdvalue_getu32(psxheader, "t_size", nullptr);
+    u32 pc0 = rdvalue_getu32(psxheader, "pc0", nullptr);
 
     rd_mapsegment_n("TEXT", taddr, tsize, PSXEXE_TEXT_OFFSET, tsize,
                     SEG_HASCODE | SEG_HASDATA);

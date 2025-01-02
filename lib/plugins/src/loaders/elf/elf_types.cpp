@@ -1,4 +1,5 @@
 #include "elf_types.h"
+#include "elf_format.h"
 
 namespace elf_types {
 
@@ -23,6 +24,36 @@ const RDStructField ELF_PHDR_64BE[] = {
     {"u32be", "p_type"},  {"u32be", "p_flags"}, {"u32be", "p_offset"},
     {"u64be", "p_vaddr"}, {"u64be", "p_paddr"}, {"u64be", "p_filesz"},
     {"u64be", "p_memsz"}, {"u64be", "p_align"}, {nullptr, nullptr}};
+
+// const RDStructField ELF_SHDR_32LE[] = {
+//     {"u32", "sh_name"},    {"u32", "sh_type"},   {"u32", "sh_flags"},
+//     {"u32", "sh_addr"},    {"u32", "sh_offset"}, {"u32", "sh_size"},
+//     {"u32", "sh_link"},    {"u32", "sh_info"},   {"u32", "sh_addralign"},
+//     {"u32", "sh_entsize"}, {nullptr, nullptr},
+// };
+
+// const RDStructField ELF_SHDR_64LE[] = {
+//     {"u32", "sh_name"},    {"u32", "sh_type"},   {"u64", "sh_flags"},
+//     {"u64", "sh_addr"},    {"u64", "sh_offset"}, {"u64", "sh_size"},
+//     {"u32", "sh_link"},    {"u32", "sh_info"},   {"u64", "sh_addralign"},
+//     {"u64", "sh_entsize"}, {nullptr, nullptr},
+// };
+
+// const RDStructField ELF_SHDR_32BE[] = {
+//     {"u32be", "sh_name"},    {"u32be", "sh_type"},   {"u32be", "sh_flags"},
+//     {"u32be", "sh_addr"},    {"u32be", "sh_offset"}, {"u32be", "sh_size"},
+//     {"u32be", "sh_link"},    {"u32be", "sh_info"},   {"u32be",
+//     "sh_addralign"},
+//     {"u32be", "sh_entsize"}, {nullptr, nullptr},
+// };
+
+// const RDStructField ELF_SHDR_64BE[] = {
+//     {"u32be", "sh_name"},    {"u32be", "sh_type"},   {"u64be", "sh_flags"},
+//     {"u64be", "sh_addr"},    {"u64be", "sh_offset"}, {"u64be", "sh_size"},
+//     {"u32be", "sh_link"},    {"u32be", "sh_info"},   {"u64be",
+//     "sh_addralign"},
+//     {"u64be", "sh_entsize"}, {nullptr, nullptr},
+// };
 
 const RDStructField ELF_DYN_32LE[] = {
     {"i32", "d_tag"}, {"u32", "d_val"}, {nullptr, nullptr}};
@@ -102,34 +133,27 @@ const RDStructField ELF_VERNEED_BE[] = {
 
 } // namespace
 
-void register_all(const ElfState& s) {
-    if(s.is_be() == BO_BIG) {
-        rd_createstruct("ELF_VERNEED", ELF_VERNEED_BE);
+void register_all(const ElfIdent& ident) {
+    bool isbe = elf_format::is_be(ident);
+    int b = elf_format::get_bits(ident);
 
-        rd_createstruct("ELF_PHDR",
-                        s.bits() == 64 ? ELF_PHDR_64BE : ELF_PHDR_32BE);
-        rd_createstruct("ELF_DYN",
-                        s.bits() == 64 ? ELF_DYN_64BE : ELF_DYN_32BE);
-        rd_createstruct("ELF_SYM",
-                        s.bits() == 64 ? ELF_SYM_64BE : ELF_SYM_32BE);
-        rd_createstruct("ELF_REL",
-                        s.bits() == 64 ? ELF_REL_64BE : ELF_REL_32BE);
-        rd_createstruct("ELF_RELA",
-                        s.bits() == 64 ? ELF_RELA_64BE : ELF_RELA_32BE);
+    if(isbe) {
+        rd_createstruct("ELF_VERNEED", ELF_VERNEED_BE);
+        rd_createstruct("ELF_PHDR", b == 64 ? ELF_PHDR_64BE : ELF_PHDR_32BE);
+        // rd_createstruct("ELF_SHDR", b == 64 ? ELF_SHDR_64BE : ELF_SHDR_32BE);
+        rd_createstruct("ELF_DYN", b == 64 ? ELF_DYN_64BE : ELF_DYN_32BE);
+        rd_createstruct("ELF_SYM", b == 64 ? ELF_SYM_64BE : ELF_SYM_32BE);
+        rd_createstruct("ELF_REL", b == 64 ? ELF_REL_64BE : ELF_REL_32BE);
+        rd_createstruct("ELF_RELA", b == 64 ? ELF_RELA_64BE : ELF_RELA_32BE);
     }
     else {
         rd_createstruct("ELF_VERNEED", ELF_VERNEED_LE);
-
-        rd_createstruct("ELF_PHDR",
-                        s.bits() == 64 ? ELF_PHDR_64LE : ELF_PHDR_32LE);
-        rd_createstruct("ELF_DYN",
-                        s.bits() == 64 ? ELF_DYN_64LE : ELF_DYN_32LE);
-        rd_createstruct("ELF_SYM",
-                        s.bits() == 64 ? ELF_SYM_64LE : ELF_SYM_32LE);
-        rd_createstruct("ELF_REL",
-                        s.bits() == 64 ? ELF_REL_64LE : ELF_REL_32LE);
-        rd_createstruct("ELF_RELA",
-                        s.bits() == 64 ? ELF_RELA_64LE : ELF_RELA_32LE);
+        rd_createstruct("ELF_PHDR", b == 64 ? ELF_PHDR_64LE : ELF_PHDR_32LE);
+        // rd_createstruct("ELF_SHDR", b == 64 ? ELF_SHDR_64LE : ELF_SHDR_32LE);
+        rd_createstruct("ELF_DYN", b == 64 ? ELF_DYN_64LE : ELF_DYN_32LE);
+        rd_createstruct("ELF_SYM", b == 64 ? ELF_SYM_64LE : ELF_SYM_32LE);
+        rd_createstruct("ELF_REL", b == 64 ? ELF_REL_64LE : ELF_REL_32LE);
+        rd_createstruct("ELF_RELA", b == 64 ? ELF_RELA_64LE : ELF_RELA_32LE);
     }
 }
 

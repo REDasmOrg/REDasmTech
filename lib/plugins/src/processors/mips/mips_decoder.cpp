@@ -72,8 +72,7 @@ int check_format(const MIPSInstruction& mi) {
 
     if(((mi.i_u.op >= 0x04) && (mi.i_u.op <= 0x2e)) || (mi.i_u.op == 0x01))
         return MIPS_FORMAT_I;
-    if((mi.j.op == 0x02) || (mi.j.op == 0x03))
-        return MIPS_FORMAT_J;
+    if((mi.j.op == 0x02) || (mi.j.op == 0x03)) return MIPS_FORMAT_J;
 
     return MIPS_FORMAT_NONE;
 }
@@ -124,21 +123,18 @@ bool check_encoding(MIPSDecodedInstruction& dec) {
 } // namespace
 
 const char* mnemonic(usize id) {
-    if(id >= MIPS_INSTR_MNEMONICS.size())
-        return "???";
+    if(id >= MIPS_INSTR_MNEMONICS.size()) return "???";
 
     return MIPS_INSTR_MNEMONICS[id].data(); // NOLINT
 }
 
 const char* reg(u32 r) {
-    if(r >= GPR_NAMES.size())
-        return "???";
+    if(r >= GPR_NAMES.size()) return "???";
     return GPR_NAMES[r].data(); // NOLINT
 }
 
 std::string_view cop0_reg(u32 r) {
-    if(r >= COP0R_NAMES.size())
-        return {};
+    if(r >= COP0R_NAMES.size()) return {};
     return COP0R_NAMES[r];
 }
 
@@ -171,13 +167,12 @@ bool has_delayslot(usize id) {
 
 bool decode(RDAddress address, MIPSDecodedInstruction& dec, bool big,
             bool one) {
-    bool ok = big ? rd_getu32be(address, &dec.instr.word)
-                  : rd_getu32(address, &dec.instr.word);
+    bool ok = false;
+    dec.instr.word = big ? rd_getu32be(address, &ok) : rd_getu32(address, &ok);
+
     if(ok) {
         ok = mips_decoder::check_encoding(dec);
-
-        if(ok && !one)
-            mips_macrodecoder::check_macro(address, dec, big);
+        if(ok && !one) mips_macrodecoder::check_macro(address, dec, big);
     }
 
     return ok;

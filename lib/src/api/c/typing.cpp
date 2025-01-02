@@ -25,23 +25,17 @@ const u32 TID_STR = redasm::typing::ids::STR;
 const u32 TID_WSTR = redasm::typing::ids::WSTR;
 
 usize rd_sizeof(const char* tname) {
-    if(!tname)
-        return 0;
-
+    if(!tname) return 0;
     return redasm::api::internal::size_of(tname);
 }
 
-bool rd_createtype(const char* tname, RDType* t) {
-    if(!tname)
-        return false;
-
+bool rdtype_create(const char* tname, RDType* t) {
+    if(!tname) return false;
     return redasm::api::internal::create_type(tname, t);
 }
 
-bool rd_createtype_n(const char* tname, usize n, RDType* t) {
-    if(!tname)
-        return false;
-
+bool rdtype_create_n(const char* tname, usize n, RDType* t) {
+    if(!tname) return false;
     return redasm::api::internal::create_type_n(tname, n, t);
 }
 
@@ -57,15 +51,13 @@ const char* rd_typename(const RDType* t) {
     else
         s.clear();
 
-    if(!s.empty())
-        return s.c_str();
+    if(!s.empty()) return s.c_str();
 
     return nullptr;
 }
 
 const char* rd_createstruct(const char* name, const RDStructField* fields) {
-    if(!name || !fields)
-        return nullptr;
+    if(!name || !fields) return nullptr;
 
     static std::string res;
     redasm::typing::StructBody body;
@@ -83,26 +75,25 @@ RDValue* rdvalue_create() {
     return redasm::api::to_c(redasm::api::internal::create_value());
 }
 
+void rdvalue_destroy(RDValue* v) {}
+
 const RDType* rdvalue_gettype(const RDValue* self) {
-    if(self)
-        return &redasm::api::from_c(self)->type;
+    if(self) return &redasm::api::from_c(self)->type;
     return nullptr;
 }
 
 const char* rdvalue_tostring(const RDValue* self) {
-    if(self)
-        return redasm::api::from_c(self)->str.c_str();
-
+    if(self) return redasm::api::from_c(self)->str.c_str();
     return nullptr;
 }
 
 usize rdvalue_getlength(const RDValue* self) {
+    if(!self) return 0;
+
     const redasm::typing::Value* v = redasm::api::from_c(self);
 
-    if(v->is_list())
-        return v->list.size();
-    if(v->is_struct())
-        return v->dict.size();
+    if(v->is_list()) return v->list.size();
+    if(v->is_struct()) return v->dict.size();
 
     if(v->type.id == redasm::typing::ids::STR ||
        v->type.id == redasm::typing::ids::WSTR)
@@ -112,74 +103,38 @@ usize rdvalue_getlength(const RDValue* self) {
            redasm::api::internal::type_name(v->type));
 }
 
-bool rdvalue_at(const RDValue* self, usize idx, const RDValue** v) {
+const RDValue* rdvalue_at(const RDValue* self, usize idx) {
+    if(!self) return nullptr;
+
     const redasm::typing::Value* val = redasm::api::from_c(self);
 
-    if(val->is_list()) {
-        if(idx < val->list.size()) {
-            if(v)
-                *v = redasm::api::to_c(&val->list[idx]);
-            return true;
-        }
+    if(val->is_list() && idx < val->list.size())
+        return redasm::api::to_c(&val->list[idx]);
 
-        return false;
-    }
-
-    return false;
+    return nullptr;
 }
 
-bool rdvalue_get(const RDValue* self, const char* key, const RDValue** v) {
-    if(!self)
-        return false;
-
-    const redasm::typing::Value* curr = redasm::api::from_c(self);
-
-    redasm::utils::split_each(key, '/', [&](std::string_view x) {
-        if(auto it = curr->dict.find(x); it != curr->dict.end())
-            curr = &it->second;
-        else
-            curr = nullptr;
-
-        return curr != nullptr;
-    });
-
-    if(v && curr)
-        *v = redasm::api::to_c(curr);
-    else if(!curr)
-        *v = {};
-
-    return curr != nullptr;
+const RDValue* rdvalue_get(const RDValue* self, const char* q,
+                           const char** error) {
+    return rdvalue_get_n(self, q, q ? std::strlen(q) : 0, error);
 }
 
-bool rdvalue_query(const RDValue* self, const char* q, const RDValue** v,
-                   const char** error) {
-    return rdvalue_query_n(self, q, q ? std::strlen(q) : 0, v, error);
-}
-
-bool rdvalue_query_n(const RDValue* self, const char* q, usize n,
-                     const RDValue** v, const char** error) {
+const RDValue* rdvalue_get_n(const RDValue* self, const char* q, usize n,
+                             const char** error) {
     auto set_error = [&](const char* msg) {
-        if(error)
-            *error = msg;
+        if(error) *error = msg;
         return false;
     };
 
-    if(error)
-        *error = nullptr;
-
-    if(!self || !v)
-        return false;
+    if(error) *error = nullptr;
+    if(!self) return nullptr;
 
     if(!q) {
         q = ".";
         n = 1;
     }
 
-    if(*q == '.' && *(q + 1) == '\0') {
-        if(v)
-            *v = self;
-        return true;
-    }
+    if(*q == '.' && *(q + 1) == '\0') return self;
 
     const redasm::typing::Value* curr = redasm::api::from_c(self);
     const char *kstart = q, *endq = q + n;
@@ -207,11 +162,13 @@ bool rdvalue_query_n(const RDValue* self, const char* q, usize n,
         if(*q == '.' || *q == '[' || q == endq) {
             if(!curr->is_list()) {
                 usize klen = q - kstart;
-                if(!klen)
-                    return set_error("Invalid key: empty segment detected");
+                if(!klen) {
+                    set_error("Invalid key: empty segment detected");
+                    return nullptr;
+                }
 
                 if(!inindex && !traverse_key(std::string_view{kstart, klen}))
-                    return false;
+                    return nullptr;
             }
 
             if(*q == '[') {
@@ -223,160 +180,136 @@ bool rdvalue_query_n(const RDValue* self, const char* q, usize n,
             }
         }
         else if(*q == ']') {
-            if(!inindex)
-                return set_error("Unmatched closing bracket ']'");
+            if(!inindex) {
+                set_error("Unmatched closing bracket ']'");
+                return nullptr;
+            }
 
             // Parse the index
             auto index = redasm::utils::to_integer(std::string_view{kstart, q});
-            if(!index || !traverse_index(*index))
-                return false;
+            if(!index || !traverse_index(*index)) return nullptr;
 
             inindex = false;
-
-            if(++q == endq) // Skip ']'
-                break;
-            if(*q == '.')
-                q++; // Skip '.'
-
+            if(++q == endq) break; // Skip ']'
+            if(*q == '.') q++;     // Skip '.'
             kstart = q;
         }
 
         q++;
     }
 
-    if(inindex)
-        return set_error("Unmatched opening bracket '['");
-
-    if(v)
-        *v = redasm::api::to_c(curr);
-    return true;
-}
-
-bool rdvalue_getu8(const RDValue* self, const char* q, u8* v) {
-    const RDValue* res = nullptr;
-    const char* error = nullptr;
-
-    if(rdvalue_query(self, q, &res, &error)) {
-        if(v)
-            *v = redasm::api::from_c(res)->u8_v;
-        return true;
+    if(inindex) {
+        set_error("Unmatched opening bracket '['");
+        return nullptr;
     }
-    if(error)
-        except("{}", error);
 
-    return false;
+    return redasm::api::to_c(curr);
 }
 
-bool rdvalue_getu16(const RDValue* self, const char* q, u16* v) {
-    const RDValue* res = nullptr;
+u8 rdvalue_getu8(const RDValue* self, const char* q, bool* ok) {
     const char* error = nullptr;
+    const RDValue* res = nullptr;
 
-    if(rdvalue_query(self, q, &res, &error)) {
-        if(v)
-            *v = redasm::api::from_c(res)->u16_v;
-        return true;
-    }
-    if(error)
-        except("{}", error);
+    if(self) res = rdvalue_get(self, q, &error);
+    if(ok) *ok = self && res;
 
-    return false;
+    if(res) return redasm::api::from_c(res)->u16_v;
+    if(error) spdlog::error("rdvalue_getu8: {} ({})", error, q);
+    return {};
 }
 
-bool rdvalue_getu32(const RDValue* self, const char* q, u32* v) {
-    const RDValue* res = nullptr;
+u16 rdvalue_getu16(const RDValue* self, const char* q, bool* ok) {
     const char* error = nullptr;
+    const RDValue* res = nullptr;
 
-    if(rdvalue_query(self, q, &res, &error)) {
-        if(v)
-            *v = redasm::api::from_c(res)->u32_v;
-        return true;
-    }
-    if(error)
-        except("{}", error);
+    if(self) res = rdvalue_get(self, q, &error);
+    if(ok) *ok = self && res;
 
-    return false;
+    if(res) return redasm::api::from_c(res)->u16_v;
+    if(error) spdlog::error("rdvalue_getu16: {} ({})", error, q);
+    return {};
 }
 
-bool rdvalue_getu64(const RDValue* self, const char* q, u64* v) {
-    const RDValue* res = nullptr;
+u32 rdvalue_getu32(const RDValue* self, const char* q, bool* ok) {
     const char* error = nullptr;
+    const RDValue* res = nullptr;
 
-    if(rdvalue_query(self, q, &res, &error)) {
-        if(v)
-            *v = redasm::api::from_c(res)->u64_v;
-        return true;
-    }
-    if(error)
-        except("{}", error);
+    if(self) res = rdvalue_get(self, q, &error);
+    if(ok) *ok = self && res;
 
-    return false;
+    if(res) return redasm::api::from_c(res)->u32_v;
+    if(error) spdlog::error("rdvalue_getu32: {} ({})", error, q);
+    return {};
 }
 
-bool rdvalue_geti8(const RDValue* self, const char* q, i8* v) {
-    const RDValue* res = nullptr;
+u64 rdvalue_getu64(const RDValue* self, const char* q, bool* ok) {
     const char* error = nullptr;
+    const RDValue* res = nullptr;
 
-    if(rdvalue_query(self, q, &res, &error)) {
-        if(v)
-            *v = redasm::api::from_c(res)->i8_v;
-        return true;
-    }
-    if(error)
-        except("{}", error);
+    if(self) res = rdvalue_get(self, q, &error);
+    if(ok) *ok = self && res;
 
-    return false;
+    if(res) return redasm::api::from_c(res)->u64_v;
+    if(error) spdlog::error("rdvalue_getu64: {} ({})", error, q);
+    return {};
 }
 
-bool rdvalue_geti16(const RDValue* self, const char* q, i16* v) {
-    const RDValue* res = nullptr;
+i8 rdvalue_geti8(const RDValue* self, const char* q, bool* ok) {
     const char* error = nullptr;
+    const RDValue* res = nullptr;
 
-    if(rdvalue_query(self, q, &res, &error)) {
-        if(v)
-            *v = redasm::api::from_c(res)->i16_v;
-        return true;
-    }
-    if(error)
-        except("{}", error);
+    if(self) res = rdvalue_get(self, q, &error);
+    if(ok) *ok = self && res;
 
-    return false;
+    if(res) return redasm::api::from_c(res)->i8_v;
+    if(error) spdlog::error("rdvalue_geti8: {} ({})", error, q);
+    return {};
 }
 
-bool rdvalue_geti32(const RDValue* self, const char* q, i32* v) {
-    const RDValue* res = nullptr;
+i16 rdvalue_geti16(const RDValue* self, const char* q, bool* ok) {
     const char* error = nullptr;
+    const RDValue* res = nullptr;
 
-    if(rdvalue_query(self, q, &res, &error)) {
-        if(v)
-            *v = redasm::api::from_c(res)->i32_v;
-        return true;
-    }
-    if(error)
-        except("{}", error);
+    if(self) res = rdvalue_get(self, q, &error);
+    if(ok) *ok = self && res;
 
-    return false;
+    if(res) return redasm::api::from_c(res)->i16_v;
+    if(error) spdlog::error("rdvalue_geti16: {} ({})", error, q);
+    return {};
 }
 
-bool rdvalue_geti64(const RDValue* self, const char* q, i64* v) {
-    const RDValue* res = nullptr;
+i32 rdvalue_geti32(const RDValue* self, const char* q, bool* ok) {
     const char* error = nullptr;
+    const RDValue* res = nullptr;
 
-    if(rdvalue_query(self, q, &res, &error)) {
-        if(v)
-            *v = redasm::api::from_c(res)->i64_v;
-        return true;
-    }
-    if(error)
-        except("{}", error);
+    if(self) res = rdvalue_get(self, q, &error);
+    if(ok) *ok = self && res;
 
-    return false;
+    if(res) return redasm::api::from_c(res)->i32_v;
+    if(error) spdlog::error("rdvalue_geti32: {} ({})", error, q);
+    return {};
 }
 
-bool rdvalue_getstr(const RDValue* self, const char* q, const char** v) {
-    const RDValue* res = nullptr;
+i64 rdvalue_geti64(const RDValue* self, const char* q, bool* ok) {
     const char* error = nullptr;
+    const RDValue* res = nullptr;
 
-    if(rdvalue_query(self, q, &res, &error)) {
+    if(self) res = rdvalue_get(self, q, &error);
+    if(ok) *ok = self && res;
+
+    if(res) return redasm::api::from_c(res)->i64_v;
+    if(error) spdlog::error("rdvalue_geti64: {} ({})", error, q);
+    return {};
+}
+
+const char* rdvalue_getstr(const RDValue* self, const char* q, bool* ok) {
+    const char* error = nullptr;
+    const RDValue* res = nullptr;
+
+    if(self) res = rdvalue_get(self, q, &error);
+    if(ok) *ok = self && res;
+
+    if(res) {
         const redasm::typing::Value* r = redasm::api::from_c(res);
 
         if(r->is_list()) { // Try to build a string for char array
@@ -385,16 +318,11 @@ bool rdvalue_getstr(const RDValue* self, const char* q, const char** v) {
                 r->scratchpad[i] = r->list[i].ch_v;
             r->scratchpad.back() = '\0';
 
-            if(v)
-                *v = r->scratchpad.data();
+            return r->scratchpad.data();
         }
-        else if(v)
-            *v = r->str.c_str();
-
-        return true;
+        if(res) return r->str.c_str();
     }
-    if(error)
-        except("{}", error);
 
-    return false;
+    if(error) spdlog::error("rdvalue_getstr: {} ({})", error, q);
+    return nullptr;
 }

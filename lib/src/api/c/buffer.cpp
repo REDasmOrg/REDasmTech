@@ -156,12 +156,12 @@ bool rdbuffer_getwstr(const RDBuffer* self, usize idx, usize n,
     return res.has_value();
 }
 
-bool rdbuffer_gettype(const RDBuffer* self, usize idx, const char* tname,
-                      RDValue* v) {
+bool rdbuffer_gettypename(const RDBuffer* self, usize idx, const char* tname,
+                          RDValue* v) {
     if(!tname)
         return false;
 
-    auto res = redasm::api::internal::buffer_gettype(self, idx, tname);
+    auto res = redasm::api::internal::buffer_gettypename(self, idx, tname);
 
     res.map([&](const redasm::typing::Value& x) {
         if(v)
@@ -171,12 +171,36 @@ bool rdbuffer_gettype(const RDBuffer* self, usize idx, const char* tname,
     return res.has_value();
 }
 
-bool rdbuffer_collecttype(const RDBuffer* self, usize idx, const char* tname,
-                          RDValue* v) {
+bool rdbuffer_gettype(const RDBuffer* self, usize idx, const RDType* t,
+                      RDValue* v) {
+    auto res = redasm::api::internal::buffer_gettype(self, idx, t);
+
+    res.map([&](const redasm::typing::Value& x) {
+        if(v)
+            *redasm::api::from_c(v) = x;
+    });
+
+    return res.has_value();
+}
+
+bool rdbuffer_collecttypename(const RDBuffer* self, usize idx,
+                              const char* tname, RDValue* v) {
     if(!tname)
         return false;
 
-    auto res = redasm::api::internal::buffer_collecttype(self, idx, tname);
+    auto res = redasm::api::internal::buffer_collecttypename(self, idx, tname);
+
+    res.map([&](const redasm::typing::Value& x) {
+        if(v)
+            *redasm::api::from_c(v) = x;
+    });
+
+    return res.has_value();
+}
+
+bool rdbuffer_collecttype(const RDBuffer* self, usize idx, const RDType* t,
+                          RDValue* v) {
+    auto res = redasm::api::internal::buffer_collecttype(self, idx, t);
 
     res.map([&](const redasm::typing::Value& x) {
         if(v)

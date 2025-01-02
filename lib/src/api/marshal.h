@@ -33,6 +33,12 @@ struct Segment;
 
 namespace api {
 
+template<typename T, typename U> // Syntactic sugar for outvalues
+inline void set_if(T* p, const U& v) {
+    if(p)
+        *p = v;
+}
+
 inline Byte from_c(RDByte arg) { return Byte{arg}; }
 
 inline const StyledGraph* from_c(const RDGraph* arg) {

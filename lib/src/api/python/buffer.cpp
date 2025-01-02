@@ -182,8 +182,7 @@ PyObject* buffer_getstrz(PyBuffer* self, PyObject* args) {
 PyObject* buffer_getstr(PyBuffer* self, PyObject* args) {
     usize idx{}, n{};
 
-    if(!PyArg_ParseTuple(args, "KK", &idx, &n))
-        return nullptr;
+    if(!PyArg_ParseTuple(args, "KK", &idx, &n)) return nullptr;
 
     if(auto v = internal::buffer_getstr(self->buffer, idx, n); v)
         return PyUnicode_FromString(v->c_str());
@@ -203,8 +202,7 @@ PyObject* buffer_getwstrz(PyBuffer* self, PyObject* args) {
 PyObject* buffer_getwstr(PyBuffer* self, PyObject* args) {
     usize idx{}, n{};
 
-    if(!PyArg_ParseTuple(args, "KK", &idx, &n))
-        return nullptr;
+    if(!PyArg_ParseTuple(args, "KK", &idx, &n)) return nullptr;
 
     if(auto v = internal::buffer_getstr(self->buffer, idx, n); v)
         return PyUnicode_FromString(v->c_str());
@@ -216,10 +214,9 @@ PyObject* buffer_gettype(PyBuffer* self, PyObject* args) {
     usize idx{};
     const char* tname = nullptr;
 
-    if(!PyArg_ParseTuple(args, "Ks*", &idx, &tname))
-        return nullptr;
+    if(!PyArg_ParseTuple(args, "Ks*", &idx, &tname)) return nullptr;
 
-    if(auto v = internal::buffer_gettype(self->buffer, idx, tname); v)
+    if(auto v = internal::buffer_gettypename(self->buffer, idx, tname); v)
         return python::to_object(*v);
 
     Py_RETURN_NONE;
@@ -258,8 +255,7 @@ PySequenceMethods file_sequence_methods = []() {
     PySequenceMethods seq{};
 
     seq.sq_length = [](PyObject*) -> Py_ssize_t {
-        if(!state::context->file)
-            return 0;
+        if(!state::context->file) return 0;
 
         return state::context->file->size();
     };
@@ -271,8 +267,7 @@ PySequenceMethods file_sequence_methods = []() {
             Py_RETURN_NONE;
 
         auto b = state::context->file->get_byte(uidx);
-        if(b)
-            return PyLong_FromSize_t(*b);
+        if(b) return PyLong_FromSize_t(*b);
         Py_RETURN_NONE;
     };
 
@@ -283,8 +278,7 @@ PyObject* file_map_type(PyFile* /*self*/, PyObject* args) {
     RDOffset offset{};
     const char* tname;
 
-    if(!PyArg_ParseTuple(args, "Kz", &offset, &tname))
-        return nullptr;
+    if(!PyArg_ParseTuple(args, "Kz", &offset, &tname)) return nullptr;
 
     if(auto v = internal::file_map_type(offset, tname); v)
         return python::to_object(*v);
@@ -296,8 +290,7 @@ PyObject* file_map_type_as(PyFile* /*self*/, PyObject* args) {
     RDOffset offset{};
     const char *tname, *dbname;
 
-    if(!PyArg_ParseTuple(args, "Kzz", &offset, &tname, &dbname))
-        return nullptr;
+    if(!PyArg_ParseTuple(args, "Kzz", &offset, &tname, &dbname)) return nullptr;
 
     if(auto v = internal::file_map_type_as(offset, tname, dbname); v)
         return python::to_object(*v);
@@ -317,8 +310,7 @@ PyMethodDef file_methods[] = {
 PyObject* memory_map_n(PyMemory* /*self*/, PyObject* args) {
     usize base{}, size{};
 
-    if(!PyArg_ParseTuple(args, "KK", &base, &size))
-        return nullptr;
+    if(!PyArg_ParseTuple(args, "KK", &base, &size)) return nullptr;
 
     return PyBool_FromLong(internal::memory_map_n(base, size));
 }
@@ -326,8 +318,7 @@ PyObject* memory_map_n(PyMemory* /*self*/, PyObject* args) {
 PyObject* memory_map(PyMemory* /*self*/, PyObject* args) {
     RDAddress startaddr{}, endaddr{};
 
-    if(!PyArg_ParseTuple(args, "KK", &startaddr, &endaddr))
-        return nullptr;
+    if(!PyArg_ParseTuple(args, "KK", &startaddr, &endaddr)) return nullptr;
 
     return PyBool_FromLong(internal::memory_map(startaddr, endaddr));
 }
@@ -336,8 +327,7 @@ PyObject* memory_copy(PyMemory* /*self*/, PyObject* args) {
     RDAddress address{};
     RDOffset start{}, end{};
 
-    if(!PyArg_ParseTuple(args, "KKK", &address, &start, &end))
-        return nullptr;
+    if(!PyArg_ParseTuple(args, "KKK", &address, &start, &end)) return nullptr;
 
     internal::memory_copy(address, start, end);
     Py_RETURN_NONE;
@@ -347,8 +337,7 @@ PyObject* memory_copy_n(PyMemory* /*self*/, PyObject* args) {
     RDAddress address{}, start{};
     usize size{};
 
-    if(!PyArg_ParseTuple(args, "KKK", &address, &start, &size))
-        return nullptr;
+    if(!PyArg_ParseTuple(args, "KKK", &address, &start, &size)) return nullptr;
 
     internal::memory_copy_n(address, start, size);
     Py_RETURN_NONE;
@@ -358,8 +347,7 @@ PySequenceMethods memory_sequence_methods = []() {
     PySequenceMethods seq{};
 
     seq.sq_length = [](PyObject*) -> Py_ssize_t {
-        if(!state::context->memory)
-            return 0;
+        if(!state::context->memory) return 0;
 
         return state::context->memory->size();
     };

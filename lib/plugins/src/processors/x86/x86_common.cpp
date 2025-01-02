@@ -4,24 +4,15 @@ namespace x86_common {
 
 std::optional<RDAddress> read_address(RDAddress address) {
     const RDProcessor* p = rd_getprocessor();
+    bool ok = false;
+    RDAddress val;
 
-    if(p->address_size == 8) {
-        u64 val;
+    if(p->address_size == 8)
+        val = rd_getu64(address, &ok);
+    else if(p->address_size == 4)
+        val = rd_getu32(address, &ok);
 
-        if(rd_getu64(address, &val))
-            return val;
-
-        return std::nullopt;
-    }
-
-    if(p->address_size == 4) {
-        u32 val;
-
-        if(rd_getu32(address, &val))
-            return val;
-    }
-
-    return std::nullopt;
+    return ok ? std::make_optional(val) : std::nullopt;
 }
 
 ZydisRegister get_sp() {

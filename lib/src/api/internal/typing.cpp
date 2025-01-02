@@ -20,6 +20,11 @@ typing::Value* create_value() {
     return nullptr;
 }
 
+void destroy_value(typing::Value* v) {
+    state::context->types.valuespool.remove_if(
+        [v](const typing::Value& x) { return v == &x; });
+}
+
 std::string type_name(RDType t) {
     if(state::context)
         return state::context->types.to_string(t);

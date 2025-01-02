@@ -21,25 +21,25 @@
  */
 
 // clang-format off
-template<int bits> struct ElfUnsignedT { };
+template<int Bits> struct ElfUnsignedT { };
 template<> struct ElfUnsignedT<32> { using type = u32; };
 template<> struct ElfUnsignedT<64> { using type = u64; };
 
-template<int bits> struct ElfSignedT { };
+template<int Bits> struct ElfSignedT { };
 template<> struct ElfSignedT<32> { using type = i32; };
 template<> struct ElfSignedT<64> { using type = i64; };
 
-template<int bits>
-auto elf_r_sym(typename ElfUnsignedT<bits>::type info) {
-    if constexpr(bits == 64)
+template<int Bits>
+auto elf_r_sym(typename ElfUnsignedT<Bits>::type info) {
+    if constexpr(Bits == 64)
         return info >> 32;
     else
         return info >> 8;
 }
 
-template<int bits>
-auto elf_r_type(typename ElfUnsignedT<bits>::type info) {
-    if constexpr(bits == 64)
+template<int Bits>
+auto elf_r_type(typename ElfUnsignedT<Bits>::type info) {
+    if constexpr(Bits == 64)
         return static_cast<u32>(info);
     else
         return static_cast<u8>(info);
@@ -59,15 +59,15 @@ struct ElfIdent {
     u8 pad[7];
 };
 
-template<int bits>
+template<int Bits>
 struct ElfEhdr {
     ElfIdent e_ident;
     u16 e_type;
     u16 e_machine;
     u32 e_version;
-    typename ElfUnsignedT<bits>::type e_entry;
-    typename ElfUnsignedT<bits>::type e_phoff;
-    typename ElfUnsignedT<bits>::type e_shoff;
+    typename ElfUnsignedT<Bits>::type e_entry;
+    typename ElfUnsignedT<Bits>::type e_phoff;
+    typename ElfUnsignedT<Bits>::type e_shoff;
     u32 e_flags;
     u16 e_ehsize;
     u16 e_phentsize;
@@ -99,21 +99,21 @@ struct Elf64Phdr {
     u64 p_align;
 };
 
-template<int bits>
-using ElfPhdr = std::conditional_t<bits == 64, Elf64Phdr, Elf32Phdr>;
+template<int Bits>
+using ElfPhdr = std::conditional_t<Bits == 64, Elf64Phdr, Elf32Phdr>;
 
-template<int bits>
+template<int Bits>
 struct ElfShdr {
     u32 sh_name;
     u32 sh_type;
-    typename ElfUnsignedT<bits>::type sh_flags;
-    typename ElfUnsignedT<bits>::type sh_addr;
-    typename ElfUnsignedT<bits>::type sh_offset;
-    typename ElfUnsignedT<bits>::type sh_size;
+    typename ElfUnsignedT<Bits>::type sh_flags;
+    typename ElfUnsignedT<Bits>::type sh_addr;
+    typename ElfUnsignedT<Bits>::type sh_offset;
+    typename ElfUnsignedT<Bits>::type sh_size;
     u32 sh_link;
     u32 sh_info;
-    typename ElfUnsignedT<bits>::type sh_addralign;
-    typename ElfUnsignedT<bits>::type sh_entsize;
+    typename ElfUnsignedT<Bits>::type sh_addralign;
+    typename ElfUnsignedT<Bits>::type sh_entsize;
 };
 
 struct Elf32Sym {
@@ -134,7 +134,20 @@ struct Elf64Sym {
     u64 st_size;
 };
 
-template<int bits>
-using ElfSym = std::conditional_t<bits == 64, Elf64Sym, Elf32Sym>;
+template<int Bits>
+using ElfSym = std::conditional_t<Bits == 64, Elf64Sym, Elf32Sym>;
+
+template<int Bits>
+struct ElfRel {
+    typename ElfUnsignedT<Bits>::type r_offset;
+    typename ElfUnsignedT<Bits>::type r_info;
+};
+
+template<int Bits>
+struct ElfRela {
+    typename ElfUnsignedT<Bits>::type r_offset;
+    typename ElfUnsignedT<Bits>::type r_info;
+    typename ElfSignedT<Bits>::type r_addend;
+};
 
 #pragma pack(pop)

@@ -40,8 +40,7 @@ bool is_punct(u8 b) { return std::ispunct(b); }
 bool init(const RDInitParams* params) {
     spdlog::trace("init({})", fmt::ptr(params));
 
-    if(initialized)
-        return true;
+    if(initialized) return true;
 
     initialized = true;
 
@@ -80,28 +79,24 @@ bool init(const RDInitParams* params) {
 void deinit() {
     spdlog::trace("deinit()");
 
-    if(!initialized)
-        return;
+    if(!initialized) return;
 
     initialized = false;
 
     for(RDAnalyzer& a : state::analyzers) {
-        if(a.free)
-            a.free(&a);
+        if(a.free) a.free(&a);
     }
 
     state::analyzers.clear();
 
     for(RDProcessor& p : state::processors) {
-        if(p.free)
-            p.free(&p);
+        if(p.free) p.free(&p);
     }
 
     state::processors.clear();
 
     for(RDLoader& l : state::loaders) {
-        if(l.free)
-            l.free(&l);
+        if(l.free) l.free(&l);
     }
 
     state::loaders.clear();
@@ -134,15 +129,13 @@ void add_searchpath(const std::string& sp) {
 void set_userdata(const std::string& k, uptr v) {
     spdlog::trace("set_userdata('{}', {:x})", k, v);
 
-    if(state::context)
-        state::context->set_userdata(k, v);
+    if(state::context) state::context->set_userdata(k, v);
 }
 
 tl::optional<uptr> get_userdata(const std::string& k) {
     spdlog::trace("get_userdata('{}')", k);
 
-    if(state::context)
-        return state::context->get_userdata(k);
+    if(state::context) return state::context->get_userdata(k);
 
     return tl::nullopt;
 }
@@ -157,8 +150,7 @@ void status(std::string_view s) { state::log(s); }
 
 std::string symbolize(std::string s) {
     for(char& ch : s) {
-        if(std::isalnum(ch) || ch == '_')
-            continue;
+        if(std::isalnum(ch) || ch == '_') continue;
 
         ch = '_';
     }
@@ -224,8 +216,7 @@ void select(RDContext* context) {
     while(!state::contextlist.empty()) {
         Context* c = state::contextlist.back();
         state::contextlist.pop_back();
-        if(c != ctx)
-            delete c;
+        if(c != ctx) delete c;
     }
 }
 
@@ -233,8 +224,7 @@ void free(void* obj) { delete reinterpret_cast<redasm::Object*>(obj); }
 
 bool destroy() {
     spdlog::trace("destroy()");
-    if(!state::context)
-        return false;
+    if(!state::context) return false;
 
     delete state::context;
     state::context = nullptr;
@@ -254,8 +244,7 @@ void discard() {
 bool tick(const RDWorkerStatus** s) {
     spdlog::trace("tick({})", fmt::ptr(s));
 
-    if(state::context)
-        return state::context->worker.execute(s);
+    if(state::context) return state::context->worker.execute(s);
 
     return false;
 }
@@ -263,8 +252,7 @@ bool tick(const RDWorkerStatus** s) {
 void disassemble() {
     spdlog::trace("disassemble()");
 
-    if(!state::context)
-        return;
+    if(!state::context) return;
 
     while(tick(nullptr))
         ;
@@ -273,8 +261,7 @@ void disassemble() {
 std::vector<RDAddress> get_entries() {
     spdlog::trace("get_entries()");
 
-    if(!state::context)
-        return {};
+    if(!state::context) return {};
 
     std::vector<RDAddress> entries;
     entries.reserve(state::context->entrypoints.size());
@@ -293,8 +280,7 @@ std::vector<RDProblem> get_problems() {
 
     Context* ctx = state::context;
 
-    if(!ctx)
-        return {};
+    if(!ctx) return {};
 
     std::vector<RDProblem> res;
     res.reserve(ctx->problems.size());
@@ -305,50 +291,9 @@ std::vector<RDProblem> get_problems() {
     return res;
 }
 
-usize get_segments(const RDSegment** segments) {
-    spdlog::trace("get_segments()");
-
-    static std::vector<RDSegment> res;
-
-    if(segments) {
-        const Context* ctx = state::context;
-        res.resize(ctx->segments.size());
-
-        for(usize i = 0; i < ctx->segments.size(); i++)
-            res[i] = api::to_c(ctx->segments[i]);
-
-        *segments = res.data();
-    }
-
-    return state::context->segments.size();
-}
-
-bool find_segment(RDAddress address, RDSegment* segment) {
-    spdlog::trace("find_segment()");
-
-    auto idx = state::context->address_to_index(address);
-    if(!idx)
-        return false;
-
-    const Context* ctx = state::context;
-
-    for(const Segment& s : ctx->segments) {
-        if(s.index < *idx || *idx >= s.endoffset)
-            continue;
-
-        if(segment)
-            *segment = api::to_c(s);
-
-        return true;
-    }
-
-    return false;
-}
-
 std::vector<RDRef> get_refsfrom(RDAddress fromaddr) {
     spdlog::trace("get_refsfrom({})", fromaddr);
-    if(!state::context)
-        return {};
+    if(!state::context) return {};
 
     return state::context->address_to_index(fromaddr).map_or(
         [](MIndex x) { return api::to_c(state::context->get_refs_from(x)); },
@@ -357,8 +302,7 @@ std::vector<RDRef> get_refsfrom(RDAddress fromaddr) {
 
 std::vector<RDRef> get_refsfromtype(RDAddress fromaddr, usize type) {
     spdlog::trace("get_refsfromtype({}, {})", fromaddr, type);
-    if(!state::context)
-        return {};
+    if(!state::context) return {};
 
     return state::context->address_to_index(fromaddr).map_or(
         [type](MIndex x) {
@@ -369,8 +313,7 @@ std::vector<RDRef> get_refsfromtype(RDAddress fromaddr, usize type) {
 
 std::vector<RDRef> get_refsto(RDAddress toaddr) {
     spdlog::trace("get_refsto({})", toaddr);
-    if(!state::context)
-        return {};
+    if(!state::context) return {};
 
     return state::context->address_to_index(toaddr).map_or(
         [](MIndex x) { return api::to_c(state::context->get_refs_to(x)); },
@@ -379,8 +322,7 @@ std::vector<RDRef> get_refsto(RDAddress toaddr) {
 
 std::vector<RDRef> get_refstotype(RDAddress toaddr, usize type) {
     spdlog::trace("get_refstotype({}, {})", toaddr, type);
-    if(!state::context)
-        return {};
+    if(!state::context) return {};
 
     return state::context->address_to_index(toaddr).map_or(
         [type](MIndex x) {
@@ -394,54 +336,15 @@ usize get_bytes(const RDByte** bytes) {
 
     const auto& m = state::context->memory;
 
-    if(!m)
-        return 0;
+    if(!m) return 0;
 
-    if(bytes)
-        *bytes = api::to_c(m->data());
+    if(bytes) *bytes = api::to_c(m->data());
 
     return m->size();
 }
 
-bool map_segment(const std::string& name, RDAddress address,
-                 RDAddress endaddress, RDOffset offset, RDOffset endoffset,
-                 usize type) {
-    spdlog::trace("map_segment('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
-                  address, endaddress, offset, endoffset, type);
-
-    MIndex startidx = address - state::context->baseaddress;
-    MIndex endidx = endaddress - state::context->baseaddress;
-    state::context->map_segment(name, startidx, endidx, offset, endoffset,
-                                type);
-    return true;
-}
-
-bool map_segment_n(const std::string& name, RDAddress address, usize asize,
-                   RDOffset offset, usize osize, usize type) {
-    spdlog::trace("map_segment_n('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
-                  address, asize, offset, osize, type);
-
-    MIndex startidx = address - state::context->baseaddress;
-    MIndex endidx = (address + asize) - state::context->baseaddress;
-    state::context->map_segment(name, startidx, endidx, offset, offset + osize,
-                                type);
-    return true;
-}
-
-bool set_name_ex(RDAddress address, const std::string& name, usize flags) {
-    spdlog::trace("set_nameex({:x}, '{}', {:x})", address, name, flags);
-
-    if(!state::context)
-        return false;
-
-    return state::context->address_to_index(address).map_or(
-        [&](MIndex idx) { return state::context->set_name(idx, name, flags); },
-        false);
-}
-
 tl::optional<RDAddress> get_address(std::string_view name) {
-    if(!state::context)
-        return tl::nullopt;
+    if(!state::context) return tl::nullopt;
 
     return state::context->get_index(name).and_then(
         [](MIndex idx) { return state::context->index_to_address(idx); });
@@ -459,8 +362,7 @@ std::string get_comment(RDAddress address) {
 std::string get_name(RDAddress address) {
     spdlog::trace("get_name({:x})", address);
 
-    if(!state::context)
-        return {};
+    if(!state::context) return {};
 
     if(auto idx = state::context->address_to_index(address); idx)
         return state::context->get_name(*idx);
@@ -468,31 +370,14 @@ std::string get_name(RDAddress address) {
     return {};
 }
 
-std::string render_text(RDAddress address) {
-    auto idx = state::context->address_to_index(address);
-    if(!idx)
-        return {};
+bool set_name_ex(RDAddress address, const std::string& name, usize flags) {
+    spdlog::trace("set_nameex({:x}, '{}', {:x})", address, name, flags);
 
-    auto it = state::context->listing.lower_bound(*idx);
+    if(!state::context) return false;
 
-    // Find first code item
-    while(it != state::context->listing.end() && it->index == *idx) {
-        if(it->type == LISTINGITEM_INSTRUCTION)
-            break;
-
-        it++;
-    }
-
-    if(it == state::context->listing.end() || it->index != *idx)
-        return {};
-
-    LIndex lidx = std::distance(state::context->listing.cbegin(), it);
-
-    Surface s{SURFACE_TEXT};
-    s.seek(lidx);
-    s.render(1);
-
-    return std::string{s.get_text()};
+    return state::context->address_to_index(address).map_or(
+        [&](MIndex idx) { return state::context->set_name(idx, name, flags); },
+        false);
 }
 
 tl::optional<typing::Value> set_type_ex(RDAddress address, const RDType* t,
@@ -518,22 +403,55 @@ set_typename_ex(RDAddress address, typing::FullTypeName tname, usize flags) {
     return tl::nullopt;
 }
 
+tl::optional<typing::Value> map_type(RDAddress address,
+                                     std::string_view tname) {
+    spdlog::trace("map_type({}, '{}')", address, tname);
+
+    auto idx = state::context->address_to_index(address);
+    if(!idx) return tl::nullopt;
+
+    usize sz = state::context->types.size_of(tname);
+    state::context->memory_copy(*idx, *idx, *idx + sz);
+
+    if(!state::context->set_type(*idx, tname, 0)) return tl::nullopt;
+
+    return state::context->memory->get_type(*idx, tname);
+}
+
+tl::optional<typing::Value> get_typename(RDAddress address,
+                                         std::string_view tname) {
+    spdlog::trace("get_typename({:x}, '{}')", address, tname);
+
+    if(auto idx = state::context->address_to_index(address); idx)
+        return internal::buffer_gettypename(
+            api::to_c(state::context->memory.get()), *idx, tname);
+
+    return tl::nullopt;
+}
+
+tl::optional<typing::Value> get_type(RDAddress address, const RDType* t) {
+    spdlog::trace("get_type({:x}, {})", address, fmt::ptr(t));
+
+    if(auto idx = state::context->address_to_index(address); idx)
+        return internal::buffer_gettype(api::to_c(state::context->memory.get()),
+                                        *idx, t);
+
+    return tl::nullopt;
+}
+
 tl::optional<typing::Value> map_type_ex(RDOffset offset, RDAddress address,
                                         const RDType* t, usize flags) {
     spdlog::trace("map_type_ex({:x}, {:x}, {}, {})", offset, address,
                   fmt::ptr(t), flags);
-    if(!t)
-        return tl::nullopt;
+    if(!t) return tl::nullopt;
 
     auto idx = state::context->address_to_index(address);
-    if(!idx)
-        return tl::nullopt;
+    if(!idx) return tl::nullopt;
 
     usize sz = state::context->types.size_of(*t);
     state::context->memory_copy(*idx, offset, offset + sz);
 
-    if(!state::context->set_type(*idx, *t, 0))
-        return tl::nullopt;
+    if(!state::context->set_type(*idx, *t, 0)) return tl::nullopt;
     return state::context->file->get_type(*idx, *t);
 }
 
@@ -544,14 +462,12 @@ tl::optional<typing::Value> map_typename_ex(RDOffset offset, RDAddress address,
                   tname, flags);
 
     auto idx = state::context->address_to_index(address);
-    if(!idx)
-        return tl::nullopt;
+    if(!idx) return tl::nullopt;
 
     usize sz = state::context->types.size_of(tname);
     state::context->memory_copy(*idx, offset, offset + sz);
 
-    if(!state::context->set_type(*idx, tname, 0))
-        return tl::nullopt;
+    if(!state::context->set_type(*idx, tname, 0)) return tl::nullopt;
     return state::context->file->get_type(*idx, tname);
 }
 
@@ -579,6 +495,92 @@ bool set_entry(RDAddress address, const std::string& name) {
         false);
 }
 
+std::string render_text(RDAddress address) {
+    auto idx = state::context->address_to_index(address);
+    if(!idx) return {};
+
+    auto it = state::context->listing.lower_bound(*idx);
+
+    // Find first code item
+    while(it != state::context->listing.end() && it->index == *idx) {
+        if(it->type == LISTINGITEM_INSTRUCTION) break;
+
+        it++;
+    }
+
+    if(it == state::context->listing.end() || it->index != *idx) return {};
+
+    LIndex lidx = std::distance(state::context->listing.cbegin(), it);
+
+    Surface s{SURFACE_TEXT};
+    s.seek(lidx);
+    s.render(1);
+
+    return std::string{s.get_text()};
+}
+
+usize get_segments(const RDSegment** segments) {
+    spdlog::trace("get_segments()");
+
+    static std::vector<RDSegment> res;
+
+    if(segments) {
+        const Context* ctx = state::context;
+        res.resize(ctx->segments.size());
+
+        for(usize i = 0; i < ctx->segments.size(); i++)
+            res[i] = api::to_c(ctx->segments[i]);
+
+        *segments = res.data();
+    }
+
+    return state::context->segments.size();
+}
+
+bool find_segment(RDAddress address, RDSegment* segment) {
+    spdlog::trace("find_segment()");
+
+    auto idx = state::context->address_to_index(address);
+    if(!idx) return false;
+
+    const Context* ctx = state::context;
+
+    for(const Segment& s : ctx->segments) {
+        if(s.index < *idx || *idx >= s.endoffset) continue;
+
+        if(segment) *segment = api::to_c(s);
+
+        return true;
+    }
+
+    return false;
+}
+
+bool map_segment(const std::string& name, RDAddress address,
+                 RDAddress endaddress, RDOffset offset, RDOffset endoffset,
+                 usize type) {
+    spdlog::trace("map_segment('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
+                  address, endaddress, offset, endoffset, type);
+
+    MIndex startidx = address - state::context->baseaddress;
+    MIndex endidx = endaddress - state::context->baseaddress;
+    state::context->map_segment(name, startidx, endidx, offset, endoffset,
+                                type);
+    return true;
+}
+
+bool map_segment_n(const std::string& name, RDAddress address, usize asize,
+                   RDOffset offset, usize osize, usize type) {
+    spdlog::trace("map_segment_n('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
+                  address, asize, offset, osize, type);
+
+    MIndex startidx = address - state::context->baseaddress;
+    MIndex endidx = (address + asize) - state::context->baseaddress;
+    state::context->map_segment(name, startidx, endidx, offset, offset + osize,
+                                type);
+    return true;
+}
+
 void add_ref(RDAddress fromaddr, RDAddress toaddr, usize type) {
     spdlog::trace("add_ref({:x}, {:x}, {})", fromaddr, toaddr, type);
 
@@ -586,8 +588,7 @@ void add_ref(RDAddress fromaddr, RDAddress toaddr, usize type) {
         auto fromidx = state::context->address_to_index(fromaddr);
         auto toidx = state::context->address_to_index(toaddr);
 
-        if(fromidx && toidx)
-            state::context->add_ref(*fromidx, *toidx, type);
+        if(fromidx && toidx) state::context->add_ref(*fromidx, *toidx, type);
     }
 }
 
@@ -600,25 +601,17 @@ void add_problem(RDAddress address, const std::string& problem) {
     }
 }
 
-bool is_address(RDAddress address) {
-    spdlog::trace("is_address({:x})", address);
-    const Context* ctx = state::context;
-    return ctx && ctx->is_address(address);
-}
-
 bool address_to_segment(RDAddress address, RDSegment* res) {
     spdlog::trace("address_to_segment({:x}, {})", address, fmt::ptr(res));
     usize idx = address - state::context->baseaddress;
-    if(idx >= state::context->memory->size())
-        return {};
+    if(idx >= state::context->memory->size()) return {};
 
     const Context* ctx = state::context;
 
     return std::any_of(ctx->segments.begin(), ctx->segments.end(),
                        [&](const Segment& s) {
                            if(idx >= s.index && idx < s.endindex) {
-                               if(res)
-                                   *res = api::to_c(s);
+                               if(res) *res = api::to_c(s);
                                return true;
                            }
 
@@ -628,16 +621,14 @@ bool address_to_segment(RDAddress address, RDSegment* res) {
 
 bool offset_to_segment(RDOffset offset, RDSegment* res) {
     spdlog::trace("offset_to_segment({:x}, {})", offset, fmt::ptr(res));
-    if(offset >= state::context->file->size())
-        return {};
+    if(offset >= state::context->file->size()) return {};
 
     const Context* ctx = state::context;
 
     return std::any_of(ctx->segments.begin(), ctx->segments.end(),
                        [&](const Segment& s) {
                            if(offset >= s.offset && offset < s.endoffset) {
-                               if(res)
-                                   *res = api::to_c(s);
+                               if(res) *res = api::to_c(s);
                                return true;
                            }
 
@@ -647,8 +638,7 @@ bool offset_to_segment(RDOffset offset, RDSegment* res) {
 
 tl::optional<RDOffset> to_offset(RDAddress address) {
     spdlog::trace("to_offset({:x})", address);
-    if(!state::context)
-        return tl::nullopt;
+    if(!state::context) return tl::nullopt;
 
     usize idx = address - state::context->baseaddress;
     if(idx < state::context->memory->size())
@@ -659,11 +649,9 @@ tl::optional<RDOffset> to_offset(RDAddress address) {
 
 tl::optional<RDAddress> to_address(RDOffset offset) {
     spdlog::trace("to_address({:x})", offset);
-    if(!state::context)
-        return tl::nullopt;
+    if(!state::context) return tl::nullopt;
 
-    if(offset >= state::context->file->size())
-        return {};
+    if(offset >= state::context->file->size()) return {};
 
     RDAddress address = state::context->baseaddress + offset;
 
@@ -680,8 +668,7 @@ tl::optional<RDAddress> to_address(RDOffset offset) {
 
 tl::optional<RDAddress> from_reladdress(RDAddress reladdress) {
     spdlog::trace("from_reladdress({:x})", reladdress);
-    if(!state::context)
-        return tl::nullopt;
+    if(!state::context) return tl::nullopt;
 
     RDAddress address = state::context->baseaddress + reladdress;
 
@@ -692,190 +679,15 @@ tl::optional<RDAddress> from_reladdress(RDAddress reladdress) {
     return tl::nullopt;
 }
 
-tl::optional<bool> get_bool(RDAddress address) {
-    spdlog::trace("get_bool({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_getbool(api::to_c(state::context->memory.get()),
-                                        *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<char> get_char(RDAddress address) {
-    spdlog::trace("get_char({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_getchar(api::to_c(state::context->memory.get()),
-                                        *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<u8> get_u8(RDAddress address) {
-    spdlog::trace("get_u8({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_getu8(api::to_c(state::context->memory.get()),
-                                      *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<u16> get_u16(RDAddress address) {
-    spdlog::trace("get_u16({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_getu16(api::to_c(state::context->memory.get()),
-                                       *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<u32> get_u32(RDAddress address) {
-    spdlog::trace("get_u32({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_getu32(api::to_c(state::context->memory.get()),
-                                       *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<u64> get_u64(RDAddress address) {
-    spdlog::trace("get_u64({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_getu64(api::to_c(state::context->memory.get()),
-                                       *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<i8> get_i8(RDAddress address) {
-    spdlog::trace("get_i8({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_geti8(api::to_c(state::context->memory.get()),
-                                      *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<i16> get_i16(RDAddress address) {
-    spdlog::trace("get_i16({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_geti16(api::to_c(state::context->memory.get()),
-                                       *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<i32> get_i32(RDAddress address) {
-    spdlog::trace("get_i32({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_geti32(api::to_c(state::context->memory.get()),
-                                       *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<i64> get_i64(RDAddress address) {
-    spdlog::trace("get_i64({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_geti64(api::to_c(state::context->memory.get()),
-                                       *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<u16> get_u16be(RDAddress address) {
-    spdlog::trace("get_u16be({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_getu16be(
-            api::to_c(state::context->memory.get()), *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<u32> get_u32be(RDAddress address) {
-    spdlog::trace("get_u32be({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_getu32be(
-            api::to_c(state::context->memory.get()), *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<u64> get_u64be(RDAddress address) {
-    spdlog::trace("get_u64be({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_getu64be(
-            api::to_c(state::context->memory.get()), *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<i16> get_i16be(RDAddress address) {
-    spdlog::trace("get_i16be({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_geti16be(
-            api::to_c(state::context->memory.get()), *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<i32> get_i32be(RDAddress address) {
-    spdlog::trace("get_i32be({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_geti32be(
-            api::to_c(state::context->memory.get()), *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<i64> get_i64be(RDAddress address) {
-    spdlog::trace("get_i64be({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_geti64be(
-            api::to_c(state::context->memory.get()), *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<std::string> get_strz(RDAddress address) {
-    spdlog::trace("get_strz({:x})", address);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_getstrz(api::to_c(state::context->memory.get()),
-                                        *idx);
-
-    return tl::nullopt;
-}
-
-tl::optional<std::string> get_str(RDAddress address, usize n) {
-    spdlog::trace("get_str({:x}, {})", address, n);
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_getstr(api::to_c(state::context->memory.get()),
-                                       *idx, n);
-
-    return tl::nullopt;
-}
-
-tl::optional<typing::Value> get_type(RDAddress address,
-                                     std::string_view tname) {
-    spdlog::trace("get_type({:x}, '{}')", address, tname);
-
-    if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_gettype(api::to_c(state::context->memory.get()),
-                                        *idx, tname);
-
-    return tl::nullopt;
-}
-
 tl::optional<usize> address_to_index(RDAddress address) {
     spdlog::trace("address_to_index({:x})", address);
-    if(!state::context)
-        return tl::nullopt;
+    if(!state::context) return tl::nullopt;
     return state::context->address_to_index(address);
 }
 
 tl::optional<RDAddress> index_to_address(usize idx) {
     spdlog::trace("index_to_address({})", idx);
-    if(!state::context)
-        return tl::nullopt;
+    if(!state::context) return tl::nullopt;
     return state::context->index_to_address(idx);
 }
 

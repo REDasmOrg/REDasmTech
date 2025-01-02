@@ -85,31 +85,6 @@ REDASM_EXPORT usize rd_getsegments(const RDSegment** segments);
 REDASM_EXPORT usize rd_getbytes(const RDByte** bytes);
 REDASM_EXPORT const char* rd_rendertext(RDAddress address);
 
-REDASM_EXPORT bool rd_mapsegment(const char* name, RDAddress address,
-                                 RDAddress endaddress, RDOffset offset,
-                                 RDOffset endoffset, usize type);
-
-REDASM_EXPORT bool rd_mapsegment_n(const char* name, RDAddress address,
-                                   usize asize, RDOffset offset, usize osize,
-                                   usize type);
-
-REDASM_EXPORT bool rd_getbool(RDAddress address, bool* v);
-REDASM_EXPORT bool rd_getchar(RDAddress address, char* v);
-REDASM_EXPORT bool rd_getu8(RDAddress address, u8* v);
-REDASM_EXPORT bool rd_getu16(RDAddress address, u16* v);
-REDASM_EXPORT bool rd_getu32(RDAddress address, u32* v);
-REDASM_EXPORT bool rd_getu64(RDAddress address, u64* v);
-REDASM_EXPORT bool rd_geti8(RDAddress address, i8* v);
-REDASM_EXPORT bool rd_geti16(RDAddress address, i16* v);
-REDASM_EXPORT bool rd_geti32(RDAddress address, i32* v);
-REDASM_EXPORT bool rd_geti64(RDAddress address, i64* v);
-REDASM_EXPORT bool rd_getu16be(RDAddress address, u16* v);
-REDASM_EXPORT bool rd_getu32be(RDAddress address, u32* v);
-REDASM_EXPORT bool rd_getu64be(RDAddress address, u64* v);
-REDASM_EXPORT bool rd_geti16be(RDAddress address, i16* v);
-REDASM_EXPORT bool rd_geti32be(RDAddress address, i32* v);
-REDASM_EXPORT bool rd_geti64be(RDAddress address, i64* v);
-REDASM_EXPORT bool rd_gettype(RDAddress address, const char* tname, RDValue* v);
 REDASM_EXPORT usize rd_getentries(RDAddress** entries);
 REDASM_EXPORT bool rd_tick(const RDWorkerStatus** s);
 
@@ -147,6 +122,18 @@ REDASM_EXPORT bool rd_setname(RDAddress address, const char* name);
 REDASM_EXPORT bool rd_setname_ex(RDAddress address, const char* name,
                                  usize flags);
 
+REDASM_EXPORT bool rd_gettypename(RDAddress address, const char* tname,
+                                  RDValue* v);
+REDASM_EXPORT bool rd_gettype(RDAddress address, const RDType* t, RDValue* v);
+
+REDASM_EXPORT bool rd_mapsegment(const char* name, RDAddress address,
+                                 RDAddress endaddress, RDOffset offset,
+                                 RDOffset endoffset, usize type);
+
+REDASM_EXPORT bool rd_mapsegment_n(const char* name, RDAddress address,
+                                   usize asize, RDOffset offset, usize osize,
+                                   usize type);
+
 REDASM_EXPORT bool rd_getaddress(const char* name, RDAddress* address);
 REDASM_EXPORT const char* rd_getname(RDAddress address);
 REDASM_EXPORT const char* rd_getcomment(RDAddress address);
@@ -161,7 +148,6 @@ REDASM_EXPORT bool rd_offsettosegment(RDOffset offset, RDSegment* s);
 REDASM_EXPORT bool rd_addresstooffset(RDAddress address, RDOffset* offset);
 REDASM_EXPORT bool rd_addresstoindex(RDAddress address, MIndex* index);
 REDASM_EXPORT bool rd_offsettoaddress(RDOffset offset, RDAddress* address);
-REDASM_EXPORT bool rd_isaddress(RDAddress address);
 
 REDASM_EXPORT void rdplugin_init(void);
 REDASM_EXPORT void rdplugin_free(void);

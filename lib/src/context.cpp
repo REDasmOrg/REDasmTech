@@ -87,13 +87,11 @@ bool Context::activate() {
     if(this->loader->init && this->loader->init(this->loader)) {
         for(const RDAnalyzer& a : state::analyzers) {
             // Assume true if 'isenabled' is not implemented
-            if(a.isenabled && !a.isenabled(&a))
-                continue;
+            if(a.isenabled && !a.isenabled(&a)) continue;
 
             this->analyzers.push_back(a); // Take a copy of the analyzer
 
-            if(a.flags & ANA_SELECTED)
-                this->selectedanalyzers.insert(a.name);
+            if(a.flags & ANA_SELECTED) this->selectedanalyzers.insert(a.name);
         }
 
         this->worker.emulator.setup();
@@ -123,8 +121,7 @@ bool Context::set_entry(MIndex idx, const std::string& name) {
     if(const Segment* s = this->index_to_segment(idx); s) {
         this->memory->set(idx, BF_EXPORT);
 
-        if(s->type & SEG_HASCODE)
-            assume(this->set_function(idx, 0));
+        if(s->type & SEG_HASCODE) assume(this->set_function(idx, 0));
 
         this->set_name(idx, name, 0);
         this->entrypoints.push_back(idx);
@@ -202,8 +199,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
 }
 
 bool Context::set_comment(MIndex idx, std::string_view comment) {
-    if(idx >= this->memory->size())
-        return false;
+    if(idx >= this->memory->size()) return false;
 
     this->m_database.set_comment(idx, comment);
     this->memory->at(idx).set_flag(BF_COMMENT, !comment.empty());
@@ -285,19 +281,16 @@ bool Context::memory_map(RDAddress base, usize size) {
 }
 
 tl::optional<MIndex> Context::address_to_index(RDAddress address) const {
-    if(address < this->baseaddress)
-        return tl::nullopt;
+    if(address < this->baseaddress) return tl::nullopt;
 
     usize idx = address - this->baseaddress;
-    if(idx >= this->memory->size())
-        return tl::nullopt;
+    if(idx >= this->memory->size()) return tl::nullopt;
 
     return idx;
 }
 
 tl::optional<RDAddress> Context::index_to_address(MIndex index) const {
-    if(index > this->memory->size())
-        return tl::nullopt;
+    if(index > this->memory->size()) return tl::nullopt;
     return this->baseaddress + index;
 }
 
@@ -313,12 +306,10 @@ tl::optional<RDOffset> Context::index_to_offset(MIndex index) const {
 }
 
 const Segment* Context::index_to_segment(MIndex index) const {
-    if(index >= this->memory->size())
-        return nullptr;
+    if(index >= this->memory->size()) return nullptr;
 
     const Segment* ls = m_lastsegment;
-    if(ls && (index >= ls->index && index < ls->endindex))
-        return ls;
+    if(ls && (index >= ls->index && index < ls->endindex)) return ls;
 
     for(const Segment& s : this->segments) {
         if(index >= s.index && index < s.endindex) {
@@ -331,12 +322,10 @@ const Segment* Context::index_to_segment(MIndex index) const {
 }
 
 const Function* Context::index_to_function(usize index) const {
-    if(index >= this->memory->size())
-        return nullptr;
+    if(index >= this->memory->size()) return nullptr;
 
     for(const Function& f : this->functions) {
-        if(f.contains(index))
-            return &f;
+        if(f.contains(index)) return &f;
     }
 
     return nullptr;
@@ -424,8 +413,7 @@ tl::optional<RDType> Context::get_type(MIndex idx) const {
         return tl::nullopt;
     }
 
-    if(this->memory->at(idx).has(BF_TYPE))
-        return m_database.get_type(idx);
+    if(this->memory->at(idx).has(BF_TYPE)) return m_database.get_type(idx);
 
     return tl::nullopt;
 }
@@ -439,8 +427,7 @@ std::string Context::get_name(MIndex idx) const {
     Byte b = this->memory->at(idx);
     std::string name;
 
-    if(b.has(BF_NAME))
-        name = m_database.get_name(idx);
+    if(b.has(BF_NAME)) name = m_database.get_name(idx);
 
     if(name.empty()) {
         std::string prefix = "loc";
@@ -557,8 +544,7 @@ std::string Context::to_hex(usize v, int n) const {
         v >>= 4;
     }
 
-    if(hexstr.empty())
-        hexstr = "0";
+    if(hexstr.empty()) hexstr = "0";
     while(hexstr.size() < static_cast<usize>(n))
         hexstr.insert(0, 1, '0');
     return hexstr;

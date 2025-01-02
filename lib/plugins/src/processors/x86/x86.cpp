@@ -42,8 +42,7 @@ void apply_optype(const ZydisDecodedOperand& zop, RDOperand& op) {
         default: op.dtype = {}; return;
     }
 
-    if(op.dtype.id && zop.element_count > 1)
-        op.dtype.n = zop.element_count;
+    if(op.dtype.id && zop.element_count > 1) op.dtype.n = zop.element_count;
 }
 
 bool is_branch_instruction(const RDInstruction* instr) {
@@ -83,7 +82,7 @@ X86Processor::X86Processor(usize bits) {
 }
 
 void X86Processor::decode(RDInstruction* instr) {
-    usize n = rd_memoryread(instr->address, m_dbuffer.data(), m_dbuffer.size());
+    usize n = rd_read(instr->address, m_dbuffer.data(), m_dbuffer.size());
 
     ZydisDecodedInstruction zinstr;
     std::array<ZydisDecodedOperand, ZYDIS_MAX_OPERAND_COUNT> zops;
@@ -117,8 +116,7 @@ void X86Processor::decode(RDInstruction* instr) {
 
     for(auto i = 0, j = 0; i < zinstr.operand_count; i++) {
         const ZydisDecodedOperand& zop = zops[i];
-        if(zop.visibility == ZYDIS_OPERAND_VISIBILITY_HIDDEN)
-            continue;
+        if(zop.visibility == ZYDIS_OPERAND_VISIBILITY_HIDDEN) continue;
 
         RDOperand& op = instr->operands[j++];
         apply_optype(zop, op);
@@ -213,8 +211,7 @@ void render_instruction(const RDProcessor* /*self*/, RDRenderer* r,
     }
 
     foreach_operand(i, op, instr) {
-        if(i > 0)
-            rdrenderer_text(r, ", ");
+        if(i > 0) rdrenderer_text(r, ", ");
 
         switch(op->type) {
             case OP_ADDR: rdrenderer_addr(r, op->addr); break;
@@ -293,13 +290,11 @@ void emulate(const RDProcessor* /*self*/, RDEmulator* e,
             case OP_MEM: {
                 if(instr->features & IF_JUMP) {
                     auto addr = x86_common::read_address(op->mem);
-                    if(addr)
-                        rdemulator_addref(e, *addr, CR_JUMP);
+                    if(addr) rdemulator_addref(e, *addr, CR_JUMP);
                 }
                 else if(instr->features & IF_CALL) {
                     auto addr = x86_common::read_address(op->mem);
-                    if(addr)
-                        rdemulator_addref(e, *addr, CR_CALL);
+                    if(addr) rdemulator_addref(e, *addr, CR_CALL);
                 }
 
                 rdemulator_addref(e, op->mem, DR_READ);
@@ -350,11 +345,9 @@ void rdplugin_init() {
 }
 
 void rdplugin_free() {
-    if(x86_32.userdata)
-        delete reinterpret_cast<X86Processor*>(x86_32.userdata);
+    if(x86_32.userdata) delete reinterpret_cast<X86Processor*>(x86_32.userdata);
 
-    if(x86_64.userdata)
-        delete reinterpret_cast<X86Processor*>(x86_64.userdata);
+    if(x86_64.userdata) delete reinterpret_cast<X86Processor*>(x86_64.userdata);
 
     x86_32.userdata = nullptr;
     x86_64.userdata = nullptr;

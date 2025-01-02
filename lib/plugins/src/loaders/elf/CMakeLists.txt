@@ -7,9 +7,8 @@ add_library(${PROJECT_NAME} SHARED)
 target_sources(${PROJECT_NAME} 
     PRIVATE
         elf.cpp
-        elf_state.cpp
         elf_types.cpp
-        elf_sections.cpp
+        elf_format.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

@@ -1,7 +1,5 @@
 #include "elf_common.h"
-#include "elf_header.h"
-#include "elf_sections.h"
-#include "elf_state.h"
+#include "elf_format.h"
 #include "elf_types.h"
 #include <redasm/redasm.h>
 #include <string>
@@ -24,112 +22,78 @@
 
 namespace {
 
-template<int bits>
-void map_memory(const std::vector<ElfPhdr<bits>>& phdr, usize& phdridx) {
-    RDAddress start = -1ULL, end = 0;
+template<int Bits>
+bool load_elf() {
+    using ELF = ElfFormat<Bits>;
+    ELF elf{};
+    RDBuffer* file = rdbuffer_getfile();
 
-    for(usize i = 0; i < phdr.size(); i++) {
-        const auto& p = phdr[i];
-
-        switch(p.p_type) {
-            case PT_LOAD: {
-                start = std::min<RDAddress>(start, p.p_vaddr);
-
-                u64 asize = p.p_memsz; // Align size
-                if(usize diff = asize % p.p_align; diff)
-                    asize += (p.p_align - diff);
-
-                RDAddress pend = p.p_vaddr + asize;
-                end = std::max<RDAddress>(end, pend);
-                break;
-            }
-
-            case PT_PHDR: phdridx = i; break;
-            default: break;
-        }
-    }
-
-    rd_map(start, end);
-}
-
-template<int bits>
-bool load_elf(ElfState& s) {
-    ElfEhdr<bits> ehdr;
-    if(!rdbuffer_read(s.file, 0, &ehdr, sizeof(ehdr)) ||
-       (ehdr.e_shstrndx && ehdr.e_shstrndx >= ehdr.e_shnum))
+    if(!rdbuffer_read(file, 0, &elf.ehdr, sizeof(typename ELF::EHDR)) ||
+       (elf.ehdr.e_shstrndx && elf.ehdr.e_shstrndx >= elf.ehdr.e_shnum))
         return false;
 
-    std::vector<ElfPhdr<bits>> phdr(ehdr.e_phnum);
-    if(!rdbuffer_read(s.file, ehdr.e_phoff, phdr.data(),
-                      sizeof(ElfPhdr<bits>) * phdr.size()))
+    elf.phdr.resize(elf.ehdr.e_phnum);
+    elf.shdr.resize(elf.ehdr.e_shnum);
+
+    if(!rdbuffer_read(file, elf.ehdr.e_phoff, elf.phdr.data(),
+                      sizeof(typename ELF::PHDR) * elf.phdr.size()) ||
+       !rdbuffer_read(file, elf.ehdr.e_shoff, elf.shdr.data(),
+                      sizeof(typename ELF::SHDR) * elf.shdr.size()))
         return false;
 
-    std::vector<ElfShdr<bits>> shdr(ehdr.e_shnum);
-    if(!rdbuffer_read(s.file, ehdr.e_shoff, shdr.data(),
-                      sizeof(ElfShdr<bits>) * shdr.size()))
-        return false;
+    usize phdridx = elf.map_memory();
+    elf.set_processor();
 
-    usize phdridx = phdr.size();
-    map_memory<bits>(phdr, phdridx);
-    elf_state::set_processor(s, ehdr.e_machine, ehdr.e_flags);
-
-    // Search string tables
-    for(usize i = 0; i < shdr.size(); i++) {
-        const auto& seg = shdr[i];
-
-        if(seg.sh_type == SHT_STRTAB)
-            s.shstrings[i] = seg.sh_offset;
-    }
-
-    for(usize i = 0; i < shdr.size(); i++) {
-        const auto& seg = shdr[i];
-
-        if(!(seg.sh_flags & SHF_ALLOC)) {
-            elf_sections::parse_offset(s, seg.sh_type, seg.sh_offset,
-                                       seg.sh_size, seg.sh_link);
-            continue;
-        }
-
-        std::string name = elf_state::get_string(
-            s, seg.sh_name, ehdr.e_shstrndx, "seg_" + std::to_string(i));
+    // Map sections
+    for(usize i = 0; i < elf.shdr.size(); i++) {
+        const auto& seg = elf.shdr[i];
+        RDOffset offset = seg.sh_offset, offsize = seg.sh_size;
         usize type = SEG_UNKNOWN;
-        RDOffset offset = seg.sh_offset;
-        usize size = seg.sh_size;
+
+        std::string name = elf.get_str(seg.sh_name, elf.ehdr.e_shstrndx,
+                                       "seg_" + std::to_string(i));
 
         switch(seg.sh_type) {
             case SHT_PROGBITS:
                 type = seg.sh_flags & SHF_EXECINSTR ? SEG_HASCODE : SEG_HASDATA;
                 break;
 
-            case SHT_NOBITS: offset = size = 0; break;
+            case SHT_NOBITS: offset = offsize = 0; [[fallthrough]];
             default: type = SEG_HASDATA; break;
         }
 
-        rd_mapsegment_n(name.c_str(), seg.sh_addr, size, offset, size, type);
-        elf_sections::parse_address(s, name, seg.sh_type, seg.sh_addr, size,
-                                    seg.sh_link);
+        rd_mapsegment_n(name.c_str(), seg.sh_addr, seg.sh_size, offset, offsize,
+                        type);
     }
 
-    if(phdridx < phdr.size()) { // Map ELF_ProgramHeader
+    // Process sections (separate steps in order to fix out of order links)
+    for(usize i = 0; i < elf.shdr.size(); i++) {
+        const auto& seg = elf.shdr[i];
+
+        if(seg.sh_flags & SHF_ALLOC)
+            elf.parse_section_address(i);
+        else
+            elf.parse_section_offset(i);
+    }
+
+    if(phdridx < elf.phdr.size()) { // Map ELF_ProgramHeader
         RDType t;
-        if(rd_createtype_n("ELF_PHDR", phdr.size(), &t))
-            rd_maptype(ehdr.e_phoff, phdr[phdridx].p_vaddr, &t);
+        rdtype_create_n("ELF_PHDR", elf.phdr.size(), &t);
+        rd_maptype(elf.ehdr.e_phoff, elf.phdr[phdridx].p_vaddr, &t);
     }
 
-    rd_setentry(ehdr.e_entry, "_ELF_EntryPoint_");
+    rd_setentry(elf.ehdr.e_entry, "ELF_EntryPoint");
     return true;
 }
 
 bool init(RDLoader*) {
-    ElfState s{};
-    if(!elf_state::validate(s))
-        return false;
+    ElfIdent ident;
+    if(!elf_format::validate(ident)) return false;
+    elf_types::register_all(ident);
 
-    elf_types::register_all(s);
-
-    switch(s.bits()) {
-        case 32: return load_elf<32>(s);
-        case 64: return load_elf<64>(s);
+    switch(elf_format::get_bits(ident)) {
+        case 32: return load_elf<32>();
+        case 64: return load_elf<64>();
         default: break;
     }
 
