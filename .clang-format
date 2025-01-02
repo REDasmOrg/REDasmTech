@@ -10,7 +10,7 @@ AllowShortEnumsOnASingleLine: true
 AllowShortCaseLabelsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: All
 AllowShortBlocksOnASingleLine: Never
-AllowShortIfStatementsOnASingleLine: Never
+AllowShortIfStatementsOnASingleLine: true
 AlwaysBreakTemplateDeclarations: Yes
 SpaceBeforeCtorInitializerColon: false
 SpaceBeforeInheritanceColon: false
