@@ -71,15 +71,13 @@ bool Worker::execute(const RDWorkerStatus** s) {
         m_status->listingchanged = true;
     }
 
-    if(s)
-        *s = m_status.get();
+    if(s) *s = m_status.get();
 
     return m_status->busy;
 }
 
 void Worker::execute(usize step) {
-    if(step == m_currentstep)
-        return;
+    if(step == m_currentstep) return;
 
     m_currentstep = step;
     this->execute(nullptr);
@@ -119,8 +117,7 @@ void Worker::analyze_step() {
     m_status->listingchanged = true;
 
     for(const RDAnalyzer& a : state::context->analyzers) {
-        if((a.flags & ANA_RUNONCE) && (m_analyzerruns[a.name] > 0))
-            continue;
+        if((a.flags & ANA_RUNONCE) && (m_analyzerruns[a.name] > 0)) continue;
 
         m_analyzerruns[a.name]++;
 
@@ -145,8 +142,7 @@ void Worker::mergecode_step() {
     const auto& mem = ctx->memory;
 
     for(const Segment& seg : ctx->segments) {
-        if(!(seg.type & SEG_HASCODE) || seg.offset == seg.endoffset)
-            continue;
+        if(!(seg.type & SEG_HASCODE) || seg.offset == seg.endoffset) continue;
 
         usize idx = seg.index;
 
@@ -181,13 +177,17 @@ void Worker::mergedata_step() {
 
         if(lastb.is_unknown() && !lastb.has(BF_REFSTO | BF_REFSFROM)) {
             usize startidx = idx++;
+            const Segment* startseg = ctx->index_to_segment(idx);
 
             while(idx < mem->size()) {
+                const Segment* seg = ctx->index_to_segment(idx);
+                // Don't merge different/invalid segments
+                if(startseg != seg) break;
+
                 Byte b = mem->at(idx);
 
-                // Don't merge inter-segment bytes
-                if((idx > startidx && b.has(BF_SEGMENT)) || !b.is_unknown() ||
-                   b.has_common() || (b.has_byte() != lastb.has_byte()) ||
+                if(!b.is_unknown() || b.has_common() ||
+                   (b.has_byte() != lastb.has_byte()) ||
                    (b.has_byte() && (b.byte() != lastb.byte())))
                     break;
 
