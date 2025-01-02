@@ -174,6 +174,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
         // Find basic block end
         for(MIndex curridx = startidx; curridx < mem->size();) {
             Byte b = mem->at(curridx);
+            if(!b.is_code()) break;
 
             if(curridx != startidx) {
                 if(b.has(BF_FUNCTION)) break;
