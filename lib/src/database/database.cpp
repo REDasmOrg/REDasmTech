@@ -50,8 +50,7 @@ void sql_bindparam(sqlite3* db, sqlite3_stmt* stmt, std::string_view n,
     using U = std::decay_t<T>;
 
     int idx = sqlite3_bind_parameter_index(stmt, n.data());
-    if(!idx)
-        except("SQL: parameter '{}' not found", n);
+    if(!idx) except("SQL: parameter '{}' not found", n);
 
     int res = SQLITE_ERROR;
     if constexpr(std::is_same_v<U, std::string> ||
@@ -62,15 +61,13 @@ void sql_bindparam(sqlite3* db, sqlite3_stmt* stmt, std::string_view n,
     else if constexpr(std::is_same_v<U, u32>)
         res = sqlite3_bind_int(stmt, idx, static_cast<int>(v));
 
-    if(res != SQLITE_OK)
-        except("SQL: {}", sqlite3_errmsg(db));
+    if(res != SQLITE_OK) except("SQL: {}", sqlite3_errmsg(db));
 }
 
 int sql_step(sqlite3* db, sqlite3_stmt* stmt) {
     int res = sqlite3_step(stmt);
 
-    if((res == SQLITE_ROW) || (res == SQLITE_DONE))
-        return res;
+    if((res == SQLITE_ROW) || (res == SQLITE_DONE)) return res;
 
     except("SQL: {}", sqlite3_errmsg(db));
 }
@@ -143,8 +140,7 @@ Database::Database(std::string_view ldrid, std::string_view source) {
     char* errmsg = nullptr;
     int rc = sqlite3_exec(m_db, DB_SCHEMA.data(), nullptr, nullptr, &errmsg);
 
-    if(rc != SQLITE_OK)
-        except("SQLite Error: {}", errmsg);
+    if(rc != SQLITE_OK) except("SQLite Error: {}", errmsg);
 }
 
 Database::~Database() {
@@ -164,8 +160,7 @@ Database::~Database() {
     // Check project root, delete it if empty
     fs::path projroot = fs::path{m_dbroot}.parent_path();
 
-    if(fs::exists(projroot) && fs::is_empty(projroot))
-        fs::remove_all(projroot);
+    if(fs::exists(projroot) && fs::is_empty(projroot)) fs::remove_all(projroot);
 }
 
 sqlite3_stmt* Database::prepare_query(int q, std::string_view s) const {
@@ -250,7 +245,7 @@ Database::RefList Database::get_refs_from_type(MIndex fromidx,
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_REFS_FROM_TYPE, R"(
         SELECT toidx, type 
         FROM Refs
-        WHERE fromidx = :fromidx AND :type = :type
+        WHERE fromidx = :fromidx AND type = :type
     )");
 
     sql_bindparam(m_db, stmt, ":fromidx", fromidx);
@@ -289,7 +284,7 @@ Database::RefList Database::get_refs_to_type(MIndex toidx, usize type) const {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_REFS_TO_TYPE, R"(
         SELECT fromidx, type
         FROM Refs
-        WHERE toidx = :toidx AND :type = :type
+        WHERE toidx = :toidx AND type = :type
     )");
 
     sql_bindparam(m_db, stmt, ":toidx", toidx);
@@ -365,8 +360,7 @@ void Database::set_userdata(std::string_view k, uptr v) {
 }
 
 tl::optional<uptr> Database::get_userdata(std::string_view k) const {
-    if(k.empty())
-        return tl::nullopt;
+    if(k.empty()) return tl::nullopt;
 
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_USERDATA, R"(
         SELECT v 
@@ -384,8 +378,7 @@ tl::optional<uptr> Database::get_userdata(std::string_view k) const {
 
 tl::optional<MIndex> Database::get_index(std::string_view name,
                                          bool onlydb) const {
-    if(name.empty())
-        return tl::nullopt;
+    if(name.empty()) return tl::nullopt;
 
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_INDEX, R"(
         SELECT idx 
@@ -398,18 +391,15 @@ tl::optional<MIndex> Database::get_index(std::string_view name,
     if(sql_step(m_db, stmt) == SQLITE_ROW)
         return static_cast<u64>(sqlite3_column_int64(stmt, 0));
 
-    if(onlydb)
-        return tl::nullopt;
+    if(onlydb) return tl::nullopt;
 
     usize idx = name.size();
 
     while(idx-- > 0) {
-        if(!std::isxdigit(name[idx]))
-            break;
+        if(!std::isxdigit(name[idx])) break;
     }
 
-    if(idx >= name.size() || name.at(idx) != '_')
-        return tl::nullopt;
+    if(idx >= name.size() || name.at(idx) != '_') return tl::nullopt;
 
     if(++idx < name.size()) {
         std::string_view saddr{name.data() + idx};
