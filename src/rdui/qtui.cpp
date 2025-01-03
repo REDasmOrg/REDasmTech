@@ -46,12 +46,12 @@ int get_item(const char* title, const char* text, const RDUIOptions* options,
 
 bool get_checked(const char* title, const char* text, RDUIOptions* options,
                  usize c) {
-    TableDialog dlgtable{qstr_if(title)};
-    dlgtable.set_description(qstr_if(text));
-    dlgtable.set_header_visible(false);
-    dlgtable.set_button_box_visible(true);
-    // dlgtable.set_model(new UIOptionsModel(options, c));
-    return dlgtable.exec() == TableDialog::Accepted;
+    auto* dlgtable = new TableDialog(qstr_if(title));
+    dlgtable->set_description(qstr_if(text));
+    dlgtable->set_header_visible(false);
+    dlgtable->set_button_box_visible(true);
+    dlgtable->set_model(new UIOptionsModel(options, c));
+    return dlgtable->exec() == TableDialog::Accepted;
 }
 
 const char* get_text(const char* title, const char* text, bool* ok) {
