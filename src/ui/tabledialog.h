@@ -3,6 +3,7 @@
 #include <QBoxLayout>
 #include <QDialog>
 #include <QDialogButtonBox>
+#include <QLabel>
 #include <QLineEdit>
 #include <QTreeWidget>
 
@@ -11,6 +12,7 @@ namespace ui {
 struct TableDialog {
     QDialogButtonBox* buttonbox;
     QLineEdit* lesearch;
+    QLabel* lbldescription;
     QTreeView* tvtable;
 
     explicit TableDialog(QDialog* self) {
@@ -18,6 +20,7 @@ struct TableDialog {
         self->resize(800, 600);
 
         this->tvtable = new QTreeView();
+        this->lbldescription = new QLabel();
         this->lesearch = new QLineEdit();
         this->lesearch->setPlaceholderText("Search…");
 
@@ -30,6 +33,7 @@ struct TableDialog {
 
         auto* vboxlayout = new QVBoxLayout(self);
         vboxlayout->addWidget(this->lesearch);
+        vboxlayout->addWidget(this->lbldescription);
         vboxlayout->addWidget(this->tvtable);
         vboxlayout->addWidget(this->buttonbox);
     }

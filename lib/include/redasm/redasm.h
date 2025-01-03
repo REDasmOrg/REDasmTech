@@ -20,6 +20,7 @@
 #include <redasm/theme.h>
 #include <redasm/types.h>
 #include <redasm/typing.h>
+#include <redasm/ui.h>
 #include <redasm/utils.h>
 #include <redasm/version.h>
 #include <redasm/worker.h>
@@ -65,6 +66,7 @@ typedef struct RDInitParams {
     RDLogCallback onlog;
     RDStatusCallback onstatus;
     RDErrorCallback onerror;
+    RDUI ui;
     void* userdata;
 } RDInitParams;
 

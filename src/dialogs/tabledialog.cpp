@@ -3,6 +3,7 @@
 
 TableDialog::TableDialog(QWidget* parent): QDialog{parent}, m_ui{this} {
     this->set_button_box_visible(false);
+    m_ui.lbldescription->setVisible(false);
 
     connect(m_ui.tvtable, &QTreeView::doubleClicked, this,
             &TableDialog::on_table_double_clicked);
@@ -24,10 +25,14 @@ TableDialog::TableDialog(const QString& title, QWidget* parent)
 
 QAbstractItemModel* TableDialog::model() const {
     auto* sfmodel = m_ui.tvtable->model();
-    if(!sfmodel)
-        return nullptr;
+    if(!sfmodel) return nullptr;
 
     return static_cast<QSortFilterProxyModel*>(sfmodel)->sourceModel();
+}
+
+void TableDialog::set_description(const QString& descr) { // NOLINT
+    m_ui.lbldescription->setText(descr);
+    m_ui.lbldescription->setVisible(!descr.isEmpty());
 }
 
 void TableDialog::set_model(QAbstractItemModel* m) {
@@ -62,6 +67,10 @@ void TableDialog::set_button_box_visible(bool b) { // NOLINT
 
 void TableDialog::set_search_box_visible(bool b) { // NOLINT
     m_ui.lesearch->setVisible(b);
+}
+
+void TableDialog::set_header_visible(bool b) { // NOLINT
+    m_ui.tvtable->setHeaderHidden(!b);
 }
 
 void TableDialog::on_table_double_clicked(const QModelIndex& index) {

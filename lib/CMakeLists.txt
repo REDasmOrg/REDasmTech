@@ -67,6 +67,7 @@ target_sources(${PROJECT_NAME_LIB}
 
     PRIVATE # Internal
         src/api/marshal.cpp
+        src/api/internal/ui.cpp
         src/api/internal/hash.cpp
         src/api/internal/utils.cpp
         src/api/internal/redasm.cpp
@@ -91,6 +92,7 @@ target_sources(${PROJECT_NAME_LIB}
     PRIVATE # C
         src/api/c/hash.cpp
         src/api/c/utils.cpp
+        src/api/c/ui.cpp
         src/api/c/redasm.cpp
         src/api/c/byteorder.cpp
         src/api/c/buffer.cpp

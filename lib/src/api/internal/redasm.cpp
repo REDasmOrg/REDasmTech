@@ -51,14 +51,15 @@ bool init(const RDInitParams* params) {
         .onerror  = [](const char* arg, void*) { spdlog::error("ERROR: {}", arg); },
         .userdata = nullptr,
     };
+    // clang-format on
 
     if(params) {
         if(params->onlog) state::params.onlog = params->onlog;
         if(params->onstatus) state::params.onstatus = params->onstatus;
         if(params->onerror) state::params.onerror = params->onerror;
+        state::params.ui = params->ui,
         state::params.userdata = params->userdata;
     }
-    // clang-format on
 
     builtins::register_loaders();
     builtins::register_processors();

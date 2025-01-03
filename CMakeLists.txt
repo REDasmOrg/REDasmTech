@@ -32,6 +32,9 @@ target_sources(${PROJECT_NAME}
         src/fontawesome.cpp
         src/statusbar.cpp
 
+        src/rdui/uioptionsmodel.cpp
+        src/rdui/qtui.cpp
+
         src/hexview/flagsbuffer.cpp
 
         src/models/recentfilesdelegate.cpp

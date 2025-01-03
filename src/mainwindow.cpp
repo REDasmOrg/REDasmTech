@@ -12,6 +12,7 @@
 #include "models/segmentsmodel.h"
 #include "models/symbolsfiltermodel.h"
 #include "models/symbolsmodel.h"
+#include "rdui/qtui.h"
 #include "settings.h"
 #include "statusbar.h"
 #include "themeprovider.h"
@@ -60,20 +61,21 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
     this->show_welcome_view();
     this->init_searchpaths();
 
-    RDInitParams params = {
-        [](const char* arg, void* userdata) { // onlog
-            auto* self = reinterpret_cast<MainWindow*>(userdata);
-            self->m_ui.logview->log(arg);
-        },
-        [](const char* arg, void*) { // onstatus
-            statusbar::set_status_text(arg);
-        },
-        [](const char* arg, void*) { // onerror
-            ErrorDialog::show_error("An error occurred", arg);
-        },
-        this,
+    RDInitParams params{};
+    params.onlog = [](const char* arg, void* userdata) { // onlog
+        auto* self = reinterpret_cast<MainWindow*>(userdata);
+        self->m_ui.logview->log(arg);
     };
 
+    params.onstatus = [](const char* arg, void*) {
+        statusbar::set_status_text(arg);
+    };
+    params.onerror = [](const char* arg, void*) {
+        ErrorDialog::show_error("An error occurred", arg);
+    };
+
+    params.userdata = this;
+    qtui::initialize(params.ui);
     rd_init(&params);
 
     connect(m_ui.actfileexit, &QAction::triggered, this, &MainWindow::close);
@@ -127,36 +129,31 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
 MainWindow::~MainWindow() { rd_deinit(); }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent* e) {
-    if(!e->mimeData()->hasUrls())
-        return;
+    if(!e->mimeData()->hasUrls()) return;
     e->acceptProposedAction();
 }
 
 void MainWindow::dragMoveEvent(QDragMoveEvent* e) {
-    if(!e->mimeData()->hasUrls())
-        return;
+    if(!e->mimeData()->hasUrls()) return;
     e->acceptProposedAction();
 }
 
 void MainWindow::dropEvent(QDropEvent* e) {
     const QMimeData* mimedata = e->mimeData();
-    if(!mimedata->hasUrls())
-        return;
+    if(!mimedata->hasUrls()) return;
 
     QList<QUrl> urllist = mimedata->urls();
     QString filepath = urllist.first().toLocalFile();
 
     QFileInfo fi(filepath);
-    if(!fi.isFile())
-        return;
+    if(!fi.isFile()) return;
 
     this->open_file(filepath);
     e->acceptProposedAction();
 }
 
 void MainWindow::load_window_state() {
-    if(REDasmSettings{}.restore_state(this))
-        return;
+    if(REDasmSettings{}.restore_state(this)) return;
 
     QRect position = this->frameGeometry();
     position.moveCenter(qApp->primaryScreen()->availableGeometry().center());
@@ -177,8 +174,7 @@ void MainWindow::load_recents() {
             continue;
         }
 
-        if(!QFileInfo().exists(recents[i]))
-            continue;
+        if(!QFileInfo().exists(recents[i])) continue;
 
         QAction* action = m_ui.mnurecents->addAction(
             QString("%1 - %2").arg(i).arg(recents[i]));
@@ -188,8 +184,7 @@ void MainWindow::load_recents() {
                 [=]() { this->open_file(action->data().toString()); });
     }
 
-    if(recents.empty())
-        return;
+    if(recents.empty()) return;
 
     m_ui.mnurecents->addSeparator();
     QAction* action = m_ui.mnurecents->addAction(tr("Clear"));
@@ -251,8 +246,7 @@ void MainWindow::clear_recents() {
     settings.clear_recent_files();
     this->load_recents();
 
-    if(!this->context_view())
-        this->show_welcome_view(); // Recreate Welcome Tab
+    if(!this->context_view()) this->show_welcome_view(); // Recreate Welcome Tab
 }
 
 [[nodiscard]] ContextView* MainWindow::context_view() const {
@@ -287,8 +281,7 @@ bool MainWindow::can_close() const {
         msgbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No |
                                   QMessageBox::Cancel);
 
-        if(msgbox.exec() != QMessageBox::Yes)
-            return false;
+        if(msgbox.exec() != QMessageBox::Yes) return false;
     }
 
     return true;
@@ -310,19 +303,16 @@ void MainWindow::enable_context_actions(bool e) { // NOLINT
     m_pbrdilswitch->setVisible(e);
     m_ui.statusbar->setVisible(e);
 
-    if(!e)
-        m_ui.logview->clear();
+    if(!e) m_ui.logview->clear();
 }
 
 void MainWindow::open_file(const QString& filepath) {
-    if(filepath.isEmpty())
-        return;
+    if(filepath.isEmpty()) return;
 
     m_filepath = filepath;
 
     RDBuffer* buffer = rd_loadfile(qUtf8Printable(m_filepath));
-    if(!buffer)
-        return;
+    if(!buffer) return;
 
     REDasmSettings settings;
     settings.update_recent_files(m_filepath);
@@ -338,8 +328,7 @@ void MainWindow::open_file(const QString& filepath) {
 
 void MainWindow::toggle_rdil() {
     ContextView* ctxview = this->context_view();
-    if(!ctxview)
-        return;
+    if(!ctxview) return;
 
     bool rdil = !ctxview->has_rdil();
     ctxview->set_rdil(rdil);
@@ -348,8 +337,7 @@ void MainWindow::toggle_rdil() {
 
 void MainWindow::select_file() {
     QString s = QFileDialog::getOpenFileName(this, "Disassemble file...");
-    if(!s.isEmpty())
-        this->open_file(s);
+    if(!s.isEmpty()) this->open_file(s);
 }
 
 void MainWindow::init_searchpaths() {
@@ -364,8 +352,7 @@ void MainWindow::init_searchpaths() {
         rd_addsearchpath(qUtf8Printable(
             QDir{searchpath}.absoluteFilePath(PLUGINS_FOLDER_NAME)));
 
-        if(!isappimage)
-            continue;
+        if(!isappimage) continue;
 
         QString appdirqt = QString::fromUtf8(appdir);
 
@@ -405,8 +392,7 @@ void MainWindow::show_segments() {
     connect(dlg, &TableDialog::double_clicked, this,
             [&, dlg](const QModelIndex& index) {
                 ContextView* ctxview = this->context_view();
-                if(!ctxview)
-                    return;
+                if(!ctxview) return;
 
                 auto* segmentsmodel = static_cast<SegmentsModel*>(dlg->model());
                 ctxview->jump_to(segmentsmodel->address(index));
@@ -424,8 +410,7 @@ void MainWindow::show_strings() {
     connect(dlg, &TableDialog::double_clicked, this,
             [&, dlg](const QModelIndex& index) {
                 ContextView* ctxview = this->context_view();
-                if(!ctxview)
-                    return;
+                if(!ctxview) return;
 
                 auto* m = static_cast<SymbolsModel*>(dlg->model());
                 ctxview->jump_to(m->address(index));
@@ -443,8 +428,7 @@ void MainWindow::show_exports() {
     connect(dlg, &TableDialog::double_clicked, this,
             [&, dlg](const QModelIndex& index) {
                 ContextView* ctxview = this->context_view();
-                if(!ctxview)
-                    return;
+                if(!ctxview) return;
 
                 auto* m = static_cast<ExportsModel*>(dlg->model());
                 ctxview->jump_to(m->address(index));
@@ -461,8 +445,7 @@ void MainWindow::show_imports() {
     connect(dlg, &TableDialog::double_clicked, this,
             [&, dlg](const QModelIndex& index) {
                 ContextView* ctxview = this->context_view();
-                if(!ctxview)
-                    return;
+                if(!ctxview) return;
 
                 auto* m = static_cast<ImportsModel*>(dlg->model());
                 ctxview->jump_to(m->address(index));
