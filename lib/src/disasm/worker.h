@@ -12,7 +12,6 @@ public:
     Worker();
     bool execute(const RDWorkerStatus** s);
     void execute(usize step);
-    void reset();
 
 private:
     void init_step();

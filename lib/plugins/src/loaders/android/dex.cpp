@@ -41,15 +41,14 @@ void load_method(const DexFile* df, const DexMethod& dexmethod, bool filter) {
 
     RDAddress addr = reinterpret_cast<const u8*>(dexcode->insns) - df->baseAddr;
 
-    rd_settypename(addr, "u16", nullptr);
-    rd_setname_ex(addr, fullname.c_str(), SN_IMPORT);
-    // if(filter) {
-    // rd_setname_ex(addr, fullname.c_str(), SN_IMPORT);
-    // }
-    // else {
-    // rd_setname_ex(addr, fullname.c_str(), 0);
-    // rd_setentry(addr, fullname.c_str());
-    // }
+    if(filter) {
+        rd_settypename(addr, "u16", nullptr);
+        rd_setname_ex(addr, fullname.c_str(), SN_IMPORT);
+    }
+    else {
+        rd_setname_ex(addr, fullname.c_str(), 0);
+        rd_setentry(addr, fullname.c_str());
+    }
 }
 
 void load_class(const DexFile* df, const DexClassDef* classdef, bool filter) {
@@ -69,8 +68,8 @@ void load_class(const DexFile* df, const DexClassDef* classdef, bool filter) {
 
 bool filter_classes(const DexFile* df) {
     std::vector<const DexClassDef*> classdefs;
+    std::vector<RDUIOptions> options;
     std::list<std::string> classtypes;
-
     for(u32 i = 0; i < df->pHeader->classDefsSize; i++) {
         const DexClassDef* classdef = dexGetClassDef(df, i);
         if(!classdef) continue;
@@ -86,12 +85,17 @@ bool filter_classes(const DexFile* df) {
 
         // Cache Strings
         classtypes.push_back(demangler::get_objectname(pclassdescr));
-        // options.push_back({classtypes.back().c_str(), precheck});
+        options.push_back({classtypes.back().c_str(), precheck});
         classdefs.push_back(classdef);
     }
 
-    for(const DexClassDef* dcd : classdefs)
-        dex::load_class(df, dcd, false);
+    if(!rdui_getchecked("Class Loader",
+                        "Select one or more objects from the list below",
+                        options.data(), options.size()))
+        return false;
+
+    for(usize i = 0; i < classdefs.size(); i++)
+        dex::load_class(df, classdefs[i], options[i].selected);
 
     return true;
 }
@@ -111,6 +115,7 @@ bool init(RDLoader*) {
                     df->pHeader->dataOff, df->pHeader->dataSize, SEG_HASCODE);
 
     bool ok = dex::filter_classes(df);
+    if(ok) rd_setprocessor("dalvik");
     dexFileFree(df);
     return ok;
 }

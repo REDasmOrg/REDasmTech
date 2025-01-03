@@ -9,6 +9,7 @@ target_sources(${PROJECT_NAME}
     PRIVATE
         android.cpp
         demangler.cpp
+        dalvik.cpp
         dex.cpp
 )
 

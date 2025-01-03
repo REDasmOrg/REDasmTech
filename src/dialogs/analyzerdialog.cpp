@@ -13,9 +13,10 @@ AnalyzerDialog::AnalyzerDialog(QWidget* parent): QDialog{parent}, m_ui{this} {
                                   (item->checkState() == Qt::Checked));
             });
 
-    connect(
-        m_ui.chkshowdetails, &QCheckBox::stateChanged, this,
-        [&](int state) { this->set_details_visible(state == Qt::Checked); });
+    connect(m_ui.chkshowdetails, &QCheckBox::checkStateChanged, this,
+            [&](Qt::CheckState state) {
+                this->set_details_visible(state == Qt::Checked);
+            });
 
     connect(m_ui.pbselectall, &QPushButton::clicked, this,
             [&]() { this->select_analyzers(true); });
@@ -52,9 +53,8 @@ void AnalyzerDialog::get_analyzers() {
 
         nameitem->setCheckable(true);
 
-        nameitem->setCheckState(m_analyzers[i].flags & ANA_SELECTED
-                                    ? Qt::Checked
-                                    : Qt::Unchecked);
+        nameitem->setCheckState(
+            m_analyzers[i].flags & ANA_SELECTED ? Qt::Checked : Qt::Unchecked);
 
         m_analyzersmodel->appendRow({nameitem, orderitem});
     }

@@ -5,6 +5,14 @@
 
 struct RDLoader;
 
+enum {
+    LF_NOMERGECODE = (1 << 1),
+    LF_NOMERGEDATA = (1 << 2),
+    LF_NOAUTORENAME = (1 << 3),
+
+    LF_NOMERGE = LF_NOMERGECODE | LF_NOMERGEDATA,
+};
+
 typedef bool (*RDLoaderInit)(RDLoader*);
 typedef void (*RDLoaderFree)(RDLoader*);
 
@@ -12,6 +20,7 @@ typedef struct RDLoader {
     const char* id;
     const char* name;
     void* userdata;
+    usize flags;
 
     RDLoaderInit init;
     RDLoaderFree free;

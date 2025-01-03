@@ -50,7 +50,7 @@ bool get_checked(const char* title, const char* text, RDUIOptions* options,
     dlgtable->set_description(qstr_if(text));
     dlgtable->set_header_visible(false);
     dlgtable->set_button_box_visible(true);
-    dlgtable->set_model(new UIOptionsModel(options, c));
+    dlgtable->set_model(new UIOptionsModel(options, c, dlgtable));
     return dlgtable->exec() == TableDialog::Accepted;
 }
 

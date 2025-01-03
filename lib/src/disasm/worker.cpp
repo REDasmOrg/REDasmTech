@@ -12,11 +12,14 @@ namespace {
 // clang-format off
 enum WorkerSteps {
     WS_INIT = 0,
-    WS_EMULATE1, WS_ANALYZE1, // First pass
+    // 1st pass
+    WS_EMULATE1, WS_ANALYZE1, 
     WS_MERGEDATA1,
+    // 2nd pass
     WS_MERGECODE,
-    WS_EMULATE2, WS_ANALYZE2, // Second pass
+    WS_EMULATE2, WS_ANALYZE2, 
     WS_MERGEDATA2,
+    // Finalize pass
     WS_FINALIZE,
     WS_DONE,
     WS_COUNT,
@@ -72,7 +75,6 @@ bool Worker::execute(const RDWorkerStatus** s) {
     }
 
     if(s) *s = m_status.get();
-
     return m_status->busy;
 }
 
@@ -82,8 +84,6 @@ void Worker::execute(usize step) {
     m_currentstep = step;
     this->execute(nullptr);
 }
-
-void Worker::reset() { m_currentstep = WS_INIT; }
 
 void Worker::init_step() {
     m_status->filepath = state::context->file->source.c_str();
@@ -116,13 +116,14 @@ void Worker::analyze_step() {
     mem::process_segments(false); // Show pre-analysis listing
     m_status->listingchanged = true;
 
-    for(const RDAnalyzer& a : state::context->analyzers) {
+    const Context* ctx = state::context;
+
+    for(const RDAnalyzer& a : ctx->analyzers) {
         if((a.flags & ANA_RUNONCE) && (m_analyzerruns[a.name] > 0)) continue;
 
         m_analyzerruns[a.name]++;
 
-        if(a.execute && state::context->selectedanalyzers.contains(a.name))
-            a.execute(&a);
+        if(a.execute && ctx->selectedanalyzers.contains(a.name)) a.execute(&a);
     }
 
     if(this->emulator.has_pending_code()) {
@@ -139,6 +140,12 @@ void Worker::analyze_step() {
 
 void Worker::mergecode_step() {
     const Context* ctx = state::context;
+
+    if(ctx->loader->flags & LF_NOMERGECODE) {
+        m_currentstep = WS_MERGEDATA2;
+        return;
+    }
+
     const auto& mem = ctx->memory;
 
     for(const Segment& seg : ctx->segments) {
@@ -170,6 +177,12 @@ void Worker::mergecode_step() {
 
 void Worker::mergedata_step() {
     Context* ctx = state::context;
+
+    if(ctx->loader->flags & LF_NOMERGEDATA) {
+        m_currentstep++;
+        return;
+    }
+
     auto& mem = ctx->memory;
 
     for(usize idx = 0; idx < mem->size();) {
