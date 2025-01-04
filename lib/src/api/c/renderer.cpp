@@ -16,6 +16,10 @@ void rdrenderer_mnem(RDRenderer* self, const char* s, RDThemeKind kind) {
         spdlog::error("rdrenderer_mnemonic: invalid string");
 }
 
+void rdrenderer_unkn(RDRenderer* self) {
+    redasm::api::internal::renderer_unkn(self);
+}
+
 void rdrenderer_reg(RDRenderer* self, int reg) {
     redasm::api::internal::renderer_reg(self, reg);
 }
@@ -47,11 +51,52 @@ void rdrenderer_cnst(RDRenderer* self, usize value) {
     redasm::api::internal::renderer_cnst(self, value);
 }
 
-void rdrenderer_int_ex(RDRenderer* self, u64 value, TypeId id,
-                       RDThemeKind kind) {
-    redasm::api::internal::renderer_int_ex(self, value, id, kind);
+void rdrenderer_i8_ex(RDRenderer* self, i8 v, int base, RDThemeKind kind) {
+    redasm::api::internal::renderer_i8_ex(self, v, base, kind);
 }
-
-void rdrenderer_int(RDRenderer* self, u64 value, TypeId id) {
-    redasm::api::internal::renderer_int(self, value, id);
+void rdrenderer_i16_ex(RDRenderer* self, i16 v, int base, RDThemeKind kind) {
+    redasm::api::internal::renderer_i16_ex(self, v, base, kind);
+}
+void rdrenderer_i32_ex(RDRenderer* self, i32 v, int base, RDThemeKind kind) {
+    redasm::api::internal::renderer_i32_ex(self, v, base, kind);
+}
+void rdrenderer_i64_ex(RDRenderer* self, i64 v, int base, RDThemeKind kind) {
+    redasm::api::internal::renderer_i64_ex(self, v, base, kind);
+}
+void rdrenderer_u8_ex(RDRenderer* self, u8 v, int base, RDThemeKind kind) {
+    redasm::api::internal::renderer_u8_ex(self, v, base, kind);
+    redasm::api::internal::renderer_u8_ex(self, v, base, kind);
+}
+void rdrenderer_u16_ex(RDRenderer* self, u16 v, int base, RDThemeKind kind) {
+    redasm::api::internal::renderer_u16_ex(self, v, base, kind);
+}
+void rdrenderer_u32_ex(RDRenderer* self, u32 v, int base, RDThemeKind kind) {
+    redasm::api::internal::renderer_u32_ex(self, v, base, kind);
+}
+void rdrenderer_u64_ex(RDRenderer* self, u64 v, int base, RDThemeKind kind) {
+    redasm::api::internal::renderer_u64_ex(self, v, base, kind);
+}
+void rdrenderer_i8(RDRenderer* self, i8 v, int base) {
+    redasm::api::internal::renderer_i8(self, v, base);
+}
+void rdrenderer_i16(RDRenderer* self, i16 v, int base) {
+    redasm::api::internal::renderer_i16(self, v, base);
+}
+void rdrenderer_i32(RDRenderer* self, i32 v, int base) {
+    redasm::api::internal::renderer_i32(self, v, base);
+}
+void rdrenderer_i64(RDRenderer* self, i64 v, int base) {
+    redasm::api::internal::renderer_i64(self, v, base);
+}
+void rdrenderer_u8(RDRenderer* self, u8 v, int base) {
+    redasm::api::internal::renderer_u8(self, v, base);
+}
+void rdrenderer_u16(RDRenderer* self, u16 v, int base) {
+    redasm::api::internal::renderer_u16(self, v, base);
+}
+void rdrenderer_u32(RDRenderer* self, u32 v, int base) {
+    redasm::api::internal::renderer_u32(self, v, base);
+}
+void rdrenderer_u64(RDRenderer* self, u64 v, int base) {
+    redasm::api::internal::renderer_u64(self, v, base);
 }

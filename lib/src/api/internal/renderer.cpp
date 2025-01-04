@@ -21,6 +21,11 @@ void renderer_mnem(RDRenderer* self, std::string_view s, RDThemeKind kind) {
     renderer->prevmnemonic = true;
 }
 
+void renderer_unkn(RDRenderer* self) {
+    spdlog::trace("renderer_unkn({})", fmt::ptr(self));
+    api::from_c(self)->unknown();
+}
+
 void renderer_reg(RDRenderer* self, int reg) {
     spdlog::trace("renderer_reg({}, {})", fmt::ptr(self), reg);
     api::from_c(self)->reg(reg);
@@ -46,10 +51,52 @@ void renderer_cnst_ex(RDRenderer* self, u64 value, int base, int flags) {
     api::from_c(self)->constant(value, base, flags);
 }
 
-void renderer_int_ex(RDRenderer* self, u64 value, TypeId id, RDThemeKind kind) {
-    spdlog::trace("renderer_int_ex({}, {}, {}, {})", fmt::ptr(self), value, id,
+void renderer_i8_ex(RDRenderer* self, i8 v, int base, RDThemeKind kind) {
+    spdlog::trace("renderer_i8_ex({}, {}, {}, {}", fmt::ptr(self), v, base,
                   static_cast<int>(kind));
-    api::from_c(self)->integer(value, id, kind);
+    api::from_c(self)->int_i8(v, base, kind);
+}
+
+void renderer_i16_ex(RDRenderer* self, i16 v, int base, RDThemeKind kind) {
+    spdlog::trace("renderer_i16_ex({}, {}, {}, {}", fmt::ptr(self), v, base,
+                  static_cast<int>(kind));
+    api::from_c(self)->int_i16(v, base, kind);
+}
+
+void renderer_i32_ex(RDRenderer* self, i32 v, int base, RDThemeKind kind) {
+    spdlog::trace("renderer_i32_ex({}, {}, {}, {}", fmt::ptr(self), v, base,
+                  static_cast<int>(kind));
+    api::from_c(self)->int_i32(v, base, kind);
+}
+
+void renderer_i64_ex(RDRenderer* self, i64 v, int base, RDThemeKind kind) {
+    spdlog::trace("renderer_i64_ex({}, {}, {}, {}", fmt::ptr(self), v, base,
+                  static_cast<int>(kind));
+    api::from_c(self)->int_i64(v, base, kind);
+}
+
+void renderer_u8_ex(RDRenderer* self, u8 v, int base, RDThemeKind kind) {
+    spdlog::trace("renderer_u8_ex({}, {}, {}, {}", fmt::ptr(self), v, base,
+                  static_cast<int>(kind));
+    api::from_c(self)->int_u8(v, base, kind);
+}
+
+void renderer_u16_ex(RDRenderer* self, u16 v, int base, RDThemeKind kind) {
+    spdlog::trace("renderer_u16_ex({}, {}, {}, {}", fmt::ptr(self), v, base,
+                  static_cast<int>(kind));
+    api::from_c(self)->int_u16(v, base, kind);
+}
+
+void renderer_u32_ex(RDRenderer* self, u32 v, int base, RDThemeKind kind) {
+    spdlog::trace("renderer_u32_ex({}, {}, {}, {}", fmt::ptr(self), v, base,
+                  static_cast<int>(kind));
+    api::from_c(self)->int_u32(v, base, kind);
+}
+
+void renderer_u64_ex(RDRenderer* self, u64 v, int base, RDThemeKind kind) {
+    spdlog::trace("renderer_u64_ex({}, {}, {}, {}", fmt::ptr(self), v, base,
+                  static_cast<int>(kind));
+    api::from_c(self)->int_u64(v, base, kind);
 }
 
 } // namespace redasm::api::internal

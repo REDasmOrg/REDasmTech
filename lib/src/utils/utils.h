@@ -24,12 +24,12 @@ using Data = std::vector<u8>;
 std::string_view trim(std::string_view v);
 
 template<typename T>
-static std::string_view to_string(T value, int base, bool sign = false) {
+static std::string_view to_string(T value, int base, bool sign = false,
+                                  int w = 0) {
     constexpr std::string_view DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     static std::array<char, 66> out;
 
-    if(base < 2 || base > 36)
-        except("tostring: invalid base {}", base);
+    if(base < 2 || base > 36) except("tostring: invalid base {}", base);
 
     bool isneg = false;
 
@@ -38,7 +38,7 @@ static std::string_view to_string(T value, int base, bool sign = false) {
         value = -value;
     }
 
-    usize c = out.size() - 1;
+    int c = out.size() - 1;
     out[c] = 0;
 
     do {
@@ -47,24 +47,30 @@ static std::string_view to_string(T value, int base, bool sign = false) {
         out[--c] = DIGITS.at(rem);
     } while(value > 0);
 
-    if(isneg)
-        out[--c] = '-';
+    if(isneg) out[--c] = '-';
+
+    // Zero pad
+    if(int ndigits = out.size() - c - 1; w > ndigits) {
+        int nzeros = w - ndigits;
+        for(int i = c - 1; i >= c - nzeros && i >= 0; --i)
+            out[i] = '0';
+
+        c -= nzeros;
+    }
 
     return std::string_view{&out[c], out.size() - c - 1};
 }
 
 template<typename T = usize>
 [[nodiscard]] tl::optional<T> to_integer(std::string_view sv, int base = 0) {
-    if(sv.empty())
-        return tl::nullopt;
+    if(sv.empty()) return tl::nullopt;
 
     impl::detect_base(sv, !base ? &base : nullptr);
 
     T val{};
     auto res = std::from_chars(sv.begin(), sv.end(), val, base);
 
-    if(res.ec != std::errc{} || res.ptr < sv.end())
-        return tl::nullopt;
+    if(res.ec != std::errc{} || res.ptr < sv.end()) return tl::nullopt;
 
     return val;
 }
@@ -74,15 +80,12 @@ void split_each(std::string_view s, char sep, Function f) {
     usize i = 0, start = 0;
 
     for(; i < s.size(); i++) {
-        if(s[i] != sep)
-            continue;
-        if(i > start && !f(utils::trim(s.substr(start, i - start))))
-            return;
+        if(s[i] != sep) continue;
+        if(i > start && !f(utils::trim(s.substr(start, i - start)))) return;
         start = i + 1;
     }
 
-    if(start < s.size())
-        f(utils::trim(s.substr(start)));
+    if(start < s.size()) f(utils::trim(s.substr(start)));
 }
 
 tl::optional<Data> read_file(const std::string& filepath);

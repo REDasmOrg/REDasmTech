@@ -1,5 +1,4 @@
 #include "utils.h"
-#include "../error.h"
 #include <algorithm>
 #include <cctype>
 #include <fstream>
@@ -23,8 +22,7 @@ void detect_base(std::string_view& sv, int* res) {
         sv = sv.substr(2);
     }
 
-    if(res)
-        *res = base;
+    if(res) *res = base;
 }
 
 } // namespace impl
@@ -38,16 +36,14 @@ std::string_view trim(std::string_view v) {
     while(end >= 0 && std::isblank(v[end]))
         end--;
 
-    if(start < end)
-        return v.substr(start, end - start + 1);
+    if(start < end) return v.substr(start, end - start + 1);
 
     return {};
 }
 
 tl::optional<Data> read_file(const std::string& filepath) {
     std::ifstream ifs(filepath, std::ios::binary | std::ios::ate);
-    if(!ifs.is_open())
-        return tl::nullopt;
+    if(!ifs.is_open()) return tl::nullopt;
 
     return Data(std::istreambuf_iterator<char>{ifs},
                 std::istreambuf_iterator<char>{});

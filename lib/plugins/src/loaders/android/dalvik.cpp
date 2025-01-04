@@ -7,6 +7,13 @@ namespace dalvik {
 
 namespace {
 
+void render_integer(RDRenderer* r, const RDOperand* op) {
+    if(op->dtype.id == TID_I16)
+        rdrenderer_i16(r, op->s_imm, 16);
+    else
+        rdrenderer_cnst(r, op->imm);
+}
+
 RDThemeKind get_op_theme(u32 opcode) {
     switch(opcode) {
         case OP_RETURN:
@@ -162,16 +169,8 @@ void render_instruction(const RDProcessor*, RDRenderer* r,
         switch(op->type) {
             case OP_REG: rdrenderer_reg(r, op->reg); break;
             case OP_MEM: rdrenderer_addr(r, op->mem); break;
-
-            case OP_IMM: {
-                if(rd_istypenull(&op->dtype))
-                    rdrenderer_cnst(r, op->s_imm);
-                else
-                    rdrenderer_int(r, op->s_imm, op->dtype.id);
-                break;
-            }
-
-            default: rdrenderer_text(r, "???"); break;
+            case OP_IMM: dalvik::render_integer(r, op); break;
+            default: rdrenderer_unkn(r); break;
         }
     }
 }

@@ -9,6 +9,17 @@
 
 namespace redasm {
 
+namespace {
+
+template<typename T>
+std::string_view render_int(T val, int base) {
+    constexpr int W = sizeof(T) * 2;
+    constexpr bool SIGN = std::is_signed_v<T>;
+    return utils::to_string(val, base, SIGN, W);
+}
+
+} // namespace
+
 Renderer::Renderer(usize f): flags{f} {}
 usize Renderer::current_address() const { return m_curraddress; }
 
@@ -130,7 +141,7 @@ Renderer& Renderer::instr() {
     p->decode(p, &instr);
 
     if(!instr.length || !p->renderinstruction)
-        this->chunk("???");
+        this->unknown();
     else
         p->renderinstruction(p, api::to_c(this), &instr);
 
@@ -188,9 +199,36 @@ Renderer& Renderer::addr(RDAddress address, int flags) {
     return *this;
 }
 
-Renderer& Renderer::integer(u64 val, TypeId id, RDThemeKind fg) {
-    std::string s = state::context->types.integer_string(val, id);
-    return this->chunk(s, fg);
+Renderer& Renderer::int_i8(i8 v, int base, RDThemeKind fg) {
+    return this->chunk(render_int(v, base), fg);
+}
+
+Renderer& Renderer::int_i16(i16 v, int base, RDThemeKind fg) {
+    return this->chunk(render_int(v, base), fg);
+}
+
+Renderer& Renderer::int_i32(i32 v, int base, RDThemeKind fg) {
+    return this->chunk(render_int(v, base), fg);
+}
+
+Renderer& Renderer::int_i64(i64 v, int base, RDThemeKind fg) {
+    return this->chunk(render_int(v, base), fg);
+}
+
+Renderer& Renderer::int_u8(u8 v, int base, RDThemeKind fg) {
+    return this->chunk(render_int(v, base), fg);
+}
+
+Renderer& Renderer::int_u16(u16 v, int base, RDThemeKind fg) {
+    return this->chunk(render_int(v, base), fg);
+}
+
+Renderer& Renderer::int_u32(u32 v, int base, RDThemeKind fg) {
+    return this->chunk(render_int(v, base), fg);
+}
+
+Renderer& Renderer::int_u64(u64 v, int base, RDThemeKind fg) {
+    return this->chunk(render_int(v, base), fg);
 }
 
 Renderer& Renderer::new_row(const ListingItem& item) {

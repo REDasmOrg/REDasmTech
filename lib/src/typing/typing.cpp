@@ -1,28 +1,13 @@
 #include "typing.h"
-#include "../context.h"
 #include "../error.h"
-#include "../state.h"
 #include "../utils/utils.h"
 #include "base.h"
 #include <fmt/core.h>
 #include <spdlog/spdlog.h>
-#include <type_traits>
 
 namespace redasm::typing {
 
 namespace {
-
-template<typename T>
-std::string integer_string_impl(T val) {
-    constexpr int N = sizeof(T) * 2;
-
-    if constexpr(std::is_signed_v<T>) {
-        if(val < 0) return std::to_string(val);
-        return state::context->to_hex(val, N);
-    }
-    else
-        return state::context->to_hex(val, N);
-}
 
 void parse(FullTypeName tn, std::string_view& name, usize& n) {
     if(tn.empty()) except("typing::parse('{}'): type is empty", tn);
@@ -158,37 +143,6 @@ std::string Types::to_string(RDType t) const {
     const TypeDef* td = this->get_typedef(t);
     if(t.n > 0) return fmt::format("{}[{}]", td->name, t.n);
     return td->name;
-}
-
-std::string Types::integer_string(u64 val, TypeId id) const {
-    switch(id) {
-        case typing::ids::I8: return typing::integer_string_impl<i8>(val);
-
-        case typing::ids::I16:
-        case typing::ids::I16BE: return typing::integer_string_impl<i16>(val);
-
-        case typing::ids::I32:
-        case typing::ids::I32BE: return typing::integer_string_impl<i32>(val);
-
-        case typing::ids::I64:
-        case typing::ids::I64BE: return typing::integer_string_impl<i64>(val);
-
-        case typing::ids::U8: return typing::integer_string_impl<u8>(val);
-
-        case typing::ids::U16:
-        case typing::ids::U16BE: return typing::integer_string_impl<u16>(val);
-
-        case typing::ids::U32:
-        case typing::ids::U32BE: return typing::integer_string_impl<u32>(val);
-
-        case typing::ids::U64:
-        case typing::ids::U64BE: return typing::integer_string_impl<u64>(val);
-
-        default: break;
-    }
-
-    spdlog::error("Types::integer_string({:x}): integer conversion failed", id);
-    return state::context->to_hex(val);
 }
 
 [[nodiscard]] RDType Types::from_string(FullTypeName tn) const {

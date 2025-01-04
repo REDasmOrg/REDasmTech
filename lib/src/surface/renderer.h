@@ -59,7 +59,6 @@ struct Renderer {
     }
 
     Renderer& nop(std::string_view arg) { return this->chunk(arg, THEME_NOP); }
-    Renderer& unknown() { return this->nop("?"); }
 
     Renderer& comment(std::string_view arg) {
         return this->chunk(arg, THEME_COMMENT);
@@ -76,6 +75,10 @@ struct Renderer {
 
     Renderer& type(std::string_view arg) {
         return this->chunk(arg, THEME_TYPE);
+    }
+
+    Renderer& unknown() {
+        return this->chunk("???", THEME_BACKGROUND, THEME_FOREGROUND);
     }
 
     Renderer& function(std::string_view arg) {
@@ -102,7 +105,14 @@ public: // High level interface
     Renderer& instr();
     Renderer& rdil();
     Renderer& addr(RDAddress address, int flags = 0);
-    Renderer& integer(u64 val, TypeId id, RDThemeKind fg = THEME_CONSTANT);
+    Renderer& int_i8(i8 v, int base, RDThemeKind fg = THEME_CONSTANT);
+    Renderer& int_i16(i16 v, int base, RDThemeKind fg = THEME_CONSTANT);
+    Renderer& int_i32(i32 v, int base, RDThemeKind fg = THEME_CONSTANT);
+    Renderer& int_i64(i64 v, int base, RDThemeKind fg = THEME_CONSTANT);
+    Renderer& int_u8(u8 v, int base, RDThemeKind fg = THEME_CONSTANT);
+    Renderer& int_u16(u16 v, int base, RDThemeKind fg = THEME_CONSTANT);
+    Renderer& int_u32(u32 v, int base, RDThemeKind fg = THEME_CONSTANT);
+    Renderer& int_u64(u64 v, int base, RDThemeKind fg = THEME_CONSTANT);
 
 public:
     bool prevmnemonic{false}; // Autoinsert whitespace on next chunk
