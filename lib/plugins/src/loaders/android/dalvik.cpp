@@ -1,6 +1,7 @@
 #include "dalvik.h"
 #include <array>
 #include <libdex/InstrUtils.h>
+#include <string>
 
 namespace dalvik {
 
@@ -67,32 +68,84 @@ enum DalvikOperands {
     DVKOP_PARAMETERTHIS = 0x4000
 };
 
-using DalvikMaxBuffer = std::array<u16, 5>; // Max instruction is 5 words
+using DalvikMaxBuffer = std::array<dex_u2, 5>; // Max instruction is 5 words
+
+const char* get_registername(const RDProcessor*, int regid) {
+    static std::string reg;
+    reg = "v" + std::to_string(regid);
+    return reg.c_str();
+}
 
 void decode(const RDProcessor*, RDInstruction* instr) {
+    // if(instr->address == 0x42624) {
+    //     int zzz = 0;
+    //     zzz++;
+    // }
+
     DalvikMaxBuffer buff;
-    usize n = rd_read(instr->address, buff.data(), buff.size());
+    usize n =
+        rd_read(instr->address, buff.data(), buff.size() * sizeof(dex_u2));
 
     DecodedInstruction di;
-    if(n < sizeof(u16) || !dexDecodeInstruction(buff.data(), &di)) return;
+    if(n < sizeof(dex_u2) || !dexDecodeInstruction(buff.data(), &di)) return;
 
-    u32 len = dexGetWidthFromInstruction(buff.data()) * sizeof(u16);
+    u32 len = dexGetWidthFromInstruction(buff.data()) * sizeof(dex_u2);
     if(!len || len > n) return;
 
     instr->id = di.opcode;
     instr->length = len;
 
-    switch(instr->id) {
+    switch(di.opcode) {
         case OP_RETURN_VOID:
         case OP_RETURN:
         case OP_RETURN_WIDE:
-        case OP_RETURN_OBJECT: instr->features |= IF_STOP; break;
+        case OP_RETURN_OBJECT: instr->features |= IF_STOP; return;
+
+        case OP_IF_LEZ:
+        case OP_IF_EQZ:
+            instr->features |= IF_JUMP;
+            instr->operands[0].type = OP_MEM;
+            instr->operands[0].mem =
+                instr->address + (static_cast<dex_s2>(di.vB) * sizeof(dex_u2));
+            return;
+
+        case OP_IF_LE:
+        case OP_IF_LT:
+            instr->features |= IF_JUMP;
+            instr->operands[0].type = OP_MEM;
+            instr->operands[0].mem =
+                instr->address + (static_cast<dex_s2>(di.vC) * sizeof(dex_u2));
+            return;
+
+        case OP_GOTO:
+            instr->features |= IF_JUMP | IF_STOP;
+            instr->operands[0].type = OP_MEM;
+            instr->operands[0].mem =
+                instr->address + (static_cast<dex_s2>(di.vA) * sizeof(dex_u2));
+            return;
+
+        default: break;
+    }
+
+    InstructionFormat fmt = dexGetFormatFromOpcode(di.opcode);
+
+    switch(fmt) {
+        case kFmt21s:
+            instr->operands[0].type = OP_REG;
+            instr->operands[0].reg = di.vA;
+            instr->operands[1].type = OP_IMM;
+            instr->operands[1].dtype.id = TID_I16;
+            instr->operands[1].s_imm = di.vB;
+            break;
 
         default: break;
     }
 }
 
 void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
+    if(instr->features & IF_JUMP)
+        rdemulator_addref(e, instr->operands[0].mem, CR_JUMP);
+
     if(!(instr->features & IF_STOP))
         rdemulator_flow(e, instr->address + instr->length);
 }
@@ -102,6 +155,25 @@ void render_instruction(const RDProcessor*, RDRenderer* r,
 
     rdrenderer_mnem(r, dexGetOpcodeName(static_cast<Opcode>(instr->id)),
                     dalvik::get_op_theme(instr->id));
+
+    foreach_operand(i, op, instr) {
+        if(i) rdrenderer_text(r, ",");
+
+        switch(op->type) {
+            case OP_REG: rdrenderer_reg(r, op->reg); break;
+            case OP_MEM: rdrenderer_addr(r, op->mem); break;
+
+            case OP_IMM: {
+                if(rd_istypenull(&op->dtype))
+                    rdrenderer_cnst(r, op->s_imm);
+                else
+                    rdrenderer_int(r, op->s_imm, op->dtype.id);
+                break;
+            }
+
+            default: rdrenderer_text(r, "???"); break;
+        }
+    }
 }
 
 } // namespace dalvik

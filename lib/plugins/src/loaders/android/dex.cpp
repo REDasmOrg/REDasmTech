@@ -45,10 +45,8 @@ void load_method(const DexFile* df, const DexMethod& dexmethod, bool filter) {
         rd_settypename(addr, "u16", nullptr);
         rd_setname_ex(addr, fullname.c_str(), SN_IMPORT);
     }
-    else {
-        rd_setname_ex(addr, fullname.c_str(), 0);
+    else
         rd_setentry(addr, fullname.c_str());
-    }
 }
 
 void load_class(const DexFile* df, const DexClassDef* classdef, bool filter) {

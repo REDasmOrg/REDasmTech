@@ -14,6 +14,7 @@ void rdplugin_init() {
     ldalvik.integer_size = 2;
     ldalvik.id = "dalvik";
     ldalvik.name = "Dalvik VM";
+    ldalvik.getregistername = dalvik::get_registername;
     ldalvik.decode = dalvik::decode;
     ldalvik.emulate = dalvik::emulate;
     ldalvik.renderinstruction = dalvik::render_instruction;
