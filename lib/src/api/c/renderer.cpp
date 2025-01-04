@@ -46,3 +46,12 @@ void rdrenderer_cnst_ex(RDRenderer* self, usize value, int base, int flags) {
 void rdrenderer_cnst(RDRenderer* self, usize value) {
     redasm::api::internal::renderer_cnst(self, value);
 }
+
+void rdrenderer_int_ex(RDRenderer* self, u64 value, TypeId id,
+                       RDThemeKind kind) {
+    redasm::api::internal::renderer_int_ex(self, value, id, kind);
+}
+
+void rdrenderer_int(RDRenderer* self, u64 value, TypeId id) {
+    redasm::api::internal::renderer_int(self, value, id);
+}

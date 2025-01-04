@@ -102,6 +102,7 @@ public: // High level interface
     Renderer& instr();
     Renderer& rdil();
     Renderer& addr(RDAddress address, int flags = 0);
+    Renderer& integer(u64 val, TypeId id, RDThemeKind fg = THEME_CONSTANT);
 
 public:
     bool prevmnemonic{false}; // Autoinsert whitespace on next chunk

@@ -13,18 +13,15 @@ Renderer::Renderer(usize f): flags{f} {}
 usize Renderer::current_address() const { return m_curraddress; }
 
 const Segment* Renderer::current_segment() const {
-    if(m_currsegment >= state::context->segments.size())
-        return nullptr;
+    if(m_currsegment >= state::context->segments.size()) return nullptr;
 
     return &state::context->segments[m_currsegment];
 }
 
 void Renderer::highlight_row(int row) {
-    if(this->has_flag(SURFACE_NOCURSORLINE))
-        return;
+    if(this->has_flag(SURFACE_NOCURSORLINE)) return;
 
-    if(row >= static_cast<int>(m_rows.size()))
-        return;
+    if(row >= static_cast<int>(m_rows.size())) return;
 
     SurfaceRow& sfrow = m_rows[row];
 
@@ -33,12 +30,10 @@ void Renderer::highlight_row(int row) {
 }
 
 void Renderer::highlight_words(int row, int col) {
-    if(this->has_flag(SURFACE_NOHIGHLIGHT))
-        return;
+    if(this->has_flag(SURFACE_NOHIGHLIGHT)) return;
 
     std::string word = Renderer::word_at(m_rows, row, col);
-    if(word.empty())
-        return;
+    if(word.empty()) return;
 
     for(SurfaceRow& row : m_rows) {
         for(usize i = 0; i < row.cells.size(); i++) {
@@ -46,13 +41,11 @@ void Renderer::highlight_words(int row, int col) {
             bool found = true;
 
             for(char ch : word) {
-                if(endidx >= row.cells.size())
-                    break;
+                if(endidx >= row.cells.size()) break;
 
                 RDSurfaceCell cell = row.cells[endidx++];
 
-                if(cell.ch == ch)
-                    continue;
+                if(cell.ch == ch) continue;
 
                 found = false;
                 endidx = i;
@@ -70,20 +63,16 @@ void Renderer::highlight_words(int row, int col) {
 
 void Renderer::highlight_selection(RDSurfacePosition startsel,
                                    RDSurfacePosition endsel) {
-    if(this->has_flag(SURFACE_NOSELECTION))
-        return;
+    if(this->has_flag(SURFACE_NOSELECTION)) return;
 
     for(int row = startsel.row;
         row < static_cast<int>(m_rows.size()) && row <= endsel.row; row++) {
         int startcol = 0, endcol = 0;
 
-        if(!m_rows[row].cells.empty())
-            endcol = m_rows[row].cells.size() - 1;
+        if(!m_rows[row].cells.empty()) endcol = m_rows[row].cells.size() - 1;
 
-        if(row == startsel.row)
-            startcol = startsel.col;
-        if(row == endsel.row)
-            endcol = endsel.col;
+        if(row == startsel.row) startcol = startsel.col;
+        if(row == endsel.row) endcol = endsel.col;
 
         for(int col = startcol;
             col < static_cast<int>(m_rows[row].cells.size()) && col <= endcol;
@@ -96,14 +85,11 @@ void Renderer::highlight_selection(RDSurfacePosition startsel,
 }
 
 void Renderer::highlight_cursor(int row, int col) {
-    if(this->has_flag(SURFACE_NOCURSOR) || m_rows.empty())
-        return;
+    if(this->has_flag(SURFACE_NOCURSOR) || m_rows.empty()) return;
 
-    if(row >= static_cast<int>(m_rows.size()))
-        row = m_rows.size() - 1;
+    if(row >= static_cast<int>(m_rows.size())) row = m_rows.size() - 1;
 
-    if(m_rows[row].cells.empty())
-        return;
+    if(m_rows[row].cells.empty()) return;
 
     if(col >= static_cast<int>(m_rows[row].cells.size()))
         col = m_rows[row].cells.size() - 1;
@@ -161,18 +147,15 @@ Renderer& Renderer::rdil() {
         .address = this->current_address(),
     };
 
-    if(p->decode)
-        p->decode(p, &instr);
+    if(p->decode) p->decode(p, &instr);
 
     if(!instr.length || !p->lift || !p->lift(p, api::to_c(&el), &instr))
         el.clear();
 
-    if(el.empty())
-        el.append(el.expr_unknown());
+    if(el.empty()) el.append(el.expr_unknown());
 
     for(usize i = 0; i < el.size(); i++) {
-        if(i)
-            this->chunk("; ");
+        if(i) this->chunk("; ");
 
         rdil::render(el.at(i), *this);
     }
@@ -205,6 +188,11 @@ Renderer& Renderer::addr(RDAddress address, int flags) {
     return *this;
 }
 
+Renderer& Renderer::integer(u64 val, TypeId id, RDThemeKind fg) {
+    std::string s = state::context->types.integer_string(val, id);
+    return this->chunk(s, fg);
+}
+
 Renderer& Renderer::new_row(const ListingItem& item) {
     this->prevmnemonic = false;
 
@@ -218,8 +206,7 @@ Renderer& Renderer::new_row(const ListingItem& item) {
         .cells = {},
     });
 
-    if(this->columns)
-        m_rows.back().cells.reserve(this->columns);
+    if(this->columns) m_rows.back().cells.reserve(this->columns);
 
     if(!this->has_flag(SURFACE_NOADDRESS)) {
         if(const Segment* s = this->current_segment(); s)
@@ -231,8 +218,7 @@ Renderer& Renderer::new_row(const ListingItem& item) {
         this->chunk(state::context->to_hex(m_curraddress, p->address_size * 2))
             .ws(2);
 
-        if(item.indent)
-            this->ws(item.indent);
+        if(item.indent) this->ws(item.indent);
     }
 
     return *this;
@@ -244,8 +230,7 @@ Renderer& Renderer::constant(u64 c, int base, int flags, RDThemeKind fg) {
         return *this;
     }
 
-    if(!base)
-        base = 16;
+    if(!base) base = 16;
 
     auto sc = static_cast<i64>(c);
 
@@ -256,8 +241,7 @@ Renderer& Renderer::constant(u64 c, int base, int flags, RDThemeKind fg) {
             this->chunk(utils::to_string(sc, base, true), fg);
     }
     else {
-        if(flags == RC_NEEDSIGN)
-            this->chunk("+", fg);
+        if(flags == RC_NEEDSIGN) this->chunk("+", fg);
         this->chunk(utils::to_string(c, base), fg);
     }
 
@@ -272,12 +256,10 @@ Renderer& Renderer::reg(int reg) {
 
     if(p->getregistername) {
         const char* res = p->getregistername(p, reg);
-        if(res)
-            regname = res;
+        if(res) regname = res;
     }
 
-    if(regname.empty())
-        regname = utils::to_string(reg, 10);
+    if(regname.empty()) regname = utils::to_string(reg, 10);
 
     return this->chunk(regname, THEME_REG);
 }
@@ -298,8 +280,7 @@ Renderer& Renderer::chunk(std::string_view arg, RDThemeKind fg,
     SurfaceRow& row = m_rows.back();
 
     for(char ch : arg) {
-        if(this->columns && row.cells.size() >= this->columns)
-            break;
+        if(this->columns && row.cells.size() >= this->columns) break;
 
         switch(ch) {
             case '\t':
@@ -333,8 +314,7 @@ void Renderer::check_current_segment(const ListingItem& item) {
     if(m_currsegment < state::context->segments.size()) {
         const Segment& s = state::context->segments[m_currsegment];
 
-        if(item.index >= s.index && item.index < s.endindex)
-            return;
+        if(item.index >= s.index && item.index < s.endindex) return;
     }
 
     for(usize i = 0; i < state::context->segments.size(); i++) {
@@ -350,31 +330,27 @@ void Renderer::check_current_segment(const ListingItem& item) {
 }
 
 std::string Renderer::word_at(const SurfaceRows& rows, int row, int col) {
-    if(row >= static_cast<int>(rows.size()))
-        return {};
+    if(row >= static_cast<int>(rows.size())) return {};
 
     const SurfaceRow& sfrow = rows[row];
 
     if(col >= static_cast<int>(sfrow.cells.size()))
         col = sfrow.cells.size() - 1;
 
-    if(Renderer::is_char_skippable(sfrow.cells[col].ch))
-        return {};
+    if(Renderer::is_char_skippable(sfrow.cells[col].ch)) return {};
 
     std::string word;
 
     for(int i = col; i-- > 0;) {
         RDSurfaceCell cell = sfrow.cells[i];
-        if(Renderer::is_char_skippable(cell.ch))
-            break;
+        if(Renderer::is_char_skippable(cell.ch)) break;
 
         word.insert(0, &cell.ch, 1);
     }
 
     for(int i = col; i < static_cast<int>(sfrow.cells.size()); i++) {
         RDSurfaceCell cell = sfrow.cells[i];
-        if(Renderer::is_char_skippable(cell.ch))
-            break;
+        if(Renderer::is_char_skippable(cell.ch)) break;
 
         word.append(&cell.ch, 1);
     }
@@ -383,8 +359,7 @@ std::string Renderer::word_at(const SurfaceRows& rows, int row, int col) {
 }
 
 bool Renderer::is_char_skippable(char ch) {
-    if(ch == '_' || ch == '.')
-        return false;
+    if(ch == '_' || ch == '.') return false;
 
     return std::isspace(ch) || std::ispunct(ch);
 }

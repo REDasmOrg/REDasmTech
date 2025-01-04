@@ -3,6 +3,7 @@
 #include <redasm/byte.h>
 #include <redasm/theme.h>
 #include <redasm/types.h>
+#include <redasm/typing.h>
 
 RD_HANDLE(RDRenderer);
 
@@ -35,3 +36,7 @@ REDASM_EXPORT void rdrenderer_addr(RDRenderer* self, RDAddress address);
 REDASM_EXPORT void rdrenderer_cnst_ex(RDRenderer* self, usize value, int base,
                                       int flags);
 REDASM_EXPORT void rdrenderer_cnst(RDRenderer* self, usize value);
+
+REDASM_EXPORT void rdrenderer_int_ex(RDRenderer* self, u64 value, TypeId id,
+                                     RDThemeKind kind);
+REDASM_EXPORT void rdrenderer_int(RDRenderer* self, u64 value, TypeId id);

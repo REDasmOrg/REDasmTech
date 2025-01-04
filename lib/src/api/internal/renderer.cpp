@@ -46,4 +46,10 @@ void renderer_cnst_ex(RDRenderer* self, u64 value, int base, int flags) {
     api::from_c(self)->constant(value, base, flags);
 }
 
+void renderer_int_ex(RDRenderer* self, u64 value, TypeId id, RDThemeKind kind) {
+    spdlog::trace("renderer_int_ex({}, {}, {}, {})", fmt::ptr(self), value, id,
+                  static_cast<int>(kind));
+    api::from_c(self)->integer(value, id, kind);
+}
+
 } // namespace redasm::api::internal
