@@ -1,17 +1,31 @@
 #include "typing.h"
+#include "../context.h"
 #include "../error.h"
+#include "../state.h"
 #include "../utils/utils.h"
 #include "base.h"
 #include <fmt/core.h>
 #include <spdlog/spdlog.h>
+#include <type_traits>
 
 namespace redasm::typing {
 
 namespace {
 
+template<typename T>
+std::string integer_string_impl(T val) {
+    constexpr int N = sizeof(T) * 2;
+
+    if constexpr(std::is_signed_v<T>) {
+        if(val < 0) return std::to_string(val);
+        return state::context->to_hex(val, N);
+    }
+    else
+        return state::context->to_hex(val, N);
+}
+
 void parse(FullTypeName tn, std::string_view& name, usize& n) {
-    if(tn.empty())
-        except("typing::parse('{}'): type is empty", tn);
+    if(tn.empty()) except("typing::parse('{}'): type is empty", tn);
 
     usize idx = 0;
     std::string_view strn;
@@ -26,8 +40,7 @@ void parse(FullTypeName tn, std::string_view& name, usize& n) {
         name = tn.substr(0, idx);
     }
 
-    if(name.empty())
-        except("typing::parse('{}'): type is empty", tn);
+    if(name.empty()) except("typing::parse('{}'): type is empty", tn);
 
     if(idx < tn.size() && tn[idx] == '[') {
         usize startidx = idx + 1;
@@ -51,8 +64,7 @@ void parse(FullTypeName tn, std::string_view& name, usize& n) {
 
     // Ignore trailing whitespaces and check for junk
     while(idx < tn.size()) {
-        if(std::isspace(idx++))
-            continue;
+        if(std::isspace(idx++)) continue;
         except("typing::parse('{}'): invalid type", tn);
     }
 }
@@ -61,8 +73,7 @@ void parse(FullTypeName tn, std::string_view& name, usize& n) {
 
 tl::optional<RDType> Types::int_from_bytes(usize n, bool sign) const {
     for(const auto& [id, td] : this->registered) {
-        if(!td.is_int() || td.is_big())
-            continue;
+        if(!td.is_int() || td.is_big()) continue;
 
         if(td.size == n && sign == td.is_signed())
             return RDType{.id = id, .n = 0};
@@ -74,8 +85,7 @@ tl::optional<RDType> Types::int_from_bytes(usize n, bool sign) const {
 usize Types::size_of(FullTypeName tname, ParsedType* res) const {
     ParsedType pt = this->parse(tname);
 
-    if(res)
-        *res = pt;
+    if(res) *res = pt;
 
     return pt.type->size * std::max<usize>(pt.n, 1);
 }
@@ -140,20 +150,45 @@ Types::Types() {
 
 std::string Types::to_string(ParsedType pt) const {
     assume(pt.type);
-
-    if(pt.n > 0)
-        return fmt::format("{}[{}]", pt.type->name, pt.n);
-
+    if(pt.n > 0) return fmt::format("{}[{}]", pt.type->name, pt.n);
     return pt.type->name;
 }
 
 std::string Types::to_string(RDType t) const {
     const TypeDef* td = this->get_typedef(t);
-
-    if(t.n > 0)
-        return fmt::format("{}[{}]", td->name, t.n);
-
+    if(t.n > 0) return fmt::format("{}[{}]", td->name, t.n);
     return td->name;
+}
+
+std::string Types::integer_string(u64 val, TypeId id) const {
+    switch(id) {
+        case typing::ids::I8: return typing::integer_string_impl<i8>(val);
+
+        case typing::ids::I16:
+        case typing::ids::I16BE: return typing::integer_string_impl<i16>(val);
+
+        case typing::ids::I32:
+        case typing::ids::I32BE: return typing::integer_string_impl<i32>(val);
+
+        case typing::ids::I64:
+        case typing::ids::I64BE: return typing::integer_string_impl<i64>(val);
+
+        case typing::ids::U8: return typing::integer_string_impl<u8>(val);
+
+        case typing::ids::U16:
+        case typing::ids::U16BE: return typing::integer_string_impl<u16>(val);
+
+        case typing::ids::U32:
+        case typing::ids::U32BE: return typing::integer_string_impl<u32>(val);
+
+        case typing::ids::U64:
+        case typing::ids::U64BE: return typing::integer_string_impl<u64>(val);
+
+        default: break;
+    }
+
+    spdlog::error("Types::integer_string({:x}): integer conversion failed", id);
+    return state::context->to_hex(val);
 }
 
 [[nodiscard]] RDType Types::from_string(FullTypeName tn) const {
@@ -162,11 +197,8 @@ std::string Types::to_string(RDType t) const {
 }
 
 const TypeDef* Types::declare(const std::string& name, const StructBody& arg) {
-    if(name.empty())
-        except("Struct name is empty");
-
-    if(arg.empty())
-        except("Struct cannot be empty");
+    if(name.empty()) except("Struct name is empty");
+    if(arg.empty()) except("Struct cannot be empty");
 
     TypeDef type{};
     type.name = name;
@@ -194,10 +226,7 @@ const TypeDef* Types::declare(const std::string& name, const StructBody& arg) {
 
 TypeName Types::type_name(RDType t) const {
     auto it = this->registered.find(t.id);
-
-    if(it == this->registered.end())
-        except("Type id {:x} not found", t.id);
-
+    if(it == this->registered.end()) except("Type id {:x} not found", t.id);
     return it->second.name;
 }
 
