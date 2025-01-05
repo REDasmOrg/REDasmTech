@@ -7,11 +7,71 @@ namespace dalvik {
 
 namespace {
 
+struct DalvikIndex {
+    dex_u4 index{0};
+    dex_u4 secindex{0};
+    dex_u4 width{0};
+};
+
 void render_integer(RDRenderer* r, const RDOperand* op) {
     if(op->dtype.id == TID_I16)
         rdrenderer_i16(r, op->s_imm, 16);
     else
         rdrenderer_cnst(r, op->imm);
+}
+
+void get_index_op(const DecodedInstruction& di, DalvikIndex& res) {
+    switch(dexGetFormatFromOpcode(di.opcode)) {
+        case kFmt20bc:
+        case kFmt21c:
+        case kFmt35c:
+        case kFmt35ms:
+        case kFmt3rc:
+        case kFmt3rms:
+        case kFmt35mi:
+        case kFmt3rmi:
+            res.index = di.vB;
+            res.width = 4;
+            break;
+
+        case kFmt31c:
+            res.index = di.vB;
+            res.width = 8;
+            break;
+
+        case kFmt22c:
+        case kFmt22cs:
+            res.index = di.vC;
+            res.width = 4;
+            break;
+
+        case kFmt45cc:
+        case kFmt4rcc:
+            res.index = di.vB;        // method index
+            res.secindex = di.arg[4]; // proto index
+            res.width = 4;
+            break;
+
+        default:
+            res.index = 0;
+            res.width = 4;
+            break;
+    }
+}
+
+bool create_index_op(const DecodedInstruction& di, RDOperand& op) {
+    DalvikIndex index;
+    dalvik::get_index_op(di, index);
+
+    switch(di.indexType) {
+        case kIndexFieldRef: {
+            break;
+        }
+
+        default: return false;
+    }
+
+    return true;
 }
 
 RDThemeKind get_op_theme(u32 opcode) {
@@ -84,10 +144,10 @@ const char* get_registername(const RDProcessor*, int regid) {
 }
 
 void decode(const RDProcessor*, RDInstruction* instr) {
-    // if(instr->address == 0x42624) {
-    //     int zzz = 0;
-    //     zzz++;
-    // }
+    if(instr->address == 0x42624) {
+        int zzz = 0;
+        zzz++;
+    }
 
     DalvikMaxBuffer buff;
     usize n =
@@ -143,6 +203,13 @@ void decode(const RDProcessor*, RDInstruction* instr) {
             instr->operands[1].type = OP_IMM;
             instr->operands[1].dtype.id = TID_I16;
             instr->operands[1].s_imm = di.vB;
+            break;
+
+        case kFmt21c:
+        case kFmt31c:
+            instr->operands[0].type = OP_REG;
+            instr->operands[0].reg = di.vA;
+            dalvik::create_index_op(di, instr->operands[1]);
             break;
 
         default: break;
