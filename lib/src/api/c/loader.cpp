@@ -12,4 +12,4 @@ const RDLoaderPlugin* rd_getloaderplugin() {
     return redasm::api::internal::get_loaderplugin();
 }
 
-const RDLoader* rd_getloader() { return redasm::api::internal::get_loader(); }
+RDLoader* rd_getloader() { return redasm::api::internal::get_loader(); }

@@ -10,7 +10,6 @@ from loaders.pe.analyzers import register_pe_analyzers
 class PELoader:
     id = "pe"
     name = "Portable Executable"
-    flags = 0
 
     def __init__(self):
         self.classifier = PEClassifier()
@@ -365,9 +364,8 @@ class PELoader:
         else:
             self.load_default()
 
-        redasm.set_userdata("pe_class", self.classifier.value)
         return True
 
 
 redasm.register_loader(PELoader)
-# register_pe_analyzers()
+register_pe_analyzers()

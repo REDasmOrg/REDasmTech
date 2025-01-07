@@ -92,7 +92,7 @@ bool Context::init_plugins(const RDLoaderPlugin* plugin) {
     if(this->loaderplugin->load && this->loaderplugin->load(this->loader)) {
         foreach_analyzers(ap, {
             // Assume true if 'isenabled' is not implemented
-            if(!ap->isenabled || ap->isenabled()) {
+            if(!ap->is_enabled || ap->is_enabled(ap)) {
                 this->analyzerplugins.push_back(ap);
                 if(ap->flags & AF_SELECTED)
                     this->selectedanalyzerplugins.insert(ap);

@@ -7,6 +7,6 @@ namespace redasm::api::internal {
 bool register_loader(const RDLoaderPlugin* plugin);
 const RDLoaderPlugin** get_loaderplugins(usize* n);
 const RDLoaderPlugin* get_loaderplugin();
-const RDLoader* get_loader();
+RDLoader* get_loader();
 
 } // namespace redasm::api::internal

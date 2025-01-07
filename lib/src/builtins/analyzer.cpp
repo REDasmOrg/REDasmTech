@@ -35,8 +35,8 @@ RDAnalyzerPlugin autorename_analyzer = {
     .name = "Autorename Nullsubs and Thunks",
     .flags = AF_SELECTED,
     .order = 0,
-    .isenabled =
-        []() {
+    .is_enabled =
+        [](const RDAnalyzerPlugin*) {
             const RDLoaderPlugin* ldr = state::context->loaderplugin;
             return !(ldr->flags & LF_NOAUTORENAME);
         },

@@ -121,6 +121,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/python/common.cpp
         src/api/python/module.cpp
         src/api/python/typing.cpp
+        src/api/python/analyzer.cpp
         src/api/python/loader.cpp
         src/api/python/redasm.cpp
 )

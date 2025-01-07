@@ -14,18 +14,21 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
     PyObject* pyclass = nullptr;
 
     if(!PyArg_ParseTuple(args, "O", &pyclass) ||
-       !python::validate_class(pyclass, {"id", "name", "flags", "load"}))
+       !python::validate_class(pyclass, {"id", "name", "load"}))
         return nullptr;
 
     PyObject* idattr = PyObject_GetAttrString(pyclass, "id");
     PyObject* nameattr = PyObject_GetAttrString(pyclass, "name");
-    PyObject* flagsattr = PyObject_GetAttrString(pyclass, "flags");
+
+    PyObject* flagsattr = nullptr;
+    if(PyObject_HasAttrString(pyclass, "flags"))
+        flagsattr = PyObject_GetAttrString(pyclass, "flags");
 
     auto* plugin = new RDPYLoaderPlugin{};
     plugin->pyclass = pyclass;
     plugin->base.id = PyUnicode_AsUTF8(idattr);
     plugin->base.name = PyUnicode_AsUTF8(nameattr);
-    plugin->base.flags = PyLong_AsUnsignedLong(flagsattr);
+    plugin->base.flags = flagsattr ? PyLong_AsUnsignedLong(flagsattr) : 0;
 
     plugin->base.oninit = [](const RDLoaderPlugin* arg) {
         const auto* plugin = reinterpret_cast<const RDPYLoaderPlugin*>(arg);
@@ -65,6 +68,12 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
 
     return PyBool_FromLong(
         internal::register_loader(reinterpret_cast<RDLoaderPlugin*>(plugin)));
+}
+
+PyObject* get_loader(PyObject* /*self*/, PyObject* /*args*/) {
+    RDLoader* l = internal::get_loader();
+    if(l) return reinterpret_cast<PyObject*>(l);
+    Py_RETURN_NONE;
 }
 
 } // namespace redasm::api::python

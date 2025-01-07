@@ -11,15 +11,16 @@ typedef enum RDAnalyzerFlags {
 } RDAnalyzerFlags;
 
 RD_HANDLE(RDAnalyzer);
+struct RDAnalyzerPlugin;
 
-typedef bool (*RDAnalyzerPluginIsEnabled)(void);
+typedef bool (*RDAnalyzerPluginIsEnabled)(const struct RDAnalyzerPlugin*);
 typedef void (*RDAnalyzerPluginExecute)(RDAnalyzer*);
 
 typedef struct RDAnalyzerPlugin {
     RDPLUGIN_HEADER(RDAnalyzer)
     u32 flags;
     u32 order;
-    RDAnalyzerPluginIsEnabled isenabled;
+    RDAnalyzerPluginIsEnabled is_enabled;
     RDAnalyzerPluginExecute execute;
 } RDAnalyzerPlugin;
 

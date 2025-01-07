@@ -22,7 +22,7 @@ const RDLoaderPlugin* get_loaderplugin() {
     return nullptr;
 }
 
-const RDLoader* get_loader() {
+RDLoader* get_loader() {
     spdlog::trace("get_loader()");
     if(state::context) return state::context->loader;
     return nullptr;

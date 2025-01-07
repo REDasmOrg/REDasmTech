@@ -1,5 +1,6 @@
 #pragma once
 
+#include "analyzer.h"
 #include "byteorder.h"
 #include "common.h"
 #include "loader.h"
@@ -62,7 +63,9 @@ inline PyMethodDef methods[] = {
     {"set_processor", python::set_processor, METH_O, nullptr},
     {"add_ref", python::add_ref, METH_VARARGS, nullptr},
     {"add_problem", python::add_problem, METH_VARARGS, nullptr},
-    {"register_loader",python::register_loader, METH_VARARGS, nullptr},
+    {"register_loader", python::register_loader, METH_VARARGS, nullptr},
+    {"register_analyzer", python::register_analyzer, METH_VARARGS, nullptr},
+    {"get_loader", python::get_loader, METH_NOARGS, nullptr},
     {"get_bool", python::get_bool, METH_O, nullptr},
     {"get_char", python::get_char, METH_O, nullptr},
     {"get_u8", python::get_u8, METH_O, nullptr},
