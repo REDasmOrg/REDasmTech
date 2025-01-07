@@ -57,7 +57,7 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
         PyObject* res = PyObject_CallMethod(self, "load", nullptr);
 
         if(res) {
-            bool ok = PyBool_Check(res);
+            bool ok = Py_IsTrue(res);
             Py_DECREF(res);
             return ok;
         }

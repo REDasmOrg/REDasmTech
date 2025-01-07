@@ -42,7 +42,7 @@ class PELoader:
             redasm.create_struct("IMAGE_OPTIONAL_HEADER",
                                 PEH.IMAGE_OPTIONAL_HEADER64)
         else:
-            raise "Invalid OptionalHeader Magic"
+            return False
 
         self.integertype = "u64" if self.bits == 64 else "u32"
         self.optionalheader = stream.collect_type("IMAGE_OPTIONAL_HEADER")
