@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../modulemanager.h"
+#include "../../plugins/modulemanager.h"
 #include "../../typing/typing.h"
 #include <redasm/redasm.h>
 #include <string>
@@ -28,7 +28,7 @@ void set_loglevel(RDLogLevel l);
 void add_searchpath(const std::string& sp);
 void set_userdata(const std::string& k, uptr v);
 tl::optional<uptr> get_userdata(const std::string& k);
-const redasm::SearchPaths& get_searchpaths();
+const mm::SearchPaths& get_searchpaths();
 void log(std::string_view s);
 void status(std::string_view s);
 std::string symbolize(std::string s);

@@ -7,7 +7,7 @@ namespace redasm::builtins {
 
 namespace {
 
-void do_autorename(const RDAnalyzer*) {
+void do_autorename(RDAnalyzer*) {
     Context* ctx = state::context;
 
     for(const Function& f : ctx->functions) {
@@ -30,23 +30,23 @@ void do_autorename(const RDAnalyzer*) {
     }
 }
 
+RDAnalyzerPlugin autorename_analyzer = {
+    .id = "autorename",
+    .name = "Autorename Nullsubs and Thunks",
+    .flags = AF_SELECTED,
+    .order = 0,
+    .isenabled =
+        []() {
+            const RDLoaderPlugin* ldr = state::context->loaderplugin;
+            return !(ldr->flags & LF_NOAUTORENAME);
+        },
+    .execute = do_autorename,
+};
+
 } // namespace
 
 void register_analyzers() {
-    RDAnalyzer autorename{
-        .id = "autorename",
-        .name = "Autorename Nullsubs and Thunks",
-        .flags = ANA_SELECTED,
-        .order = 0,
-        .isenabled =
-            [](const RDAnalyzer*) {
-                const RDLoader* ldr = state::context->loader;
-                return !(ldr->flags & LF_NOAUTORENAME);
-            },
-        .execute = do_autorename,
-    };
-
-    api::internal::register_analyzer(autorename);
+    api::internal::register_analyzer(&autorename_analyzer);
 }
 
 } // namespace redasm::builtins

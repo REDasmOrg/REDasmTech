@@ -11,7 +11,7 @@ public:
     explicit LoaderDialog(RDBuffer* buffer, QWidget* parent = nullptr);
 
 private:
-    void select_processor(const RDProcessor* processor);
+    void select_processor(const RDProcessorPlugin* proc);
     void populate_processors();
     void populate_loglevels() const;
 
@@ -26,6 +26,6 @@ public:
 private:
     ui::LoaderDialog m_ui;
     const RDTestResult* m_testresult{nullptr};
-    const RDProcessor* m_processors{nullptr};
+    const RDProcessorPlugin** m_processors{nullptr};
     usize m_nprocessors{0};
 };

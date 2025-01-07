@@ -10,6 +10,10 @@ namespace dex {
 
 namespace {
 
+struct DexLoader {
+    DexFile* dexfile;
+};
+
 std::string demangle(std::string s) {
     if(s.front() == '[') return dex::demangle(s.substr(1)) + "[]";
     if(s == "V") return "void";
@@ -64,14 +68,17 @@ void load_class(const DexFile* df, const DexClassDef* classdef, bool filter) {
     std::free(classdata);
 }
 
-bool filter_classes(const DexFile* df) {
+bool filter_classes(const DexLoader* self) {
     std::vector<const DexClassDef*> classdefs;
     std::vector<RDUIOptions> options;
     std::list<std::string> classtypes;
-    for(u32 i = 0; i < df->pHeader->classDefsSize; i++) {
-        const DexClassDef* classdef = dexGetClassDef(df, i);
+
+    for(u32 i = 0; i < self->dexfile->pHeader->classDefsSize; i++) {
+        const DexClassDef* classdef = dexGetClassDef(self->dexfile, i);
         if(!classdef) continue;
-        const char* pclassdescr = dexGetClassDescriptor(df, classdef);
+
+        const char* pclassdescr =
+            dexGetClassDescriptor(self->dexfile, classdef);
         if(!pclassdescr) continue;
 
         bool precheck = true;
@@ -83,7 +90,12 @@ bool filter_classes(const DexFile* df) {
 
         // Cache Strings
         classtypes.push_back(demangler::get_objectname(pclassdescr));
-        options.push_back({classtypes.back().c_str(), precheck});
+
+        options.push_back({
+            .text = classtypes.back().c_str(),
+            .selected = precheck,
+        });
+
         classdefs.push_back(classdef);
     }
 
@@ -93,29 +105,51 @@ bool filter_classes(const DexFile* df) {
         return false;
 
     for(usize i = 0; i < classdefs.size(); i++)
-        dex::load_class(df, classdefs[i], options[i].selected);
+        dex::load_class(self->dexfile, classdefs[i], options[i].selected);
 
     return true;
 }
 
-} // namespace
-
-bool init(RDLoader*) {
+bool load(RDLoader* l) {
+    auto* self = reinterpret_cast<DexLoader*>(l);
     const u8* data = nullptr;
     usize n = rd_getfile(&data);
     if(!n) return false;
 
-    DexFile* df = dexFileParse(data, n, 0);
-    if(!df) return false;
+    self->dexfile = dexFileParse(data, n, 0);
+    if(!self->dexfile) return false;
 
     rd_map(0, n);
-    rd_mapsegment_n("CODE", df->pHeader->dataOff, df->pHeader->dataSize,
-                    df->pHeader->dataOff, df->pHeader->dataSize, SEG_HASCODE);
+    rd_mapsegment_n("CODE", self->dexfile->pHeader->dataOff,
+                    self->dexfile->pHeader->dataSize,
+                    self->dexfile->pHeader->dataOff,
+                    self->dexfile->pHeader->dataSize, SEG_HASCODE);
 
-    bool ok = dex::filter_classes(df);
+    bool ok = dex::filter_classes(self);
     if(ok) rd_setprocessor("dalvik");
-    dexFileFree(df);
     return ok;
 }
+
+} // namespace
+
+RDLoaderPlugin loader = {
+    .id = "dex",
+    .name = "Dalvik Executable",
+
+    .create =
+        [](const RDLoaderPlugin*) {
+            return reinterpret_cast<RDLoader*>(new DexLoader{});
+        },
+
+    .destroy =
+        [](RDLoader* l) {
+            auto* self = reinterpret_cast<DexLoader*>(l);
+            if(self->dexfile) dexFileFree(self->dexfile);
+            delete self;
+        },
+
+    .flags = LF_NOMERGE | LF_NOAUTORENAME,
+    .load = dex::load,
+};
 
 } // namespace dex

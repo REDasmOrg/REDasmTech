@@ -2,6 +2,7 @@
 
 #include "byteorder.h"
 #include "common.h"
+#include "loader.h"
 #include "redasm.h"
 #include "typing.h"
 #include "utils.h"
@@ -61,9 +62,7 @@ inline PyMethodDef methods[] = {
     {"set_processor", python::set_processor, METH_O, nullptr},
     {"add_ref", python::add_ref, METH_VARARGS, nullptr},
     {"add_problem", python::add_problem, METH_VARARGS, nullptr},
-    {"register_loader", python::to_cfunction(python::register_loader), METH_VARARGS | METH_KEYWORDS, nullptr},
-    {"register_processor", python::to_cfunction(python::register_processor), METH_VARARGS | METH_KEYWORDS, nullptr},
-    {"register_analyzer", python::to_cfunction(python::register_analyzer), METH_VARARGS | METH_KEYWORDS, nullptr},
+    {"register_loader",python::register_loader, METH_VARARGS, nullptr},
     {"get_bool", python::get_bool, METH_O, nullptr},
     {"get_char", python::get_char, METH_O, nullptr},
     {"get_u8", python::get_u8, METH_O, nullptr},

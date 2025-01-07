@@ -11,6 +11,7 @@
 #include <redasm/listing.h>
 #include <redasm/loader.h>
 #include <redasm/memory.h>
+#include <redasm/plugin.h>
 #include <redasm/processor.h>
 #include <redasm/rdil.h>
 #include <redasm/renderer.h>
@@ -53,8 +54,8 @@ typedef struct RDProblem {
 RD_HANDLE(RDContext);
 
 typedef struct RDTestResult {
-    const RDLoader* loader;
-    const RDProcessor* processor;
+    const RDLoaderPlugin* loaderplugin;
+    const RDProcessorPlugin* processorplugin;
     RDContext* context;
 } RDTestResult;
 
@@ -152,5 +153,5 @@ REDASM_EXPORT bool rd_addresstooffset(RDAddress address, RDOffset* offset);
 REDASM_EXPORT bool rd_addresstoindex(RDAddress address, MIndex* index);
 REDASM_EXPORT bool rd_offsettoaddress(RDOffset offset, RDAddress* address);
 
-REDASM_EXPORT void rdplugin_init(void);
-REDASM_EXPORT void rdplugin_free(void);
+REDASM_EXPORT void rdplugin_create(void);
+REDASM_EXPORT void rdplugin_destroy(void);

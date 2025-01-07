@@ -46,10 +46,8 @@ void render_mnemonic(const RDInstruction* instr, RDRenderer* r) {
 
     if(instr->features & IF_JUMP)
         theme = is_jump_cond(instr) ? THEME_JUMPCOND : THEME_JUMP;
-    if(instr->features & IF_CALL)
-        theme = THEME_CALL;
-    if(instr->features & IF_STOP)
-        theme = THEME_RET;
+    if(instr->features & IF_CALL) theme = THEME_CALL;
+    if(instr->features & IF_STOP) theme = THEME_RET;
 
     rdrenderer_mnem(r, mips_decoder::mnemonic(instr->id), theme);
 }
@@ -205,12 +203,11 @@ void decode_j(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
 }
 
 void decode_b(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
-    if(dec.opcode->id == MIPS_INSTR_BREAK)
-        instr->features |= IF_STOP;
+    if(dec.opcode->id == MIPS_INSTR_BREAK) instr->features |= IF_STOP;
 }
 
 template<bool BigEndian>
-void decode(const RDProcessor*, RDInstruction* instr) {
+void decode(RDProcessor*, RDInstruction* instr) {
     MIPSDecodedInstruction dec;
     if(!mips_decoder::decode(instr->address, dec, BigEndian,
                              instr->features & IF_DSLOT))
@@ -220,8 +217,7 @@ void decode(const RDProcessor*, RDInstruction* instr) {
     instr->length = dec.length;
     instr->uservalue = dec.opcode->format;
 
-    if(mips_decoder::has_delayslot(instr->id))
-        instr->delayslots = 1;
+    if(mips_decoder::has_delayslot(instr->id)) instr->delayslots = 1;
 
     if(dec.opcode->category == MIPS_CATEGORY_MACRO) {
         decode_macro(dec, instr);
@@ -261,7 +257,7 @@ void handle_operands(RDEmulator* e, const RDInstruction* instr) {
     }
 }
 
-void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
+void emulate(RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
     switch(instr->id) {
         case MIPS_MACRO_LA:
             rdemulator_addref(e, instr->operands[1].addr, DR_ADDRESS);
@@ -283,8 +279,7 @@ void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
         const RDInstruction* dslot = nullptr;
         u32 n = rdemulator_getdslotinfo(e, &dslot);
 
-        if(n == dslot->delayslots && (dslot->features & IF_STOP))
-            return;
+        if(n == dslot->delayslots && (dslot->features & IF_STOP)) return;
     }
 
     if(!(instr->features & IF_STOP) || instr->delayslots)
@@ -296,8 +291,7 @@ void render_instruction(const RDProcessor*, RDRenderer* r,
     render_mnemonic(instr, r);
 
     foreach_operand(i, op, instr) {
-        if(i > 0)
-            rdrenderer_text(r, ", ");
+        if(i > 0) rdrenderer_text(r, ", ");
 
         switch(op->type) {
             case OP_REG: rdrenderer_reg(r, op->reg); break;
@@ -321,38 +315,32 @@ const char* get_register_name(const RDProcessor*, int reg) {
     return mips_decoder::reg(reg);
 }
 
+RDProcessorPlugin mips32le_processor = {
+    .id = "mips32le",
+    .name = "MIPS32 (Little Endian)",
+    .address_size = 4,
+    .integer_size = 4,
+    .getregistername = get_register_name,
+    .decode = decode<false>,
+    .emulate = emulate,
+    .renderinstruction = render_instruction,
+};
+
+RDProcessorPlugin mips32be_processor = {
+    .id = "mips32be",
+    .name = "MIPS32 (Big Endian)",
+    .address_size = 4,
+    .integer_size = 4,
+    .getregistername = get_register_name,
+    .decode = decode<true>,
+    .emulate = emulate,
+    .renderinstruction = render_instruction,
+};
+
 } // namespace
 
-void rdplugin_init() {
+void rdplugin_create() {
     mips_initialize_formats();
-
-    RDProcessor mips32le{};
-    mips32le.id = "mips32le";
-    mips32le.name = "MIPS32 (Little Endian)";
-    mips32le.address_size = 4;
-    mips32le.integer_size = 4;
-    mips32le.decode = decode<false>;
-    mips32le.emulate = emulate;
-    mips32le.getregistername = get_register_name;
-    mips32le.renderinstruction = render_instruction;
-    rd_registerprocessor(&mips32le);
-
-    RDProcessor mips32be{};
-    mips32be.id = "mips32be";
-    mips32be.name = "MIPS32 (Big Endian)";
-    mips32be.address_size = 8;
-    mips32be.integer_size = 4;
-    mips32be.decode = decode<true>;
-    mips32be.emulate = emulate;
-    mips32be.getregistername = get_register_name;
-    mips32be.renderinstruction = render_instruction;
-    rd_registerprocessor(&mips32be);
-
-    // RDProcessor mips64le{};
-    // ...
-    // rd_registerprocessor(&mips64le);
-
-    // RDProcessor mips64be{};
-    // ...
-    // rd_registerprocessor(&mips64be);
+    rd_registerprocessor(&mips32le_processor);
+    rd_registerprocessor(&mips32be_processor);
 }

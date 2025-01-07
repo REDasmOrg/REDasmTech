@@ -1,10 +1,7 @@
 #include "redasm.h"
-#include "../../builtins/analyzer.h"
-#include "../../builtins/loader.h"
-#include "../../builtins/processor.h"
 #include "../../context.h"
 #include "../../memory/file.h"
-#include "../../modulemanager.h"
+#include "../../plugins/pluginmanager.h"
 #include "../../state.h"
 #include "../../surface/surface.h"
 #include "../marshal.h"
@@ -61,16 +58,10 @@ bool init(const RDInitParams* params) {
         state::params.userdata = params->userdata;
     }
 
-    builtins::register_loaders();
-    builtins::register_processors();
-    builtins::register_analyzers();
-    redasm::load_modules();
+    pm::create();
 
     if(python::init()) {
         python::main();
-
-        // Keep 'Binary' loader as last option
-        std::ranges::reverse(state::loaders);
         return true;
     }
 
@@ -83,26 +74,6 @@ void deinit() {
     if(!initialized) return;
 
     initialized = false;
-
-    for(RDAnalyzer& a : state::analyzers) {
-        if(a.free) a.free(&a);
-    }
-
-    state::analyzers.clear();
-
-    for(RDProcessor& p : state::processors) {
-        if(p.free) p.free(&p);
-    }
-
-    state::processors.clear();
-
-    for(RDLoader& l : state::loaders) {
-        if(l.free) l.free(&l);
-    }
-
-    state::loaders.clear();
-
-    redasm::unload_modules();
     python::deinit();
 }
 
@@ -124,7 +95,7 @@ void set_loglevel(RDLogLevel l) {
 
 void add_searchpath(const std::string& sp) {
     spdlog::trace("add_searchpath('{}')", sp);
-    redasm::add_searchpath(sp);
+    mm::add_searchpath(sp);
 }
 
 void set_userdata(const std::string& k, uptr v) {
@@ -141,9 +112,9 @@ tl::optional<uptr> get_userdata(const std::string& k) {
     return tl::nullopt;
 }
 
-const SearchPaths& get_searchpaths() {
+const mm::SearchPaths& get_searchpaths() {
     spdlog::trace("get_searchpaths()");
-    return redasm::get_searchpaths();
+    return mm::get_searchpaths();
 }
 
 void log(std::string_view s) { state::log(s); }
@@ -185,22 +156,24 @@ std::vector<RDTestResult> test(RDBuffer* buffer) {
     std::vector<RDTestResult> res;
     std::shared_ptr<AbstractBuffer> b{api::from_c(buffer)};
 
-    for(RDLoader& ldr : state::loaders) {
-        auto* ctx = new Context(b, &ldr);
+    foreach_loaders(lp, {
+        auto* ctx = new Context(b);
+        state::context = ctx; // Set context as active
 
-        if(ctx->activate()) {
+        if(ctx->init_plugins(lp)) {
             state::contextlist.push_back(ctx);
 
             res.emplace_back(RDTestResult{
-                ctx->loader,
-                ctx->processor,
+                ctx->loaderplugin,
+                ctx->processorplugin,
                 api::to_c(ctx),
             });
         }
         else
             delete ctx;
-    }
+    });
 
+    std::ranges::reverse(res);
     state::context = nullptr; // Deselect "test" context
     return res;
 }

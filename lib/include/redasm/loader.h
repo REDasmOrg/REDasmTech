@@ -1,31 +1,28 @@
 #pragma once
 
 #include <redasm/common.h>
+#include <redasm/plugin.h>
 #include <redasm/types.h>
 
-struct RDLoader;
-
-enum {
-    LF_NOMERGECODE = (1 << 1),
-    LF_NOMERGEDATA = (1 << 2),
-    LF_NOAUTORENAME = (1 << 3),
+typedef enum RDLoaderFlags {
+    LF_NOMERGECODE = (1 << 0),
+    LF_NOMERGEDATA = (1 << 1),
+    LF_NOAUTORENAME = (1 << 2),
 
     LF_NOMERGE = LF_NOMERGECODE | LF_NOMERGEDATA,
-};
+} RDLoaderFlags;
 
-typedef bool (*RDLoaderInit)(RDLoader*);
-typedef void (*RDLoaderFree)(RDLoader*);
+RD_HANDLE(RDLoader);
 
-typedef struct RDLoader {
-    const char* id;
-    const char* name;
-    void* userdata;
+typedef bool (*RDLoaderPluginLoad)(RDLoader*);
+
+typedef struct RDLoaderPlugin {
+    RDPLUGIN_HEADER(RDLoader)
     usize flags;
+    RDLoaderPluginLoad load;
+} RDLoaderPlugin;
 
-    RDLoaderInit init;
-    RDLoaderFree free;
-} RDLoader;
-
+REDASM_EXPORT bool rd_registerloader(const RDLoaderPlugin* plugin);
+REDASM_EXPORT const RDLoaderPlugin** rd_getloaderplugins(usize* n);
+REDASM_EXPORT const RDLoaderPlugin* rd_getloaderplugin(void);
 REDASM_EXPORT const RDLoader* rd_getloader(void);
-REDASM_EXPORT usize rd_getloaders(const RDLoader** loaders);
-REDASM_EXPORT void rd_registerloader(const RDLoader* ldr);

@@ -1,5 +1,5 @@
 #include "modulemanager.h"
-#include "error.h"
+#include "../error.h"
 #include <filesystem>
 #include <spdlog/spdlog.h>
 #include <vector>
@@ -11,14 +11,14 @@
 #include <dlfcn.h>
 #endif
 
-namespace redasm {
+namespace redasm::mm {
 
 namespace fs = std::filesystem;
 
 namespace {
 
-constexpr const char PLUGIN_INIT[] = "rdplugin_init";
-constexpr const char PLUGIN_FREE[] = "rdplugin_free";
+constexpr const char PLUGIN_CREATE[] = "rdplugin_create";
+constexpr const char PLUGIN_DESTROY[] = "rdplugin_destroy";
 
 #ifdef _WIN32
 using HModule = HMODULE;
@@ -40,8 +40,7 @@ struct Module {
     }
 
     void deinit() const {
-        if(deinitfn)
-            deinitfn();
+        if(deinitfn) deinitfn();
     }
 
     explicit operator bool() const { return !!this->handle; }
@@ -51,7 +50,7 @@ SearchPaths g_searchpaths;
 std::vector<Module> g_modules;
 
 template<typename Function>
-Function get_module_function(HModule h, std::string_view name) {
+Function get_function(HModule h, std::string_view name) {
 #ifdef _WIN32
     return reinterpret_cast<Function>(GetProcAddress(h, name.data()));
 #else
@@ -59,9 +58,8 @@ Function get_module_function(HModule h, std::string_view name) {
 #endif
 }
 
-void unload_module(const Module& m) {
-    if(!m)
-        return;
+void unload(const Module& m) {
+    if(!m) return;
 
 #ifdef _WIN32
     FreeLibrary(m.handle);
@@ -70,7 +68,7 @@ void unload_module(const Module& m) {
 #endif
 }
 
-Module load_module(std::string_view modulepath) {
+Module load(std::string_view modulepath) {
     spdlog::info("Loading Module '{}'", modulepath);
     Module m{};
 
@@ -91,20 +89,20 @@ Module load_module(std::string_view modulepath) {
 #endif
     }
 
-    m.initfn = get_module_function<ModuleInitFunc>(m.handle, PLUGIN_INIT);
+    m.initfn = mm::get_function<ModuleInitFunc>(m.handle, PLUGIN_CREATE);
 
     if(!m.initfn) {
-        spdlog::error("{}: '{}' not found", modulepath, PLUGIN_INIT);
-        unload_module(m);
+        spdlog::error("{}: '{}' not found", modulepath, PLUGIN_CREATE);
+        mm::unload(m);
         return {};
     }
 
-    m.deinitfn = get_module_function<ModuleDeinitFunc>(m.handle, PLUGIN_FREE);
+    m.deinitfn = mm::get_function<ModuleDeinitFunc>(m.handle, PLUGIN_DESTROY);
 
     return m;
 }
 
-void load_modules_from(const std::string& p) {
+void load_all_from(const std::string& p) {
     if(fs::directory_entry e{p}; e.is_directory()) {
         for(const auto& entry : fs::recursive_directory_iterator{
                 e, fs::directory_options::follow_directory_symlink}) {
@@ -112,7 +110,7 @@ void load_modules_from(const std::string& p) {
                entry.path().extension() != SHARED_OBJECT_EXT)
                 continue;
 
-            g_modules.emplace_back(load_module(entry.path().string()));
+            g_modules.emplace_back(load(entry.path().string()));
             g_modules.back().init();
         }
     }
@@ -123,8 +121,7 @@ void load_modules_from(const std::string& p) {
 const SearchPaths& get_searchpaths() { return g_searchpaths; }
 
 void add_searchpath(const std::string& sp) {
-    if(sp.empty())
-        return;
+    if(sp.empty()) return;
 
     auto it = std::ranges::find(g_searchpaths, sp);
 
@@ -134,18 +131,20 @@ void add_searchpath(const std::string& sp) {
         spdlog::warn("add_searchpath(): duplicate entry '{}'", sp);
 }
 
-void unload_modules() {
+void unload_all() {
+    spdlog::info("Unloading Modules");
     for(const Module& m : g_modules) {
         m.deinit();
-        unload_module(m);
+        unload(m);
     }
 
     g_modules.clear();
 }
 
-void load_modules() {
+void load_all() {
+    spdlog::info("Loading Modules");
     for(const std::string& p : g_searchpaths)
-        redasm::load_modules_from(p);
+        mm::load_all_from(p);
 }
 
-} // namespace redasm
+} // namespace redasm::mm

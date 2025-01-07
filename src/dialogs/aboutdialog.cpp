@@ -53,12 +53,9 @@ void compile_searchpaths(QString& html) {
 }
 
 void compile_plugins(QString& html) {
-    const RDLoader* loaders = nullptr;
-    usize ldrc = rd_getloaders(&loaders);
-
-    const RDProcessor* processors = nullptr;
-    usize procc = rd_getprocessors(&processors);
-
+    usize ldrc, procc;
+    const RDLoaderPlugin** loaders = rd_getloaderplugins(&ldrc);
+    const RDProcessorPlugin** processors = rd_getprocessorplugins(&procc);
     QString plugins;
 
     for(usize i = 0; i < qMax(ldrc, procc); i++) {
@@ -71,14 +68,14 @@ void compile_plugins(QString& html) {
 
         if(i < ldrc)
             row = row.arg(
-                QString{"%1 (%2)"}.arg(loaders[i].name).arg(loaders[i].id));
+                QString{"%1 (%2)"}.arg(loaders[i]->name).arg(loaders[i]->id));
         else
             row = row.arg(QString{});
 
         if(i < procc) {
             row = row.arg(QString{"%1 (%2)"}
-                              .arg(processors[i].name)
-                              .arg(processors[i].id));
+                              .arg(processors[i]->name)
+                              .arg(processors[i]->id));
         }
         else
             row = row.arg(QString{});

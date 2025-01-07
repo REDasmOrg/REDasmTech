@@ -1,6 +1,7 @@
 #include "worker.h"
 #include "../context.h"
 #include "../error.h"
+#include "../plugins/pluginmanager.h"
 #include "../state.h"
 #include "memprocess.h"
 #include <ctime>
@@ -88,8 +89,8 @@ void Worker::execute(usize step) {
 void Worker::init_step() {
     m_status->filepath = state::context->file->source.c_str();
     m_status->filesize = state::context->file->size();
-    m_status->loader = state::context->loader->name;
-    m_status->processor = state::context->processor->name;
+    m_status->loader = state::context->loaderplugin->name;
+    m_status->processor = state::context->processorplugin->name;
     m_status->analysisstart = std::time(nullptr);
 
     if(state::context->memory) {
@@ -118,12 +119,18 @@ void Worker::analyze_step() {
 
     const Context* ctx = state::context;
 
-    for(const RDAnalyzer& a : ctx->analyzers) {
-        if((a.flags & ANA_RUNONCE) && (m_analyzerruns[a.name] > 0)) continue;
+    for(const RDAnalyzerPlugin* plugin : ctx->analyzerplugins) {
+        if(!(plugin->flags & AF_SELECTED) ||
+           (plugin->flags & AF_RUNONCE && m_analyzerruns[plugin->id] > 0))
+            continue;
 
-        m_analyzerruns[a.name]++;
+        m_analyzerruns[plugin->id]++;
 
-        if(a.execute && ctx->selectedanalyzers.contains(a.name)) a.execute(&a);
+        if(plugin->execute) {
+            RDAnalyzer* a = pm::create_instance(plugin);
+            plugin->execute(a);
+            pm::destroy_instance(plugin, a);
+        }
     }
 
     if(this->emulator.has_pending_code()) {
@@ -141,7 +148,7 @@ void Worker::analyze_step() {
 void Worker::mergecode_step() {
     const Context* ctx = state::context;
 
-    if(ctx->loader->flags & LF_NOMERGECODE) {
+    if(ctx->loaderplugin->flags & LF_NOMERGECODE) {
         m_currentstep = WS_MERGEDATA2;
         return;
     }
@@ -178,7 +185,7 @@ void Worker::mergecode_step() {
 void Worker::mergedata_step() {
     Context* ctx = state::context;
 
-    if(ctx->loader->flags & LF_NOMERGEDATA) {
+    if(ctx->loaderplugin->flags & LF_NOMERGEDATA) {
         m_currentstep++;
         return;
     }
@@ -209,7 +216,7 @@ void Worker::mergedata_step() {
 
             usize len = idx - startidx;
 
-            if(len > static_cast<usize>(ctx->processor->integer_size)) {
+            if(len > static_cast<usize>(ctx->processorplugin->integer_size)) {
                 mem->set_n(startidx, len, BF_DATA);
                 mem->set(startidx, BF_FILL);
             }

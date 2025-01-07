@@ -131,25 +131,27 @@ void Renderer::set_current_item(LIndex lidx, const ListingItem& item) {
 }
 
 Renderer& Renderer::instr() {
-    const RDProcessor* p = state::context->processor;
+    const Context* ctx = state::context;
+    const RDProcessorPlugin* p = ctx->processorplugin;
     assume(p);
 
     RDInstruction instr = {
         .address = this->current_address(),
     };
 
-    p->decode(p, &instr);
+    p->decode(ctx->processor, &instr);
 
     if(!instr.length || !p->renderinstruction)
         this->unknown();
     else
-        p->renderinstruction(p, api::to_c(this), &instr);
+        p->renderinstruction(ctx->processor, api::to_c(this), &instr);
 
     return *this;
 }
 
 Renderer& Renderer::rdil() {
-    const RDProcessor* p = state::context->processor;
+    const Context* ctx = state::context;
+    const RDProcessorPlugin* p = ctx->processorplugin;
     assume(p);
 
     rdil::ILExprList el;
@@ -158,9 +160,10 @@ Renderer& Renderer::rdil() {
         .address = this->current_address(),
     };
 
-    if(p->decode) p->decode(p, &instr);
+    if(p->decode) p->decode(ctx->processor, &instr);
 
-    if(!instr.length || !p->lift || !p->lift(p, api::to_c(&el), &instr))
+    if(!instr.length || !p->lift ||
+       !p->lift(ctx->processor, api::to_c(&el), &instr))
         el.clear();
 
     if(el.empty()) el.append(el.expr_unknown());
@@ -250,7 +253,7 @@ Renderer& Renderer::new_row(const ListingItem& item) {
         if(const Segment* s = this->current_segment(); s)
             this->chunk(s->name).chunk(":");
 
-        const RDProcessor* p = state::context->processor;
+        const RDProcessorPlugin* p = state::context->processorplugin;
         assume(p);
 
         this->chunk(state::context->to_hex(m_curraddress, p->address_size * 2))
@@ -287,13 +290,14 @@ Renderer& Renderer::constant(u64 c, int base, int flags, RDThemeKind fg) {
 }
 
 Renderer& Renderer::reg(int reg) {
-    const RDProcessor* p = state::context->processor;
+    const Context* ctx = state::context;
+    const RDProcessorPlugin* p = ctx->processorplugin;
     assume(p);
 
     std::string_view regname;
 
     if(p->getregistername) {
-        const char* res = p->getregistername(p, reg);
+        const char* res = p->getregistername(ctx->processor, reg);
         if(res) regname = res;
     }
 

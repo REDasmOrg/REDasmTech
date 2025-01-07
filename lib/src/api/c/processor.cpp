@@ -27,15 +27,13 @@ u64 rdemulator_updreg(RDEmulator* self, int regid, u64 val, u64 mask) {
 }
 
 u64 rdemulator_getstate(const RDEmulator* self, const char* state) {
-    if(state)
-        return redasm::api::internal::emulator_getstate(self, state);
+    if(state) return redasm::api::internal::emulator_getstate(self, state);
 
     except("rdemulator_getstate(): 'state' argument is null");
 }
 
 u64 rdemulator_takestate(RDEmulator* self, const char* state) {
-    if(state)
-        return redasm::api::internal::emulator_takestate(self, state);
+    if(state) return redasm::api::internal::emulator_takestate(self, state);
 
     except("rdemulator_takestate(): 'state' argument is null");
 }
@@ -62,22 +60,25 @@ u64 rdemulator_updstate(RDEmulator* self, const char* state, u64 val,
     except("rdemulator_setstate(): 'state' argument is null");
 }
 
+bool rd_registerprocessor(const RDProcessorPlugin* plugin) {
+    return redasm::api::internal::register_processor(plugin);
+}
+
+const RDProcessorPlugin** rd_getprocessorplugins(usize* n) {
+    return redasm::api::internal::get_processorplugins(n);
+}
+
+const RDProcessorPlugin* rd_getprocessorplugin() {
+    return redasm::api::internal::get_processorplugin();
+}
+
 const RDProcessor* rd_getprocessor(void) {
     return redasm::api::internal::get_processor();
 }
 
-usize rd_getprocessors(const RDProcessor** processors) {
-    return redasm::api::internal::get_processors(processors);
-}
-
-void rd_registerprocessor(const RDProcessor* proc) {
-    if(proc)
-        redasm::api::internal::register_processor(*proc);
-}
-
-void rd_setprocessor(const char* id) {
-    if(id)
-        redasm::api::internal::set_processor(id);
+bool rd_setprocessor(const char* id) {
+    if(id) return redasm::api::internal::set_processor(id);
+    return false;
 }
 
 bool rd_decode(RDAddress address, RDInstruction* instr) {

@@ -25,8 +25,7 @@ void render_function(const RDProcessor*, RDRenderer* r,
 
     RDAddress ep = api::internal::function_getentry(function);
     std::string n = api::internal::get_name(ep);
-    if(n.empty())
-        n = "???";
+    if(n.empty()) n = "???";
 
     std::string s;
 
@@ -40,17 +39,21 @@ void render_function(const RDProcessor*, RDRenderer* r,
 
 } // namespace processor
 
-void register_processors() {
-    RDProcessor nullprocessor{
-        .id = "null",
-        .name = "Null",
-        .address_size = sizeof(uptr),
-        .integer_size = sizeof(int),
-    };
+namespace {
 
-    nullprocessor.rendersegment = builtins::processor::render_segment;
-    nullprocessor.renderfunction = builtins::processor::render_function;
-    api::internal::register_processor(nullprocessor);
+RDProcessorPlugin null_processor = {
+    .id = "null",
+    .name = "Null",
+    .address_size = sizeof(uptr),
+    .integer_size = sizeof(int),
+    .rendersegment = builtins::processor::render_segment,
+    .renderfunction = builtins::processor::render_function,
+};
+
+} // namespace
+
+void register_processors() {
+    api::internal::register_processor(&null_processor);
 }
 
 } // namespace redasm::builtins

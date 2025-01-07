@@ -8,8 +8,7 @@ namespace redasm {
 namespace {
 
 void do_enqueue(std::deque<MIndex>& q, MIndex idx) {
-    if(q.empty() || q.front() != idx)
-        q.push_front(idx);
+    if(q.empty() || q.front() != idx) q.push_front(idx);
 }
 
 } // namespace
@@ -22,8 +21,9 @@ void Emulator::setup() {
     this->dslotinstr = std::make_unique<RDInstruction>();
 
     const Context* ctx = state::context;
-    if(ctx->processor && ctx->processor->setup)
-        ctx->processor->setup(ctx->processor, api::to_c(this));
+
+    if(ctx->processorplugin && ctx->processorplugin->setup)
+        ctx->processorplugin->setup(ctx->processor, api::to_c(this));
 }
 
 void Emulator::flow(MIndex index) {
@@ -54,8 +54,7 @@ void Emulator::add_ref(MIndex toidx, usize type) { // NOLINT
 u64 Emulator::get_reg(int regid) const {
     auto it = m_state.registers.find(regid);
 
-    if(it != m_state.registers.end())
-        return it->second;
+    if(it != m_state.registers.end()) return it->second;
 
     return {};
 }
@@ -78,8 +77,7 @@ u64 Emulator::upd_reg(int regid, u64 val, u64 mask) {
 u64 Emulator::get_state(std::string_view s) const {
     auto it = m_state.states.find(s);
 
-    if(it != m_state.states.end())
-        return it->second;
+    if(it != m_state.states.end()) return it->second;
 
     return {};
 }
@@ -91,8 +89,7 @@ void Emulator::set_state(const std::string& s, u64 val) {
 void Emulator::del_state(std::string_view s) {
     auto it = m_state.states.find(s);
 
-    if(it != m_state.states.end())
-        m_state.states.erase(it);
+    if(it != m_state.states.end()) m_state.states.erase(it);
 }
 
 u64 Emulator::take_state(std::string_view s) {
@@ -151,11 +148,10 @@ u32 Emulator::tick() {
     Context* ctx = state::context;
     auto& mem = ctx->memory;
 
-    const RDProcessor* p = ctx->processor;
-    assume(p);
+    const RDProcessorPlugin* plugin = ctx->processorplugin;
+    assume(plugin);
 
-    if(ctx->memory->at(idx).is_code())
-        return ctx->memory->get_length(idx);
+    if(ctx->memory->at(idx).is_code()) return ctx->memory->get_length(idx);
 
     this->pc = idx;
 
@@ -167,27 +163,24 @@ u32 Emulator::tick() {
         .features = this->ndslot ? IF_DSLOT : IF_NONE,
     };
 
-    if(p->decode)
-        p->decode(p, &instr);
+    if(plugin->decode)
+        plugin->decode(ctx->processor, &instr);
     else {
         ctx->add_problem(
             idx, fmt::format("decode() not implemented for processor '{}'",
-                             p->name));
+                             plugin->name));
         return 0;
     }
 
     if(instr.length) {
         mem->unset_n(idx, instr.length);
-        assume(p->emulate);
-        p->emulate(p, api::to_c(this), &instr);
+        assume(plugin->emulate);
+        plugin->emulate(ctx->processor, api::to_c(this), &instr);
         mem->set_n(idx, instr.length, BF_CODE);
 
-        if(instr.features & IF_JUMP)
-            mem->set(idx, BF_JUMP);
-        if(instr.features & IF_CALL)
-            mem->set(idx, BF_CALL);
-        if(instr.delayslots)
-            this->execute_delayslots(instr);
+        if(instr.features & IF_JUMP) mem->set(idx, BF_JUMP);
+        if(instr.features & IF_CALL) mem->set(idx, BF_CALL);
+        if(instr.delayslots) this->execute_delayslots(instr);
     }
 
     return instr.length;
@@ -217,7 +210,7 @@ void Emulator::execute_delayslots(const RDInstruction& instr) {
 }
 
 bool Emulator::has_pending_code() const {
-    return state::context->memory && state::context->processor->emulate &&
+    return state::context->memory && state::context->processorplugin->emulate &&
            (!m_qflow.empty() || !m_qjump.empty() || !m_qcall.empty());
 }
 

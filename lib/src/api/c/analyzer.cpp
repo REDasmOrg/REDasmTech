@@ -1,14 +1,22 @@
 #include "../internal/analyzer.h"
 #include <redasm/analyzer.h>
 
-usize rd_getanalyzers(const RDAnalyzer** analyzers) {
-    return redasm::api::internal::get_analyzers(analyzers);
+bool rd_registeranalyzer(const RDAnalyzerPlugin* plugin) {
+    return redasm::api::internal::register_analyzer(plugin);
 }
 
-bool rdanalyzer_select(const RDAnalyzer* self, bool select) {
-    return self && redasm::api::internal::analyzer_select(self, select);
+const RDAnalyzerPlugin** rd_getanalyzerplugins(usize* n) {
+    return redasm::api::internal::get_analyzerplugins(n);
 }
 
-bool rdanalyzer_isselected(const RDAnalyzer* self) {
-    return self && redasm::api::internal::analyzer_isselected(self);
+const RDAnalyzerPlugin** rd_getanalyzers(usize* n) {
+    return redasm::api::internal::get_analyzers(n);
+}
+
+bool rdanalyzerplugin_select(const RDAnalyzerPlugin* self, bool select) {
+    return redasm::api::internal::analyzerplugin_select(self, select);
+}
+
+bool rdanalyzerplugin_isselected(const RDAnalyzerPlugin* self) {
+    return redasm::api::internal::analyzerplugin_isselected(self);
 }

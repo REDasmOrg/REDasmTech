@@ -24,9 +24,7 @@ struct PsxExeHeader {
 };
 #pragma pack(pop)
 
-} // namespace
-
-bool init(RDLoader*) {
+bool load(RDLoader*) {
     RDBuffer* file = rdbuffer_getfile();
     PsxExeHeader psxheader;
     usize n = rdbuffer_read(file, 0, &psxheader, sizeof(PsxExeHeader));
@@ -44,5 +42,13 @@ bool init(RDLoader*) {
     rd_setentry(psxheader.pc0, "PSXEXE_EntryPoint");
     return true;
 }
+
+} // namespace
+
+RDLoaderPlugin loader = {
+    .id = "psxexe",
+    .name = "PS-X Executable",
+    .load = psxexe::load,
+};
 
 } // namespace psxexe

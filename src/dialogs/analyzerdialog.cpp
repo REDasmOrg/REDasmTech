@@ -9,8 +9,8 @@ AnalyzerDialog::AnalyzerDialog(QWidget* parent): QDialog{parent}, m_ui{this} {
 
     connect(m_analyzersmodel, &QStandardItemModel::itemChanged, this,
             [&](QStandardItem* item) {
-                rdanalyzer_select(&m_analyzers[item->index().row()],
-                                  (item->checkState() == Qt::Checked));
+                rdanalyzerplugin_select(m_analyzers[item->index().row()],
+                                        item->checkState() == Qt::Checked);
             });
 
     connect(m_ui.chkshowdetails, &QCheckBox::checkStateChanged, this,
@@ -35,26 +35,25 @@ void AnalyzerDialog::select_analyzers(bool select) {
     for(int i = 0; i < m_analyzersmodel->rowCount(); i++) {
         auto* item = m_analyzersmodel->item(i);
         item->setCheckState(select ? Qt::Checked : Qt::Unchecked);
-        rdanalyzer_select(&m_analyzers[i], select);
+        rdanalyzerplugin_select(m_analyzers[i], select);
     }
 }
 
 void AnalyzerDialog::get_analyzers() {
     m_analyzersmodel->clear();
     m_analyzersmodel->setHorizontalHeaderLabels({"Name", "Order"});
-
-    m_nanalyzers = rd_getanalyzers(&m_analyzers);
+    m_analyzers = rd_getanalyzers(&m_nanalyzers);
 
     for(usize i = 0; i < m_nanalyzers; i++) {
-        QString name = m_analyzers[i].name;
-        QString order = QString::number(m_analyzers[i].order, 16);
+        QString name = m_analyzers[i]->name;
+        QString order = QString::number(m_analyzers[i]->order, 16);
         auto* nameitem = new QStandardItem(name);
         auto* orderitem = new QStandardItem(order);
 
         nameitem->setCheckable(true);
 
         nameitem->setCheckState(
-            m_analyzers[i].flags & ANA_SELECTED ? Qt::Checked : Qt::Unchecked);
+            m_analyzers[i]->flags & AF_SELECTED ? Qt::Checked : Qt::Unchecked);
 
         m_analyzersmodel->appendRow({nameitem, orderitem});
     }

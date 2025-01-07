@@ -86,7 +86,7 @@ bool load_elf() {
     return true;
 }
 
-bool init(RDLoader*) {
+bool load(RDLoader*) {
     ElfIdent ident;
     if(!elf_format::validate(ident)) return false;
     elf_types::register_all(ident);
@@ -100,12 +100,12 @@ bool init(RDLoader*) {
     return false;
 }
 
+RDLoaderPlugin loader = {
+    .id = "elf",
+    .name = "ELF Executable",
+    .load = load,
+};
+
 } // namespace
 
-void rdplugin_init() {
-    RDLoader elf{};
-    elf.id = "elf";
-    elf.name = "ELF Executable";
-    elf.init = init;
-    rd_registerloader(&elf);
-}
+void rdplugin_create() { rd_registerloader(&loader); }

@@ -10,7 +10,7 @@ LoaderDialog::LoaderDialog(RDBuffer* buffer, QWidget* parent)
     usize c = rd_test(buffer, &m_testresult);
 
     for(usize i = 0; i < c; i++)
-        m_ui.lwloaders->addItem(m_testresult[i].loader->name);
+        m_ui.lwloaders->addItem(m_testresult[i].loaderplugin->name);
 
     this->populate_loglevels();
 
@@ -24,28 +24,27 @@ LoaderDialog::LoaderDialog(RDBuffer* buffer, QWidget* parent)
             &LoaderDialog::on_loader_changed);
 
     // Trigger "on_loader_changed"
-    if(c > 0)
-        m_ui.lwloaders->setCurrentRow(0);
+    if(c > 0) m_ui.lwloaders->setCurrentRow(0);
 }
 
 void LoaderDialog::on_loader_changed(int currentrow) {
     if(currentrow != -1)
-        this->select_processor(m_testresult[currentrow].processor);
+        this->select_processor(m_testresult[currentrow].processorplugin);
 }
 
 void LoaderDialog::accept() {
     const RDTestResult& tr = m_testresult[m_ui.lwloaders->currentRow()];
-    const RDProcessor* p = tr.processor;
+    const RDProcessorPlugin* p = tr.processorplugin;
     this->context = tr.context;
     rd_select(tr.context);
 
     if(usize idx = m_ui.cbprocessors->currentIndex(); idx < m_nprocessors) {
-        rd_setprocessor(m_processors[idx].id);
-        p = &m_processors[idx];
+        rd_setprocessor(m_processors[idx]->id);
+        p = m_processors[idx];
     }
 
     utils::log(QString{"Selected loader '%1' with '%2' processor"}
-                   .arg(tr.loader->name)
+                   .arg(tr.loaderplugin->name)
                    .arg(p->name));
 
     auto l = static_cast<RDLogLevel>(m_ui.cbloglevel->currentData().toUInt());
@@ -59,9 +58,9 @@ void LoaderDialog::reject() {
     QDialog::reject();
 }
 
-void LoaderDialog::select_processor(const RDProcessor* processor) {
+void LoaderDialog::select_processor(const RDProcessorPlugin* proc) {
     for(usize i = 0; i < m_nprocessors; i++) {
-        if(m_processors[i].id == processor->id) {
+        if(m_processors[i]->id == proc->id) {
             m_ui.cbprocessors->setCurrentIndex(i);
             return;
         }
@@ -71,10 +70,10 @@ void LoaderDialog::select_processor(const RDProcessor* processor) {
 }
 
 void LoaderDialog::populate_processors() {
-    m_nprocessors = rd_getprocessors(&m_processors);
+    m_processors = rd_getprocessorplugins(&m_nprocessors);
 
     for(usize i = 0; i < m_nprocessors; i++)
-        m_ui.cbprocessors->addItem(m_processors[i].name);
+        m_ui.cbprocessors->addItem(m_processors[i]->name);
 }
 
 void LoaderDialog::populate_loglevels() const {

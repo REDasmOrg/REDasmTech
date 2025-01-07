@@ -5,6 +5,7 @@
 #include "../state.h"
 #include "../typing/base.h"
 #include "function.h"
+#include <unordered_set>
 
 namespace redasm::mem {
 
@@ -275,11 +276,13 @@ void process_refsto(Context* ctx, MIndex idx) {
                                      [](Byte b) { return b.is_unknown(); });
     };
 
-    assume(ctx->processor);
+    assume(ctx->processorplugin);
     Database::RefList refs = ctx->get_refs_to(idx);
-    auto addrtype = ctx->types.int_from_bytes(ctx->processor->address_size);
+    auto addrtype =
+        ctx->types.int_from_bytes(ctx->processorplugin->address_size);
     assume(addrtype.has_value());
-    auto inttype = ctx->types.int_from_bytes(ctx->processor->integer_size);
+    auto inttype =
+        ctx->types.int_from_bytes(ctx->processorplugin->integer_size);
     assume(inttype.has_value());
 
     for(const Database::Ref& r : refs) {
@@ -294,7 +297,8 @@ void process_refsto(Context* ctx, MIndex idx) {
                             ctx->set_type(idx, x.type, ST_WEAK);
                     })
                     .or_else([&]() {
-                        if(is_range_unknown(idx, ctx->processor->integer_size))
+                        if(is_range_unknown(idx,
+                                            ctx->processorplugin->integer_size))
                             ctx->set_type(idx, *inttype, ST_WEAK);
                     });
                 break;
@@ -307,7 +311,8 @@ void process_refsto(Context* ctx, MIndex idx) {
                             ctx->set_type(idx, x.type, ST_WEAK);
                     })
                     .or_else([&]() {
-                        if(is_range_unknown(idx, ctx->processor->address_size))
+                        if(is_range_unknown(idx,
+                                            ctx->processorplugin->address_size))
                             ctx->set_type(idx, *addrtype, ST_WEAK);
                     });
                 break;
@@ -369,12 +374,8 @@ void process_segments(bool finalize) {
             for(usize idx = seg.index;
                 idx < seg.endindex && idx < ctx->memory->size(); idx++) {
                 Byte b = ctx->memory->at(idx);
-
                 if(b.has(BF_FUNCTION)) mem::process_function_graph(ctx, f, idx);
-
-                if(finalize) {
-                    if(b.has(BF_REFSTO)) mem::process_refsto(ctx, idx);
-                }
+                if(finalize && b.has(BF_REFSTO)) mem::process_refsto(ctx, idx);
             }
         }
     }

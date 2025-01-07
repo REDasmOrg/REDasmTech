@@ -1,6 +1,7 @@
 #include "context.h"
 #include "api/marshal.h"
 #include "error.h"
+#include "plugins/pluginmanager.h"
 #include "state.h"
 #include "typing/base.h"
 #include "utils/utils.h"
@@ -59,10 +60,7 @@ constexpr std::array<char, 16> INTHEX_TABLE = {
 
 } // namespace
 
-Context::Context(const std::shared_ptr<AbstractBuffer>& b, RDLoader* l)
-    : loader{l}, file{b}, m_database{l->id, b->source} {
-    assume(this->loader);
-}
+Context::Context(const std::shared_ptr<AbstractBuffer>& b): file{b} {}
 
 void Context::set_userdata(const std::string& k, uptr v) {
     if(k.empty()) {
@@ -70,29 +68,36 @@ void Context::set_userdata(const std::string& k, uptr v) {
         return;
     }
 
-    m_database.set_userdata(k, v);
+    m_database->set_userdata(k, v);
+}
+
+Context::~Context() {
+    pm::destroy_instance(this->processorplugin, this->processor);
+    pm::destroy_instance(this->loaderplugin, this->loader);
 }
 
 tl::optional<uptr> Context::get_userdata(const std::string& k) const {
-    return m_database.get_userdata(k);
+    return m_database->get_userdata(k);
 }
 
-bool Context::activate() {
-    state::context = this; // Set context as active
+bool Context::init_plugins(const RDLoaderPlugin* plugin) {
+    assume(plugin);
 
-    assume(!state::processors.empty());
-    this->processor = &state::processors.front();
-    this->availableprocessors.emplace_back(this->processor->name);
+    m_database = std::make_unique<Database>(plugin->id, this->file->source);
+    this->loaderplugin = plugin;
+    this->loader = pm::create_instance(plugin);
+    this->processorplugin = pm::find_processor("null");
+    assume(this->processorplugin);
 
-    if(this->loader->init && this->loader->init(this->loader)) {
-        for(const RDAnalyzer& a : state::analyzers) {
+    if(this->loaderplugin->load && this->loaderplugin->load(this->loader)) {
+        foreach_analyzers(ap, {
             // Assume true if 'isenabled' is not implemented
-            if(a.isenabled && !a.isenabled(&a)) continue;
-
-            this->analyzers.push_back(a); // Take a copy of the analyzer
-
-            if(a.flags & ANA_SELECTED) this->selectedanalyzers.insert(a.name);
-        }
+            if(!ap->isenabled || ap->isenabled()) {
+                this->analyzerplugins.push_back(ap);
+                if(ap->flags & AF_SELECTED)
+                    this->selectedanalyzerplugins.insert(ap);
+            }
+        });
 
         this->worker.emulator.setup();
         return true;
@@ -154,7 +159,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         case DR_READ:
         case DR_WRITE:
         case DR_ADDRESS: {
-            this->m_database.add_ref(fromidx, toidx, type);
+            this->m_database->add_ref(fromidx, toidx, type);
             this->memory->set(fromidx, BF_REFSFROM);
             this->memory->set(toidx, BF_REFSTO);
             break;
@@ -162,7 +167,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
 
         case CR_JUMP: {
             if(s) {
-                this->m_database.add_ref(fromidx, toidx, type);
+                this->m_database->add_ref(fromidx, toidx, type);
                 this->memory->set(fromidx, BF_REFSFROM);
                 this->memory->set(toidx, BF_JUMPDST | BF_REFSTO);
             }
@@ -179,7 +184,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
 
         case CR_CALL: {
             if(s) {
-                this->m_database.add_ref(fromidx, toidx, type);
+                this->m_database->add_ref(fromidx, toidx, type);
                 this->memory->set(fromidx, BF_REFSFROM);
                 this->memory->set(toidx, BF_FUNCTION | BF_REFSTO);
             }
@@ -201,7 +206,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
 bool Context::set_comment(MIndex idx, std::string_view comment) {
     if(idx >= this->memory->size()) return false;
 
-    this->m_database.set_comment(idx, comment);
+    this->m_database->set_comment(idx, comment);
     this->memory->at(idx).set_flag(BF_COMMENT, !comment.empty());
     return true;
 }
@@ -246,7 +251,7 @@ bool Context::set_type(MIndex idx, RDType t, usize flags) {
         default: len = std::max<usize>(t.n, 1) * td->size; break;
     }
 
-    m_database.set_type(idx, t);
+    m_database->set_type(idx, t);
     this->memory->unset_n(idx, len);
     this->memory->set_n(idx, len, BF_DATA);
     this->memory->set(idx, BF_TYPE);
@@ -400,11 +405,11 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
         .endoffset = endoffset,
     });
 
-    m_database.add_segment(name, idx, endidx, offset, endoffset, type);
+    m_database->add_segment(name, idx, endidx, offset, endoffset, type);
 }
 
 tl::optional<MIndex> Context::get_index(std::string_view name) const {
-    return m_database.get_index(name);
+    return m_database->get_index(name);
 }
 
 tl::optional<RDType> Context::get_type(MIndex idx) const {
@@ -413,7 +418,7 @@ tl::optional<RDType> Context::get_type(MIndex idx) const {
         return tl::nullopt;
     }
 
-    if(this->memory->at(idx).has(BF_TYPE)) return m_database.get_type(idx);
+    if(this->memory->at(idx).has(BF_TYPE)) return m_database->get_type(idx);
 
     return tl::nullopt;
 }
@@ -427,7 +432,7 @@ std::string Context::get_name(MIndex idx) const {
     Byte b = this->memory->at(idx);
     std::string name;
 
-    if(b.has(BF_NAME)) name = m_database.get_name(idx);
+    if(b.has(BF_NAME)) name = m_database->get_name(idx);
 
     if(name.empty()) {
         std::string prefix = "loc";
@@ -462,14 +467,14 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
     std::string dbname = name;
 
     if(!name.empty()) {
-        auto nameidx = m_database.get_index(dbname, true);
+        auto nameidx = m_database->get_index(dbname, true);
 
         if(nameidx && (flags & SN_FORCE)) {
             usize n = 0;
 
             while(nameidx) {
                 dbname = fmt::format("{}_{}", name, ++n);
-                nameidx = m_database.get_index(dbname, true);
+                nameidx = m_database->get_index(dbname, true);
             }
         }
         else if(nameidx) {
@@ -485,7 +490,7 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
     b.set_flag(BF_NAME, !dbname.empty());
     b.set_flag(BF_IMPORT, flags & SN_IMPORT);
 
-    m_database.set_name(idx, dbname);
+    m_database->set_name(idx, dbname);
     return true;
 }
 
@@ -493,7 +498,7 @@ std::string Context::get_comment(MIndex idx) const {
     if(idx >= this->memory->size() || !this->memory->at(idx).has(BF_COMMENT))
         return {};
 
-    return m_database.get_comment(idx);
+    return m_database->get_comment(idx);
 }
 
 Database::RefList Context::get_refs_from_type(MIndex fromidx,
@@ -502,7 +507,7 @@ Database::RefList Context::get_refs_from_type(MIndex fromidx,
        !this->memory->at(fromidx).has(BF_REFSFROM))
         return {};
 
-    return m_database.get_refs_from_type(fromidx, type);
+    return m_database->get_refs_from_type(fromidx, type);
 }
 
 Database::RefList Context::get_refs_from(MIndex fromidx) const {
@@ -510,30 +515,30 @@ Database::RefList Context::get_refs_from(MIndex fromidx) const {
        !this->memory->at(fromidx).has(BF_REFSFROM))
         return {};
 
-    return m_database.get_refs_from(fromidx);
+    return m_database->get_refs_from(fromidx);
 }
 
 Database::RefList Context::get_refs_to_type(MIndex toidx, usize type) const {
     if(toidx >= this->memory->size() || !this->memory->at(toidx).has(BF_REFSTO))
         return {};
 
-    return m_database.get_refs_to_type(toidx, type);
+    return m_database->get_refs_to_type(toidx, type);
 }
 
 Database::RefList Context::get_refs_to(MIndex toidx) const {
     if(toidx >= this->memory->size() || !this->memory->at(toidx).has(BF_REFSTO))
         return {};
 
-    return m_database.get_refs_to(toidx);
+    return m_database->get_refs_to(toidx);
 }
 
 std::string Context::to_hex(usize v, int n) const {
-    assume(this->processor);
+    assume(this->processorplugin);
 
     if(n == -1)
         n = 0;
     else if(!n)
-        n = this->processor->integer_size * 2;
+        n = this->processorplugin->integer_size * 2;
 
     std::string hexstr;
     hexstr.reserve(n);

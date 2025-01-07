@@ -1,64 +1,55 @@
 #include "analyzer.h"
 #include "../../context.h"
+#include "../../plugins/pluginmanager.h"
 #include "../../state.h"
 #include <spdlog/spdlog.h>
 
 namespace redasm::api::internal {
 
-void register_analyzer(const RDAnalyzer& analyzer) {
-    spdlog::trace("register_analyzer('{}')", analyzer.name);
+bool register_analyzer(const RDAnalyzerPlugin* plugin) {
+    spdlog::trace("register_analyzer({})", fmt::ptr(plugin));
+    return pm::register_analyzer(plugin);
+}
 
-    if(std::ranges::find_if(state::analyzers, [&](const RDAnalyzer& x) {
-           return x.id == analyzer.id;
-       }) != state::analyzers.end()) {
-        state::error(fmt::format("Analyzer '{}' already exists", analyzer.id));
-        return;
+const RDAnalyzerPlugin** get_analyzerplugins(usize* n) {
+    spdlog::trace("get_analyzersplugins({})", fmt::ptr(n));
+    return pm::get_analyzers(n);
+}
+
+const RDAnalyzerPlugin** get_analyzers(usize* n) {
+    spdlog::trace("get_analyzers({})", fmt::ptr(n));
+
+    if(!state::context) {
+        if(n) *n = 0;
+        return nullptr;
     }
 
-    auto it = std::ranges::upper_bound(
-        state::analyzers, analyzer,
-        [](const auto& a, const auto& b) { return a.order < b.order; });
-
-    state::analyzers.insert(it, analyzer);
+    if(n) *n = state::context->analyzerplugins.size();
+    return state::context->analyzerplugins.data();
 }
 
-usize get_analyzers(const RDAnalyzer** analyzers) {
-    spdlog::trace("get_analyzers({})", fmt::ptr(analyzers));
-
-    if(!state::context)
-        return 0;
-
-    if(analyzers)
-        *analyzers = state::context->analyzers.data();
-
-    return state::context->analyzers.size();
-}
-
-bool analyzer_select(const RDAnalyzer* self, bool select) {
-    spdlog::trace("analyzer_select('{}', {})", self->name, select);
+bool analyzerplugin_select(const RDAnalyzerPlugin* self, bool select) {
+    spdlog::trace("analyzerplugin_select('{}', {})", self->name, select);
 
     Context* ctx = state::context;
 
-    return std::ranges::any_of(ctx->analyzers, [&](const RDAnalyzer& x) {
-        if(&x != self)
-            return false;
+    return std::ranges::any_of(
+        ctx->analyzerplugins, [&](const RDAnalyzerPlugin* x) {
+            if(x != self) return false;
 
-        if(select)
-            state::context->selectedanalyzers.insert(x.name);
-        else
-            state::context->selectedanalyzers.erase(x.name);
+            if(select)
+                state::context->selectedanalyzerplugins.insert(x);
+            else
+                state::context->selectedanalyzerplugins.erase(x);
 
-        return true;
-    });
+            return true;
+        });
 }
 
-bool analyzer_isselected(const RDAnalyzer* self) {
-    spdlog::trace("analyzer_isselected('{}')", self->name);
-
-    if(!state::context)
-        return false;
-
-    return state::context->selectedanalyzers.contains(self->name);
+bool analyzerplugin_isselected(const RDAnalyzerPlugin* self) {
+    spdlog::trace("analyzerplugin_isselected('{}')", self->name);
+    if(!state::context) return false;
+    return state::context->selectedanalyzerplugins.contains(self);
 }
 
 } // namespace redasm::api::internal

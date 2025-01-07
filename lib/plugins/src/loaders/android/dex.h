@@ -8,6 +8,6 @@
 
 namespace dex {
 
-bool init(RDLoader*);
+extern RDLoaderPlugin loader;
 
 }

@@ -5,6 +5,18 @@
 
 namespace redasm::api::python {
 
+bool validate_class(PyObject* obj,
+                    std::initializer_list<const char*> reqattrs) {
+    if(!PyType_Check(obj)) return python::type_error(obj, "class");
+
+    for(const char* attr : reqattrs) {
+        if(!PyObject_HasAttrString(obj, attr))
+            return python::attr_error(obj, attr);
+    }
+
+    return true;
+}
+
 PyObject* new_simplenamespace() {
     PyObject* mod_types = PyImport_ImportModule("types");
     PyObject* ns = PyObject_GetAttrString(mod_types, "SimpleNamespace");
@@ -93,8 +105,7 @@ PyObject* to_object(const typing::Value& v) {
 }
 
 void check_error() {
-    if(!PyErr_Occurred())
-        return;
+    if(!PyErr_Occurred()) return;
 
     std::string s;
     PyObject* exc = PyErr_GetRaisedException();
@@ -111,8 +122,7 @@ void check_error() {
     if(strace) {
         PyTracebackObject* t = strace;
 
-        if(!s.empty())
-            s += '\n';
+        if(!s.empty()) s += '\n';
 
         s += "Traceback (most recent call last):";
 

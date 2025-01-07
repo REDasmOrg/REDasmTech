@@ -1,6 +1,6 @@
 #include "module.h"
 #include "../../error.h"
-#include "../../modulemanager.h"
+#include "../../plugins/modulemanager.h"
 #include "buffer.h"
 #include "common.h"
 #include "methods.h"
@@ -42,10 +42,9 @@ void init_constants(PyObject* m) {
     assume(PyModule_AddIntConstant(m, "SEG_UNKNOWN", SEG_UNKNOWN) == 0);
     assume(PyModule_AddIntConstant(m, "SEG_HASDATA", SEG_HASDATA) == 0);
     assume(PyModule_AddIntConstant(m, "SEG_HASCODE", SEG_HASCODE) == 0);
-    assume(PyModule_AddIntConstant(m, "ANA_NONE", ANA_NONE) == 0);
-    assume(PyModule_AddIntConstant(m, "ANA_RUNONCE", ANA_RUNONCE) == 0);
-    assume(PyModule_AddIntConstant(m, "ANA_SELECTED", ANA_SELECTED) == 0);
-    assume(PyModule_AddIntConstant(m, "ANA_EXPERIMENTAL", ANA_EXPERIMENTAL) == 0);
+    assume(PyModule_AddIntConstant(m, "ANA_RUNONCE", AF_RUNONCE) == 0);
+    assume(PyModule_AddIntConstant(m, "ANA_SELECTED", AF_SELECTED) == 0);
+    assume(PyModule_AddIntConstant(m, "ANA_EXPERIMENTAL", AF_EXPERIMENTAL) == 0);
 
     assume(PyModule_AddIntConstant(m, "DR_READ", DR_READ) == 0);
     assume(PyModule_AddIntConstant(m, "DR_WRITE", DR_WRITE) == 0);
@@ -80,8 +79,7 @@ PyMODINIT_FUNC PyInit_redasm() { // NOLINT
 }
 
 bool init() {
-    if(Py_IsInitialized())
-        return true;
+    if(Py_IsInitialized()) return true;
 
     spdlog::info("Initializing Python");
     PyImport_AppendInittab("redasm", PyInit_redasm);
@@ -94,14 +92,12 @@ bool init() {
 
     PyObject* syspath = PySys_GetObject("path");
 
-    for(const std::string& sp : redasm::get_searchpaths()) {
+    for(const std::string& sp : mm::get_searchpaths()) {
         fs::path rootpath = fs::path{sp} / PYTHON_PREFIX;
-        if(!fs::is_directory(rootpath))
-            continue;
+        if(!fs::is_directory(rootpath)) continue;
 
         fs::path initfile = rootpath / "__init__.py";
-        if(!fs::is_regular_file(initfile))
-            continue;
+        if(!fs::is_regular_file(initfile)) continue;
 
         PyObject* item = PyUnicode_FromString(rootpath.c_str());
         assume(PyList_Append(syspath, item) == 0);
@@ -115,8 +111,7 @@ bool init() {
 void deinit() {
     spdlog::info("Deinitializing Python");
 
-    if(Py_IsInitialized())
-        Py_Finalize();
+    if(Py_IsInitialized()) Py_Finalize();
 }
 
 void main() {
@@ -132,8 +127,7 @@ void main() {
 
         spdlog::info("Executing '{}'", init);
 
-        if(PyRun_SimpleFile(fp, init.c_str()) == -1)
-            python::check_error();
+        if(PyRun_SimpleFile(fp, init.c_str()) == -1) python::check_error();
 
         std::fclose(fp);
     }

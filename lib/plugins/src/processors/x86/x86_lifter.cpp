@@ -32,11 +32,9 @@ const RDILExpr* lift_op(const RDInstruction* instr, usize idx, RDILPool* pool) {
             if(op.displ.index != ZYDIS_REGISTER_NONE)
                 index = rdil_reg(pool, op.displ.index);
 
-            if(op.displ.scale > 1)
-                scale = rdil_cnst(pool, op.displ.scale);
+            if(op.displ.scale > 1) scale = rdil_cnst(pool, op.displ.scale);
 
-            if(op.displ.displ)
-                disp = rdil_cnst(pool, op.displ.displ);
+            if(op.displ.displ) disp = rdil_cnst(pool, op.displ.displ);
 
             const RDILExpr* lhs = nullptr;
             const RDILExpr* indexscale =
@@ -98,7 +96,7 @@ const RDILExpr* lift_jump(const RDInstruction* instr, RDILPool* pool) {
 
 } // namespace
 
-bool lift(const RDProcessor*, RDILList* l, const RDInstruction* instr) {
+bool lift(RDProcessor*, RDILList* l, const RDInstruction* instr) {
     RDILPool* pool = rdillist_getpool(l);
 
     switch(instr->id) {

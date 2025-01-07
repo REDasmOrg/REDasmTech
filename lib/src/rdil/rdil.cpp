@@ -293,24 +293,28 @@ void to_string(const ILExpr* e, ToStringCallback cb) {
 }
 
 void get_text_impl(const ILExpr* e, std::string& res) {
-    rdil::to_string(e, [&res](const ILExpr* expr, const std::string& s,
-                              WalkType) {
-        Context* ctx = state::context;
+    rdil::to_string(e,
+                    [&res](const ILExpr* expr, const std::string& s, WalkType) {
+                        Context* ctx = state::context;
 
-        switch(expr->op) {
-            case RDIL_CNST: res += ctx->to_hex(expr->u_value, -1); break;
-            case RDIL_VAR: res += ctx->to_hex(expr->address); break;
+                        switch(expr->op) {
+                            case RDIL_CNST:
+                                res += ctx->to_hex(expr->u_value, -1);
+                                break;
+                            case RDIL_VAR:
+                                res += ctx->to_hex(expr->address);
+                                break;
 
-            case RDIL_REG: {
-                res +=
-                    ctx->processor->getregistername(ctx->processor, expr->reg);
-                break;
-            }
+                            case RDIL_REG: {
+                                res += ctx->processorplugin->getregistername(
+                                    ctx->processor, expr->reg);
+                                break;
+                            }
 
-            case RDIL_SYM: res += expr->sym; break;
-            default: res += s; break;
-        }
-    });
+                            case RDIL_SYM: res += expr->sym; break;
+                            default: res += s; break;
+                        }
+                    });
 }
 
 } // namespace
@@ -350,8 +354,7 @@ usize get_op_type(std::string_view id) {
     };
 
     auto it = IDS.find(id);
-    if(it != IDS.end())
-        return it->second;
+    if(it != IDS.end()) return it->second;
     return RDIL_INVALID;
 }
 
@@ -362,12 +365,10 @@ std::string get_text(const ILExpr* e) {
 }
 
 std::string get_format(const ILExpr* e) {
-    if(!e)
-        return {};
+    if(!e) return {};
 
     std::string fmt;
-    if(!rdil::get_format_impl(e, fmt))
-        return {};
+    if(!rdil::get_format_impl(e, fmt)) return {};
     return fmt;
 }
 
@@ -378,7 +379,7 @@ void generate(const Function& f, ILExprList& res) {
 void generate(const Function& f, ILExprList& res, usize maxn) {
     const Context* ctx = state::context;
     const auto& mem = state::context->memory;
-    const RDProcessor* p = ctx->processor;
+    const RDProcessorPlugin* p = ctx->processorplugin;
     assume(p);
 
     for(const Function::BasicBlock& bb : f.blocks) {
@@ -389,16 +390,14 @@ void generate(const Function& f, ILExprList& res, usize maxn) {
             assume(address.has_value());
 
             RDInstruction instr{.address = *address};
-            if(p->decode)
-                p->decode(p, &instr);
+            if(p->decode) p->decode(ctx->processor, &instr);
 
             if(!instr.length || !p->lift ||
-               !p->lift(p, api::to_c(&res), &instr)) {
+               !p->lift(ctx->processor, api::to_c(&res), &instr)) {
                 res.append(res.expr_unknown());
             }
 
-            if(res.size() >= maxn)
-                return;
+            if(res.size() >= maxn) return;
 
             if(auto nextidx = mem->get_next(idx); nextidx) {
                 assume(*nextidx > idx);

@@ -19,10 +19,11 @@ void emulator_setstate(RDEmulator* self, const std::string& state, u64 val);
 u64 emulator_updstate(RDEmulator* self, std::string_view state, u64 val,
                       u64 mask);
 
+bool register_processor(const RDProcessorPlugin* plugin);
+const RDProcessorPlugin** get_processorplugins(usize* n);
+const RDProcessorPlugin* get_processorplugin();
 const RDProcessor* get_processor();
-usize get_processors(const RDProcessor** processors);
-void register_processor(const RDProcessor& processor);
-void set_processor(std::string_view id);
+bool set_processor(std::string_view id);
 bool decode(RDAddress address, RDInstruction* instr);
 
 } // namespace redasm::api::internal

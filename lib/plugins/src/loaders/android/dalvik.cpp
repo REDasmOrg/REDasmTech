@@ -7,10 +7,27 @@ namespace dalvik {
 
 namespace {
 
+using DalvikMaxBuffer = std::array<dex_u2, 5>; // Max instruction is 5 words
+
 struct DalvikIndex {
     dex_u4 index{0};
     dex_u4 secindex{0};
     dex_u4 width{0};
+};
+
+enum DalvikOperands {
+    DVKOP_VNORMAL = 0,
+    DVKOP_VMETHODINDEX,
+    DVKOP_VTYPEINDEX,
+    DVKOP_VSTRINGINDEX,
+    DVKOP_VFIELDINDEX,
+    DVKOP_VPACKEDSWITCHTABLE,
+    DVKOP_VSPARSESWITCHTABLE,
+    DVKOP_VFILLARRAYDATA,
+
+    DVKOP_PARAMETERFIRST = 0x1000,
+    DVKOP_PARAMETERLAST = 0x2000,
+    DVKOP_PARAMETERTHIS = 0x4000
 };
 
 void render_integer(RDRenderer* r, const RDOperand* op) {
@@ -118,32 +135,13 @@ RDThemeKind get_op_theme(u32 opcode) {
     return THEME_DEFAULT;
 }
 
-} // namespace
-
-enum DalvikOperands {
-    DVKOP_VNORMAL = 0,
-    DVKOP_VMETHODINDEX,
-    DVKOP_VTYPEINDEX,
-    DVKOP_VSTRINGINDEX,
-    DVKOP_VFIELDINDEX,
-    DVKOP_VPACKEDSWITCHTABLE,
-    DVKOP_VSPARSESWITCHTABLE,
-    DVKOP_VFILLARRAYDATA,
-
-    DVKOP_PARAMETERFIRST = 0x1000,
-    DVKOP_PARAMETERLAST = 0x2000,
-    DVKOP_PARAMETERTHIS = 0x4000
-};
-
-using DalvikMaxBuffer = std::array<dex_u2, 5>; // Max instruction is 5 words
-
 const char* get_registername(const RDProcessor*, int regid) {
     static std::string reg;
     reg = "v" + std::to_string(regid);
     return reg.c_str();
 }
 
-void decode(const RDProcessor*, RDInstruction* instr) {
+void decode(RDProcessor*, RDInstruction* instr) {
     if(instr->address == 0x42624) {
         int zzz = 0;
         zzz++;
@@ -216,7 +214,7 @@ void decode(const RDProcessor*, RDInstruction* instr) {
     }
 }
 
-void emulate(const RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
+void emulate(RDProcessor*, RDEmulator* e, const RDInstruction* instr) {
     if(instr->features & IF_JUMP)
         rdemulator_addref(e, instr->operands[0].mem, CR_JUMP);
 
@@ -241,5 +239,18 @@ void render_instruction(const RDProcessor*, RDRenderer* r,
         }
     }
 }
+
+} // namespace
+
+RDProcessorPlugin processor = {
+    .id = "dalvik",
+    .name = "Dalvik VM",
+    .address_size = 2,
+    .integer_size = 2,
+    .getregistername = dalvik::get_registername,
+    .decode = dalvik::decode,
+    .emulate = dalvik::emulate,
+    .renderinstruction = dalvik::render_instruction,
+};
 
 } // namespace dalvik

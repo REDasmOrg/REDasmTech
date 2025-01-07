@@ -19,6 +19,6 @@ private:
 private:
     ui::AnalyzerDialog m_ui;
     QStandardItemModel* m_analyzersmodel;
-    const RDAnalyzer* m_analyzers{nullptr};
+    const RDAnalyzerPlugin** m_analyzers{nullptr};
     usize m_nanalyzers{0};
 };

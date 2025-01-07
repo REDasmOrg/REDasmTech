@@ -3,7 +3,7 @@
 namespace x86_common {
 
 std::optional<RDAddress> read_address(RDAddress address) {
-    const RDProcessor* p = rd_getprocessor();
+    const RDProcessorPlugin* p = rd_getprocessorplugin();
     bool ok = false;
     RDAddress val;
 
@@ -16,7 +16,7 @@ std::optional<RDAddress> read_address(RDAddress address) {
 }
 
 ZydisRegister get_sp() {
-    switch(rd_getprocessor()->address_size) {
+    switch(rd_getprocessorplugin()->address_size) {
         case 4: return ZYDIS_REGISTER_ESP;
         case 8: return ZYDIS_REGISTER_RSP;
         default: break;
@@ -26,7 +26,7 @@ ZydisRegister get_sp() {
 }
 
 ZydisRegister get_bp() {
-    switch(rd_getprocessor()->address_size) {
+    switch(rd_getprocessorplugin()->address_size) {
         case 4: return ZYDIS_REGISTER_EBP;
         case 8: return ZYDIS_REGISTER_RBP;
         default: break;

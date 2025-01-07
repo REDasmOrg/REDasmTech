@@ -4,12 +4,12 @@ function(setup_compiler project_name)
             EXPORT_COMPILE_COMMANDS ON
             CXX_STANDARD_REQUIRED YES
             CXX_EXTENSIONS NO
-            CXX_STANDARD 17
+            CXX_STANDARD 20
     )
 
     target_compile_features(${project_name}
         PUBLIC
-            cxx_std_17
+            cxx_std_20
     )
 
     set(NOT_MSVC_COMPILE_OPTIONS

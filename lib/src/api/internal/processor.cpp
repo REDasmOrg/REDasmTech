@@ -1,5 +1,6 @@
 #include "processor.h"
 #include "../../context.h"
+#include "../../plugins/pluginmanager.h"
 #include "../../state.h"
 #include "../marshal.h"
 #include <spdlog/spdlog.h>
@@ -9,8 +10,7 @@ namespace redasm::api::internal {
 u32 emulator_getdslotinfo(const RDEmulator* self, const RDInstruction** dslot) {
     const Emulator* e = api::from_c(self);
 
-    if(dslot && e->ndslot)
-        *dslot = e->dslotinstr.get();
+    if(dslot && e->ndslot) *dslot = e->dslotinstr.get();
 
     return e->ndslot;
 }
@@ -74,82 +74,58 @@ u64 emulator_updstate(RDEmulator* self, std::string_view state, u64 val,
     return api::from_c(self)->upd_state(state, val, mask);
 }
 
-const RDProcessor* get_processor() {
-    spdlog::trace("get_processor()");
+bool register_processor(const RDProcessorPlugin* plugin) {
+    spdlog::trace("register_processor({})", fmt::ptr(plugin));
+    return pm::register_processor(plugin);
+}
 
-    if(state::context)
-        return state::context->processor;
+const RDProcessorPlugin** get_processorplugins(usize* n) {
+    spdlog::trace("get_processorplugins({})", fmt::ptr(n));
+    return pm::get_processors(n);
+}
 
+const RDProcessorPlugin* get_processorplugin() {
+    spdlog::trace("get_processorplugin()");
+    if(state::context) return state::context->processorplugin;
     return nullptr;
 }
 
-usize get_processors(const RDProcessor** processors) {
-    spdlog::trace("get_processors({})", fmt::ptr(processors));
-
-    if(processors)
-        *processors = state::processors.data();
-
-    return state::processors.size();
+const RDProcessor* get_processor() {
+    spdlog::trace("get_processor()");
+    if(state::context) return state::context->processor;
+    return nullptr;
 }
 
-void register_processor(const RDProcessor& processor) {
-    spdlog::trace("register_processor('{}', '{}')", processor.id,
-                  processor.name);
-
-    if(!processor.address_size) {
-        state::error(fmt::format(
-            "register_processor: invalid address-size for processor '{}'",
-            processor.id));
-
-        return;
-    }
-
-    if(!processor.integer_size) {
-        state::error(fmt::format(
-            "register_processor: invalid integer-size for processor '{}'",
-            processor.id));
-
-        return;
-    }
-
-    if(processor.id)
-        state::processors.push_back(processor);
-    else
-        spdlog::error("register_processor: invalid id");
-}
-
-void set_processor(std::string_view id) {
+bool set_processor(std::string_view id) {
     spdlog::trace("set_processor('{}')", id);
 
-    if(!state::context)
-        return;
+    if(!state::context) return false;
+    const RDProcessorPlugin* plugin = pm::find_processor(id);
 
-    assume(!state::processors.empty());
-
-    for(const RDProcessor& p : state::processors) {
-        if(p.id == id) {
-            state::context->processor = &p;
-            return;
-        }
+    if(plugin) {
+        RDProcessor* proc = pm::create_instance(plugin);
+        pm::destroy_instance(state::context->processorplugin,
+                             state::context->processor);
+        state::context->processorplugin = plugin;
+        state::context->processor = proc;
+        return true;
     }
 
-    // Select 'null' processor;
-    state::context->processor = &state::processors.front();
     spdlog::error("set_processor: '{}' not found", id);
+    return false;
 }
 
 bool decode(RDAddress address, RDInstruction* instr) {
     spdlog::trace("decode({:x}, {})", address, fmt::ptr(instr));
 
     const Context* ctx = state::context;
-    if(!instr || (ctx && !ctx->is_address(address)))
-        return false;
+    if(!instr || (ctx && !ctx->is_address(address))) return false;
 
     *instr = {
         .address = address,
     };
 
-    ctx->processor->decode(ctx->processor, instr);
+    ctx->processorplugin->decode(ctx->processor, instr);
     return instr->length > 0;
 }
 

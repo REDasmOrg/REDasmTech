@@ -14,19 +14,27 @@
 #include <redasm/loader.h>
 #include <redasm/processor.h>
 #include <redasm/types.h>
+#include <set>
 #include <string_view>
-#include <unordered_set>
 
 namespace redasm {
 
 class Context: public Object {
+    struct AnalyzerSorter {
+        bool operator()(const RDAnalyzerPlugin* a,
+                        const RDAnalyzerPlugin* b) const {
+            return a->order < b->order;
+        }
+    };
+
 public:
     static constexpr usize DEFAULT_MIN_STRING = 4;
 
-    Context(const std::shared_ptr<AbstractBuffer>& b, RDLoader* loader);
+    explicit Context(const std::shared_ptr<AbstractBuffer>& b);
+    ~Context() override;
     void set_userdata(const std::string& k, uptr v);
     tl::optional<uptr> get_userdata(const std::string& k) const;
-    bool activate();
+    bool init_plugins(const RDLoaderPlugin* plugin);
     bool set_function(MIndex idx, usize flags);
     bool set_entry(MIndex idx, const std::string& name = {});
     bool memory_map(RDAddress base, usize size);
@@ -73,28 +81,31 @@ public:
 
     [[nodiscard]] std::string to_hex(usize v, int n = -1) const;
 
+public: // Plugins
+    const RDLoaderPlugin* loaderplugin{nullptr};
+    const RDProcessorPlugin* processorplugin{nullptr};
+    RDProcessor* processor{nullptr};
+    RDLoader* loader{nullptr};
+    std::vector<const RDAnalyzerPlugin*> analyzerplugins;
+    std::set<const RDAnalyzerPlugin*, AnalyzerSorter> selectedanalyzerplugins;
+
 public:
-    mutable Segment* m_lastsegment{nullptr};
-    RDLoader* loader;
-    const RDProcessor* processor;
-    int minstring{DEFAULT_MIN_STRING};
-    std::vector<std::pair<MIndex, std::string>> problems;
-    std::vector<RDAnalyzer> analyzers;
-    std::unordered_set<std::string_view> selectedanalyzers;
-    std::vector<std::string> availableprocessors;
-    std::vector<std::pair<usize, RDType>> collectedtypes;
+    std::unique_ptr<Memory> memory;
+    std::shared_ptr<AbstractBuffer> file;
     std::vector<Segment> segments;
+    std::vector<std::pair<usize, RDType>> collectedtypes;
+    std::vector<std::pair<MIndex, std::string>> problems;
     std::vector<MIndex> entrypoints;
     Worker worker;
     RDAddress baseaddress{};
     FunctionList functions;
     Listing listing;
     typing::Types types;
-    std::unique_ptr<Memory> memory;
-    std::shared_ptr<AbstractBuffer> file;
+    int minstring{DEFAULT_MIN_STRING};
 
 private:
-    Database m_database;
+    mutable Segment* m_lastsegment{nullptr};
+    std::unique_ptr<Database> m_database;
 };
 
 } // namespace redasm

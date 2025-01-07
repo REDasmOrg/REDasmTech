@@ -4,6 +4,6 @@
 
 namespace psxexe {
 
-bool init(RDLoader*);
+extern RDLoaderPlugin loader;
 
 } // namespace psxexe

@@ -42,7 +42,8 @@ target_sources(${PROJECT_NAME_LIB}
         src/database/database.cpp
         src/surface/surface.cpp
         src/surface/renderer.cpp
-        src/modulemanager.cpp
+        src/plugins/pluginmanager.cpp
+        src/plugins/modulemanager.cpp
         src/typing/typing.cpp
         src/disasm/worker.cpp
         src/disasm/emulator.cpp
@@ -120,6 +121,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/python/common.cpp
         src/api/python/module.cpp
         src/api/python/typing.cpp
+        src/api/python/loader.cpp
         src/api/python/redasm.cpp
 )
 

@@ -34,32 +34,28 @@ std::string surface_valuestr(const typing::Value& v, bool& isaddr) {
 
     switch(v.type.id) {
         case typing::ids::I8: {
-            if(v.i8_v < 0)
-                return std::to_string(v.i8_v);
+            if(v.i8_v < 0) return std::to_string(v.i8_v);
             return surface_checkaddr(v.i8_v, isaddr)
                 .value_or(ctx->to_hex(v.i8_v, sizeof(i8) * 2));
         }
 
         case typing::ids::I16:
         case typing::ids::I16BE: {
-            if(v.i16_v < 0)
-                return std::to_string(v.i16_v);
+            if(v.i16_v < 0) return std::to_string(v.i16_v);
             return surface_checkaddr(v.i16_v, isaddr)
                 .value_or(ctx->to_hex(v.i16_v, sizeof(i16) * 2));
         }
 
         case typing::ids::I32:
         case typing::ids::I32BE: {
-            if(v.i32_v < 0)
-                return std::to_string(v.i32_v);
+            if(v.i32_v < 0) return std::to_string(v.i32_v);
             return surface_checkaddr(v.i32_v, isaddr)
                 .value_or(ctx->to_hex(v.i32_v, sizeof(i32) * 2));
         }
 
         case typing::ids::I64:
         case typing::ids::I64BE: {
-            if(v.i64_v < 0)
-                return std::to_string(v.i64_v);
+            if(v.i64_v < 0) return std::to_string(v.i64_v);
             return surface_checkaddr(v.i64_v, isaddr)
                 .value_or(ctx->to_hex(v.i64_v, sizeof(i64) * 2));
         }
@@ -115,8 +111,7 @@ tl::optional<MIndex> Surface::current_index() const {
 }
 
 tl::optional<usize> Surface::index_under_pos(RDSurfacePosition pos) const {
-    if(!this->start)
-        return tl::nullopt;
+    if(!this->start) return tl::nullopt;
 
     if(std::string w = Renderer::word_at(this->rows, pos.row, pos.col);
        !w.empty()) {
@@ -136,8 +131,7 @@ tl::optional<usize> Surface::index_under_cursor() const {
 const Segment* Surface::current_segment() const {
     if(auto idx = this->current_index(); idx) {
         for(const Segment& s : state::context->segments) {
-            if(*idx >= s.index && *idx < s.endindex)
-                return &s;
+            if(*idx >= s.index && *idx < s.endindex) return &s;
         }
     }
 
@@ -177,8 +171,7 @@ void Surface::render(usize n) {
 }
 
 bool Surface::go_back() {
-    if(m_histback.empty())
-        return false;
+    if(m_histback.empty()) return false;
 
     HistoryItem hitem = m_histback.front();
     m_histback.pop_front();
@@ -194,8 +187,7 @@ bool Surface::go_back() {
 }
 
 bool Surface::go_forward() {
-    if(m_histforward.empty())
-        return false;
+    if(m_histforward.empty()) return false;
 
     HistoryItem hitem = m_histforward.front();
     m_histforward.pop_front();
@@ -266,12 +258,10 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
 
     for(usize i = 0; this->start && i < this->rows.size(); i++) {
         usize lidx = *this->start + i;
-        if(lidx >= lst.size())
-            break;
+        if(lidx >= lst.size()) break;
 
         const ListingItem& item = lst[lidx];
-        if(item.type != LISTINGITEM_INSTRUCTION)
-            continue;
+        if(item.type != LISTINGITEM_INSTRUCTION) continue;
 
         Byte b = mem->at(item.index);
 
@@ -314,31 +304,26 @@ void Surface::set_rdil(bool v) {
 void Surface::set_columns(usize cols) { m_renderer->columns = cols; }
 
 void Surface::set_position(int row, int col) {
-    if(row == m_selrow && col == m_selcol)
-        return;
+    if(row == m_selrow && col == m_selcol) return;
 
     this->update_history(m_histback);
 
-    if(row >= 0)
-        m_selrow = row;
-    if(col >= 0)
-        m_selcol = col;
+    if(row >= 0) m_selrow = row;
+    if(col >= 0) m_selcol = col;
 
     this->fit(m_selrow, m_selcol);
     this->select(m_selrow, m_selcol);
 }
 
 bool Surface::select_word(int row, int col) {
-    if(row >= this->rows_count())
-        return false;
+    if(row >= this->rows_count()) return false;
 
     const SurfaceRow& sfrow = this->rows[row];
 
     if(col >= static_cast<int>(sfrow.cells.size()))
         col = sfrow.cells.size() - 1;
 
-    if(Renderer::is_char_skippable(sfrow.cells[col].ch))
-        return false;
+    if(Renderer::is_char_skippable(sfrow.cells[col].ch)) return false;
 
     usize startcol = 0, endcol = 0;
 
@@ -367,13 +352,10 @@ bool Surface::select_word(int row, int col) {
 }
 
 bool Surface::select(int row, int col) {
-    if(row == m_row && col == m_col)
-        return false;
+    if(row == m_row && col == m_col) return false;
 
-    if(row >= 0)
-        m_row = row;
-    if(col >= 0)
-        m_col = col;
+    if(row >= 0) m_row = row;
+    if(col >= 0) m_col = col;
 
     this->fit(m_row, m_col);
     return true;
@@ -382,24 +364,20 @@ bool Surface::select(int row, int col) {
 RDSurfacePosition Surface::position() const { return {m_row, m_col}; }
 
 RDSurfacePosition Surface::start_selection() const {
-    if(m_row < m_selrow)
-        return {m_row, m_col};
+    if(m_row < m_selrow) return {m_row, m_col};
 
     if(m_row == m_selrow) {
-        if(m_col < m_selcol)
-            return {m_row, m_col};
+        if(m_col < m_selcol) return {m_row, m_col};
     }
 
     return {m_selrow, m_selcol};
 }
 
 RDSurfacePosition Surface::end_selection() const {
-    if(m_row > m_selrow)
-        return {m_row, m_col};
+    if(m_row > m_selrow) return {m_row, m_col};
 
     if(m_row == m_selrow) {
-        if(m_col > m_selcol)
-            return {m_row, m_col};
+        if(m_col > m_selcol) return {m_row, m_col};
     }
 
     return {m_selrow, m_selcol};
@@ -415,19 +393,15 @@ std::string_view Surface::get_selected_text() const {
         m_strcache.reserve(m_renderer->columns * this->rows.size());
 
     for(int i = startrow; i < this->rows_count() && i <= endrow; i++) {
-        if(!m_strcache.empty())
-            m_strcache += "\n";
+        if(!m_strcache.empty()) m_strcache += "\n";
 
         const SurfaceRow& sfrow = this->rows[i];
         usize s = 0, e = 0;
 
-        if(!sfrow.cells.empty())
-            e = sfrow.cells.size() - 1;
+        if(!sfrow.cells.empty()) e = sfrow.cells.size() - 1;
 
-        if(i == startrow)
-            s = startcol;
-        if(i == endrow)
-            e = endcol;
+        if(i == startrow) s = startcol;
+        if(i == endrow) e = endcol;
 
         for(auto j = s; j <= e; j++)
             m_strcache.append(&sfrow.cells[j].ch, 1);
@@ -443,8 +417,7 @@ std::string_view Surface::get_text() const {
         m_strcache.reserve(m_renderer->columns * this->rows.size());
 
     for(const SurfaceRow& row : this->rows) {
-        if(!m_strcache.empty())
-            m_strcache += "\n";
+        if(!m_strcache.empty()) m_strcache += "\n";
 
         for(RDSurfaceCell col : row.cells)
             m_strcache.append(&col.ch, 1);
@@ -467,12 +440,10 @@ const ListingItem& Surface::get_listing_item(const SurfaceRow& sfrow) const {
 int Surface::calculate_index(usize idx) const {
     if(!this->rows.empty()) {
         const ListingItem& first = this->get_listing_item(this->rows.front());
-        if(idx < first.index)
-            return -1;
+        if(idx < first.index) return -1;
 
         const ListingItem& last = this->get_listing_item(this->rows.back());
-        if(idx > last.index)
-            return this->rows.size() + 1;
+        if(idx > last.index) return this->rows.size() + 1;
     }
 
     int residx = -1;
@@ -483,20 +454,17 @@ int Surface::calculate_index(usize idx) const {
         if(item.index == idx) {
             residx = i;
 
-            if(item.type == LISTINGITEM_INSTRUCTION)
-                break;
+            if(item.type == LISTINGITEM_INSTRUCTION) break;
         }
 
-        if(item.index < idx)
-            break;
+        if(item.index < idx) break;
     }
 
     return residx;
 }
 
 void Surface::update_history(History& history) const {
-    if(!this->start || m_lockhistory)
-        return;
+    if(!this->start || m_lockhistory) return;
 
     RDSurfacePosition pos = this->end_selection();
 
@@ -511,11 +479,9 @@ void Surface::update_history(History& history) const {
 }
 
 void Surface::insert_path(Byte b, int fromrow, int torow) const {
-    if(fromrow == torow)
-        return;
+    if(fromrow == torow) return;
 
-    if(auto it = m_done.emplace(fromrow, torow); !it.second)
-        return;
+    if(auto it = m_done.emplace(fromrow, torow); !it.second) return;
 
     if(fromrow > torow) { // Loop
         if(b.has(BF_FLOW)) {
@@ -541,8 +507,7 @@ void Surface::render_finalize() {
     m_renderer->fill_columns();
     m_renderer->highlight_row(m_row);
 
-    if(!this->has_selection())
-        m_renderer->highlight_words(m_row, m_col);
+    if(!this->has_selection()) m_renderer->highlight_words(m_row, m_col);
 
     auto startsel = this->start_selection(), endsel = this->end_selection();
     m_renderer->highlight_selection(startsel, endsel);
@@ -555,8 +520,7 @@ void Surface::render_range(LIndex start, usize n) {
     const Listing& listing = state::context->listing;
 
     auto it = std::next(listing.begin(), start);
-    if(it == listing.end())
-        return;
+    if(it == listing.end()) return;
 
     for(usize i = 0; it != listing.end() && i < n; it++, i++) {
         m_renderer->set_current_item(start + i, *it);
@@ -636,8 +600,7 @@ void Surface::render_hexdump(const ListingItem& item) {
             m_renderer->nop("?");
     }
 
-    if(c < HEX_WIDTH)
-        m_renderer->chunk(std::string(HEX_WIDTH - c, ' '));
+    if(c < HEX_WIDTH) m_renderer->chunk(std::string(HEX_WIDTH - c, ' '));
 }
 
 void Surface::render_fill(const ListingItem& item) {
@@ -663,12 +626,12 @@ void Surface::render_label(const ListingItem& item) {
 }
 
 void Surface::render_segment(const ListingItem& item) {
-    if(m_renderer->has_flag(SURFACE_NOSEGMENT))
-        return;
+    if(m_renderer->has_flag(SURFACE_NOSEGMENT)) return;
 
     m_renderer->new_row(item);
 
-    const RDProcessor* p = state::context->processor;
+    const Context* ctx = state::context;
+    const RDProcessorPlugin* p = ctx->processorplugin;
     assume(p);
 
     const Segment* s = state::context->index_to_segment(item.index);
@@ -677,29 +640,30 @@ void Surface::render_segment(const ListingItem& item) {
     RDSegment cs = api::to_c(*s);
 
     if(p->rendersegment)
-        p->rendersegment(p, api::to_c(m_renderer.get()), &cs);
+        p->rendersegment(ctx->processor, api::to_c(m_renderer.get()), &cs);
     else
-        builtins::processor::render_segment(p, api::to_c(m_renderer.get()),
-                                            &cs);
+        builtins::processor::render_segment(ctx->processor,
+                                            api::to_c(m_renderer.get()), &cs);
 }
 
 void Surface::render_function(const ListingItem& item) {
-    if(m_renderer->has_flag(SURFACE_NOFUNCTION))
-        return;
+    if(m_renderer->has_flag(SURFACE_NOFUNCTION)) return;
 
     m_renderer->new_row(item);
 
-    const RDProcessor* p = state::context->processor;
+    const Context* ctx = state::context;
+    const RDProcessorPlugin* p = ctx->processorplugin;
     assume(p);
 
     const Function* f = state::context->index_to_function(item.index);
     assume(f);
 
     if(p->renderfunction)
-        p->renderfunction(p, api::to_c(m_renderer.get()), api::to_c(f));
+        p->renderfunction(ctx->processor, api::to_c(m_renderer.get()),
+                          api::to_c(f));
     else
-        builtins::processor::render_function(p, api::to_c(m_renderer.get()),
-                                             api::to_c(f));
+        builtins::processor::render_function(
+            ctx->processor, api::to_c(m_renderer.get()), api::to_c(f));
 }
 
 void Surface::render_type(const ListingItem& item) {
@@ -728,8 +692,7 @@ void Surface::render_type(const ListingItem& item) {
 
     m_renderer->new_row(item);
 
-    if(item.array_index)
-        m_renderer->arr_index(*item.array_index);
+    if(item.array_index) m_renderer->arr_index(*item.array_index);
 
     if(td->is_struct()) {
         if(!item.array_index) {
@@ -742,8 +705,7 @@ void Surface::render_type(const ListingItem& item) {
         return;
     }
 
-    if(!item.array_index)
-        m_renderer->type(t).ws().chunk(fname);
+    if(!item.array_index) m_renderer->type(t).ws().chunk(fname);
 
     switch(td->get_id()) {
         case typing::ids::CHAR:
@@ -809,8 +771,7 @@ void Surface::render_type(const ListingItem& item) {
 }
 
 void Surface::render_comment(const ListingItem& item) {
-    if(m_renderer->has_flag(SURFACE_NOCOMMENTS))
-        return;
+    if(m_renderer->has_flag(SURFACE_NOCOMMENTS)) return;
 
     if(Byte b = state::context->memory->at(item.index); !b.has(BF_COMMENT))
         return;
@@ -826,16 +787,14 @@ void Surface::render_comment(const ListingItem& item) {
 }
 
 void Surface::render_refs(const ListingItem& item) {
-    if(m_renderer->has_flag(SURFACE_NOREFS))
-        return;
+    if(m_renderer->has_flag(SURFACE_NOREFS)) return;
 
     const Context* ctx = state::context;
     const auto& mem = ctx->memory;
     bool paddingdone = false;
 
     for(const auto& [index, _] : ctx->get_refs_from(item.index)) {
-        if(!mem->at(index).has(BF_TYPE))
-            continue;
+        if(!mem->at(index).has(BF_TYPE)) continue;
 
         if(!paddingdone) {
             m_renderer->ws(COLUMN_PADDING);
@@ -933,35 +892,30 @@ void Surface::render_array(const ListingItem& item) {
 
         m_renderer->new_row(item);
 
-        if(td->is_struct())
-            m_renderer->function("struct ");
+        if(td->is_struct()) m_renderer->function("struct ");
 
         m_renderer->type(state::context->types.to_string(*type))
             .ws()
             .chunk(field.second)
             .word("=");
 
-        if(!chars.empty())
-            m_renderer->string(chars);
+        if(!chars.empty()) m_renderer->string(chars);
     }
     else {
         m_renderer->new_row(item);
 
-        if(td->is_struct())
-            m_renderer->function("struct ");
+        if(td->is_struct()) m_renderer->function("struct ");
 
         std::string name = state::context->get_name(item.index);
         m_renderer->type(state::context->types.to_string(*type))
             .ws()
             .chunk(name);
 
-        if(item.array_index)
-            m_renderer->arr_index(*item.array_index);
+        if(item.array_index) m_renderer->arr_index(*item.array_index);
 
         m_renderer->word("=");
 
-        if(!chars.empty())
-            m_renderer->string(chars);
+        if(!chars.empty()) m_renderer->string(chars);
     }
 }
 
@@ -971,8 +925,7 @@ void Surface::fit(int& row, int& col) {
         col = 0;
     }
     else {
-        if(row >= this->rows_count())
-            row = this->rows_count() - 1;
+        if(row >= this->rows_count()) row = this->rows_count() - 1;
 
         int ncols = this->cols_count(row);
 
@@ -987,8 +940,7 @@ int Surface::index_of(MIndex index) const {
     for(usize i = 0; i < this->rows.size(); i++) {
         const SurfaceRow& sfrow = this->rows[i];
         const ListingItem& item = this->get_listing_item(sfrow);
-        if(item.index == index)
-            return static_cast<int>(i);
+        if(item.index == index) return static_cast<int>(i);
     }
 
     return -1;
@@ -998,8 +950,7 @@ int Surface::last_index_of(MIndex index) const {
     for(usize i = this->rows.size(); i-- > 0;) {
         const SurfaceRow& sfrow = this->rows[i];
         const ListingItem& item = this->get_listing_item(sfrow);
-        if(item.index == index)
-            return static_cast<int>(i);
+        if(item.index == index) return static_cast<int>(i);
     }
 
     return -1;

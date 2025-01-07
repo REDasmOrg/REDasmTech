@@ -1,8 +1,15 @@
-#include "x86.h"
 #include "x86_common.h"
 #include "x86_lifter.h"
+#include <Zydis/Zydis.h>
+#include <array>
+#include <redasm/redasm.h>
 
 namespace {
+
+struct X86Processor {
+    ZydisDecoder decoder;
+    std::array<char, ZYDIS_MAX_INSTRUCTION_LENGTH> buffer;
+};
 
 void apply_optype(const ZydisDecodedOperand& zop, RDOperand& op) {
     if(!zop.element_size) {
@@ -68,27 +75,16 @@ bool is_addr_instruction(const RDInstruction* instr) {
     return false;
 }
 
-} // namespace
-
-X86Processor::X86Processor(usize bits) {
-    if(bits == 32) {
-        ZydisDecoderInit(&m_decoder, ZYDIS_MACHINE_MODE_LEGACY_32,
-                         ZYDIS_STACK_WIDTH_32);
-    }
-    else {
-        ZydisDecoderInit(&m_decoder, ZYDIS_MACHINE_MODE_LONG_64,
-                         ZYDIS_STACK_WIDTH_64);
-    }
-}
-
-void X86Processor::decode(RDInstruction* instr) {
-    usize n = rd_read(instr->address, m_dbuffer.data(), m_dbuffer.size());
+void decode(RDProcessor* proc, RDInstruction* instr) {
+    auto* self = reinterpret_cast<X86Processor*>(proc);
+    usize n = rd_read(instr->address, self->buffer.data(), self->buffer.size());
 
     ZydisDecodedInstruction zinstr;
     std::array<ZydisDecodedOperand, ZYDIS_MAX_OPERAND_COUNT> zops;
 
-    if(!n || !ZYAN_SUCCESS(ZydisDecoderDecodeFull(&m_decoder, m_dbuffer.data(),
-                                                  n, &zinstr, zops.data()))) {
+    if(!n ||
+       !ZYAN_SUCCESS(ZydisDecoderDecodeFull(&self->decoder, self->buffer.data(),
+                                            n, &zinstr, zops.data()))) {
         return;
     }
 
@@ -188,8 +184,6 @@ void X86Processor::decode(RDInstruction* instr) {
     }
 }
 
-namespace {
-
 void render_instruction(const RDProcessor* /*self*/, RDRenderer* r,
                         const RDInstruction* instr) {
     const char* mnemonic =
@@ -269,12 +263,7 @@ void render_instruction(const RDProcessor* /*self*/, RDRenderer* r,
     }
 }
 
-void decode(const RDProcessor* self, RDInstruction* instr) {
-    reinterpret_cast<X86Processor*>(self->userdata)->decode(instr);
-}
-
-void emulate(const RDProcessor* /*self*/, RDEmulator* e,
-             const RDInstruction* instr) {
+void emulate(RDProcessor* /*self*/, RDEmulator* e, const RDInstruction* instr) {
     foreach_operand(i, op, instr) {
         switch(op->type) {
             case OP_ADDR: {
@@ -313,42 +302,57 @@ const char* get_register_name(const RDProcessor*, int reg) {
     return ZydisRegisterGetString(static_cast<ZydisRegister>(reg));
 }
 
-RDProcessor x86_32{};
-RDProcessor x86_64{};
+RDProcessorPlugin x86_32 = {
+    .id = "x86_32",
+    .name = "X86",
+
+    .create =
+        [](const RDProcessorPlugin*) {
+            auto* self = new X86Processor();
+            ZydisDecoderInit(&self->decoder, ZYDIS_MACHINE_MODE_LEGACY_32,
+                             ZYDIS_STACK_WIDTH_32);
+            return reinterpret_cast<RDProcessor*>(self);
+        },
+
+    .destroy =
+        [](RDProcessor* self) { delete reinterpret_cast<X86Processor*>(self); },
+
+    .address_size = 4,
+    .integer_size = 4,
+    .getregistername = get_register_name,
+    .decode = decode,
+    .emulate = emulate,
+    .lift = x86_lifter::lift,
+    .renderinstruction = render_instruction,
+};
+
+RDProcessorPlugin x86_64 = {
+    .id = "x86_64",
+    .name = "X86_64",
+
+    .create =
+        [](const RDProcessorPlugin*) {
+            auto* self = new X86Processor();
+            ZydisDecoderInit(&self->decoder, ZYDIS_MACHINE_MODE_LONG_64,
+                             ZYDIS_STACK_WIDTH_64);
+            return reinterpret_cast<RDProcessor*>(self);
+        },
+
+    .destroy =
+        [](RDProcessor* self) { delete reinterpret_cast<X86Processor*>(self); },
+
+    .address_size = 8,
+    .integer_size = 4,
+    .getregistername = get_register_name,
+    .decode = decode,
+    .emulate = emulate,
+    .lift = x86_lifter::lift,
+    .renderinstruction = render_instruction,
+};
 
 } // namespace
 
-void rdplugin_init() {
-    x86_32.id = "x86_32";
-    x86_32.name = "X86";
-    x86_32.address_size = 4;
-    x86_32.integer_size = 4;
-    x86_32.userdata = new X86Processor(32);
-    x86_32.getregistername = get_register_name;
-    x86_32.renderinstruction = render_instruction;
-    x86_32.decode = decode;
-    x86_32.emulate = emulate;
-    x86_32.lift = x86_lifter::lift;
+void rdplugin_create() {
     rd_registerprocessor(&x86_32);
-
-    x86_64.id = "x86_64";
-    x86_64.name = "X64";
-    x86_64.address_size = 8;
-    x86_64.integer_size = 4;
-    x86_64.userdata = new X86Processor(64);
-    x86_64.getregistername = get_register_name;
-    x86_64.renderinstruction = render_instruction;
-    x86_64.decode = decode;
-    x86_64.emulate = emulate;
-    x86_64.lift = x86_lifter::lift;
     rd_registerprocessor(&x86_64);
-}
-
-void rdplugin_free() {
-    if(x86_32.userdata) delete reinterpret_cast<X86Processor*>(x86_32.userdata);
-
-    if(x86_64.userdata) delete reinterpret_cast<X86Processor*>(x86_64.userdata);
-
-    x86_32.userdata = nullptr;
-    x86_64.userdata = nullptr;
 }

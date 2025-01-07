@@ -80,8 +80,4 @@ PyObject* get_type(PyObject* self, PyObject* args);
 
 PyObject* set_processor(PyObject* self, PyObject* args);
 
-PyObject* register_loader(PyObject* self, PyObject* args, PyObject* kwargs);
-PyObject* register_processor(PyObject* self, PyObject* args, PyObject* kwargs);
-PyObject* register_analyzer(PyObject* self, PyObject* args, PyObject* kwargs);
-
 } // namespace redasm::api::python

@@ -3,11 +3,13 @@
 #include <redasm/common.h>
 #include <redasm/function.h>
 #include <redasm/instruction.h>
+#include <redasm/plugin.h>
 #include <redasm/rdil.h>
 #include <redasm/renderer.h>
 #include <redasm/segment.h>
 
 RD_HANDLE(RDEmulator);
+RD_HANDLE(RDProcessor);
 
 typedef enum RDRefType {
     DR_READ = 1,
@@ -23,39 +25,30 @@ typedef struct RDRef {
     usize type;
 } RDRef;
 
-// struct RDProcessorState;
-struct RDProcessor;
-
 // clang-format off
-typedef void (*RDProcessorSetup)(const RDProcessor*, RDEmulator*);
-typedef const char* (*RDProcessorGetRegisterName)(const RDProcessor*, int);
-typedef void (*RDProcessorDecode)(const RDProcessor*, RDInstruction*);
-typedef void (*RDProcessorEmulate)(const RDProcessor*, RDEmulator*, const RDInstruction*);
-typedef bool (*RDProcessorLift)(const RDProcessor*, RDILList*, const RDInstruction*);
-typedef void (*RDProcessorRenderSegment)(const RDProcessor*, RDRenderer*, const RDSegment*);
-typedef void (*RDProcessorRenderFunction)(const RDProcessor*, RDRenderer*, const RDFunction*);
-typedef void (*RDProcessorRenderInstruction)(const RDProcessor*, RDRenderer*, const RDInstruction*);
-typedef void (*RDProcessorFree)(RDProcessor*);
+typedef void (*RDProcessorPluginSetup)(RDProcessor*, RDEmulator*);
+typedef void (*RDProcessorPluginDecode)(RDProcessor*, RDInstruction*);
+typedef void (*RDProcessorPluginEmulate)(RDProcessor*, RDEmulator*, const RDInstruction*);
+typedef bool (*RDProcessorPluginLift)(RDProcessor*, RDILList*, const RDInstruction*);
+typedef const char* (*RDProcessorPluginGetRegisterName)(const RDProcessor*, int);
+typedef void (*RDProcessorPluginRenderSegment)(const RDProcessor*, RDRenderer*, const RDSegment*);
+typedef void (*RDProcessorPluginRenderFunction)(const RDProcessor*, RDRenderer*, const RDFunction*);
+typedef void (*RDProcessorPluginRenderInstruction)(const RDProcessor*, RDRenderer*, const RDInstruction*);
 // clang-format on
 
-typedef struct RDProcessor {
-    const char* id;
-    const char* name;
-
-    void* userdata;
+typedef struct RDProcessorPlugin {
+    RDPLUGIN_HEADER(RDProcessor)
     int address_size;
     int integer_size;
-
-    RDProcessorGetRegisterName getregistername;
-    RDProcessorSetup setup;
-    RDProcessorDecode decode;
-    RDProcessorEmulate emulate;
-    RDProcessorLift lift;
-    RDProcessorRenderSegment rendersegment;
-    RDProcessorRenderFunction renderfunction;
-    RDProcessorRenderInstruction renderinstruction;
-    RDProcessorFree free;
-} RDProcessor;
+    RDProcessorPluginSetup setup;
+    RDProcessorPluginGetRegisterName getregistername;
+    RDProcessorPluginDecode decode;
+    RDProcessorPluginEmulate emulate;
+    RDProcessorPluginLift lift;
+    RDProcessorPluginRenderSegment rendersegment;
+    RDProcessorPluginRenderFunction renderfunction;
+    RDProcessorPluginRenderInstruction renderinstruction;
+} RDProcessorPlugin;
 
 REDASM_EXPORT u32 rdemulator_getdslotinfo(const RDEmulator* self,
                                           const RDInstruction** dslot);
@@ -75,8 +68,9 @@ REDASM_EXPORT u64 rdemulator_updstate(RDEmulator* self, const char* state,
 REDASM_EXPORT void rdemulator_addref(RDEmulator* self, RDAddress toaddr,
                                      usize type);
 
+REDASM_EXPORT bool rd_registerprocessor(const RDProcessorPlugin* plugin);
+REDASM_EXPORT const RDProcessorPlugin** rd_getprocessorplugins(usize* n);
+REDASM_EXPORT const RDProcessorPlugin* rd_getprocessorplugin(void);
 REDASM_EXPORT const RDProcessor* rd_getprocessor(void);
-REDASM_EXPORT usize rd_getprocessors(const RDProcessor** processors);
-REDASM_EXPORT void rd_registerprocessor(const RDProcessor* proc);
-REDASM_EXPORT void rd_setprocessor(const char* name);
+REDASM_EXPORT bool rd_setprocessor(const char* name);
 REDASM_EXPORT bool rd_decode(RDAddress address, RDInstruction* instr);

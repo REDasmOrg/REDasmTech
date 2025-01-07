@@ -1,14 +1,15 @@
 #include "../internal/loader.h"
 
-const RDLoader* rd_getloader(void) {
-    return redasm::api::internal::get_loader();
+bool rd_registerloader(const RDLoaderPlugin* plugin) {
+    return redasm::api::internal::register_loader(plugin);
 }
 
-usize rd_getloaders(const RDLoader** loaders) {
-    return redasm::api::internal::get_loaders(loaders);
+const RDLoaderPlugin** rd_getloaderplugins(usize* n) {
+    return redasm::api::internal::get_loaderplugins(n);
 }
 
-void rd_registerloader(const RDLoader* ldr) {
-    if(ldr)
-        redasm::api::internal::register_loader(*ldr);
+const RDLoaderPlugin* rd_getloaderplugin() {
+    return redasm::api::internal::get_loaderplugin();
 }
+
+const RDLoader* rd_getloader() { return redasm::api::internal::get_loader(); }
