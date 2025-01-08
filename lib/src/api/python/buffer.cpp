@@ -30,7 +30,7 @@ PyObject* buffer_getbool(PyBuffer* self, PyObject* args) {
     usize idx = PyLong_AsUnsignedLongLong(args);
 
     if(auto v = internal::buffer_getbool(self->buffer, idx); v)
-        return *v ? Py_True : Py_False;
+        return PyBool_FromLong(*v);
 
     return Py_None;
 }
@@ -361,22 +361,15 @@ PySequenceMethods memory_sequence_methods = []() {
         Byte b = state::context->memory->at(uidx);
         PyObject* pb = python::new_simplenamespace();
 
-        PyObject_SetAttrString(pb, "name", b.has(BF_NAME) ? Py_True : Py_False);
-
-        PyObject_SetAttrString(pb, "segment",
-                               b.has(BF_SEGMENT) ? Py_True : Py_False);
-
-        PyObject_SetAttrString(pb, "import",
-                               b.has(BF_IMPORT) ? Py_True : Py_False);
-
-        PyObject_SetAttrString(pb, "export",
-                               b.has(BF_EXPORT) ? Py_True : Py_False);
-
-        PyObject_SetAttrString(pb, "unknown",
-                               b.is_unknown() ? Py_True : Py_False);
-
-        PyObject_SetAttrString(pb, "data", b.is_data() ? Py_True : Py_False);
-        PyObject_SetAttrString(pb, "code", b.is_code() ? Py_True : Py_False);
+        // clang-format off
+        PyObject_SetAttrString(pb, "name", PyBool_FromLong(b.has(BF_NAME)));
+        PyObject_SetAttrString(pb, "segment", PyBool_FromLong(b.has(BF_SEGMENT)));
+        PyObject_SetAttrString(pb, "import", PyBool_FromLong(b.has(BF_IMPORT)));
+        PyObject_SetAttrString(pb, "export", PyBool_FromLong(b.has(BF_EXPORT)));
+        PyObject_SetAttrString(pb, "unknown", PyBool_FromLong(b.is_unknown()));
+        PyObject_SetAttrString(pb, "data", PyBool_FromLong(b.is_data()));
+        PyObject_SetAttrString(pb, "code", PyBool_FromLong(b.is_code()));
+        // clang-format on
 
         if(b.has_byte())
             PyObject_SetAttrString(pb, "byte", PyLong_FromSize_t(b.byte()));
