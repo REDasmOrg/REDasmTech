@@ -5,9 +5,9 @@
 #include <redasm/types.h>
 
 typedef enum RDLoaderFlags {
-    LF_NOMERGECODE = (1 << 0),
-    LF_NOMERGEDATA = (1 << 1),
-    LF_NOAUTORENAME = (1 << 2),
+    LF_NOMERGECODE = (1u << 0),
+    LF_NOMERGEDATA = (1u << 1),
+    LF_NOAUTORENAME = (1u << 2),
 
     LF_NOMERGE = LF_NOMERGECODE | LF_NOMERGEDATA,
 } RDLoaderFlags;
@@ -18,7 +18,6 @@ typedef bool (*RDLoaderPluginLoad)(RDLoader*);
 
 typedef struct RDLoaderPlugin {
     RDPLUGIN_HEADER(RDLoader)
-    usize flags;
     RDLoaderPluginLoad load;
 } RDLoaderPlugin;
 

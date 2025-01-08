@@ -18,7 +18,6 @@ typedef void (*RDAnalyzerPluginExecute)(RDAnalyzer*);
 
 typedef struct RDAnalyzerPlugin {
     RDPLUGIN_HEADER(RDAnalyzer)
-    u32 flags;
     u32 order;
     RDAnalyzerPluginIsEnabled is_enabled;
     RDAnalyzerPluginExecute execute;

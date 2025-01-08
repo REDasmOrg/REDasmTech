@@ -3,6 +3,7 @@
 #include "../api/internal/memory.h"
 #include "../context.h"
 #include "../state.h"
+#include <redasm/loader.h>
 
 namespace redasm::builtins {
 
@@ -11,6 +12,7 @@ namespace {
 RDLoaderPlugin binary_loader = {
     .id = "binary",
     .name = "Binary",
+    .flags = PF_LAST,
 
     .load =
         [](RDLoader*) {

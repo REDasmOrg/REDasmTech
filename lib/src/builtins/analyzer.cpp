@@ -2,6 +2,7 @@
 #include "../api/internal/analyzer.h"
 #include "../context.h"
 #include "../state.h"
+#include <redasm/analyzer.h>
 
 namespace redasm::builtins {
 
@@ -33,7 +34,7 @@ void do_autorename(RDAnalyzer*) {
 RDAnalyzerPlugin autorename_analyzer = {
     .id = "autorename",
     .name = "Autorename Nullsubs and Thunks",
-    .flags = AF_SELECTED,
+    .flags = PF_LAST | AF_SELECTED,
     .order = 0,
     .is_enabled =
         [](const RDAnalyzerPlugin*) {

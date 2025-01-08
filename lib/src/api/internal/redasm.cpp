@@ -38,7 +38,6 @@ bool init(const RDInitParams* params) {
     spdlog::trace("init({})", fmt::ptr(params));
 
     if(initialized) return true;
-
     initialized = true;
 
     // clang-format off
@@ -70,9 +69,7 @@ bool init(const RDInitParams* params) {
 
 void deinit() {
     spdlog::trace("deinit()");
-
     if(!initialized) return;
-
     initialized = false;
     python::deinit();
 }
@@ -173,7 +170,11 @@ std::vector<RDTestResult> test(RDBuffer* buffer) {
             delete ctx;
     });
 
-    std::ranges::reverse(res);
+    // Sort results by priority
+    std::ranges::stable_partition(res, std::not_fn([](const RDTestResult& x) {
+                                      return x.loaderplugin->flags & PF_LAST;
+                                  }));
+
     state::context = nullptr; // Deselect "test" context
     return res;
 }

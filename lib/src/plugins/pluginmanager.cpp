@@ -62,10 +62,10 @@ const T* find_plugin(std::vector<const T*>& plugins, std::string_view id) {
 
 void create() {
     spdlog::info("Loading Plugins");
-    mm::load_all();
     builtins::register_loaders();
     builtins::register_processors();
     builtins::register_analyzers();
+    mm::load_all();
 }
 
 void destroy() {

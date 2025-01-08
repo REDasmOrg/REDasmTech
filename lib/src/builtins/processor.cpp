@@ -4,6 +4,7 @@
 #include "../api/internal/redasm.h"
 #include "../api/internal/renderer.h"
 #include "../api/internal/utils.h"
+#include <redasm/processor.h>
 
 namespace redasm::builtins {
 
@@ -44,6 +45,7 @@ namespace {
 RDProcessorPlugin null_processor = {
     .id = "null",
     .name = "Null",
+    .flags = PF_LAST,
     .address_size = sizeof(uptr),
     .integer_size = sizeof(int),
     .rendersegment = builtins::processor::render_segment,
