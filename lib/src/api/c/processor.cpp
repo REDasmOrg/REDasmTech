@@ -1,5 +1,6 @@
 #include "../internal/processor.h"
 #include "../../error.h"
+#include "../../plugins/origin.h"
 
 u32 rdemulator_getdslotinfo(const RDEmulator* self,
                             const RDInstruction** dslot) {
@@ -61,7 +62,8 @@ u64 rdemulator_updstate(RDEmulator* self, const char* state, u64 val,
 }
 
 bool rd_registerprocessor(const RDProcessorPlugin* plugin) {
-    return redasm::api::internal::register_processor(plugin);
+    return redasm::api::internal::register_processor(
+        plugin, redasm::pm::Origin::NATIVE);
 }
 
 const RDProcessorPlugin** rd_getprocessorplugins(usize* n) {

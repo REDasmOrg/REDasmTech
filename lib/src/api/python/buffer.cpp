@@ -32,7 +32,7 @@ PyObject* buffer_getbool(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_getbool(self->buffer, idx); v)
         return *v ? Py_True : Py_False;
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_getchar(PyBuffer* self, PyObject* args) {
@@ -41,7 +41,7 @@ PyObject* buffer_getchar(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_getchar(self->buffer, idx); v)
         return PyUnicode_FromStringAndSize(&v.value(), 1);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_getu8(PyBuffer* self, PyObject* args) {
@@ -50,7 +50,7 @@ PyObject* buffer_getu8(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_getu8(self->buffer, idx); v)
         return PyLong_FromUnsignedLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_getu16(PyBuffer* self, PyObject* args) {
@@ -59,7 +59,7 @@ PyObject* buffer_getu16(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_getu16(self->buffer, idx); v)
         return PyLong_FromUnsignedLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_getu32(PyBuffer* self, PyObject* args) {
@@ -68,7 +68,7 @@ PyObject* buffer_getu32(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_getu32(self->buffer, idx); v)
         return PyLong_FromUnsignedLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_getu64(PyBuffer* self, PyObject* args) {
@@ -77,7 +77,7 @@ PyObject* buffer_getu64(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_getu64(self->buffer, idx); v)
         return PyLong_FromUnsignedLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_geti8(PyBuffer* self, PyObject* args) {
@@ -86,7 +86,7 @@ PyObject* buffer_geti8(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_geti8(self->buffer, idx); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_geti16(PyBuffer* self, PyObject* args) {
@@ -95,7 +95,7 @@ PyObject* buffer_geti16(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_geti16(self->buffer, idx); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_geti32(PyBuffer* self, PyObject* args) {
@@ -104,7 +104,7 @@ PyObject* buffer_geti32(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_geti32(self->buffer, idx); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_geti64(PyBuffer* self, PyObject* args) {
@@ -113,7 +113,7 @@ PyObject* buffer_geti64(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_geti64(self->buffer, idx); v)
         return PyLong_FromLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_getu16be(PyBuffer* self, PyObject* args) {
@@ -122,7 +122,7 @@ PyObject* buffer_getu16be(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_getu16be(self->buffer, idx); v)
         return PyLong_FromUnsignedLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_getu32be(PyBuffer* self, PyObject* args) {
@@ -131,7 +131,7 @@ PyObject* buffer_getu32be(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_getu32be(self->buffer, idx); v)
         return PyLong_FromUnsignedLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_getu64be(PyBuffer* self, PyObject* args) {
@@ -140,7 +140,7 @@ PyObject* buffer_getu64be(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_getu64be(self->buffer, idx); v)
         return PyLong_FromUnsignedLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_geti16be(PyBuffer* self, PyObject* args) {
@@ -149,7 +149,7 @@ PyObject* buffer_geti16be(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_geti16be(self->buffer, idx); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_geti32be(PyBuffer* self, PyObject* args) {
@@ -158,7 +158,7 @@ PyObject* buffer_geti32be(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_geti32be(self->buffer, idx); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_geti64be(PyBuffer* self, PyObject* args) {
@@ -167,7 +167,7 @@ PyObject* buffer_geti64be(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_geti64be(self->buffer, idx); v)
         return PyLong_FromLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_getstrz(PyBuffer* self, PyObject* args) {
@@ -176,7 +176,7 @@ PyObject* buffer_getstrz(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_getstrz(self->buffer, idx); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_getstr(PyBuffer* self, PyObject* args) {
@@ -187,7 +187,7 @@ PyObject* buffer_getstr(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_getstr(self->buffer, idx, n); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_getwstrz(PyBuffer* self, PyObject* args) {
@@ -196,7 +196,7 @@ PyObject* buffer_getwstrz(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_getstrz(self->buffer, idx); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_getwstr(PyBuffer* self, PyObject* args) {
@@ -207,7 +207,7 @@ PyObject* buffer_getwstr(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_getstr(self->buffer, idx, n); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* buffer_gettype(PyBuffer* self, PyObject* args) {
@@ -219,7 +219,7 @@ PyObject* buffer_gettype(PyBuffer* self, PyObject* args) {
     if(auto v = internal::buffer_gettypename(self->buffer, idx, tname); v)
         return python::to_object(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 // clang-format off
@@ -264,11 +264,11 @@ PySequenceMethods file_sequence_methods = []() {
         auto uidx = static_cast<usize>(idx);
 
         if(!state::context->file || uidx >= state::context->file->size())
-            Py_RETURN_NONE;
+            return Py_None;
 
         auto b = state::context->file->get_byte(uidx);
         if(b) return PyLong_FromSize_t(*b);
-        Py_RETURN_NONE;
+        return Py_None;
     };
 
     return seq;
@@ -283,7 +283,7 @@ PyObject* file_map_type(PyFile* /*self*/, PyObject* args) {
     if(auto v = internal::file_map_type(offset, tname); v)
         return python::to_object(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* file_map_type_as(PyFile* /*self*/, PyObject* args) {
@@ -295,7 +295,7 @@ PyObject* file_map_type_as(PyFile* /*self*/, PyObject* args) {
     if(auto v = internal::file_map_type_as(offset, tname, dbname); v)
         return python::to_object(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 // clang-format off
@@ -330,7 +330,7 @@ PyObject* memory_copy(PyMemory* /*self*/, PyObject* args) {
     if(!PyArg_ParseTuple(args, "KKK", &address, &start, &end)) return nullptr;
 
     internal::memory_copy(address, start, end);
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* memory_copy_n(PyMemory* /*self*/, PyObject* args) {
@@ -340,7 +340,7 @@ PyObject* memory_copy_n(PyMemory* /*self*/, PyObject* args) {
     if(!PyArg_ParseTuple(args, "KKK", &address, &start, &size)) return nullptr;
 
     internal::memory_copy_n(address, start, size);
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PySequenceMethods memory_sequence_methods = []() {
@@ -356,7 +356,7 @@ PySequenceMethods memory_sequence_methods = []() {
         auto uidx = static_cast<usize>(idx);
 
         if(!state::context->memory || uidx >= state::context->memory->size())
-            Py_RETURN_NONE;
+            return Py_None;
 
         Byte b = state::context->memory->at(uidx);
         PyObject* pb = python::new_simplenamespace();

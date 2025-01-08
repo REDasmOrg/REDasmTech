@@ -1,8 +1,10 @@
 #include "../internal/analyzer.h"
+#include "../../plugins/origin.h"
 #include <redasm/analyzer.h>
 
 bool rd_registeranalyzer(const RDAnalyzerPlugin* plugin) {
-    return redasm::api::internal::register_analyzer(plugin);
+    return redasm::api::internal::register_analyzer(plugin,
+                                                    redasm::pm::Origin::NATIVE);
 }
 
 const RDAnalyzerPlugin** rd_getanalyzerplugins(usize* n) {

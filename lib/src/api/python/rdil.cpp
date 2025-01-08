@@ -19,7 +19,7 @@ namespace {
 
 PyObject* ilexpr_to_pyobject(const rdil::ILExpr* e) {
     if(!e)
-        Py_RETURN_NONE;
+        return Py_None;
 
     PyObject* obj = python::new_simplenamespace();
     PyObject* op = PyLong_FromUnsignedLongLong(e->op);
@@ -162,7 +162,7 @@ PyObject* rdil_createfunction(PyRDIL* /*self*/, PyObject* args) {
         return res;
     }
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 // clang-format off

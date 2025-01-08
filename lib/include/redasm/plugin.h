@@ -6,8 +6,8 @@
     u32 level;                                                                 \
     const char* id;                                                            \
     const char* name;                                                          \
-    void (*oninit)(const struct Self##Plugin*);                                \
-    void (*onshutdown)(const struct Self##Plugin*);                            \
+    void (*on_init)(const struct Self##Plugin*);                               \
+    void (*on_shutdown)(const struct Self##Plugin*);                           \
     Self* (*create)(const struct Self##Plugin*);                               \
     void (*destroy)(Self*);                                                    \
     u32 flags;

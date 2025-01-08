@@ -55,7 +55,7 @@ RDProcessorPlugin null_processor = {
 } // namespace
 
 void register_processors() {
-    api::internal::register_processor(&null_processor);
+    api::internal::register_processor(&null_processor, pm::Origin::NATIVE);
 }
 
 } // namespace redasm::builtins

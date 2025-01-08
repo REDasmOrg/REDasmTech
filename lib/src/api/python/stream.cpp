@@ -38,7 +38,7 @@ PyObject* abstractstream_getpos(PyAbstractStream* self, PyObject* /*args*/) {
 
 PyObject* abstractstream_rewind(PyAbstractStream* self, PyObject* /*args*/) {
     internal::stream_rewind(self->stream);
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_type(PyAbstractStream* self, PyObject* args) {
@@ -47,14 +47,14 @@ PyObject* abstractstream_peek_type(PyAbstractStream* self, PyObject* args) {
     if(auto v = internal::stream_peek_type(self->stream, tname); v)
         python::to_object(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_strz(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_peek_strz(self->stream); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_str(PyAbstractStream* self, PyObject* args) {
@@ -63,7 +63,7 @@ PyObject* abstractstream_peek_str(PyAbstractStream* self, PyObject* args) {
     if(auto v = internal::stream_peek_str(self->stream, n); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_wstrz(PyAbstractStream* self,
@@ -71,7 +71,7 @@ PyObject* abstractstream_peek_wstrz(PyAbstractStream* self,
     if(auto v = internal::stream_peek_wstrz(self->stream); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_wstr(PyAbstractStream* self, PyObject* args) {
@@ -80,63 +80,63 @@ PyObject* abstractstream_peek_wstr(PyAbstractStream* self, PyObject* args) {
     if(auto v = internal::stream_peek_wstr(self->stream, n); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_u8(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_peek_u8(self->stream); v)
         return PyLong_FromUnsignedLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_u16(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_peek_u16(self->stream); v)
         return PyLong_FromUnsignedLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_u32(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_peek_u32(self->stream); v)
         return PyLong_FromUnsignedLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_u64(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_peek_u64(self->stream); v)
         return PyLong_FromUnsignedLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_i8(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_peek_i8(self->stream); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_i16(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_peek_i16(self->stream); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_i32(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_peek_i32(self->stream); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_i64(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_peek_i64(self->stream); v)
         return PyLong_FromLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_u16be(PyAbstractStream* self,
@@ -144,7 +144,7 @@ PyObject* abstractstream_peek_u16be(PyAbstractStream* self,
     if(auto v = internal::stream_peek_u16be(self->stream); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_u32be(PyAbstractStream* self,
@@ -152,7 +152,7 @@ PyObject* abstractstream_peek_u32be(PyAbstractStream* self,
     if(auto v = internal::stream_peek_u32be(self->stream); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_u64be(PyAbstractStream* self,
@@ -160,7 +160,7 @@ PyObject* abstractstream_peek_u64be(PyAbstractStream* self,
     if(auto v = internal::stream_peek_u64be(self->stream); v)
         return PyLong_FromLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_i16be(PyAbstractStream* self,
@@ -168,7 +168,7 @@ PyObject* abstractstream_peek_i16be(PyAbstractStream* self,
     if(auto v = internal::stream_peek_i16be(self->stream); v)
         return PyLong_FromLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_i32be(PyAbstractStream* self,
@@ -176,7 +176,7 @@ PyObject* abstractstream_peek_i32be(PyAbstractStream* self,
     if(auto v = internal::stream_peek_i32be(self->stream); v)
         return PyLong_FromLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_peek_i64be(PyAbstractStream* self,
@@ -184,7 +184,7 @@ PyObject* abstractstream_peek_i64be(PyAbstractStream* self,
     if(auto v = internal::stream_peek_i64be(self->stream); v)
         return PyLong_FromLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_type(PyAbstractStream* self, PyObject* args) {
@@ -193,14 +193,14 @@ PyObject* abstractstream_read_type(PyAbstractStream* self, PyObject* args) {
     if(auto v = internal::stream_read_type(self->stream, tname); v)
         return python::to_object(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_strz(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_read_strz(self->stream); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_str(PyAbstractStream* self, PyObject* args) {
@@ -209,7 +209,7 @@ PyObject* abstractstream_read_str(PyAbstractStream* self, PyObject* args) {
     if(auto v = internal::stream_read_str(self->stream, n); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_wstrz(PyAbstractStream* self,
@@ -217,7 +217,7 @@ PyObject* abstractstream_read_wstrz(PyAbstractStream* self,
     if(auto v = internal::stream_read_wstrz(self->stream); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_wstr(PyAbstractStream* self, PyObject* args) {
@@ -226,63 +226,63 @@ PyObject* abstractstream_read_wstr(PyAbstractStream* self, PyObject* args) {
     if(auto v = internal::stream_read_wstr(self->stream, n); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_u8(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_read_u8(self->stream); v)
         return PyLong_FromUnsignedLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_u16(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_read_u16(self->stream); v)
         return PyLong_FromUnsignedLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_u32(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_read_u32(self->stream); v)
         return PyLong_FromUnsignedLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_u64(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_read_u64(self->stream); v)
         return PyLong_FromUnsignedLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_i8(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_read_i8(self->stream); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_i16(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_read_i16(self->stream); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_i32(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_read_i32(self->stream); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_i64(PyAbstractStream* self, PyObject* /*args*/) {
     if(auto v = internal::stream_read_i64(self->stream); v)
         return PyLong_FromLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_u16be(PyAbstractStream* self,
@@ -290,7 +290,7 @@ PyObject* abstractstream_read_u16be(PyAbstractStream* self,
     if(auto v = internal::stream_read_u16be(self->stream); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_u32be(PyAbstractStream* self,
@@ -298,7 +298,7 @@ PyObject* abstractstream_read_u32be(PyAbstractStream* self,
     if(auto v = internal::stream_read_u32be(self->stream); v)
         return PyLong_FromLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_u64be(PyAbstractStream* self,
@@ -306,7 +306,7 @@ PyObject* abstractstream_read_u64be(PyAbstractStream* self,
     if(auto v = internal::stream_read_u64be(self->stream); v)
         return PyLong_FromLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_i16be(PyAbstractStream* self,
@@ -314,7 +314,7 @@ PyObject* abstractstream_read_i16be(PyAbstractStream* self,
     if(auto v = internal::stream_read_i16be(self->stream); v)
         return PyLong_FromLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_i32be(PyAbstractStream* self,
@@ -322,7 +322,7 @@ PyObject* abstractstream_read_i32be(PyAbstractStream* self,
     if(auto v = internal::stream_read_i32be(self->stream); v)
         return PyLong_FromLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_read_i64be(PyAbstractStream* self,
@@ -330,7 +330,7 @@ PyObject* abstractstream_read_i64be(PyAbstractStream* self,
     if(auto v = internal::stream_read_i64be(self->stream); v)
         return PyLong_FromLongLong(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_collect_type(PyAbstractStream* self, PyObject* args) {
@@ -339,7 +339,7 @@ PyObject* abstractstream_collect_type(PyAbstractStream* self, PyObject* args) {
     if(auto v = internal::stream_collect_type(self->stream, tname); v)
         return python::to_object(*v);
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_collect_strz(PyAbstractStream* self,
@@ -347,7 +347,7 @@ PyObject* abstractstream_collect_strz(PyAbstractStream* self,
     if(auto v = internal::stream_collect_strz(self->stream); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_collect_str(PyAbstractStream* self, PyObject* args) {
@@ -356,7 +356,7 @@ PyObject* abstractstream_collect_str(PyAbstractStream* self, PyObject* args) {
     if(auto v = internal::stream_collect_str(self->stream, n); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_collect_wstrz(PyAbstractStream* self,
@@ -364,7 +364,7 @@ PyObject* abstractstream_collect_wstrz(PyAbstractStream* self,
     if(auto v = internal::stream_collect_wstrz(self->stream); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 PyObject* abstractstream_collect_wstr(PyAbstractStream* self, PyObject* args) {
@@ -373,7 +373,7 @@ PyObject* abstractstream_collect_wstr(PyAbstractStream* self, PyObject* args) {
     if(auto v = internal::stream_collect_wstr(self->stream, n); v)
         return PyUnicode_FromString(v->c_str());
 
-    Py_RETURN_NONE;
+    return Py_None;
 }
 
 // clang-format off

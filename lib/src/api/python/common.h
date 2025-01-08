@@ -13,6 +13,7 @@ inline PyCFunction to_cfunction(PyCFunctionWithKeywords f) {
 bool validate_class(PyObject* obj, std::initializer_list<const char*> reqattrs);
 PyObject* new_simplenamespace();
 PyObject* to_object(const typing::Value& v);
+void attach_methods(PyObject* obj, PyMethodDef* methods);
 void check_error();
 
 inline PyObject* attr_error(PyObject* obj, std::string_view expected) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../plugins/origin.h"
 #include <redasm/processor.h>
 #include <string>
 #include <string_view>
@@ -19,7 +20,7 @@ void emulator_setstate(RDEmulator* self, const std::string& state, u64 val);
 u64 emulator_updstate(RDEmulator* self, std::string_view state, u64 val,
                       u64 mask);
 
-bool register_processor(const RDProcessorPlugin* plugin);
+bool register_processor(const RDProcessorPlugin* plugin, pm::Origin o);
 const RDProcessorPlugin** get_processorplugins(usize* n);
 const RDProcessorPlugin* get_processorplugin();
 const RDProcessor* get_processor();

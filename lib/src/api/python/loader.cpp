@@ -1,6 +1,9 @@
 #include "loader.h"
+#include "../../error.h"
+#include "../../plugins/pluginmanager.h"
 #include "../internal/loader.h"
 #include "common.h"
+#include "plugin.h"
 #include <redasm/loader.h>
 
 namespace redasm::api::python {
@@ -9,6 +12,39 @@ struct RDPYLoaderPlugin {
     RDLoaderPlugin base;
     PyObject* pyclass;
 };
+
+namespace {
+
+PyObject* loader_load(PyObject* self, PyObject* args) {
+    using Instance = typename pm::InstanceForPlugin<RDLoaderPlugin>::Type;
+    const auto* plugin = plugin::get_bind<RDLoaderPlugin>(self);
+    assume(plugin);
+    bool b = false;
+
+    if(plugin->load) {
+        if(pm::get_origin(plugin) == pm::Origin::PYTHON)
+            b = plugin->load(reinterpret_cast<Instance*>(args));
+        else {
+            b = plugin->load(reinterpret_cast<Instance*>(
+                PyCapsule_GetPointer(args, nullptr)));
+        }
+    }
+
+    return PyBool_FromLong(b);
+}
+
+// clang-format off
+PyMethodDef loader_methods[] = {
+    {"on_init", reinterpret_cast<PyCFunction>(python::plugin::on_init<RDLoaderPlugin>), METH_NOARGS, nullptr},
+    {"on_shutdown", reinterpret_cast<PyCFunction>(python::plugin::on_shutdown<RDLoaderPlugin>), METH_NOARGS, nullptr},
+    {"create", reinterpret_cast<PyCFunction>(python::plugin::create<RDLoaderPlugin>), METH_NOARGS, nullptr},
+    {"destroy", reinterpret_cast<PyCFunction>(python::plugin::destroy<RDLoaderPlugin>), METH_O, nullptr},
+    {"load", reinterpret_cast<PyCFunction>(python::loader_load), METH_O, nullptr},
+    {nullptr},
+};
+// clang-format on
+
+} // namespace
 
 PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
     PyObject* pyclass = nullptr;
@@ -30,12 +66,12 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
     plugin->base.name = PyUnicode_AsUTF8(nameattr);
     plugin->base.flags = flagsattr ? PyLong_AsUnsignedLong(flagsattr) : 0;
 
-    plugin->base.oninit = [](const RDLoaderPlugin* arg) {
+    plugin->base.on_init = [](const RDLoaderPlugin* arg) {
         const auto* plugin = reinterpret_cast<const RDPYLoaderPlugin*>(arg);
         Py_INCREF(plugin->pyclass);
     };
 
-    plugin->base.onshutdown = [](const RDLoaderPlugin* arg) {
+    plugin->base.on_shutdown = [](const RDLoaderPlugin* arg) {
         const auto* plugin = reinterpret_cast<const RDPYLoaderPlugin*>(arg);
         Py_DECREF(plugin->pyclass);
     };
@@ -66,14 +102,30 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
         return false;
     };
 
-    return PyBool_FromLong(
-        internal::register_loader(reinterpret_cast<RDLoaderPlugin*>(plugin)));
+    return PyBool_FromLong(internal::register_loader(
+        reinterpret_cast<RDLoaderPlugin*>(plugin), pm::Origin::PYTHON));
+}
+
+PyObject* get_loaderplugin(PyObject* /*self*/, PyObject* /*args*/) {
+    const RDLoaderPlugin* plugin = internal::get_loaderplugin();
+    assume(plugin);
+    auto* res = python::new_simplenamespace();
+    python::plugin::bind_default(res, plugin);
+    python::plugin::bind_to(res, plugin);
+    python::attach_methods(res, python::loader_methods);
+    return res;
 }
 
 PyObject* get_loader(PyObject* /*self*/, PyObject* /*args*/) {
-    RDLoader* l = internal::get_loader();
-    if(l) return reinterpret_cast<PyObject*>(l);
-    Py_RETURN_NONE;
+    if(RDLoader* l = internal::get_loader(); l) {
+        const RDLoaderPlugin* plugin = internal::get_loaderplugin();
+        assume(plugin);
+        if(pm::get_origin(plugin) == pm::Origin::PYTHON)
+            return reinterpret_cast<PyObject*>(l);
+        return PyCapsule_New(l, nullptr, nullptr);
+    }
+
+    return Py_None;
 }
 
 } // namespace redasm::api::python

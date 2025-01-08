@@ -24,6 +24,8 @@ RDLoaderPlugin binary_loader = {
 
 } // namespace
 
-void register_loaders() { api::internal::register_loader(&binary_loader); }
+void register_loaders() {
+    api::internal::register_loader(&binary_loader, pm::Origin::NATIVE);
+}
 
 } // namespace redasm::builtins

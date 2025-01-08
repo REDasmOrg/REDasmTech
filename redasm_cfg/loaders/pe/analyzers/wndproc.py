@@ -17,6 +17,7 @@ WNDPROC_API = [
     {"arg": 3, "name": "CreateDialogIndirectParamW"},
 ]
 
+
 class WndProcAnalyzer:
     id = "wndproc"
     name = "Analyze Window Procedures"
@@ -24,11 +25,13 @@ class WndProcAnalyzer:
 
     @staticmethod
     def is_enabled():
-        pe = redasm.get_loader()
-        print(pe)
-        if pe:
+        plugin = redasm.get_loaderplugin()
+
+        if plugin.id == "pe":
+            pe = redasm.get_loader()
             c = pe.classifier.value
             return c is not None and not (is_borland(c) or is_dotnet(c) or is_visualbasic(c))
+
         return False
 
     def get_import(self, name):
@@ -39,7 +42,6 @@ class WndProcAnalyzer:
             address = redasm.get_address(impname)
 
         return address
-
 
     def get_api_refs(self, name):
         address = self.get_import(name)
@@ -66,7 +68,6 @@ class WndProcAnalyzer:
                     break
                 else:
                     vstack.clear()
-
 
     def execute(self):
         for api in WNDPROC_API:

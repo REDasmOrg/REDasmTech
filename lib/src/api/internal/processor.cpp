@@ -74,9 +74,9 @@ u64 emulator_updstate(RDEmulator* self, std::string_view state, u64 val,
     return api::from_c(self)->upd_state(state, val, mask);
 }
 
-bool register_processor(const RDProcessorPlugin* plugin) {
-    spdlog::trace("register_processor({})", fmt::ptr(plugin));
-    return pm::register_processor(plugin);
+bool register_processor(const RDProcessorPlugin* plugin, pm::Origin o) {
+    spdlog::trace("register_processor({}, {})", fmt::ptr(plugin), o);
+    return pm::register_processor(plugin, o);
 }
 
 const RDProcessorPlugin** get_processorplugins(usize* n) {

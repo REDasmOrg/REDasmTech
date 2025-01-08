@@ -65,6 +65,7 @@ inline PyMethodDef methods[] = {
     {"add_problem", python::add_problem, METH_VARARGS, nullptr},
     {"register_loader", python::register_loader, METH_VARARGS, nullptr},
     {"register_analyzer", python::register_analyzer, METH_VARARGS, nullptr},
+    {"get_loaderplugin", python::get_loaderplugin, METH_NOARGS, nullptr},
     {"get_loader", python::get_loader, METH_NOARGS, nullptr},
     {"get_bool", python::get_bool, METH_O, nullptr},
     {"get_char", python::get_char, METH_O, nullptr},

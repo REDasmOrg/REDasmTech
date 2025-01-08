@@ -47,7 +47,7 @@ RDAnalyzerPlugin autorename_analyzer = {
 } // namespace
 
 void register_analyzers() {
-    api::internal::register_analyzer(&autorename_analyzer);
+    api::internal::register_analyzer(&autorename_analyzer, pm::Origin::NATIVE);
 }
 
 } // namespace redasm::builtins

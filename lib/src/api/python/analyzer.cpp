@@ -30,12 +30,12 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args) {
     plugin->base.name = PyUnicode_AsUTF8(nameattr);
     plugin->base.flags = flagsattr ? PyLong_AsUnsignedLong(flagsattr) : 0;
 
-    plugin->base.oninit = [](const RDAnalyzerPlugin* arg) {
+    plugin->base.on_init = [](const RDAnalyzerPlugin* arg) {
         const auto* plugin = reinterpret_cast<const RDPYAnalyzerPlugin*>(arg);
         Py_INCREF(plugin->pyclass);
     };
 
-    plugin->base.onshutdown = [](const RDAnalyzerPlugin* arg) {
+    plugin->base.on_shutdown = [](const RDAnalyzerPlugin* arg) {
         const auto* plugin = reinterpret_cast<const RDPYAnalyzerPlugin*>(arg);
         Py_DECREF(plugin->pyclass);
     };
@@ -67,7 +67,7 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args) {
                 PyObject_CallMethod(plugin->pyclass, "is_enabled", nullptr);
 
             if(res) {
-                bool ok = PyBool_Check(res);
+                bool ok = Py_IsTrue(res);
                 Py_DECREF(res);
                 return ok;
             }
@@ -78,7 +78,7 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args) {
     }
 
     return PyBool_FromLong(internal::register_analyzer(
-        reinterpret_cast<RDAnalyzerPlugin*>(plugin)));
+        reinterpret_cast<RDAnalyzerPlugin*>(plugin), pm::Origin::PYTHON));
 }
 
 } // namespace redasm::api::python

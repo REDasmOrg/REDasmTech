@@ -104,6 +104,15 @@ PyObject* to_object(const typing::Value& v) {
     return res;
 }
 
+void attach_methods(PyObject* obj, PyMethodDef* methods) {
+    for(PyMethodDef* md = methods; md->ml_name; md++) {
+        PyObject* func = PyCFunction_New(md, nullptr);
+        PyObject* meth = PyInstanceMethod_New(func);
+        PyObject_SetAttrString(obj, md->ml_name, meth);
+        Py_DECREF(func);
+    }
+}
+
 void check_error() {
     if(!PyErr_Occurred()) return;
 

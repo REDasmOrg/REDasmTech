@@ -6,9 +6,9 @@
 
 namespace redasm::api::internal {
 
-bool register_analyzer(const RDAnalyzerPlugin* plugin) {
-    spdlog::trace("register_analyzer({})", fmt::ptr(plugin));
-    return pm::register_analyzer(plugin);
+bool register_analyzer(const RDAnalyzerPlugin* plugin, pm::Origin o) {
+    spdlog::trace("register_analyzer({}, {})", fmt::ptr(plugin), o);
+    return pm::register_analyzer(plugin, o);
 }
 
 const RDAnalyzerPlugin** get_analyzerplugins(usize* n) {

@@ -6,9 +6,9 @@
 
 namespace redasm::api::internal {
 
-bool register_loader(const RDLoaderPlugin* plugin) {
-    spdlog::trace("register_loader({})", fmt::ptr(plugin));
-    return pm::register_loader(plugin);
+bool register_loader(const RDLoaderPlugin* plugin, pm::Origin o) {
+    spdlog::trace("register_loader({}, {})", fmt::ptr(plugin), o);
+    return pm::register_loader(plugin, o);
 }
 
 const RDLoaderPlugin** get_loaderplugins(usize* n) {
