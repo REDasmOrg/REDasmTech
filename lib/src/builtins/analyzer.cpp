@@ -14,12 +14,13 @@ void do_autorename(RDAnalyzer*) {
     for(const Function& f : ctx->functions) {
         if(Byte b = ctx->memory->at(f.index); !b.has(BF_FLOW)) {
             if(b.has(BF_JUMP)) {
-                Database::RefList refs =
-                    ctx->get_refs_from_type(f.index, CR_JUMP);
-
-                if(refs.size() == 1) {
-                    ctx->set_name(f.index,
-                                  "_" + ctx->get_name(refs.front().index), 0);
+                // Search for direct/indirect jumps
+                for(const Database::Ref& ref : ctx->get_refs_from(f.index)) {
+                    if(ref.type == CR_JUMP || ref.type == DR_READ) {
+                        ctx->set_name(f.index, "_" + ctx->get_name(ref.index),
+                                      0);
+                        break;
+                    }
                 }
             }
             else if(b.has(BF_CODE)) {
