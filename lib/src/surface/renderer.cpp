@@ -36,8 +36,9 @@ void Renderer::highlight_row(int row) {
 
     SurfaceRow& sfrow = m_rows[row];
 
-    for(RDSurfaceCell& cell : sfrow.cells)
-        cell.bg = THEME_SEEK;
+    for(RDSurfaceCell& cell : sfrow.cells) {
+        if(cell.bg == THEME_DEFAULT) cell.bg = THEME_SEEK;
+    }
 }
 
 void Renderer::highlight_words(int row, int col) {
