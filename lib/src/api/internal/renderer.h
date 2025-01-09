@@ -11,6 +11,7 @@ void renderer_mnem(RDRenderer* self, std::string_view s, RDThemeKind kind);
 void renderer_unkn(RDRenderer* self);
 void renderer_reg(RDRenderer* self, int reg);
 void renderer_text(RDRenderer* self, std::string_view s);
+void renderer_str(RDRenderer* self, std::string_view s);
 void renderer_ws(RDRenderer* self);
 void renderer_addr_ex(RDRenderer* self, RDAddress address, int flags);
 void renderer_cnst_ex(RDRenderer* self, u64 value, int base, int flags);

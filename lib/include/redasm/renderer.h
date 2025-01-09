@@ -30,6 +30,7 @@ REDASM_EXPORT void rdrenderer_mnem(RDRenderer* self, const char* s,
 REDASM_EXPORT void rdrenderer_unkn(RDRenderer* self);
 REDASM_EXPORT void rdrenderer_reg(RDRenderer* self, int reg);
 REDASM_EXPORT void rdrenderer_text(RDRenderer* self, const char* s);
+REDASM_EXPORT void rdrenderer_str(RDRenderer* self, const char* s);
 REDASM_EXPORT void rdrenderer_ws(RDRenderer* self);
 REDASM_EXPORT void rdrenderer_addr_ex(RDRenderer* self, RDAddress address,
                                       int flags);

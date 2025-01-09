@@ -36,6 +36,11 @@ void renderer_text(RDRenderer* self, std::string_view s) {
     api::from_c(self)->chunk(s);
 }
 
+void renderer_str(RDRenderer* self, std::string_view s) {
+    spdlog::trace("renderer_str({}, '{}')", fmt::ptr(self), s);
+    api::from_c(self)->string(s);
+}
+
 void renderer_ws(RDRenderer* self) {
     spdlog::trace("renderer_ws({})", fmt::ptr(self));
     api::from_c(self)->ws();
