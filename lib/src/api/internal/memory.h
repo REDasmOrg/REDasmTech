@@ -36,5 +36,7 @@ tl::optional<i32> get_i32be(RDAddress address);
 tl::optional<i64> get_i64be(RDAddress address);
 tl::optional<std::string> get_strz(RDAddress address);
 tl::optional<std::string> get_str(RDAddress address, usize n);
+tl::optional<std::string> get_wstrz(RDAddress address);
+tl::optional<std::string> get_wstr(RDAddress address, usize n);
 
 } // namespace redasm::api::internal

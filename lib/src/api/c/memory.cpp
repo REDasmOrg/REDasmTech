@@ -90,6 +90,54 @@ i64 rd_geti64be(RDAddress address, bool* ok) {
     return rd_getvalue<i64>(address, ok, redasm::api::internal::get_i64be);
 }
 
+const char* rd_getstr(RDAddress address, usize n) {
+    static std::string res;
+    auto str = redasm::api::internal::get_str(address, n);
+
+    if(str) {
+        res = *str;
+        return res.c_str();
+    }
+
+    return nullptr;
+}
+
+const char* rd_getwstr(RDAddress address, usize n) {
+    static std::string res;
+    auto str = redasm::api::internal::get_wstr(address, n);
+
+    if(str) {
+        res = *str;
+        return res.c_str();
+    }
+
+    return nullptr;
+}
+
+const char* rd_getstrz(RDAddress address) {
+    static std::string res;
+    auto str = redasm::api::internal::get_strz(address);
+
+    if(str) {
+        res = *str;
+        return res.c_str();
+    }
+
+    return nullptr;
+}
+
+const char* rd_getwstrz(RDAddress address) {
+    static std::string res;
+    auto str = redasm::api::internal::get_wstrz(address);
+
+    if(str) {
+        res = *str;
+        return res.c_str();
+    }
+
+    return nullptr;
+}
+
 bool rd_isaddress(RDAddress address) {
     return redasm::api::internal::is_address(address);
 }

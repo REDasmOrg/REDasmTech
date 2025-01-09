@@ -47,3 +47,7 @@ REDASM_EXPORT u64 rd_getu64be(RDAddress address, bool* ok);
 REDASM_EXPORT i16 rd_geti16be(RDAddress address, bool* ok);
 REDASM_EXPORT i32 rd_geti32be(RDAddress address, bool* ok);
 REDASM_EXPORT i64 rd_geti64be(RDAddress address, bool* ok);
+REDASM_EXPORT const char* rd_getstr(RDAddress address, usize n);
+REDASM_EXPORT const char* rd_getwstr(RDAddress address, usize n);
+REDASM_EXPORT const char* rd_getstrz(RDAddress address);
+REDASM_EXPORT const char* rd_getwstrz(RDAddress address);

@@ -252,4 +252,22 @@ tl::optional<std::string> get_str(RDAddress address, usize n) {
     return tl::nullopt;
 }
 
+tl::optional<std::string> get_wstrz(RDAddress address) {
+    spdlog::trace("get_wstrz({:x})", address);
+    if(auto idx = state::context->address_to_index(address); idx)
+        return internal::buffer_getwstrz(
+            api::to_c(state::context->memory.get()), *idx);
+
+    return tl::nullopt;
+}
+
+tl::optional<std::string> get_wstr(RDAddress address, usize n) {
+    spdlog::trace("get_wstr({:x}, {})", address, n);
+    if(auto idx = state::context->address_to_index(address); idx)
+        return internal::buffer_getwstr(api::to_c(state::context->memory.get()),
+                                        *idx, n);
+
+    return tl::nullopt;
+}
+
 } // namespace redasm::api::internal
