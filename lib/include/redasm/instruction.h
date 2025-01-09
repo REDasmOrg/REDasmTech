@@ -3,13 +3,13 @@
 #include <redasm/types.h>
 #include <redasm/typing.h>
 
-#define RD_OPERANDCOUNT 6
+#define RD_NOPERANDS 6
 
 // Syntatic Sugar
 #define foreach_operand(i, op, instr)                                          \
     for(int i = 0, _break_ = 1; _break_; _break_ = !_break_)                   \
         for(const RDOperand* op = (instr)->operands;                           \
-            ((op) < (instr)->operands + RD_OPERANDCOUNT) &&                    \
+            ((op) < (instr)->operands + RD_NOPERANDS) &&                       \
             ((op)->type != OP_NULL);                                           \
             (op)++, (i)++)
 
@@ -55,10 +55,20 @@ typedef struct _RDDisplOperand {
 typedef struct _RDUserOperand {
     RDRegisterOperand reg1;
     RDRegisterOperand reg2;
+    RDRegisterOperand reg3;
 
     union {
-        usize val;
-        isize s_val;
+        usize val1;
+        isize s_val1;
+    };
+
+    union {
+        usize val2;
+        isize s_val2;
+    };
+    union {
+        usize val3;
+        isize s_val3;
     };
 } _RDUserOperand;
 
@@ -87,7 +97,7 @@ typedef struct RDInstruction {
     u32 features;
     u32 length;
     u32 delayslots;
-    RDOperand operands[RD_OPERANDCOUNT];
+    RDOperand operands[RD_NOPERANDS];
 
     union {
         void* userdata;
