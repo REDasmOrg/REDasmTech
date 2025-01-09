@@ -70,4 +70,23 @@ std::string get_return(const std::string& s) {
     return std::regex_match(s, m, rgx) ? demangler::get_type(m[1]) : s;
 }
 
+std::string parse(std::string s) {
+    if(s.front() == '[') return demangler::parse(s.substr(1)) + "[]";
+    if(s == "V") return "void";
+    if(s == "Z") return "boolean";
+    if(s == "B") return "byte";
+    if(s == "S") return "short";
+    if(s == "C") return "char";
+    if(s == "I") return "int";
+    if(s == "J") return "long";
+    if(s == "F") return "float";
+    if(s == "D") return "double";
+
+    if(s.front() == 'L') s.erase(s.begin());
+    if(s.back() == ';') s.pop_back();
+    std::replace(s.begin(), s.end(), '/', '.');
+    // std::replace(s.begin(), s.end(), '$', '.');
+    return s;
+}
+
 } // namespace demangler

@@ -1,7 +1,6 @@
 #include "dex.h"
 #include "demangler.h"
 #include <libdex/DexClass.h>
-#include <libdex/DexFile.h>
 #include <list>
 #include <string>
 #include <vector>
@@ -9,29 +8,6 @@
 namespace dex {
 
 namespace {
-
-struct DexLoader {
-    DexFile* dexfile;
-};
-
-std::string demangle(std::string s) {
-    if(s.front() == '[') return dex::demangle(s.substr(1)) + "[]";
-    if(s == "V") return "void";
-    if(s == "Z") return "boolean";
-    if(s == "B") return "byte";
-    if(s == "S") return "short";
-    if(s == "C") return "char";
-    if(s == "I") return "int";
-    if(s == "J") return "long";
-    if(s == "F") return "float";
-    if(s == "D") return "double";
-
-    if(s.front() == 'L') s.erase(s.begin());
-    if(s.back() == ';') s.pop_back();
-    std::replace(s.begin(), s.end(), '/', '.');
-    // std::replace(s.begin(), s.end(), '$', '.');
-    return s;
-}
 
 void load_method(const DexFile* df, const DexMethod& dexmethod, bool filter) {
     if(!dexmethod.codeOff) return;
