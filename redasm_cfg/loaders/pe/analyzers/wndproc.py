@@ -30,7 +30,7 @@ class WndProcAnalyzer:
         if plugin.id == "pe":
             pe = redasm.get_loader()
             c = pe.classifier.value
-            return c is not None and not (is_borland(c) or is_dotnet(c) or is_visualbasic(c))
+            return not (is_borland(c) or is_dotnet(c) or is_visualbasic(c))
 
         return False
 

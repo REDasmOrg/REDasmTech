@@ -36,11 +36,11 @@ class PELoader:
         if magic == PEH.IMAGE_NT_OPTIONAL_HDR32_MAGIC:
             self.bits = 32
             redasm.create_struct("IMAGE_OPTIONAL_HEADER",
-                                PEH.IMAGE_OPTIONAL_HEADER32)
+                                 PEH.IMAGE_OPTIONAL_HEADER32)
         elif magic == PEH.IMAGE_NT_OPTIONAL_HDR64_MAGIC:
             self.bits = 64
             redasm.create_struct("IMAGE_OPTIONAL_HEADER",
-                                PEH.IMAGE_OPTIONAL_HEADER64)
+                                 PEH.IMAGE_OPTIONAL_HEADER64)
         else:
             return False
 
@@ -62,11 +62,9 @@ class PELoader:
         # TODO: Dotnet parsing
         return entry
 
-
     def read_sections(self):
         t = f"IMAGE_SECTION_HEADER[{self.ntheaders.FileHeader.NumberOfSections}]"
         self.sections = redasm.file.map_type(PE.image_first_section(self), t)
-
 
     def read_exports(self):
         entry = self.optionalheader.DataDirectory[PEH.IMAGE_DIRECTORY_ENTRY_EXPORT]
@@ -118,7 +116,6 @@ class PELoader:
                 name = f"Ordinal__{redasm.to_hex(ordinal, 4)}"
 
             redasm.set_entry(redasm.from_reladdress(f), name)
-
 
     def read_imports(self):
         entry = self.optionalheader.DataDirectory[PEH.IMAGE_DIRECTORY_ENTRY_IMPORT]
@@ -174,7 +171,6 @@ class PELoader:
             va = va + redasm.size_of("IMAGE_IMPORT_DESCRIPTOR")
             entry = redasm.set_type(va, "IMAGE_IMPORT_DESCRIPTOR")
 
-
     def read_exceptions(self):
         entry = self.optionalheader.DataDirectory[PEH.IMAGE_DIRECTORY_ENTRY_EXCEPTION]
         if entry.VirtualAddress == 0:
@@ -202,7 +198,6 @@ class PELoader:
             if unwindinfo and not (flags & PEH.UNW_FLAG_CHAININFO):
                 redasm.set_function(va)
                 redasm.set_name(va, f"rnt_entry_{redasm.to_hex(va, n=-1)}")
-
 
     def read_debuginfo(self):
         entry = self.optionalheader.DataDirectory[PEH.IMAGE_DIRECTORY_ENTRY_DEBUG]
@@ -285,7 +280,6 @@ class PELoader:
             else:
                 redasm.log(f"Unknown Debug info type (value {redasm.to_hex(dbgdir.Type)})")
 
-
     def read_resources(self):
         entry = self.optionalheader.DataDirectory[PEH.IMAGE_DIRECTORY_ENTRY_RESOURCE]
         if entry.VirtualAddress == 0:
@@ -295,7 +289,6 @@ class PELoader:
         if va:
             self.resources = PEResources(self, va)
             self.classifier.classify_borland(self)
-
 
     def select_processor(self):
         machine = self.ntheaders.FileHeader.Machine
@@ -310,7 +303,6 @@ class PELoader:
             else:
                 redasm.set_processor("arm32le")
 
-
     def load_default(self):
         self.read_exports()
         self.read_imports()
@@ -320,8 +312,7 @@ class PELoader:
         self.select_processor()
 
         redasm.set_entry(redasm.from_reladdress(self.optionalheader.AddressOfEntryPoint),
-                        "PE_EntryPoint")
-
+                         "PE_EntryPoint")
 
     def load(self):
         if not self.check_header():
@@ -355,7 +346,7 @@ class PELoader:
                 segtype |= redasm.SEG_HASDATA
 
             redasm.map_segment_n(sect.Name, startva, asize,
-                                startoff, osize, segtype)
+                                 startoff, osize, segtype)
 
         corheader = self.check_dotnet()
 
