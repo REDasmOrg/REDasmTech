@@ -3,6 +3,7 @@
 
 ContextView::ContextView(QWidget* parent): QWidget{parent}, m_ui{this} {
     m_functionsmodel = new SymbolsFilterModel(SYMBOL_FUNCTION, false, this);
+    m_functionsmodel->symbols_model()->set_symbol_column_text("Functions");
     m_functionsmodel->symbols_model()->set_highlight_address(true);
     m_ui.tvfunctions->setModel(m_functionsmodel);
     m_ui.tvfunctions->header()->hideSection(0);
@@ -27,6 +28,5 @@ void ContextView::tick(const RDWorkerStatus* s) {
         m_ui.splitview->invalidate();
     }
 
-    if(!s->busy)
-        m_ui.splitview->surface_view()->jump_to_ep();
+    if(!s->busy) m_ui.splitview->surface_view()->jump_to_ep();
 }

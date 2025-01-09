@@ -200,8 +200,14 @@ void show_details() {
                                      .arg(rd_tohex(op->user.reg1)));
                     strop.append(QString("<b>reg2:</b> %1<br>")
                                      .arg(rd_tohex(op->user.reg2)));
-                    strop.append(QString("<b>val:</b> %1<br>")
-                                     .arg(rd_tohex(op->user.val)));
+                    strop.append(QString("<b>reg3:</b> %1<br>")
+                                     .arg(rd_tohex(op->user.reg3)));
+                    strop.append(QString("<b>val1:</b> %1<br>")
+                                     .arg(rd_tohex(op->user.val1)));
+                    strop.append(QString("<b>val2:</b> %1<br>")
+                                     .arg(rd_tohex(op->user.val2)));
+                    strop.append(QString("<b>val3:</b> %1<br>")
+                                     .arg(rd_tohex(op->user.val3)));
                     break;
                 }
             }

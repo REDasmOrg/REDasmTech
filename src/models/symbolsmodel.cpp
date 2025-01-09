@@ -4,13 +4,13 @@
 SymbolsModel::SymbolsModel(bool autoalign, QObject* parent)
     : QAbstractListModel{parent}, m_autoalign{autoalign} {
     m_nsymbols = rdlisting_getsymbolslength();
+    m_colsymbol = tr("Symbol");
 }
 
 RDAddress SymbolsModel::address(const QModelIndex& index) const {
     RDSymbol symbol;
 
-    if(rdlisting_getsymbol(index.row(), &symbol))
-        return symbol.address;
+    if(rdlisting_getsymbol(index.row(), &symbol)) return symbol.address;
 
     qFatal("Cannot get symbol address");
     return {};
@@ -25,8 +25,7 @@ void SymbolsModel::resync() {
 QVariant SymbolsModel::data(const QModelIndex& index, int role) const {
     RDSymbol symbol;
 
-    if(!rdlisting_getsymbol(index.row(), &symbol))
-        return {};
+    if(!rdlisting_getsymbol(index.row(), &symbol)) return {};
 
     if(role == Qt::DisplayRole) {
         switch(index.column()) {
@@ -45,8 +44,7 @@ QVariant SymbolsModel::data(const QModelIndex& index, int role) const {
     else if(m_autoalign && role == Qt::TextAlignmentRole) {
         if(index.column() == 0)
             return QVariant{Qt::AlignRight | Qt::AlignVCenter};
-        if(index.column() == 1)
-            return Qt::AlignCenter;
+        if(index.column() == 1) return Qt::AlignCenter;
         return Qt::AlignLeft;
     }
     else if(role == Qt::ForegroundRole) {
@@ -63,13 +61,12 @@ QVariant SymbolsModel::data(const QModelIndex& index, int role) const {
 
 QVariant SymbolsModel::headerData(int section, Qt::Orientation orientation,
                                   int role) const {
-    if(orientation == Qt::Vertical || role != Qt::DisplayRole)
-        return {};
+    if(orientation == Qt::Vertical || role != Qt::DisplayRole) return {};
 
     switch(section) {
         case 0: return tr("Address");
         case 1: return tr("Type");
-        case 2: return tr("Symbol");
+        case 2: return m_colsymbol;
         default: break;
     }
 
