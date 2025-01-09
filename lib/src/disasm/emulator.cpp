@@ -5,21 +5,12 @@
 
 namespace redasm {
 
-namespace {
-
-void do_enqueue(std::deque<MIndex>& q, MIndex idx) {
-    if(q.empty() || q.front() != idx) q.push_front(idx);
-}
-
-} // namespace
-
 void Emulator::setup() {
     assume(state::context);
     assume(m_state.registers.empty());
     assume(m_state.states.empty());
 
     this->dslotinstr = std::make_unique<RDInstruction>();
-
     const Context* ctx = state::context;
 
     if(ctx->processorplugin && ctx->processorplugin->setup)
@@ -53,9 +44,7 @@ void Emulator::add_ref(MIndex toidx, usize type) { // NOLINT
 
 u64 Emulator::get_reg(int regid) const {
     auto it = m_state.registers.find(regid);
-
     if(it != m_state.registers.end()) return it->second;
-
     return {};
 }
 
@@ -76,9 +65,7 @@ u64 Emulator::upd_reg(int regid, u64 val, u64 mask) {
 
 u64 Emulator::get_state(std::string_view s) const {
     auto it = m_state.states.find(s);
-
     if(it != m_state.states.end()) return it->second;
-
     return {};
 }
 
@@ -88,7 +75,6 @@ void Emulator::set_state(const std::string& s, u64 val) {
 
 void Emulator::del_state(std::string_view s) {
     auto it = m_state.states.find(s);
-
     if(it != m_state.states.end()) m_state.states.erase(it);
 }
 
@@ -115,16 +101,18 @@ u64 Emulator::upd_state(std::string_view s, u64 val, u64 mask) {
     except("State '{}' not found", s);
 }
 
-void Emulator::enqueue_flow(MIndex index) { do_enqueue(m_qflow, index); }
+void Emulator::enqueue_flow(MIndex index) {
+    if(m_qflow.empty() || m_qflow.front() != index) m_qflow.push_front(index);
+}
 
 void Emulator::enqueue_jump(MIndex index) {
     // TODO(davide): Snapshot State
-    do_enqueue(m_qjump, index);
+    if(m_qjump.empty() || m_qjump.front() != index) m_qjump.push_back(index);
 }
 
 void Emulator::enqueue_call(MIndex index) {
     // TODO(davide): Snapshot State
-    do_enqueue(m_qcall, index);
+    if(m_qcall.empty() || m_qcall.front() != index) m_qcall.push_back(index);
 }
 
 u32 Emulator::tick() {
