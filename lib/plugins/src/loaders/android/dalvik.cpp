@@ -20,9 +20,6 @@ enum DalvikOperands {
     DVKOP_TYPEINDEX,
     DVKOP_STRINGINDEX,
     DVKOP_FIELDINDEX,
-    DVKOP_PACKEDSWITCHTABLE,
-    DVKOP_SPARSESWITCHTABLE,
-    DVKOP_FILLARRAYDATA,
 };
 
 void render_integer(RDRenderer* r, const RDOperand* op) {
@@ -134,6 +131,8 @@ RDThemeKind get_op_theme(u32 opcode) {
 
 void register_types(RDProcessor*, RDEmulator*) {
     rd_createstruct("PACKED_SWITCH_PAYLOAD", dalvik::PACKEDSWITCHPAYLOAD_TYPE);
+    rd_createstruct("SPARSE_SWITCH_PAYLOAD", dalvik::SPARSESWITCHPAYLOAD_TYPE);
+    rd_createstruct("FILL_ARRAY_DATA", dalvik::FILLARRAYDATA_TYPE);
 }
 
 const char* get_registername(const RDProcessor*, int regid) {
@@ -311,14 +310,48 @@ struct DalvikProcessor {
                 const auto* t = l->get_pointer<PackedSwitchPayload>(
                     instr->operands[1].addr);
 
-                dalvik::create_packedswitchpayload(instr->operands[1].addr, t);
+                rdemulator_addref(e, instr->operands[1].addr, DR_ADDRESS);
+                const i32* targets = dalvik::create_packedswitchpayload(
+                    instr->operands[1].addr, t);
 
-                const i32* targets = &t->targets[0];
-                for(size_t i = 0; i < t->size; i++, targets++) {
-                    rdemulator_addref(
-                        e, instr->address + (targets[i] * sizeof(dex_u2)),
-                        CR_JUMP);
+                if(targets) {
+                    for(size_t i = 0; i < t->size; i++) {
+                        rdemulator_addref(
+                            e, instr->address + (targets[i] * sizeof(dex_u2)),
+                            CR_JUMP);
+                    }
                 }
+                break;
+            }
+
+            case OP_SPARSE_SWITCH: {
+                const auto* l =
+                    reinterpret_cast<const dex::DexLoader*>(rd_getloader());
+                const auto* t = l->get_pointer<SparseSwitchPayload>(
+                    instr->operands[1].addr);
+
+                rdemulator_addref(e, instr->operands[1].addr, DR_ADDRESS);
+                const i32* targets = dalvik::create_sparseswitchpayload(
+                    instr->operands[1].addr, t);
+
+                if(targets) {
+                    for(size_t i = 0; i < t->size; i++) {
+                        rdemulator_addref(
+                            e, instr->address + (targets[i] * sizeof(dex_u2)),
+                            CR_JUMP);
+                    }
+                }
+                break;
+            }
+
+            case OP_FILL_ARRAY_DATA: {
+                const auto* l =
+                    reinterpret_cast<const dex::DexLoader*>(rd_getloader());
+
+                const auto* t =
+                    l->get_pointer<FillArrayData>(instr->operands[1].addr);
+                rdemulator_addref(e, instr->operands[1].addr, DR_ADDRESS);
+                dalvik::create_fillarraydata(instr->operands[1].addr, t);
                 break;
             }
 
@@ -358,7 +391,11 @@ struct DalvikProcessor {
                     break;
                 }
 
-                case OP_ADDR: rdrenderer_addr(r, op->addr); break;
+                case OP_ADDR: {
+                    rdrenderer_addr(r, op->addr);
+                    break;
+                }
+
                 case OP_MEM: rdrenderer_addr(r, op->mem); break;
                 case OP_IMM: dalvik::render_integer(r, op); break;
 
@@ -372,7 +409,7 @@ struct DalvikProcessor {
 
                 case DVKOP_STRINGINDEX: {
                     if(auto addr = this->get_stringaddr(op->user.val1); addr)
-                        rdrenderer_str(r, rd_getstrz(*addr));
+                        rdrenderer_addr(r, *addr);
                     else
                         rdrenderer_unkn(r);
                     break;
