@@ -20,7 +20,6 @@ struct LoaderDialog {
     QComboBox *cbprocessors, *cbloglevel;
     QSpinBox* sbminstring;
     QLineEdit *leentrypoint, *leoffset, *lebaseaddress;
-    QCheckBox *chknocodemerge, *chknodemangle;
 
     explicit LoaderDialog(QDialog* self) {
         self->setAttribute(Qt::WA_DeleteOnClose);
@@ -56,11 +55,7 @@ private:
         auto* vbox = new QVBoxLayout();
         this->setup_loader_part(vbox);
         this->setup_addressing_part(vbox);
-
-        auto* hbox = new QHBoxLayout();
-        hbox->addLayout(vbox);
-        this->setup_options_part(hbox);
-        l->addLayout(hbox);
+        l->addLayout(vbox);
     }
 
     void setup_loader_part(QVBoxLayout* l) {
@@ -102,21 +97,6 @@ private:
         grid->addWidget(this->lebaseaddress, 2, 1, 1, 1);
         grid->addWidget(new QLabel("Base Address:"), 2, 0, 1, 1);
         l->addWidget(this->gbaddressing);
-    }
-
-    void setup_options_part(QHBoxLayout* l) {
-        this->gboptions = new QGroupBox();
-        this->gboptions->setTitle("Options");
-
-        auto* vbox = new QVBoxLayout(this->gboptions);
-
-        this->chknocodemerge = new QCheckBox("No Code Merge");
-        vbox->addWidget(this->chknocodemerge);
-        this->chknodemangle = new QCheckBox("No Demangle");
-        vbox->addWidget(this->chknodemangle);
-        vbox->addItem(new QSpacerItem(20, 40, QSizePolicy::Minimum,
-                                      QSizePolicy::Expanding));
-        l->addWidget(this->gboptions);
     }
 };
 
