@@ -20,7 +20,7 @@ std::optional<RDAddress> read_address(RDAddress address) {
 
 template<int Bits>
 void ElfFormat<Bits>::apply_type(const char* tname, const SHDR& shdr) const {
-    const usize S = rd_sizeof(tname);
+    const usize S = rd_nsizeof(tname);
     const usize N = shdr.sh_size / S;
 
     RDType t;
@@ -142,7 +142,7 @@ template<int Bits>
 void ElfFormat<Bits>::process_init_fini(const SHDR& shdr,
                                         const std::string& prefix) const {
     constexpr const char* TYPE = Bits == 64 ? "u64" : "u32";
-    const usize S = rd_sizeof(TYPE);
+    const usize S = rd_nsizeof(TYPE);
     const usize N = shdr.sh_size / S;
 
     RDValue* v = rdvalue_create();
