@@ -8,14 +8,18 @@ namespace redasm::api::internal {
 usize size_of(std::string_view tname) {
     spdlog::trace("size_of('{}')", tname);
 
-    if(state::context)
-        return state::context->types.size_of(tname);
+    if(state::context) return state::context->types.size_of(tname);
+    return 0;
+}
+
+usize size_of(const RDType* t) {
+    spdlog::trace("size_of('{}')", fmt::ptr(t));
+    if(t && state::context) return state::context->types.size_of(*t);
     return 0;
 }
 
 typing::Value* create_value() {
-    if(state::context)
-        return &state::context->types.valuespool.emplace_front();
+    if(state::context) return &state::context->types.valuespool.emplace_front();
 
     return nullptr;
 }
@@ -26,9 +30,7 @@ void destroy_value(typing::Value* v) {
 }
 
 std::string type_name(RDType t) {
-    if(state::context)
-        return state::context->types.to_string(t);
-
+    if(state::context) return state::context->types.to_string(t);
     return {};
 }
 
@@ -60,8 +62,7 @@ bool int_from_bytes(usize b, bool sign, RDType* t) {
 
     if(t && state::context) {
         auto inttype = state::context->types.int_from_bytes(b, sign);
-        if(inttype)
-            *t = *inttype;
+        if(inttype) *t = *inttype;
         return inttype.has_value();
     }
 

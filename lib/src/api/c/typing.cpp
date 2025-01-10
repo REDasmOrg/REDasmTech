@@ -24,10 +24,12 @@ const u32 TID_I64BE = redasm::typing::ids::I64BE;
 const u32 TID_STR = redasm::typing::ids::STR;
 const u32 TID_WSTR = redasm::typing::ids::WSTR;
 
-usize rd_sizeof(const char* tname) {
+usize rd_nsizeof(const char* tname) {
     if(!tname) return 0;
     return redasm::api::internal::size_of(tname);
 }
+
+usize rd_tsizeof(const RDType* t) { return redasm::api::internal::size_of(t); }
 
 bool rdtype_create(const char* tname, RDType* t) {
     if(!tname) return false;

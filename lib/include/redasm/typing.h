@@ -39,7 +39,8 @@ typedef struct RDType {
     usize n; // > 0 = array
 } RDType;
 
-REDASM_EXPORT usize rd_sizeof(const char* tname);
+REDASM_EXPORT usize rd_nsizeof(const char* tname);
+REDASM_EXPORT usize rd_tsizeof(const RDType* t);
 REDASM_EXPORT bool rdtype_create(const char* tname, RDType* t);
 REDASM_EXPORT bool rdtype_create_n(const char* tname, usize n, RDType* t);
 REDASM_EXPORT bool rd_intfrombytes(usize bytes, bool sign, RDType* t);

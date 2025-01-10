@@ -6,6 +6,7 @@
 namespace redasm::api::internal {
 
 usize size_of(std::string_view tname);
+usize size_of(const RDType* t);
 typing::Value* create_value();
 void destroy_value(typing::Value* v);
 std::string type_name(RDType t);
