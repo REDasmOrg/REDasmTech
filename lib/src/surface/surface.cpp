@@ -152,7 +152,13 @@ void Surface::render_function(const Function& f) {
 
     for(const Function::BasicBlock& bb : f.blocks) {
         auto startit = listing.lower_bound(bb.start);
-        assume(startit != listing.end());
+
+        if(startit == listing.end()) {
+            state::log("ERROR: Cannot find basic-block(s)");
+            m_renderer->clear();
+            break;
+        }
+
         auto endit = listing.upper_bound(bb.end, startit);
         assume(startit < endit);
 
