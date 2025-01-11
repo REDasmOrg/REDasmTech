@@ -17,10 +17,10 @@ typedef struct RDRendererParams {
     };
 } RDRendererParams;
 
-typedef enum RDRendererConst {
+typedef enum RDRendererFlags {
     RC_NEEDSIGN = 1,
     RC_NOSIGN,
-} RDRendererConst;
+} RDRendererFlags;
 
 REDASM_EXPORT void rdrenderer_themed(RDRenderer* self, const char* s,
                                      RDThemeKind kind);
