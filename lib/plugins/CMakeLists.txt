@@ -13,5 +13,6 @@ add_subdirectory(src/loaders/psx)
 add_subdirectory(src/loaders/android)
 
 # Processors
+add_subdirectory(src/processors/capstonebundle)
 add_subdirectory(src/processors/x86)
 add_subdirectory(src/processors/mips)
