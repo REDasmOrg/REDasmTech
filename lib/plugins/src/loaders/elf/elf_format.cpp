@@ -87,6 +87,7 @@ void ElfFormat<Bits>::set_processor() const {
         case EM_386: rd_setprocessor("x86_32"); break;
         case EM_X86_64: rd_setprocessor("x86_64"); break;
         case EM_XTENSA: rd_setprocessor(isbe ? "xtensabe" : "extensale"); break;
+        case EM_ARM: rd_setprocessor(isbe ? "arm32be" : "arm32le"); break;
         case EM_AARCH64: rd_setprocessor(isbe ? "arm64be" : "arm64le"); break;
 
         case EM_MIPS: {
