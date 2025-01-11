@@ -193,9 +193,9 @@ void Worker::mergedata_step() {
     auto& mem = ctx->memory;
 
     for(usize idx = 0; idx < mem->size();) {
-        Byte lastb = mem->at(idx);
+        Byte b = mem->at(idx);
 
-        if(lastb.is_unknown() && !lastb.has(BF_REFSTO | BF_REFSFROM)) {
+        if(b.is_unknown() && !b.has(BF_REFSTO | BF_REFSFROM)) {
             usize startidx = idx++;
             const Segment* startseg = ctx->index_to_segment(idx);
 
@@ -207,8 +207,8 @@ void Worker::mergedata_step() {
                 Byte b = mem->at(idx);
 
                 if(!b.is_unknown() || b.has_common() ||
-                   (b.has_byte() != lastb.has_byte()) ||
-                   (b.has_byte() && (b.byte() != lastb.byte())))
+                   (b.has_byte() != b.has_byte()) ||
+                   (b.has_byte() && (b.byte() != b.byte())))
                     break;
 
                 idx++;
@@ -216,7 +216,8 @@ void Worker::mergedata_step() {
 
             usize len = idx - startidx;
 
-            if(len > static_cast<usize>(ctx->processorplugin->integer_size)) {
+            if(len > 1 &&
+               len > static_cast<usize>(ctx->processorplugin->integer_size)) {
                 mem->set_n(startidx, len, BF_DATA);
                 mem->set(startidx, BF_FILL);
             }
