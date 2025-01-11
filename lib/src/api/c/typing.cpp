@@ -62,7 +62,7 @@ const char* rd_createstruct(const char* name, const RDStructField* fields) {
     if(!name || !fields) return nullptr;
 
     static std::string res;
-    redasm::typing::StructBody body;
+    redasm::typing::Struct body;
 
     while(fields->name && fields->type) {
         body.emplace_back(fields->type, fields->name);

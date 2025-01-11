@@ -1,5 +1,4 @@
 #include "abstractbuffer.h"
-#include "../context.h"
 #include "../error.h"
 #include "../state.h"
 #include "../typing/base.h"
@@ -7,8 +6,7 @@
 namespace redasm {
 
 usize AbstractBuffer::read(usize idx, void* dst, usize n) const {
-    if(!dst || (idx + n > this->size()))
-        return 0;
+    if(!dst || (idx + n > this->size())) return 0;
 
     usize i = 0;
     auto* p = reinterpret_cast<u8*>(dst);
@@ -25,12 +23,12 @@ usize AbstractBuffer::read(usize idx, void* dst, usize n) const {
 }
 
 tl::optional<typing::Value>
-AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
+AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* tdef) const {
     typing::Value v;
-    v.type = t->to_type();
+    v.type = tdef->to_type();
 
-    if(t->is_struct()) {
-        for(const auto& [t, n] : t->dict) {
+    if(tdef->is_struct()) {
+        for(const auto& [t, n] : tdef->dict) {
             auto item = this->get_type_impl(pos, t);
             if(item)
                 v.dict[n] = *item;
@@ -39,11 +37,11 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
         }
     }
     else {
-        switch(t->get_id()) {
+        switch(tdef->get_id()) {
             case typing::ids::BOOL: {
                 if(auto b = this->get_bool(pos); b) {
                     v.b_v = *b;
-                    pos += t->size;
+                    pos += tdef->size;
                 }
                 else
                     return tl::nullopt;
@@ -54,7 +52,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             case typing::ids::CHAR: {
                 if(auto b = this->get_char(pos); b) {
                     v.ch_v = *b;
-                    pos += t->size;
+                    pos += tdef->size;
                 }
                 else
                     return tl::nullopt;
@@ -65,7 +63,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             case typing::ids::WCHAR: {
                 if(auto b = this->get_wchar(pos); b) {
                     v.ch_v = *b;
-                    pos += t->size;
+                    pos += tdef->size;
                 }
                 else
                     return tl::nullopt;
@@ -76,7 +74,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             case typing::ids::U8: {
                 if(auto b = this->get_u8(pos); b) {
                     v.u8_v = *b;
-                    pos += t->size;
+                    pos += tdef->size;
                 }
                 else
                     return tl::nullopt;
@@ -85,9 +83,9 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::U16: {
-                if(auto b = this->get_u16(pos, t->is_big()); b) {
+                if(auto b = this->get_u16(pos, tdef->is_big()); b) {
                     v.u16_v = *b;
-                    pos += t->size;
+                    pos += tdef->size;
                 }
                 else
                     return tl::nullopt;
@@ -96,9 +94,9 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::U32: {
-                if(auto b = this->get_u32(pos, t->is_big()); b) {
+                if(auto b = this->get_u32(pos, tdef->is_big()); b) {
                     v.u32_v = *b;
-                    pos += t->size;
+                    pos += tdef->size;
                 }
                 else
                     return tl::nullopt;
@@ -107,9 +105,9 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::U64: {
-                if(auto b = this->get_u64(pos, t->is_big()); b) {
+                if(auto b = this->get_u64(pos, tdef->is_big()); b) {
                     v.u64_v = *b;
-                    pos += t->size;
+                    pos += tdef->size;
                 }
                 else
                     return tl::nullopt;
@@ -120,7 +118,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             case typing::ids::I8: {
                 if(auto b = this->get_i8(pos); b) {
                     v.i8_v = *b;
-                    pos += t->size;
+                    pos += tdef->size;
                 }
                 else
                     return tl::nullopt;
@@ -129,9 +127,9 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::I16: {
-                if(auto b = this->get_i16(pos, t->is_big()); b) {
+                if(auto b = this->get_i16(pos, tdef->is_big()); b) {
                     v.i16_v = *b;
-                    pos += t->size;
+                    pos += tdef->size;
                 }
                 else
                     return tl::nullopt;
@@ -140,9 +138,9 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::I32: {
-                if(auto b = this->get_i32(pos, t->is_big()); b) {
+                if(auto b = this->get_i32(pos, tdef->is_big()); b) {
                     v.i32_v = *b;
-                    pos += t->size;
+                    pos += tdef->size;
                 }
                 else
                     return tl::nullopt;
@@ -151,9 +149,9 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
             }
 
             case typing::ids::I64: {
-                if(auto b = this->get_i64(pos, t->is_big()); b) {
+                if(auto b = this->get_i64(pos, tdef->is_big()); b) {
                     v.i64_v = *b;
-                    pos += t->size;
+                    pos += tdef->size;
                 }
                 else
                     return tl::nullopt;
@@ -190,10 +188,9 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* t) const {
 
 tl::optional<std::string>
 AbstractBuffer::get_str_impl(usize& idx, typing::TypeName tname) const {
-    if(idx >= this->size())
-        return tl::nullopt;
+    if(idx >= this->size()) return tl::nullopt;
 
-    const typing::TypeDef* t = state::context->types.get_typedef(tname);
+    const typing::TypeDef* t = state::get_types().get_typedef(tname);
     assume(t);
 
     std::string s;
@@ -220,7 +217,7 @@ AbstractBuffer::get_str_impl(usize& idx, usize n,
     std::string s;
     s.reserve(n);
 
-    const typing::TypeDef* t = state::context->types.get_typedef(tname);
+    const typing::TypeDef* t = state::get_types().get_typedef(tname);
     assume(t);
 
     const usize ENDIDX = std::min(idx + n, this->size());
@@ -239,7 +236,11 @@ AbstractBuffer::get_str_impl(usize& idx, usize n,
 
 tl::optional<typing::Value> AbstractBuffer::get_type_impl(usize& idx,
                                                           RDType t) const {
-    const typing::TypeDef* td = state::context->types.get_typedef(t);
+    const typing::TypeDef* td = nullptr;
+    if(state::context)
+        td = state::get_types().get_typedef(t);
+    else
+        td = state::BASETYPES.get_typedef(t);
     assume(td);
 
     if(t.n > 0) {
@@ -262,8 +263,39 @@ tl::optional<typing::Value> AbstractBuffer::get_type_impl(usize& idx,
 
 tl::optional<typing::Value>
 AbstractBuffer::get_type(usize idx, typing::FullTypeName tn) const {
-    typing::ParsedType pt = state::context->types.parse(tn);
+    typing::ParsedType pt = state::get_types().parse(tn);
     return this->get_type(idx, pt.to_type());
+}
+
+[[nodiscard]]
+tl::optional<typing::Value>
+AbstractBuffer::read_struct(usize idx, const typing::Struct& s) const {
+    typing::Value v;
+
+    for(const auto& [tname, name] : s) {
+        typing::ParsedType pt = state::get_types().parse(tname);
+
+        if(pt.n) {
+            typing::Value l;
+            l.type = pt.to_type();
+            l.list.reserve(pt.n);
+
+            for(usize i = 0; i < pt.n; i++) {
+                auto val = this->get_type_impl(idx, pt.tdef);
+                if(!val) return tl::nullopt;
+                l.list.push_back(*val);
+            }
+
+            v.dict[name] = l;
+        }
+        else {
+            auto val = this->get_type_impl(idx, pt.tdef);
+            if(!val) return tl::nullopt;
+            v.dict[name] = *val;
+        }
+    }
+
+    return v;
 }
 
 tl::optional<typing::Value> AbstractBuffer::get_type(usize idx,
@@ -274,7 +306,7 @@ tl::optional<typing::Value> AbstractBuffer::get_type(usize idx,
 [[nodiscard]] tl::optional<typing::Value>
 AbstractBuffer::get_type(usize idx, typing::FullTypeName tn,
                          usize& lastidx) const {
-    typing::ParsedType pt = state::context->types.parse(tn);
+    typing::ParsedType pt = state::get_types().parse(tn);
     return this->get_type(idx, pt.to_type(), lastidx);
 }
 

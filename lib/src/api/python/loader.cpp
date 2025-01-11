@@ -2,6 +2,7 @@
 #include "../../error.h"
 #include "../../plugins/pluginmanager.h"
 #include "../internal/loader.h"
+#include "buffer.h"
 #include "common.h"
 #include "plugin.h"
 #include <redasm/loader.h>
@@ -14,6 +15,24 @@ struct RDPYLoaderPlugin {
 };
 
 namespace {
+
+PyObject* loader_accept(PyObject* self, PyObject* args) {
+    const auto* plugin = plugin::get_bind<RDLoaderPlugin>(self);
+    assume(plugin);
+    bool b = false;
+
+    if(plugin->load) {
+        if(pm::get_origin(plugin) == pm::Origin::PYTHON)
+            b = plugin->accept(plugin, pyfile_asbuffer(args));
+        else {
+            b = plugin->accept(plugin,
+                               reinterpret_cast<RDBuffer*>(
+                                   PyCapsule_GetPointer(args, nullptr)));
+        }
+    }
+
+    return PyBool_FromLong(b);
+}
 
 PyObject* loader_load(PyObject* self, PyObject* args) {
     using Instance = typename pm::InstanceForPlugin<RDLoaderPlugin>::Type;
@@ -39,6 +58,7 @@ PyMethodDef loader_methods[] = {
     {"on_shutdown", reinterpret_cast<PyCFunction>(python::plugin::on_shutdown<RDLoaderPlugin>), METH_NOARGS, nullptr},
     {"create", reinterpret_cast<PyCFunction>(python::plugin::create<RDLoaderPlugin>), METH_NOARGS, nullptr},
     {"destroy", reinterpret_cast<PyCFunction>(python::plugin::destroy<RDLoaderPlugin>), METH_O, nullptr},
+    {"accept", reinterpret_cast<PyCFunction>(python::loader_accept), METH_O, nullptr},
     {"load", reinterpret_cast<PyCFunction>(python::loader_load), METH_O, nullptr},
     {nullptr},
 };
@@ -50,7 +70,7 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
     PyObject* pyclass = nullptr;
 
     if(!PyArg_ParseTuple(args, "O", &pyclass) ||
-       !python::validate_class(pyclass, {"id", "name", "load"}))
+       !python::validate_class(pyclass, {"id", "name", "accept", "load"}))
         return nullptr;
 
     PyObject* idattr = PyObject_GetAttrString(pyclass, "id");
@@ -86,6 +106,22 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
 
     plugin->base.destroy = [](RDLoader* arg) -> void {
         Py_DECREF(reinterpret_cast<PyObject*>(arg));
+    };
+
+    plugin->base.accept = [](const RDLoaderPlugin* arg,
+                             RDBuffer* file) -> bool {
+        const auto* plugin = reinterpret_cast<const RDPYLoaderPlugin*>(arg);
+        PyObject* res = PyObject_CallMethod(plugin->pyclass, "accept", "O",
+                                            pyfile_frombuffer(file));
+
+        if(res) {
+            bool ok = Py_IsTrue(res);
+            Py_DECREF(res);
+            return ok;
+        }
+
+        python::check_error();
+        return false;
     };
 
     plugin->base.load = [](RDLoader* arg) -> bool {

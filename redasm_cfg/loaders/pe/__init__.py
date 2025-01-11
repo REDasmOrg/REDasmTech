@@ -18,37 +18,6 @@ class PELoader:
         self.ntheaders = None
         self.optionalheader = None
 
-    def check_header(self):
-        PE.register_types()
-
-        stream = redasm.FileStream()
-        self.dosheader = stream.collect_type("IMAGE_DOS_HEADER")
-        if not self.dosheader or self.dosheader.e_magic != PEH.IMAGE_DOS_SIGNATURE:
-            return False
-
-        stream.seek(self.dosheader.e_lfanew)
-        self.ntheaders = stream.collect_type("IMAGE_NT_HEADERS")
-        if self.ntheaders.Signature != PEH.IMAGE_NT_SIGNATURE:
-            return False
-
-        magic = stream.peek_u16()
-
-        if magic == PEH.IMAGE_NT_OPTIONAL_HDR32_MAGIC:
-            self.bits = 32
-            redasm.create_struct("IMAGE_OPTIONAL_HEADER",
-                                 PEH.IMAGE_OPTIONAL_HEADER32)
-        elif magic == PEH.IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-            self.bits = 64
-            redasm.create_struct("IMAGE_OPTIONAL_HEADER",
-                                 PEH.IMAGE_OPTIONAL_HEADER64)
-        else:
-            return False
-
-        self.integertype = "u64" if self.bits == 64 else "u32"
-        self.optionalheader = stream.collect_type("IMAGE_OPTIONAL_HEADER")
-        self.imagebase = self.optionalheader.ImageBase
-        return True
-
     def check_dotnet(self):
         entry = self.optionalheader.DataDirectory[PEH.IMAGE_DIRECTORY_ENTRY_DOTNET]
         if entry.VirtualAddress == 0:
@@ -314,9 +283,37 @@ class PELoader:
         redasm.set_entry(redasm.from_reladdress(self.optionalheader.AddressOfEntryPoint),
                          "PE_EntryPoint")
 
-    def load(self):
-        if not self.check_header():
+    @staticmethod
+    def accept(file):
+        dosheader = file.read_struct(0, PEH.IMAGE_DOS_HEADER)
+        if not dosheader or dosheader.e_magic != PEH.IMAGE_DOS_SIGNATURE:
             return False
+
+        signature = file.get_u32(dosheader.e_lfanew)
+        if signature != PEH.IMAGE_NT_SIGNATURE:
+            return False
+
+        magic = file.get_u16(dosheader.e_lfanew + 0x18)
+        return magic in [PEH.IMAGE_NT_OPTIONAL_HDR32_MAGIC, PEH.IMAGE_NT_OPTIONAL_HDR64_MAGIC]
+
+    def load(self):
+        PE.register_types()
+        stream = redasm.FileStream()
+        self.dosheader = stream.collect_type("IMAGE_DOS_HEADER")
+        stream.seek(self.dosheader.e_lfanew)
+        self.ntheaders = stream.collect_type("IMAGE_NT_HEADERS")
+
+        magic = stream.peek_u16()
+        if magic == PEH.IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+            self.bits = 32
+            redasm.create_struct("IMAGE_OPTIONAL_HEADER", PEH.IMAGE_OPTIONAL_HEADER32)
+        elif magic == PEH.IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+            self.bits = 64
+            redasm.create_struct("IMAGE_OPTIONAL_HEADER", PEH.IMAGE_OPTIONAL_HEADER64)
+
+        self.integertype = "u64" if self.bits == 64 else "u32"
+        self.optionalheader = stream.collect_type("IMAGE_OPTIONAL_HEADER")
+        self.imagebase = self.optionalheader.ImageBase
 
         imagebase = self.optionalheader.ImageBase
         sectionalign = self.optionalheader.SectionAlignment

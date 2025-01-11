@@ -86,9 +86,18 @@ bool load_elf() {
     return true;
 }
 
+bool accept(const RDLoaderPlugin*, RDBuffer* file) {
+    ElfIdent ident;
+    usize n = rdbuffer_read(file, 0, &ident, sizeof(ElfIdent));
+
+    return n == sizeof(ElfIdent) && ident.ei_magic[0] == ELFMAG0 &&
+           ident.ei_magic[1] == ELFMAG1 && ident.ei_magic[2] == ELFMAG2 &&
+           ident.ei_magic[3] == ELFMAG3 && ident.ei_version == EV_CURRENT;
+}
+
 bool load(RDLoader*) {
     ElfIdent ident;
-    if(!elf_format::validate(ident)) return false;
+    rdbuffer_read(rdbuffer_getfile(), 0, &ident, sizeof(ElfIdent));
     elf_types::register_all(ident);
 
     switch(elf_format::get_bits(ident)) {
@@ -103,6 +112,7 @@ bool load(RDLoader*) {
 RDLoaderPlugin loader = {
     .id = "elf",
     .name = "ELF Executable",
+    .accept = accept,
     .load = load,
 };
 

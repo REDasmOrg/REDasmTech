@@ -12,12 +12,18 @@ typedef enum RDLoaderFlags {
     LF_NOMERGE = LF_NOMERGECODE | LF_NOMERGEDATA,
 } RDLoaderFlags;
 
+struct RDBuffer;
+struct RDLoaderPlugin;
 RD_HANDLE(RDLoader);
 
-typedef bool (*RDLoaderPluginLoad)(RDLoader*);
+// clang-format off
+typedef bool (*RDLoaderPluginAccept)(const struct RDLoaderPlugin*, struct RDBuffer*);
+typedef bool (*RDLoaderPluginLoad)(struct RDLoader*);
+// clang-format on
 
 typedef struct RDLoaderPlugin {
     RDPLUGIN_HEADER(RDLoader)
+    RDLoaderPluginAccept accept;
     RDLoaderPluginLoad load;
 } RDLoaderPlugin;
 

@@ -154,6 +154,8 @@ std::vector<RDTestResult> test(RDBuffer* buffer) {
     std::shared_ptr<AbstractBuffer> b{api::from_c(buffer)};
 
     foreach_loaders(lp, {
+        if(!lp->accept || !lp->accept(lp, api::to_c(b.get()))) continue;
+
         auto* ctx = new Context(b);
         state::context = ctx; // Set context as active
 

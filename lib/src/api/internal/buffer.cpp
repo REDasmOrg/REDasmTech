@@ -19,6 +19,13 @@ RDBuffer* buffer_getmemory() {
     return nullptr;
 }
 
+usize buffer_getdata(const RDBuffer* self, const u8** data) {
+    spdlog::trace("buffer_getdata({}, {})", fmt::ptr(self), fmt::ptr(data));
+    const AbstractBuffer* b = api::from_c(self);
+    if(data) *data = b->raw_data();
+    return b->size();
+}
+
 usize buffer_read(const RDBuffer* self, usize idx, void* dst, usize n) {
     spdlog::trace("buffer_read({}, {:x}, {}, {})", fmt::ptr(self), idx,
                   fmt::ptr(dst), n);
@@ -126,6 +133,13 @@ tl::optional<std::string> buffer_getwstr(const RDBuffer* self, usize idx,
                                          usize n) {
     spdlog::trace("buffer_getwstr({}, {:x})", fmt::ptr(self), idx);
     return api::from_c(self)->get_wstr(idx, n);
+}
+
+tl::optional<typing::Value> buffer_readstruct(const RDBuffer* self, usize idx,
+                                              const typing::Struct& t) {
+    spdlog::trace("buffer_readstruct({}, {:x}, <{} fields>)", fmt::ptr(self),
+                  idx, t.size());
+    return api::from_c(self)->read_struct(idx, t);
 }
 
 tl::optional<typing::Value> buffer_gettype(const RDBuffer* self, usize idx,

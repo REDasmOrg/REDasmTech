@@ -86,14 +86,20 @@ bool filter_classes(const DexLoader* self) {
     return true;
 }
 
+bool accept(const RDLoaderPlugin*, RDBuffer* file) {
+    const u8* data = nullptr;
+    usize n = rdbuffer_getdata(file, &data);
+    DexFile* df = dexFileParse(data, n, 0);
+    bool ok = df != nullptr;
+    dexFileFree(df);
+    return ok;
+}
+
 bool load(RDLoader* l) {
     auto* self = reinterpret_cast<DexLoader*>(l);
     const u8* data = nullptr;
     usize n = rd_getfile(&data);
-    if(!n) return false;
-
     self->dexfile = dexFileParse(data, n, 0);
-    if(!self->dexfile) return false;
 
     rd_map(0, n);
     rd_mapsegment_n("CODE", self->dexfile->pHeader->dataOff,
@@ -125,6 +131,7 @@ RDLoaderPlugin loader = {
         },
 
     .flags = LF_NOMERGE | LF_NOAUTORENAME,
+    .accept = dex::accept,
     .load = dex::load,
 };
 

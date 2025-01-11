@@ -17,6 +17,7 @@ public:
 
     [[nodiscard]] virtual tl::optional<u8> get_byte(usize idx) const = 0;
     [[nodiscard]] virtual usize size() const = 0;
+    [[nodiscard]] virtual const u8* raw_data() const = 0;
 
     [[nodiscard]] tl::optional<std::string> get_str(usize idx) const;
     [[nodiscard]] tl::optional<std::string> get_str(usize idx, usize n) const;
@@ -31,22 +32,19 @@ public:
 
     [[nodiscard]] tl::optional<bool> get_bool(usize idx) const {
         auto b = this->get_byte(idx);
-        if(b)
-            return !!(*b);
+        if(b) return !!(*b);
         return tl::nullopt;
     }
 
     [[nodiscard]] tl::optional<char> get_char(usize idx) const {
         auto b = this->get_byte(idx);
-        if(b)
-            return static_cast<char>(*b);
+        if(b) return static_cast<char>(*b);
         return tl::nullopt;
     }
 
     [[nodiscard]] tl::optional<char> get_wchar(usize idx) const {
         auto b = this->get_u16(idx, false);
-        if(b)
-            return static_cast<char>(*b & 0xFF);
+        if(b) return static_cast<char>(*b & 0xFF);
         return tl::nullopt;
     }
 
@@ -63,31 +61,31 @@ public:
     }
 
     [[nodiscard]] tl::optional<i8> get_i8(usize idx) const {
-        if(auto b = this->get_u8(idx); b)
-            return static_cast<i8>(*b);
+        if(auto b = this->get_u8(idx); b) return static_cast<i8>(*b);
         return tl::nullopt;
     }
 
     [[nodiscard]] tl::optional<i16> get_i16(usize idx, bool big) const {
-        if(auto b = this->get_u16(idx, big); b)
-            return static_cast<i16>(*b);
+        if(auto b = this->get_u16(idx, big); b) return static_cast<i16>(*b);
         return tl::nullopt;
     }
 
     [[nodiscard]] tl::optional<i32> get_i32(usize idx, bool big) const {
-        if(auto b = this->get_u32(idx, big); b)
-            return static_cast<i32>(*b);
+        if(auto b = this->get_u32(idx, big); b) return static_cast<i32>(*b);
         return tl::nullopt;
     }
 
     [[nodiscard]] tl::optional<i64> get_i64(usize idx, bool big) const {
-        if(auto b = this->get_u64(idx, big); b)
-            return static_cast<i64>(*b);
+        if(auto b = this->get_u64(idx, big); b) return static_cast<i64>(*b);
         return tl::nullopt;
     }
 
     [[nodiscard]] tl::optional<typing::Value>
     get_type(usize idx, typing::FullTypeName tn) const;
+
+    [[nodiscard]]
+    tl::optional<typing::Value> read_struct(usize idx,
+                                            const typing::Struct& s) const;
 
     [[nodiscard]]
     tl::optional<typing::Value> get_type(usize idx, RDType t) const;
@@ -104,8 +102,7 @@ private:
                                              bool big = false) const {
         static constexpr usize N = sizeof(U);
 
-        if(idx + N > this->size())
-            return tl::nullopt;
+        if(idx + N > this->size()) return tl::nullopt;
 
         U num = 0;
 
@@ -119,8 +116,7 @@ private:
         if constexpr(sizeof(U) == sizeof(u8))
             return num;
         else {
-            if(big)
-                return byteorder::to_bigendian(num);
+            if(big) return byteorder::to_bigendian(num);
 
             return byteorder::to_littleendian(num);
         }
@@ -154,6 +150,10 @@ public:
     [[nodiscard]] usize size() const final { return m_buffer.size(); }
     const T* data() const { return m_buffer.data(); }
     T* data() { return m_buffer.data(); }
+
+    [[nodiscard]] const u8* raw_data() const override {
+        return reinterpret_cast<const u8*>(m_buffer.data());
+    }
 
     explicit AbstractBufferT(std::string src): AbstractBuffer{std::move(src)} {}
     T& at(usize idx) { return m_buffer.at(idx); }

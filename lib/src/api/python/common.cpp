@@ -17,6 +17,37 @@ bool validate_class(PyObject* obj,
     return true;
 }
 
+bool tuple_to_struct(PyObject* obj, typing::Struct& s) {
+    if(!PyTuple_Check(obj)) {
+        PyErr_SetString(PyExc_TypeError, "Expected a tuple");
+        return false;
+    }
+
+    Py_ssize_t size = PyTuple_Size(obj);
+    s.clear();
+    s.reserve(size);
+
+    for(Py_ssize_t i = 0; i < size; ++i) {
+        PyObject* field = PyTuple_GetItem(obj, i);
+
+        if(!PyTuple_Check(field)) {
+            PyErr_SetString(PyExc_TypeError, "Expected a tuple");
+            return false;
+        }
+
+        if(auto s = PyTuple_Size(field); s != 2) {
+            PyErr_SetString(PyExc_TypeError, "Invalid tuple size");
+            return false;
+        }
+
+        const char* ftype = PyUnicode_AsUTF8(PyTuple_GetItem(field, 0));
+        const char* fname = PyUnicode_AsUTF8(PyTuple_GetItem(field, 1));
+        s.emplace_back(ftype, fname);
+    }
+
+    return true;
+}
+
 PyObject* new_simplenamespace() {
     PyObject* mod_types = PyImport_ImportModule("types");
     PyObject* ns = PyObject_GetAttrString(mod_types, "SimpleNamespace");

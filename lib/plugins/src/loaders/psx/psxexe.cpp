@@ -24,14 +24,15 @@ struct PsxExeHeader {
 };
 #pragma pack(pop)
 
-bool load(RDLoader*) {
-    RDBuffer* file = rdbuffer_getfile();
+bool accept(const RDLoaderPlugin*, RDBuffer* file) {
     PsxExeHeader psxheader;
     usize n = rdbuffer_read(file, 0, &psxheader, sizeof(PsxExeHeader));
+    return n == sizeof(PsxExeHeader) && psxheader.id == PSXEXE_SIGNATURE;
+}
 
-    if(n != sizeof(PsxExeHeader) || psxheader.id != PSXEXE_SIGNATURE)
-        return false;
-
+bool load(RDLoader*) {
+    PsxExeHeader psxheader;
+    rdbuffer_read(rdbuffer_getfile(), 0, &psxheader, sizeof(PsxExeHeader));
     rd_setprocessor("mips32le");
     rd_map(PSX_USERRAM_START, PSX_USERRAM_END);
 
@@ -48,6 +49,7 @@ bool load(RDLoader*) {
 RDLoaderPlugin loader = {
     .id = "psxexe",
     .name = "PS-X Executable",
+    .accept = psxexe::accept,
     .load = psxexe::load,
 };
 

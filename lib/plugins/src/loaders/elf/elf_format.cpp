@@ -279,16 +279,3 @@ void ElfFormat<Bits>::process_symtab_offset(const SHDR& shdr) const {
 // Explicit instantation
 template struct ElfFormat<32>;
 template struct ElfFormat<64>;
-
-namespace elf_format {
-
-bool validate(ElfIdent ident) {
-    RDBuffer* file = rdbuffer_getfile();
-    rdbuffer_read(file, 0, &ident, sizeof(ElfIdent));
-
-    return ident.ei_magic[0] == ELFMAG0 && ident.ei_magic[1] == ELFMAG1 &&
-           ident.ei_magic[2] == ELFMAG2 && ident.ei_magic[3] == ELFMAG3 &&
-           ident.ei_version == EV_CURRENT;
-}
-
-} // namespace elf_format

@@ -41,8 +41,6 @@ private:
 
 namespace elf_format {
 
-bool validate(ElfIdent ident);
-
 inline bool is_be(const ElfIdent& ident) {
     return ident.ei_data == ELFDATA2MSB;
 }
