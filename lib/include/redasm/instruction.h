@@ -3,7 +3,7 @@
 #include <redasm/types.h>
 #include <redasm/typing.h>
 
-#define RD_NOPERANDS 6
+#define RD_NOPERANDS 8
 
 // Syntatic Sugar
 #define foreach_operand(i, op, instr)                                          \
@@ -53,20 +53,19 @@ typedef struct _RDDisplOperand {
 } _RDDisplOperand;
 
 typedef struct _RDUserOperand {
-    RDRegisterOperand reg1;
-    RDRegisterOperand reg2;
-    RDRegisterOperand reg3;
-
     union {
+        RDRegisterOperand reg1;
         usize val1;
         isize s_val1;
     };
 
     union {
+        RDRegisterOperand reg2;
         usize val2;
         isize s_val2;
     };
     union {
+        RDRegisterOperand reg3;
         usize val3;
         isize s_val3;
     };
