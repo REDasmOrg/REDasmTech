@@ -97,6 +97,24 @@ bool register_loader(const RDLoaderPlugin* plugin, pm::Origin o) {
 }
 
 bool register_processor(const RDProcessorPlugin* plugin, pm::Origin o) {
+    if(plugin) {
+        if(!plugin->address_size) {
+            state::error(fmt::format(
+                "register_processor: invalid address-size for processor '{}'",
+                plugin->id));
+
+            return false;
+        }
+
+        if(!plugin->integer_size) {
+            state::error(fmt::format(
+                "register_processor: invalid integer-size for processor '{}'",
+                plugin->id));
+
+            return false;
+        }
+    }
+
     return pm::register_plugin(pm::processors, plugin, o);
 }
 
