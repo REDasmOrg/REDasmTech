@@ -75,11 +75,6 @@ void ARM32Processor::render_instruction(RDRenderer* r,
 void ARM32Processor::process_operands(RDInstruction* instr) const {
     const cs_arm& arm = this->insn->detail->arm;
 
-    if(arm.op_count >= RD_NOPERANDS) {
-        int zzz = 0;
-        zzz++;
-    }
-
     for(u8 i = 0; i < std::min<u8>(RD_NOPERANDS, arm.op_count); i++) {
         const cs_arm_op& op = arm.operands[i];
 
