@@ -27,7 +27,9 @@ struct PsxExeHeader {
 bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) {
     PsxExeHeader psxheader;
     usize n = rdbuffer_read(req->file, 0, &psxheader, sizeof(PsxExeHeader));
-    return n == sizeof(PsxExeHeader) && psxheader.id == PSXEXE_SIGNATURE;
+    return n == sizeof(PsxExeHeader) &&
+           !PSXEXE_SIGNATURE.compare(0, PSXEXE_SIGNATURE_SIZE, psxheader.id,
+                                     PSXEXE_SIGNATURE_SIZE);
 }
 
 bool load(RDLoader*) {
