@@ -1,7 +1,8 @@
 #pragma once
 
 #include "../../plugins/modulemanager.h"
-#include "../../typing/typing.h"
+#include "../../typing/base.h"
+#include "../../typing/value.h"
 #include <redasm/redasm.h>
 #include <string>
 #include <string_view>
