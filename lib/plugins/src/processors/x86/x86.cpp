@@ -302,57 +302,44 @@ const char* get_register_name(const RDProcessor*, int reg) {
     return ZydisRegisterGetString(static_cast<ZydisRegister>(reg));
 }
 
-RDProcessorPlugin x86_32 = {
-    .id = "x86_32",
-    .name = "X86",
+template<ZydisMachineMode Mode, ZydisStackWidth Width>
+void register_processor(RDProcessorPlugin* plugin, const char* id,
+                        const char* name, int addrsize, int intsize) {
+    plugin->id = id;
+    plugin->name = name;
+    plugin->address_size = addrsize;
+    plugin->integer_size = intsize;
+    plugin->getregistername = get_register_name;
+    plugin->decode = decode;
+    plugin->emulate = emulate;
+    plugin->lift = x86_lifter::lift;
+    plugin->renderinstruction = render_instruction;
 
-    .create =
-        [](const RDProcessorPlugin*) {
-            auto* self = new X86Processor();
-            ZydisDecoderInit(&self->decoder, ZYDIS_MACHINE_MODE_LEGACY_32,
-                             ZYDIS_STACK_WIDTH_32);
-            return reinterpret_cast<RDProcessor*>(self);
-        },
+    plugin->create = [](const RDProcessorPlugin*) {
+        auto* self = new X86Processor();
+        ZydisDecoderInit(&self->decoder, Mode, Width);
+        return reinterpret_cast<RDProcessor*>(self);
+    };
 
-    .destroy =
-        [](RDProcessor* self) { delete reinterpret_cast<X86Processor*>(self); },
+    plugin->destroy = [](RDProcessor* self) {
+        delete reinterpret_cast<X86Processor*>(self);
+    };
 
-    .address_size = 4,
-    .integer_size = 4,
-    .getregistername = get_register_name,
-    .decode = decode,
-    .emulate = emulate,
-    .lift = x86_lifter::lift,
-    .renderinstruction = render_instruction,
-};
+    rd_registerprocessor(plugin);
+}
 
-RDProcessorPlugin x86_64 = {
-    .id = "x86_64",
-    .name = "X86_64",
-
-    .create =
-        [](const RDProcessorPlugin*) {
-            auto* self = new X86Processor();
-            ZydisDecoderInit(&self->decoder, ZYDIS_MACHINE_MODE_LONG_64,
-                             ZYDIS_STACK_WIDTH_64);
-            return reinterpret_cast<RDProcessor*>(self);
-        },
-
-    .destroy =
-        [](RDProcessor* self) { delete reinterpret_cast<X86Processor*>(self); },
-
-    .address_size = 8,
-    .integer_size = 4,
-    .getregistername = get_register_name,
-    .decode = decode,
-    .emulate = emulate,
-    .lift = x86_lifter::lift,
-    .renderinstruction = render_instruction,
-};
+RDProcessorPlugin x86_16_real;
+RDProcessorPlugin x86_16;
+RDProcessorPlugin x86_32;
+RDProcessorPlugin x86_64;
 
 } // namespace
 
 void rdplugin_create() {
-    rd_registerprocessor(&x86_32);
-    rd_registerprocessor(&x86_64);
+    // clang-format off
+    register_processor<ZYDIS_MACHINE_MODE_REAL_16, ZYDIS_STACK_WIDTH_16>(&x86_16_real, "x86_16_real", "X86_16 (Real Mode)", 4, 4);
+    register_processor<ZYDIS_MACHINE_MODE_LEGACY_16, ZYDIS_STACK_WIDTH_16>(&x86_16, "x86_16", "X86_16", 4, 4);
+    register_processor<ZYDIS_MACHINE_MODE_LEGACY_32, ZYDIS_STACK_WIDTH_32>(&x86_32, "x86_32", "X86_32", 4, 4);
+    register_processor<ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64>(&x86_64, "x86_64", "X86_64", 8, 4);
+    // clang-format on
 }
