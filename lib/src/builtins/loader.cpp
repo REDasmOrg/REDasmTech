@@ -13,7 +13,8 @@ RDLoaderPlugin binary_loader = {
     .id = "binary",
     .name = "Binary",
     .flags = PF_LAST,
-    .accept = [](const RDLoaderPlugin*, RDBuffer*) { return true; },
+    .accept = [](const RDLoaderPlugin*,
+                 const RDLoaderRequest*) { return true; },
 
     .load =
         [](RDLoader*) {

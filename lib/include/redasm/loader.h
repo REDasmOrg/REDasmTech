@@ -16,8 +16,15 @@ struct RDBuffer;
 struct RDLoaderPlugin;
 RD_HANDLE(RDLoader);
 
+typedef struct RDLoaderRequest {
+    const char* path;
+    const char* name;
+    const char* ext;
+    struct RDBuffer* file;
+} RDLoaderRequest;
+
 // clang-format off
-typedef bool (*RDLoaderPluginAccept)(const struct RDLoaderPlugin*, struct RDBuffer*);
+typedef bool (*RDLoaderPluginAccept)(const struct RDLoaderPlugin*, const RDLoaderRequest*);
 typedef bool (*RDLoaderPluginLoad)(struct RDLoader*);
 // clang-format on
 

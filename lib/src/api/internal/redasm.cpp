@@ -4,6 +4,7 @@
 #include "../../plugins/pluginmanager.h"
 #include "../../state.h"
 #include "../../surface/surface.h"
+#include "../../utils/utils.h"
 #include "../marshal.h"
 #include "../python/module.h"
 #include "buffer.h"
@@ -153,8 +154,15 @@ std::vector<RDTestResult> test(RDBuffer* buffer) {
     std::vector<RDTestResult> res;
     std::shared_ptr<AbstractBuffer> b{api::from_c(buffer)};
 
+    RDLoaderRequest req = {
+        .path = b->source.c_str(),
+        .name = utils::get_filename(b->source).data(), // NOLINT
+        .ext = utils::get_ext(b->source).data(),       // NOLINT
+        .file = api::to_c(b.get()),
+    };
+
     foreach_loaders(lp, {
-        if(!lp->accept || !lp->accept(lp, api::to_c(b.get()))) continue;
+        if(!lp->accept || !lp->accept(lp, &req)) continue;
 
         auto* ctx = new Context(b);
         state::context = ctx; // Set context as active

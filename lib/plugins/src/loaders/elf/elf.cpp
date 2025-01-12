@@ -86,9 +86,9 @@ bool load_elf() {
     return true;
 }
 
-bool accept(const RDLoaderPlugin*, RDBuffer* file) {
+bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) {
     ElfIdent ident;
-    usize n = rdbuffer_read(file, 0, &ident, sizeof(ElfIdent));
+    usize n = rdbuffer_read(req->file, 0, &ident, sizeof(ElfIdent));
 
     return n == sizeof(ElfIdent) && ident.ei_magic[0] == ELFMAG0 &&
            ident.ei_magic[1] == ELFMAG1 && ident.ei_magic[2] == ELFMAG2 &&

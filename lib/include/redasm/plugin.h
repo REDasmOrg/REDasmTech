@@ -1,7 +1,5 @@
 #pragma once
 
-#define RDPLUGIN_LEVEL 1
-
 #define RDPLUGIN_HEADER(Self)                                                  \
     u32 level;                                                                 \
     const char* id;                                                            \

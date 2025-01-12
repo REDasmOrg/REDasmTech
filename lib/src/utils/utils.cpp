@@ -6,6 +6,16 @@
 
 namespace redasm::utils {
 
+namespace {
+
+#ifdef _WIN32
+constexpr char PATH_SEPARATOR = '\\';
+#else
+constexpr char PATH_SEPARATOR = '/';
+#endif
+
+} // namespace
+
 namespace impl {
 
 void detect_base(std::string_view& sv, int* res) {
@@ -54,6 +64,18 @@ std::string to_lower(std::string s) {
                    [](unsigned char c) { return std::tolower(c); });
 
     return s;
+}
+
+std::string_view get_filename(std::string_view p) {
+    usize lastsep = p.find_last_of(PATH_SEPARATOR);
+    if(lastsep != std::string_view::npos) return p.substr(lastsep + 1);
+    return p;
+}
+
+std::string_view get_ext(std::string_view p) {
+    usize lastdot = p.find_last_of('.');
+    if(lastdot != std::string_view::npos) return p.substr(lastdot + 1);
+    return p.substr(p.size());
 }
 
 } // namespace redasm::utils

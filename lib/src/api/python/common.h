@@ -3,6 +3,7 @@
 #include "../../typing/base.h"
 #include "../../typing/value.h"
 #include <Python.h>
+#include <redasm/loader.h>
 #include <string_view>
 
 namespace redasm::api::python {
@@ -17,6 +18,8 @@ PyObject* new_simplenamespace();
 PyObject* to_object(const typing::Value& v);
 void attach_methods(PyObject* obj, PyMethodDef* methods);
 void check_error();
+PyObject* loadrequest_toobject(const RDLoaderRequest* req);
+RDLoaderRequest loadrequest_fromobject(PyObject* obj);
 
 inline PyObject* attr_error(PyObject* obj, std::string_view expected) {
     PyErr_Format(PyExc_TypeError, "Missing attribute '%.*s', in object '%s'",

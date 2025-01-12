@@ -90,6 +90,8 @@ void split_each(std::string_view s, char sep, Function f) {
 
 tl::optional<Data> read_file(const std::string& filepath);
 std::string to_lower(std::string s);
+std::string_view get_filename(std::string_view p);
+std::string_view get_ext(std::string_view p);
 
 constexpr u32 fnv1a_32(std::string_view s) {
     u32 h = 2166136261U;

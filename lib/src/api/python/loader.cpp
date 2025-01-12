@@ -22,11 +22,13 @@ PyObject* loader_accept(PyObject* self, PyObject* args) {
     bool b = false;
 
     if(plugin->load) {
-        if(pm::get_origin(plugin) == pm::Origin::PYTHON)
-            b = plugin->accept(plugin, pyfile_asbuffer(args));
+        if(pm::get_origin(plugin) == pm::Origin::PYTHON) {
+            RDLoaderRequest req = python::loadrequest_fromobject(args);
+            b = plugin->accept(plugin, &req);
+        }
         else {
             b = plugin->accept(plugin,
-                               reinterpret_cast<RDBuffer*>(
+                               reinterpret_cast<RDLoaderRequest*>(
                                    PyCapsule_GetPointer(args, nullptr)));
         }
     }
@@ -109,10 +111,10 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
     };
 
     plugin->base.accept = [](const RDLoaderPlugin* arg,
-                             RDBuffer* file) -> bool {
+                             const RDLoaderRequest* req) -> bool {
         const auto* plugin = reinterpret_cast<const RDPYLoaderPlugin*>(arg);
         PyObject* res = PyObject_CallMethod(plugin->pyclass, "accept", "O",
-                                            pyfile_frombuffer(file));
+                                            python::loadrequest_toobject(req));
 
         if(res) {
             bool ok = Py_IsTrue(res);

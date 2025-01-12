@@ -284,16 +284,16 @@ class PELoader:
                          "PE_EntryPoint")
 
     @staticmethod
-    def accept(file):
-        dosheader = file.read_struct(0, PEH.IMAGE_DOS_HEADER)
+    def accept(req):
+        dosheader = req.file.read_struct(0, PEH.IMAGE_DOS_HEADER)
         if not dosheader or dosheader.e_magic != PEH.IMAGE_DOS_SIGNATURE:
             return False
 
-        signature = file.get_u32(dosheader.e_lfanew)
+        signature = req.file.get_u32(dosheader.e_lfanew)
         if signature != PEH.IMAGE_NT_SIGNATURE:
             return False
 
-        magic = file.get_u16(dosheader.e_lfanew + 0x18)
+        magic = req.file.get_u16(dosheader.e_lfanew + 0x18)
         return magic in [PEH.IMAGE_NT_OPTIONAL_HDR32_MAGIC, PEH.IMAGE_NT_OPTIONAL_HDR64_MAGIC]
 
     def load(self):

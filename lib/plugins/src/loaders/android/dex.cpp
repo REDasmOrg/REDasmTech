@@ -86,9 +86,9 @@ bool filter_classes(const DexLoader* self) {
     return true;
 }
 
-bool accept(const RDLoaderPlugin*, RDBuffer* file) {
+bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) {
     const u8* data = nullptr;
-    usize n = rdbuffer_getdata(file, &data);
+    usize n = rdbuffer_getdata(req->file, &data);
     DexFile* df = dexFileParse(data, n, 0);
     bool ok = df != nullptr;
     dexFileFree(df);

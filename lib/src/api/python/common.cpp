@@ -2,6 +2,7 @@
 #include "../../error.h"
 #include "../../state.h"
 #include "../../typing/base.h"
+#include "buffer.h"
 
 namespace redasm::api::python {
 
@@ -187,6 +188,24 @@ void check_error() {
 
     state::error(s);
     Py_DECREF(exc);
+}
+
+PyObject* loadrequest_toobject(const RDLoaderRequest* req) {
+    PyObject* pyreq = python::new_simplenamespace();
+    PyObject_SetAttrString(pyreq, "path", PyUnicode_FromString(req->path));
+    PyObject_SetAttrString(pyreq, "name", PyUnicode_FromString(req->name));
+    PyObject_SetAttrString(pyreq, "ext", PyUnicode_FromString(req->ext));
+    PyObject_SetAttrString(pyreq, "file", pyfile_frombuffer(req->file));
+    return pyreq;
+}
+
+RDLoaderRequest loadrequest_fromobject(PyObject* obj) {
+    return {
+        .path = PyUnicode_AsUTF8(PyObject_GetAttrString(obj, "path")),
+        .name = PyUnicode_AsUTF8(PyObject_GetAttrString(obj, "name")),
+        .ext = PyUnicode_AsUTF8(PyObject_GetAttrString(obj, "ext")),
+        .file = pyfile_asbuffer(PyObject_GetAttrString(obj, "file")),
+    };
 }
 
 } // namespace redasm::api::python
