@@ -66,6 +66,8 @@ bool load_elf() {
                         type);
     }
 
+    rd_setentry(elf.ehdr.e_entry, "ELF_EntryPoint");
+
     // Process sections (separate steps in order to fix out of order links)
     for(usize i = 0; i < elf.shdr.size(); i++) {
         const auto& seg = elf.shdr[i];
@@ -82,7 +84,6 @@ bool load_elf() {
         rd_maptype(elf.ehdr.e_phoff, elf.phdr[phdridx].p_vaddr, &t);
     }
 
-    rd_setentry(elf.ehdr.e_entry, "ELF_EntryPoint");
     return true;
 }
 
