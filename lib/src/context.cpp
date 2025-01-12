@@ -467,6 +467,18 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
     std::string dbname = name;
 
     if(!name.empty()) {
+        if(this->memory->at(idx).has(BF_NAME)) {
+            if(!(flags & SN_NOWARN)) {
+                auto addr = this->index_to_address(idx);
+                assume(addr);
+                this->add_problem(
+                    idx,
+                    fmt::format("Name already set @ {:x} (trying to set '{}')",
+                                *addr, name));
+            }
+            return false;
+        }
+
         auto nameidx = m_database->get_index(dbname, true);
 
         if(nameidx && (flags & SN_FORCE)) {
