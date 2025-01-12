@@ -18,7 +18,7 @@ void do_autorename(RDAnalyzer*) {
                 for(const Database::Ref& ref : ctx->get_refs_from(f.index)) {
                     if(ref.type == CR_JUMP || ref.type == DR_READ) {
                         ctx->set_name(f.index, "_" + ctx->get_name(ref.index),
-                                      0);
+                                      SN_NOWARN);
                         break;
                     }
                 }
