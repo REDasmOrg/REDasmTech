@@ -26,6 +26,11 @@ usize buffer_getdata(const RDBuffer* self, const u8** data) {
     return b->size();
 }
 
+usize buffer_getlength(const RDBuffer* self) {
+    spdlog::trace("buffer_getlength({})", fmt::ptr(self));
+    return api::from_c(self)->size();
+}
+
 usize buffer_read(const RDBuffer* self, usize idx, void* dst, usize n) {
     spdlog::trace("buffer_read({}, {:x}, {}, {})", fmt::ptr(self), idx,
                   fmt::ptr(dst), n);

@@ -98,16 +98,13 @@ usize rd_getproblems(const RDProblem** problems) {
 
 RDBuffer* rd_loadfile(const char* filepath) {
     if(!filepath) return nullptr;
-
     return redasm::api::internal::load_file(filepath);
 }
 
 usize rd_test(RDBuffer* buffer, const RDTestResult** result) {
     static std::vector<RDTestResult> res;
     res = redasm::api::internal::test(buffer);
-
     if(result) *result = res.data();
-
     return res.size();
 }
 

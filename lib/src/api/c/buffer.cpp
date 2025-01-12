@@ -25,6 +25,10 @@ usize rdbuffer_getdata(const RDBuffer* self, const u8** data) {
     return redasm::api::internal::buffer_getdata(self, data);
 }
 
+usize rdbuffer_getlength(const RDBuffer* self) {
+    return redasm::api::internal::buffer_getlength(self);
+}
+
 usize rdbuffer_read(const RDBuffer* self, usize idx, void* dst, usize n) {
     return redasm::api::internal::buffer_read(self, idx, dst, n);
 }
