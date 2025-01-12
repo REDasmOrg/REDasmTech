@@ -371,11 +371,11 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
     }
 
     if(endidx > this->memory->size()) {
-        spdlog::error("End offset out of range for segment '{}'", name);
+        spdlog::error("End address out of range for segment '{}'", name);
         return;
     }
 
-    if(offset && endoffset) {
+    if(endoffset) { // Data can begin at offset 0
         if(offset >= endoffset) {
             spdlog::error("Invalid offset range for segment '{}'", name);
             return;
