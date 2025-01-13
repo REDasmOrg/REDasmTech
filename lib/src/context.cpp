@@ -271,9 +271,10 @@ bool Context::memory_map(RDAddress base, usize size) {
     // Create collected types
     for(const auto& [idx, t] : this->collectedtypes) {
         if(idx >= size) {
-            spdlog::warn("Context::mem_map({:#x}, {:#x}): Ignoring type '{}', "
-                         "out of bounds",
-                         base, size, this->types.to_string(t));
+            spdlog::warn(
+                "Context::memory_map({:#x}, {:#x}): Ignoring type '{}', "
+                "out of bounds",
+                base, size, this->types.to_string(t));
             continue;
         }
 

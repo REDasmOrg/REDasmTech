@@ -297,60 +297,51 @@ void process_listing_code(const Context* ctx, Listing& listing,
     idx += len;
 }
 
-void process_refsto(Context* ctx, MIndex idx) {
-    const Byte& b = ctx->memory->at(idx);
-    if(!b.is_unknown()) return;
-
-    auto is_range_unknown = [&](MIndex ridx, usize sz) {
+void process_refsto(Context* ctx, MIndex& idx) {
+    auto is_range_unkn = [&](MIndex ridx, usize sz) {
         return ctx->memory->range_is(ridx, sz,
                                      [](Byte b) { return b.is_unknown(); });
     };
 
-    assume(ctx->processorplugin);
     Database::RefList refs = ctx->get_refs_to(idx);
-    auto addrtype =
-        ctx->types.int_from_bytes(ctx->processorplugin->address_size);
+    std::unordered_set<usize> reftypes;
+    for(const Database::Ref& r : refs)
+        reftypes.insert(r.type);
+
+    if(reftypes.contains(CR_JUMP) || reftypes.contains(CR_CALL)) {
+        idx++;
+        return;
+    }
+
+    const RDProcessorPlugin* plugin = ctx->processorplugin;
+    assume(plugin);
+    auto addrtype = ctx->types.int_from_bytes(plugin->address_size);
     assume(addrtype.has_value());
-    auto inttype =
-        ctx->types.int_from_bytes(ctx->processorplugin->integer_size);
+    auto inttype = ctx->types.int_from_bytes(plugin->integer_size);
     assume(inttype.has_value());
 
-    for(const Database::Ref& r : refs) {
-        if(!b.is_unknown()) break;
-
-        switch(r.type) {
-            case DR_READ:
-            case DR_WRITE: {
-                stringfinder::classify(idx)
-                    .map([&](const RDStringResult& x) {
-                        if(is_range_unknown(idx, x.totalsize))
-                            ctx->set_type(idx, x.type, ST_WEAK);
-                    })
-                    .or_else([&]() {
-                        if(is_range_unknown(idx,
-                                            ctx->processorplugin->integer_size))
-                            ctx->set_type(idx, *inttype, ST_WEAK);
-                    });
-                break;
+    stringfinder::classify(idx)
+        .map([&](const RDStringResult& x) {
+            if(x.terminated) {
+                ctx->set_type(idx, x.type, ST_WEAK);
+                idx += x.totalsize;
             }
-
-            case DR_ADDRESS: {
-                stringfinder::classify(idx)
-                    .map([&](const RDStringResult& x) {
-                        if(is_range_unknown(idx, x.totalsize))
-                            ctx->set_type(idx, x.type, ST_WEAK);
-                    })
-                    .or_else([&]() {
-                        if(is_range_unknown(idx,
-                                            ctx->processorplugin->address_size))
-                            ctx->set_type(idx, *addrtype, ST_WEAK);
-                    });
-                break;
+            else
+                idx++;
+        })
+        .or_else([&]() {
+            if(reftypes.contains(DR_ADDRESS) &&
+               is_range_unkn(idx, plugin->address_size)) {
+                ctx->set_type(idx, *addrtype, ST_WEAK);
+                idx += plugin->address_size;
             }
-
-            default: break;
-        }
-    }
+            else if(is_range_unkn(idx, plugin->integer_size)) {
+                ctx->set_type(idx, *inttype, ST_WEAK);
+                idx += plugin->integer_size;
+            }
+            else
+                idx++;
+        });
 }
 
 } // namespace
@@ -392,7 +383,7 @@ void process_memory() {
         if(b.has(BF_FUNCTION))
             mem::process_function_graph(ctx, f, idx++);
         else if(b.has(BF_REFSTO))
-            mem::process_refsto(ctx, idx++);
+            mem::process_refsto(ctx, idx);
         else if(b.is_unknown() && !b.has(BF_REFSFROM | BF_REFSTO))
             mem::process_unknown_data(ctx, idx);
         else
