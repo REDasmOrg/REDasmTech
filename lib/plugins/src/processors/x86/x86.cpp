@@ -337,8 +337,8 @@ RDProcessorPlugin x86_64;
 
 void rdplugin_create() {
     // clang-format off
-    register_processor<ZYDIS_MACHINE_MODE_REAL_16, ZYDIS_STACK_WIDTH_16>(&x86_16_real, "x86_16_real", "X86_16 (Real Mode)", 4, 4);
-    register_processor<ZYDIS_MACHINE_MODE_LEGACY_16, ZYDIS_STACK_WIDTH_16>(&x86_16, "x86_16", "X86_16", 4, 4);
+    register_processor<ZYDIS_MACHINE_MODE_REAL_16, ZYDIS_STACK_WIDTH_16>(&x86_16_real, "x86_16_real", "X86_16 (Real Mode)", 2, 2);
+    register_processor<ZYDIS_MACHINE_MODE_LEGACY_16, ZYDIS_STACK_WIDTH_16>(&x86_16, "x86_16", "X86_16", 2, 2);
     register_processor<ZYDIS_MACHINE_MODE_LEGACY_32, ZYDIS_STACK_WIDTH_32>(&x86_32, "x86_32", "X86_32", 4, 4);
     register_processor<ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64>(&x86_64, "x86_64", "X86_64", 8, 4);
     // clang-format on
