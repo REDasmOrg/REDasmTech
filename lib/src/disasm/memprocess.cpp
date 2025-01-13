@@ -146,6 +146,36 @@ void process_listing_data(const Context* ctx, Listing& listing, MIndex& idx) {
     }
 }
 
+void process_unknown_data(Context* ctx, MIndex& idx) {
+    auto& mem = ctx->memory;
+    usize startidx = idx++;
+    Byte startb = mem->at(startidx);
+    const Segment* startseg = ctx->index_to_segment(startidx);
+
+    while(idx < mem->size()) {
+        // Don't merge inter-segment bytes
+        const Segment* seg = ctx->index_to_segment(idx);
+        if(startseg != seg) break;
+
+        Byte b = mem->at(idx);
+
+        if(!b.is_unknown() || b.has_common() ||
+           (b.has_byte() != startb.has_byte()) ||
+           (b.has_byte() && (b.byte() != startb.byte())))
+            break;
+
+        idx++;
+    }
+
+    usize len = idx - startidx;
+
+    if(len > 1 &&
+       len > static_cast<usize>(ctx->processorplugin->integer_size)) {
+        mem->set_n(startidx, len, BF_DATA);
+        mem->set(startidx, BF_FILL);
+    }
+}
+
 void process_function_graph(const Context* ctx, FunctionList& functions,
                             MIndex idx) {
     auto address = ctx->index_to_address(idx);
@@ -325,6 +355,53 @@ void process_refsto(Context* ctx, MIndex idx) {
 
 } // namespace
 
+void merge_code(Emulator* e) {
+    const Context* ctx = state::context;
+    const auto& mem = ctx->memory;
+
+    for(const Segment& seg : ctx->segments) {
+        if(!(seg.type & SEG_HASCODE) || seg.offset == seg.endoffset) continue;
+
+        usize idx = seg.index;
+
+        while(idx < seg.endindex && idx < mem->size()) {
+            Byte b = mem->at(idx);
+
+            if(b.has_byte() && b.is_unknown()) {
+                e->enqueue_flow(idx++);
+
+                // Move after the unknown range
+                while(idx < seg.endindex && idx < mem->size() &&
+                      mem->at(idx).is_unknown())
+                    idx++;
+            }
+            else
+                idx++;
+        }
+    }
+}
+
+void process_memory() {
+    Context* ctx = state::context;
+    auto& mem = ctx->memory;
+    FunctionList f;
+
+    for(usize idx = 0; idx < mem->size();) {
+        Byte b = mem->at(idx);
+
+        if(b.has(BF_FUNCTION))
+            mem::process_function_graph(ctx, f, idx++);
+        else if(b.has(BF_REFSTO))
+            mem::process_refsto(ctx, idx++);
+        else if(b.is_unknown() && !b.has(BF_REFSFROM | BF_REFSTO))
+            mem::process_unknown_data(ctx, idx);
+        else
+            idx++;
+    }
+
+    state::context->functions = std::move(f);
+}
+
 void process_listing() {
     const Context* ctx = state::context;
 
@@ -334,7 +411,6 @@ void process_listing() {
     if(ctx->memory) {
         for(usize idx = 0; idx < ctx->memory->size();) {
             Byte b = ctx->memory->at(idx);
-
             if(b.has(BF_SEGMENT)) l.segment(idx);
 
             if(b.is_unknown()) {
@@ -361,26 +437,6 @@ void process_listing() {
     spdlog::info("Listing completed ({} items)", l.size());
     state::context->functions = std::move(f);
     state::context->listing = std::move(l);
-}
-
-void process_segments(bool finalize) {
-    spdlog::info("Processing segments...");
-
-    FunctionList f;
-    Context* ctx = state::context;
-
-    if(ctx->memory) {
-        for(const Segment& seg : ctx->segments) {
-            for(usize idx = seg.index;
-                idx < seg.endindex && idx < ctx->memory->size(); idx++) {
-                Byte b = ctx->memory->at(idx);
-                if(b.has(BF_FUNCTION)) mem::process_function_graph(ctx, f, idx);
-                if(finalize && b.has(BF_REFSTO)) mem::process_refsto(ctx, idx);
-            }
-        }
-    }
-
-    state::context->functions = std::move(f);
 }
 
 } // namespace redasm::mem

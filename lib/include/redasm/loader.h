@@ -6,10 +6,7 @@
 
 typedef enum RDLoaderFlags {
     LF_NOMERGECODE = (1u << 0),
-    LF_NOMERGEDATA = (1u << 1),
-    LF_NOAUTORENAME = (1u << 2),
-
-    LF_NOMERGE = LF_NOMERGECODE | LF_NOMERGEDATA,
+    LF_NOAUTORENAME = (1u << 1),
 } RDLoaderFlags;
 
 struct RDBuffer;

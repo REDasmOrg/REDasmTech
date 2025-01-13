@@ -114,7 +114,7 @@ void Worker::emulate_step() {
 }
 
 void Worker::analyze_step() {
-    mem::process_segments(false); // Show pre-analysis listing
+    mem::process_memory(); // Show pre-analysis listing
     m_status->listingchanged = true;
 
     const Context* ctx = state::context;
@@ -146,35 +146,12 @@ void Worker::analyze_step() {
 }
 
 void Worker::mergecode_step() {
-    const Context* ctx = state::context;
-
-    if(ctx->loaderplugin->flags & LF_NOMERGECODE) {
+    if(state::context->loaderplugin->flags & LF_NOMERGECODE) {
         m_currentstep = WS_MERGEDATA2;
         return;
     }
 
-    const auto& mem = ctx->memory;
-
-    for(const Segment& seg : ctx->segments) {
-        if(!(seg.type & SEG_HASCODE) || seg.offset == seg.endoffset) continue;
-
-        usize idx = seg.index;
-
-        while(idx < seg.endindex && idx < mem->size()) {
-            Byte b = mem->at(idx);
-
-            if(b.has_byte() && b.is_unknown()) {
-                this->emulator.enqueue_flow(idx++);
-
-                // Move after the unknown range
-                while(idx < seg.endindex && idx < mem->size() &&
-                      mem->at(idx).is_unknown())
-                    idx++;
-            }
-            else
-                idx++;
-        }
-    }
+    mem::merge_code(&this->emulator);
 
     if(this->emulator.has_pending_code())
         m_currentstep = WS_EMULATE2;
@@ -183,54 +160,11 @@ void Worker::mergecode_step() {
 }
 
 void Worker::mergedata_step() {
-    Context* ctx = state::context;
-
-    if(ctx->loaderplugin->flags & LF_NOMERGEDATA) {
-        m_currentstep++;
-        return;
-    }
-
-    auto& mem = ctx->memory;
-
-    for(usize idx = 0; idx < mem->size();) {
-        Byte b = mem->at(idx);
-
-        if(b.is_unknown() && !b.has(BF_REFSTO | BF_REFSFROM)) {
-            usize startidx = idx++;
-            const Segment* startseg = ctx->index_to_segment(idx);
-
-            while(idx < mem->size()) {
-                const Segment* seg = ctx->index_to_segment(idx);
-                // Don't merge different/invalid segments
-                if(startseg != seg) break;
-
-                Byte b = mem->at(idx);
-
-                if(!b.is_unknown() || b.has_common() ||
-                   (b.has_byte() != b.has_byte()) ||
-                   (b.has_byte() && (b.byte() != b.byte())))
-                    break;
-
-                idx++;
-            }
-
-            usize len = idx - startidx;
-
-            if(len > 1 &&
-               len > static_cast<usize>(ctx->processorplugin->integer_size)) {
-                mem->set_n(startidx, len, BF_DATA);
-                mem->set(startidx, BF_FILL);
-            }
-        }
-        else
-            idx++;
-    }
-
+    mem::process_memory();
     m_currentstep++;
 }
 
 void Worker::finalize_step() {
-    mem::process_segments(true);
     mem::process_listing();
     m_status->listingchanged = true;
     m_currentstep++;

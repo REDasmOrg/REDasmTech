@@ -1,8 +1,15 @@
 #pragma once
 
-namespace redasm::mem {
+namespace redasm {
 
-void process_segments(bool finalize);
+class Emulator;
+
+namespace mem {
+
+void merge_code(Emulator* e);
+void process_memory();
 void process_listing();
 
-} // namespace redasm::mem
+} // namespace mem
+
+} // namespace redasm

@@ -130,7 +130,7 @@ RDLoaderPlugin loader = {
             delete self;
         },
 
-    .flags = LF_NOMERGE | LF_NOAUTORENAME,
+    .flags = LF_NOMERGECODE | LF_NOAUTORENAME,
     .accept = dex::accept,
     .load = dex::load,
 };
