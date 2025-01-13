@@ -310,6 +310,7 @@ const char* get_register_name(const RDProcessor*, int reg) {
 template<ZydisMachineMode Mode, ZydisStackWidth Width>
 void register_processor(RDProcessorPlugin* plugin, const char* id,
                         const char* name, int addrsize, int intsize) {
+    plugin->level = REDASM_API_LEVEL;
     plugin->id = id;
     plugin->name = name;
     plugin->address_size = addrsize;

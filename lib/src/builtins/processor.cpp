@@ -43,6 +43,7 @@ void render_function(const RDProcessor*, RDRenderer* r,
 namespace {
 
 RDProcessorPlugin null_processor = {
+    .level = REDASM_API_LEVEL,
     .id = "null",
     .name = "Null",
     .flags = PF_LAST,

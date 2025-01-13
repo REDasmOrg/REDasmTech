@@ -314,6 +314,7 @@ const char* get_register_name(const RDProcessor*, int reg) {
 }
 
 RDProcessorPlugin mips32le_processor = {
+    .level = REDASM_API_LEVEL,
     .id = "mips32le",
     .name = "MIPS32 (Little Endian)",
     .address_size = 4,
@@ -326,6 +327,7 @@ RDProcessorPlugin mips32le_processor = {
 };
 
 RDProcessorPlugin mips32be_processor = {
+    .level = REDASM_API_LEVEL,
     .id = "mips32be",
     .name = "MIPS32 (Big Endian)",
     .address_size = 4,

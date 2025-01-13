@@ -505,6 +505,7 @@ private:
 
 // clang-format off
 RDProcessorPlugin processor = {
+    .level = REDASM_API_LEVEL,
     .id = "dalvik",
     .name = "Dalvik VM",
     .create = [](const RDProcessorPlugin*) { 

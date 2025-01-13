@@ -10,6 +10,7 @@ namespace redasm::builtins {
 namespace {
 
 RDLoaderPlugin binary_loader = {
+    .level = REDASM_API_LEVEL,
     .id = "binary",
     .name = "Binary",
     .flags = PF_LAST,

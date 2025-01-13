@@ -33,6 +33,7 @@ void do_autorename(RDAnalyzer*) {
 }
 
 RDAnalyzerPlugin autorename_analyzer = {
+    .level = REDASM_API_LEVEL,
     .id = "autorename",
     .name = "Autorename Nullsubs and Thunks",
     .flags = PF_LAST | AF_SELECTED,

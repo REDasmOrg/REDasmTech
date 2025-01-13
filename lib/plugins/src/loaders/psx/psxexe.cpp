@@ -49,6 +49,7 @@ bool load(RDLoader*) {
 } // namespace
 
 RDLoaderPlugin loader = {
+    .level = REDASM_API_LEVEL,
     .id = "psxexe",
     .name = "PS-X Executable",
     .accept = psxexe::accept,

@@ -115,6 +115,7 @@ bool load(RDLoader* l) {
 } // namespace
 
 RDLoaderPlugin loader = {
+    .level = REDASM_API_LEVEL,
     .id = "dex",
     .name = "Dalvik Executable",
 

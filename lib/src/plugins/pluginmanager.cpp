@@ -34,8 +34,16 @@ bool register_plugin(std::vector<const T*>& plugins, const T* plugin,
         state::error("Invalid plugin id");
         return false;
     }
+
+    if(plugin->level != REDASM_API_LEVEL) {
+        state::error(
+            fmt::format("{}: Unsupported plugin API Level, expected {}, got {}",
+                        plugin->id, REDASM_API_LEVEL, plugin->level));
+        return false;
+    }
+
     if(!plugin->name || !(*plugin->name)) {
-        state::error("Invalid plugin name");
+        state::error(fmt::format("{}: Invalid plugin name", plugin->id));
         return false;
     }
 

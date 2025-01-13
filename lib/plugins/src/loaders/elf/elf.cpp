@@ -111,6 +111,7 @@ bool load(RDLoader*) {
 }
 
 RDLoaderPlugin loader = {
+    .level = REDASM_API_LEVEL,
     .id = "elf",
     .name = "ELF Executable",
     .accept = accept,

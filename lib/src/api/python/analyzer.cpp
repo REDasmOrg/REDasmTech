@@ -2,6 +2,7 @@
 #include "../internal/analyzer.h"
 #include "common.h"
 #include <redasm/loader.h>
+#include <redasm/version.h>
 
 namespace redasm::api::python {
 
@@ -26,6 +27,7 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args) {
 
     auto* plugin = new RDPYAnalyzerPlugin{};
     plugin->pyclass = pyclass;
+    plugin->base.level = REDASM_API_LEVEL;
     plugin->base.id = PyUnicode_AsUTF8(idattr);
     plugin->base.name = PyUnicode_AsUTF8(nameattr);
     plugin->base.flags = flagsattr ? PyLong_AsUnsignedLong(flagsattr) : 0;

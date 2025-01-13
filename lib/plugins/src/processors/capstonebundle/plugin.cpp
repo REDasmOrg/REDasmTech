@@ -6,6 +6,7 @@ namespace {
 template<typename Processor>
 void compile_fields(RDProcessorPlugin* plugin, const char* id, const char* name,
                     int addrsize, int intsize) {
+    plugin->level = REDASM_API_LEVEL;
     plugin->id = id;
     plugin->name = name;
     plugin->address_size = addrsize;
