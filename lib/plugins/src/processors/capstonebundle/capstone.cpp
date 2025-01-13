@@ -18,6 +18,10 @@ Capstone::~Capstone() {
     cs_close(&this->handle);
 }
 
+const char* Capstone::get_mnemonic(u32 id) const {
+    return cs_insn_name(this->handle, id);
+}
+
 const char* Capstone::get_registername(int regid) const {
     return cs_reg_name(this->handle, regid);
 }

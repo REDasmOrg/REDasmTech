@@ -7,7 +7,7 @@
 namespace redasm::api::internal {
 
 void renderer_themed(RDRenderer* self, std::string_view s, RDThemeKind kind);
-void renderer_mnem(RDRenderer* self, std::string_view s, RDThemeKind kind);
+void renderer_mnem(RDRenderer* self, u32 id, RDThemeKind kind);
 void renderer_unkn(RDRenderer* self);
 void renderer_reg(RDRenderer* self, int reg);
 void renderer_text(RDRenderer* self, std::string_view s);

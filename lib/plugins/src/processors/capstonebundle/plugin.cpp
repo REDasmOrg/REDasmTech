@@ -19,6 +19,10 @@ void compile_fields(RDProcessorPlugin* plugin, const char* id, const char* name,
         delete reinterpret_cast<Processor*>(self);
     };
 
+    plugin->getmnemonic = [](const RDProcessor* self, u32 id) {
+        return reinterpret_cast<const Processor*>(self)->get_mnemonic(id);
+    };
+
     plugin->getregistername = [](const RDProcessor* self, int regid) {
         return reinterpret_cast<const Processor*>(self)->get_registername(
             regid);

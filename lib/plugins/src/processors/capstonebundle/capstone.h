@@ -7,6 +7,7 @@ struct Capstone {
     Capstone(cs_arch arch, cs_mode mode);
     virtual ~Capstone();
 
+    [[nodiscard]] const char* get_mnemonic(u32 id) const;
     [[nodiscard]] const char* get_registername(int regid) const;
     virtual bool decode(RDInstruction* instr) = 0;
     virtual void emulate(RDEmulator* e, const RDInstruction* instr) const = 0;

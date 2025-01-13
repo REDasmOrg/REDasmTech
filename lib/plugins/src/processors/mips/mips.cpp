@@ -31,14 +31,8 @@ bool is_jump_cond(const RDInstruction* instr) {
 
 void render_mnemonic(const RDInstruction* instr, RDRenderer* r) {
     switch(instr->id) {
-        case MIPS_MACRO_NOP:
-            rdrenderer_mnem(r, mips_decoder::mnemonic(instr->id), THEME_NOP);
-            return;
-
-        case MIPS_MACRO_B:
-            rdrenderer_mnem(r, mips_decoder::mnemonic(instr->id), THEME_JUMP);
-            return;
-
+        case MIPS_MACRO_NOP: rdrenderer_mnem(r, instr->id, THEME_NOP); return;
+        case MIPS_MACRO_B: rdrenderer_mnem(r, instr->id, THEME_JUMP); return;
         default: break;
     }
 
@@ -49,7 +43,7 @@ void render_mnemonic(const RDInstruction* instr, RDRenderer* r) {
     if(instr->features & IF_CALL) theme = THEME_CALL;
     if(instr->features & IF_STOP) theme = THEME_RET;
 
-    rdrenderer_mnem(r, mips_decoder::mnemonic(instr->id), theme);
+    rdrenderer_mnem(r, instr->id, theme);
 }
 
 void decode_macro(const MIPSDecodedInstruction& dec, RDInstruction* instr) {
@@ -311,6 +305,10 @@ void render_instruction(const RDProcessor*, RDRenderer* r,
     }
 }
 
+const char* get_mnemonic(const RDProcessor*, u32 id) {
+    return mips_decoder::mnemonic(id);
+}
+
 const char* get_register_name(const RDProcessor*, int reg) {
     return mips_decoder::reg(reg);
 }
@@ -320,6 +318,7 @@ RDProcessorPlugin mips32le_processor = {
     .name = "MIPS32 (Little Endian)",
     .address_size = 4,
     .integer_size = 4,
+    .getmnemonic = get_mnemonic,
     .getregistername = get_register_name,
     .decode = decode<false>,
     .emulate = emulate,
@@ -331,6 +330,7 @@ RDProcessorPlugin mips32be_processor = {
     .name = "MIPS32 (Big Endian)",
     .address_size = 4,
     .integer_size = 4,
+    .getmnemonic = get_mnemonic,
     .getregistername = get_register_name,
     .decode = decode<true>,
     .emulate = emulate,

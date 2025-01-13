@@ -290,6 +290,24 @@ Renderer& Renderer::constant(u64 c, int base, int flags, RDThemeKind fg) {
     return *this;
 }
 
+Renderer& Renderer::mnem(u32 id, RDThemeKind fg) {
+    const Context* ctx = state::context;
+    const RDProcessorPlugin* p = ctx->processorplugin;
+    assume(p);
+
+    std::string_view mnemstr;
+
+    if(p->getmnemonic) {
+        const char* res = p->getmnemonic(ctx->processor, id);
+        if(res) mnemstr = res;
+    }
+
+    if(mnemstr.empty()) mnemstr = utils::to_string(id, 10);
+    this->chunk(mnemstr, fg);
+    this->prevmnemonic = true;
+    return *this;
+}
+
 Renderer& Renderer::reg(int reg) {
     const Context* ctx = state::context;
     const RDProcessorPlugin* p = ctx->processorplugin;
@@ -303,7 +321,6 @@ Renderer& Renderer::reg(int reg) {
     }
 
     if(regname.empty()) regname = utils::to_string(reg, 10);
-
     return this->chunk(regname, THEME_REG);
 }
 

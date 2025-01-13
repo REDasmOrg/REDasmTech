@@ -34,6 +34,7 @@ struct Renderer {
     Renderer& constant(u64 c, int base = 0, int flags = 0,
                        RDThemeKind fg = THEME_CONSTANT);
 
+    Renderer& mnem(u32 id, RDThemeKind fg = THEME_CONSTANT);
     Renderer& reg(int reg);
 
     Renderer& character(SurfaceRow& row, char ch,

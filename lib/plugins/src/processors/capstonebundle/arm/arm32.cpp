@@ -56,7 +56,7 @@ void ARM32Processor::render_instruction(RDRenderer* r,
                                         const RDInstruction* instr) const {
     const char* mnem = cs_insn_name(this->handle, instr->id);
     if(mnem)
-        rdrenderer_mnem(r, mnem, THEME_DEFAULT);
+        rdrenderer_mnem(r, instr->id, THEME_DEFAULT);
     else
         rdrenderer_unkn(r);
 

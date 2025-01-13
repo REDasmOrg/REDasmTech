@@ -24,9 +24,7 @@ typedef enum RDRendererFlags {
 
 REDASM_EXPORT void rdrenderer_themed(RDRenderer* self, const char* s,
                                      RDThemeKind kind);
-REDASM_EXPORT void rdrenderer_mnem(RDRenderer* self, const char* s,
-                                   RDThemeKind kind);
-
+REDASM_EXPORT void rdrenderer_mnem(RDRenderer* self, u32 id, RDThemeKind kind);
 REDASM_EXPORT void rdrenderer_unkn(RDRenderer* self);
 REDASM_EXPORT void rdrenderer_reg(RDRenderer* self, int reg);
 REDASM_EXPORT void rdrenderer_text(RDRenderer* self, const char* s);

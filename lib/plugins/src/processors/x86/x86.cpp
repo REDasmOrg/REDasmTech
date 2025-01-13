@@ -186,22 +186,23 @@ void decode(RDProcessor* proc, RDInstruction* instr) {
 
 void render_instruction(const RDProcessor* /*self*/, RDRenderer* r,
                         const RDInstruction* instr) {
-    const char* mnemonic =
-        ZydisMnemonicGetString(static_cast<ZydisMnemonic>(instr->id));
-
     switch(instr->uservalue) {
         case ZYDIS_CATEGORY_COND_BR:
-            rdrenderer_mnem(r, mnemonic, THEME_JUMPCOND);
+            rdrenderer_mnem(r, instr->id, THEME_JUMPCOND);
             break;
         case ZYDIS_CATEGORY_UNCOND_BR:
-            rdrenderer_mnem(r, mnemonic, THEME_JUMP);
+            rdrenderer_mnem(r, instr->id, THEME_JUMP);
             break;
         case ZYDIS_CATEGORY_CALL:
-            rdrenderer_mnem(r, mnemonic, THEME_CALL);
+            rdrenderer_mnem(r, instr->id, THEME_CALL);
             break;
-        case ZYDIS_CATEGORY_RET: rdrenderer_mnem(r, mnemonic, THEME_RET); break;
-        case ZYDIS_CATEGORY_NOP: rdrenderer_mnem(r, mnemonic, THEME_NOP); break;
-        default: rdrenderer_mnem(r, mnemonic, THEME_DEFAULT); break;
+        case ZYDIS_CATEGORY_RET:
+            rdrenderer_mnem(r, instr->id, THEME_RET);
+            break;
+        case ZYDIS_CATEGORY_NOP:
+            rdrenderer_mnem(r, instr->id, THEME_NOP);
+            break;
+        default: rdrenderer_mnem(r, instr->id, THEME_DEFAULT); break;
     }
 
     foreach_operand(i, op, instr) {
@@ -298,6 +299,10 @@ void emulate(RDProcessor* /*self*/, RDEmulator* e, const RDInstruction* instr) {
         rdemulator_flow(e, instr->address + instr->length);
 }
 
+const char* get_mnemonic(const RDProcessor*, u32 id) {
+    return ZydisMnemonicGetString(static_cast<ZydisMnemonic>(id));
+}
+
 const char* get_register_name(const RDProcessor*, int reg) {
     return ZydisRegisterGetString(static_cast<ZydisRegister>(reg));
 }
@@ -309,6 +314,7 @@ void register_processor(RDProcessorPlugin* plugin, const char* id,
     plugin->name = name;
     plugin->address_size = addrsize;
     plugin->integer_size = intsize;
+    plugin->getmnemonic = get_mnemonic;
     plugin->getregistername = get_register_name;
     plugin->decode = decode;
     plugin->emulate = emulate;

@@ -12,13 +12,12 @@ void renderer_themed(RDRenderer* self, std::string_view s, RDThemeKind kind) {
     api::from_c(self)->chunk(s, kind);
 }
 
-void renderer_mnem(RDRenderer* self, std::string_view s, RDThemeKind kind) {
-    spdlog::trace("renderer_mnem({}, '{}', {})", fmt::ptr(self), s,
+void renderer_mnem(RDRenderer* self, u32 id, RDThemeKind kind) {
+    spdlog::trace("renderer_mnem({}, {}, {})", fmt::ptr(self), id,
                   static_cast<int>(kind));
 
     Renderer* renderer = api::from_c(self);
-    renderer->chunk(s, kind);
-    renderer->prevmnemonic = true;
+    renderer->mnem(id, kind);
 }
 
 void renderer_unkn(RDRenderer* self) {

@@ -9,11 +9,8 @@ void rdrenderer_themed(RDRenderer* self, const char* s, RDThemeKind kind) {
         spdlog::error("rdrenderer_themed: invalid string");
 }
 
-void rdrenderer_mnem(RDRenderer* self, const char* s, RDThemeKind kind) {
-    if(s)
-        redasm::api::internal::renderer_mnem(self, s, kind);
-    else
-        spdlog::error("rdrenderer_mnemonic: invalid string");
+void rdrenderer_mnem(RDRenderer* self, u32 id, RDThemeKind kind) {
+    redasm::api::internal::renderer_mnem(self, id, kind);
 }
 
 void rdrenderer_unkn(RDRenderer* self) {
