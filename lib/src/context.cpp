@@ -376,8 +376,8 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
         return;
     }
 
-    if(endoffset) { // Data can begin at offset 0
-        if(offset >= endoffset) {
+    if(offset != endoffset) {
+        if(offset > endoffset) {
             spdlog::error("Invalid offset range for segment '{}'", name);
             return;
         }
