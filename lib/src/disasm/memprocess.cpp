@@ -323,7 +323,7 @@ void process_refsto(Context* ctx, MIndex& idx) {
     stringfinder::classify(idx)
         .map([&](const RDStringResult& x) {
             if(x.terminated) {
-                ctx->set_type(idx, x.type, ST_WEAK);
+                ctx->set_type(idx, x.type, 0);
                 idx += x.totalsize;
             }
             else
@@ -332,11 +332,11 @@ void process_refsto(Context* ctx, MIndex& idx) {
         .or_else([&]() {
             if(reftypes.contains(DR_ADDRESS) &&
                is_range_unkn(idx, plugin->address_size)) {
-                ctx->set_type(idx, *addrtype, ST_WEAK);
+                ctx->set_type(idx, *addrtype, 0);
                 idx += plugin->address_size;
             }
             else if(is_range_unkn(idx, plugin->integer_size)) {
-                ctx->set_type(idx, *inttype, ST_WEAK);
+                ctx->set_type(idx, *inttype, 0);
                 idx += plugin->integer_size;
             }
             else
