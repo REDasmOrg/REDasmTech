@@ -30,7 +30,8 @@ typedef enum RDInstructionFeatures {
     IF_STOP = (1 << 0),  // Stops flow
     IF_JUMP = (1 << 1),  // Can branch
     IF_CALL = (1 << 2),  // Call a function
-    IF_DSLOT = (1 << 3), // Is a delay slot
+    IF_NOP = (1 << 3),   // No-Operation
+    IF_DSLOT = (1 << 4), // Is a delay slot
 } RDInstructionFeatures;
 
 typedef usize RDRegisterOperand;
