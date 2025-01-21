@@ -53,15 +53,7 @@ void apply_optype(const ZydisDecodedOperand& zop, RDOperand& op) {
 }
 
 bool is_branch_instruction(const RDInstruction* instr) {
-    switch(instr->uservalue) {
-        case ZYDIS_CATEGORY_UNCOND_BR:
-        case ZYDIS_CATEGORY_COND_BR:
-        case ZYDIS_CATEGORY_CALL: return true;
-
-        default: break;
-    }
-
-    return false;
+    return (instr->features & (IF_JUMP | IF_CALL));
 }
 
 bool is_addr_instruction(const RDInstruction* instr) {
@@ -90,11 +82,11 @@ void decode(RDProcessor* proc, RDInstruction* instr) {
 
     instr->id = zinstr.mnemonic;
     instr->length = zinstr.length;
-    instr->uservalue = zinstr.meta.category;
 
     switch(zinstr.meta.category) {
         case ZYDIS_CATEGORY_CALL: instr->features |= IF_CALL; break;
         case ZYDIS_CATEGORY_COND_BR: instr->features |= IF_JUMP; break;
+        case ZYDIS_CATEGORY_NOP: instr->features |= IF_NOP; break;
 
         case ZYDIS_CATEGORY_UNCOND_BR:
             instr->features |= IF_JUMP | IF_STOP;
@@ -186,24 +178,20 @@ void decode(RDProcessor* proc, RDInstruction* instr) {
 
 void render_instruction(const RDProcessor* /*self*/, RDRenderer* r,
                         const RDInstruction* instr) {
-    switch(instr->uservalue) {
-        case ZYDIS_CATEGORY_COND_BR:
-            rdrenderer_mnem(r, instr->id, THEME_JUMPCOND);
-            break;
-        case ZYDIS_CATEGORY_UNCOND_BR:
+    if(instr->features & IF_STOP) {
+        if(instr->features & IF_JUMP)
             rdrenderer_mnem(r, instr->id, THEME_JUMP);
-            break;
-        case ZYDIS_CATEGORY_CALL:
-            rdrenderer_mnem(r, instr->id, THEME_CALL);
-            break;
-        case ZYDIS_CATEGORY_RET:
+        else
             rdrenderer_mnem(r, instr->id, THEME_RET);
-            break;
-        case ZYDIS_CATEGORY_NOP:
-            rdrenderer_mnem(r, instr->id, THEME_NOP);
-            break;
-        default: rdrenderer_mnem(r, instr->id, THEME_DEFAULT); break;
     }
+    else if(instr->features & IF_JUMP)
+        rdrenderer_mnem(r, instr->id, THEME_JUMPCOND);
+    else if(instr->features & IF_CALL)
+        rdrenderer_mnem(r, instr->id, THEME_CALL);
+    else if(instr->features & IF_NOP)
+        rdrenderer_mnem(r, instr->id, THEME_NOP);
+    else
+        rdrenderer_mnem(r, instr->id, THEME_DEFAULT);
 
     foreach_operand(i, op, instr) {
         if(i > 0) rdrenderer_text(r, ", ");
