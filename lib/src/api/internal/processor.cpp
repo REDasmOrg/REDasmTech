@@ -96,25 +96,6 @@ const RDProcessor* get_processor() {
     return nullptr;
 }
 
-bool set_processor(std::string_view id) {
-    spdlog::trace("set_processor('{}')", id);
-
-    if(!state::context) return false;
-    const RDProcessorPlugin* plugin = pm::find_processor(id);
-
-    if(plugin) {
-        RDProcessor* proc = pm::create_instance(plugin);
-        pm::destroy_instance(state::context->processorplugin,
-                             state::context->processor);
-        state::context->processorplugin = plugin;
-        state::context->processor = proc;
-        return true;
-    }
-
-    spdlog::error("set_processor: '{}' not found", id);
-    return false;
-}
-
 bool decode(RDAddress address, RDInstruction* instr) {
     spdlog::trace("decode({:x}, {})", address, fmt::ptr(instr));
 

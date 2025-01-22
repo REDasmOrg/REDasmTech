@@ -80,30 +80,48 @@ tl::optional<uptr> Context::get_userdata(const std::string& k) const {
     return m_database->get_userdata(k);
 }
 
-bool Context::init_plugins(const RDLoaderPlugin* plugin) {
+bool Context::try_load(const RDLoaderPlugin* plugin) {
     assume(plugin);
 
     m_database = std::make_unique<Database>(plugin->id, this->file->source);
     this->loaderplugin = plugin;
     this->loader = pm::create_instance(plugin);
-    this->processorplugin = pm::find_processor("null");
-    assume(this->processorplugin);
 
-    if(this->loaderplugin->load && this->loaderplugin->load(this->loader)) {
-        foreach_analyzers(ap, {
-            // Assume true if 'isenabled' is not implemented
-            if(!ap->is_enabled || ap->is_enabled(ap)) {
-                this->analyzerplugins.push_back(ap);
-                if(ap->flags & AF_SELECTED)
-                    this->selectedanalyzerplugins.insert(ap);
-            }
-        });
+    if(this->loaderplugin->load &&
+       this->loaderplugin->load(this->loader, api::to_c(this->file.get()))) {
 
-        this->worker.emulator.setup();
+        // Select proposed processor
+        if(this->loaderplugin->get_processor) {
+            const char* p = this->loaderplugin->get_processor(loader);
+            if(p) this->processorplugin = pm::find_processor(p);
+        }
+
+        if(!this->processorplugin)
+            this->processorplugin = pm::find_processor("null");
+
+        assume(this->processorplugin);
         return true;
     }
 
     return false;
+}
+
+void Context::setup(const RDProcessorPlugin* plugin) {
+    assume(this->loaderplugin);
+    if(plugin) this->processorplugin = plugin;
+    assume(this->processorplugin);
+    this->processor = pm::create_instance(this->processorplugin);
+
+    foreach_analyzers(ap, {
+        // Assume true if 'isenabled' is not implemented
+        if(!ap->is_enabled || ap->is_enabled(ap)) {
+            this->analyzerplugins.push_back(ap);
+            if(ap->flags & AF_SELECTED)
+                this->selectedanalyzerplugins.insert(ap);
+        }
+    });
+
+    this->worker.emulator.setup();
 }
 
 bool Context::set_function(MIndex idx, usize flags) {
@@ -546,12 +564,7 @@ Database::RefList Context::get_refs_to(MIndex toidx) const {
 }
 
 std::string Context::to_hex(usize v, int n) const {
-    assume(this->processorplugin);
-
-    if(n == -1)
-        n = 0;
-    else if(!n)
-        n = this->processorplugin->integer_size * 2;
+    if(n == -1) n = 0;
 
     std::string hexstr;
     hexstr.reserve(n);

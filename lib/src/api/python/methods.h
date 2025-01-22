@@ -60,7 +60,6 @@ inline PyMethodDef methods[] = {
     {"set_function", python::set_function, METH_O, nullptr},
     {"set_function_ex", python::set_function_ex, METH_O, nullptr},
     {"set_entry", python::set_entry, METH_VARARGS, nullptr},
-    {"set_processor", python::set_processor, METH_O, nullptr},
     {"add_ref", python::add_ref, METH_VARARGS, nullptr},
     {"add_problem", python::add_problem, METH_VARARGS, nullptr},
     {"register_loader", python::register_loader, METH_VARARGS, nullptr},

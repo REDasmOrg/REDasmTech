@@ -259,26 +259,12 @@ class PELoader:
             self.resources = PEResources(self, va)
             self.classifier.classify_borland(self)
 
-    def select_processor(self):
-        machine = self.ntheaders.FileHeader.Machine
-
-        if machine == PEH.IMAGE_FILE_MACHINE_I386:
-            redasm.set_processor("x86_32")
-        elif machine == PEH.IMAGE_FILE_MACHINE_AMD64:
-            redasm.set_processor("x86_64")
-        elif machine == PEH.IMAGE_FILE_MACHINE_ARM:
-            if self.optionalheader.Magic == PEH.IMAGE_NT_OPTIONAL_HDR64_MAGIC:
-                redasm.set_processor("arm64le")
-            else:
-                redasm.set_processor("arm32le")
-
     def load_default(self):
         self.read_exports()
         self.read_imports()
         self.read_exceptions()
         self.read_debuginfo()
         self.read_resources()
-        self.select_processor()
 
         redasm.set_entry(redasm.from_reladdress(self.optionalheader.AddressOfEntryPoint),
                          "PE_EntryPoint")
@@ -296,7 +282,7 @@ class PELoader:
         magic = req.file.get_u16(dosheader.e_lfanew + 0x18)
         return magic in [PEH.IMAGE_NT_OPTIONAL_HDR32_MAGIC, PEH.IMAGE_NT_OPTIONAL_HDR64_MAGIC]
 
-    def load(self):
+    def load(self, file):
         PE.register_types()
         stream = redasm.FileStream()
         self.dosheader = stream.collect_type("IMAGE_DOS_HEADER")
@@ -353,6 +339,24 @@ class PELoader:
             self.load_default()
 
         return True
+
+    def get_processor(self):
+        if self.check_dotnet():
+            return "cil"
+
+        machine = self.ntheaders.FileHeader.Machine
+
+        if machine == PEH.IMAGE_FILE_MACHINE_I386:
+            return "x86_32"
+        elif machine == PEH.IMAGE_FILE_MACHINE_AMD64:
+            return "x86_64"
+        elif machine == PEH.IMAGE_FILE_MACHINE_ARM:
+            if self.optionalheader.Magic == PEH.IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+                return "arm64le"
+            else:
+                return "arm32le"
+
+        return None
 
 
 redasm.register_loader(PELoader)

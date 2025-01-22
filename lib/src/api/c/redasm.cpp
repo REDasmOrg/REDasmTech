@@ -101,7 +101,7 @@ RDBuffer* rd_loadfile(const char* filepath) {
     return redasm::api::internal::load_file(filepath);
 }
 
-usize rd_test(RDBuffer* buffer, const RDTestResult** result) {
+usize rd_test(RDBuffer* buffer, RDTestResult** result) {
     static std::vector<RDTestResult> res;
     res = redasm::api::internal::test(buffer);
     if(result) *result = res.data();
@@ -109,7 +109,7 @@ usize rd_test(RDBuffer* buffer, const RDTestResult** result) {
 }
 
 void rd_disassemble(void) { redasm::api::internal::disassemble(); }
-void rd_select(RDContext* context) { redasm::api::internal::select(context); }
+void rd_select(const RDTestResult* tr) { redasm::api::internal::select(tr); }
 bool rd_destroy(void) { return redasm::api::internal::destroy(); }
 void rd_discard(void) { redasm::api::internal::discard(); }
 

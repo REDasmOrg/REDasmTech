@@ -95,7 +95,7 @@ bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) {
     return ok;
 }
 
-bool load(RDLoader* l) {
+bool load(RDLoader* l, RDBuffer*) {
     auto* self = reinterpret_cast<DexLoader*>(l);
     const u8* data = nullptr;
     usize n = rd_getfile(&data);
@@ -107,9 +107,7 @@ bool load(RDLoader* l) {
                     self->dexfile->pHeader->dataOff,
                     self->dexfile->pHeader->dataSize, SEG_HASCODE);
 
-    bool ok = dex::filter_classes(self);
-    if(ok) rd_setprocessor("dalvik");
-    return ok;
+    return dex::filter_classes(self);
 }
 
 } // namespace
@@ -134,6 +132,7 @@ RDLoaderPlugin loader = {
     .flags = LF_NOMERGECODE | LF_NOAUTORENAME,
     .accept = dex::accept,
     .load = dex::load,
+    .get_processor = [](RDLoader*) { return "dalvik"; },
 };
 
 } // namespace dex

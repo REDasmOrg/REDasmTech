@@ -23,6 +23,9 @@ LoaderDialog::LoaderDialog(RDBuffer* buffer, QWidget* parent)
     connect(m_ui.lwloaders, &QListWidget::currentRowChanged, this,
             &LoaderDialog::on_loader_changed);
 
+    connect(m_ui.cbprocessors, &QComboBox::currentIndexChanged, this,
+            &LoaderDialog::on_processor_changed);
+
     // Trigger "on_loader_changed"
     if(c > 0) m_ui.lwloaders->setCurrentRow(0);
 }
@@ -32,24 +35,25 @@ void LoaderDialog::on_loader_changed(int currentrow) {
         this->select_processor(m_testresult[currentrow].processorplugin);
 }
 
+void LoaderDialog::on_processor_changed(int currentrow) {
+    int loaderidx = m_ui.lwloaders->currentRow();
+    if(loaderidx == -1) return;
+
+    if(currentrow != -1)
+        m_testresult[loaderidx].processorplugin = m_processors[currentrow];
+}
+
 void LoaderDialog::accept() {
     const RDTestResult& tr = m_testresult[m_ui.lwloaders->currentRow()];
-    const RDProcessorPlugin* p = tr.processorplugin;
     this->context = tr.context;
-    rd_select(tr.context);
-
-    if(usize idx = m_ui.cbprocessors->currentIndex(); idx < m_nprocessors) {
-        rd_setprocessor(m_processors[idx]->id);
-        p = m_processors[idx];
-    }
+    rd_select(&tr);
 
     utils::log(QString{"Selected loader '%1' with '%2' processor"}
                    .arg(tr.loaderplugin->name)
-                   .arg(p->name));
+                   .arg(tr.processorplugin->name));
 
     auto l = static_cast<RDLogLevel>(m_ui.cbloglevel->currentData().toUInt());
     rd_setloglevel(l);
-
     QDialog::accept();
 }
 

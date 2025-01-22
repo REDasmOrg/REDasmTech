@@ -79,30 +79,6 @@ std::string_view ElfFormat<Bits>::get_strv(int idx, usize shidx) const {
 }
 
 template<int Bits>
-void ElfFormat<Bits>::set_processor() const {
-    bool isbe = elf_format::is_be(this->ehdr.e_ident);
-
-    switch(this->ehdr.e_machine) {
-        case EM_AVR: rd_setprocessor("avr8"); break;
-        case EM_386: rd_setprocessor("x86_32"); break;
-        case EM_X86_64: rd_setprocessor("x86_64"); break;
-        case EM_XTENSA: rd_setprocessor(isbe ? "xtensabe" : "extensale"); break;
-        case EM_ARM: rd_setprocessor(isbe ? "arm32be" : "arm32le"); break;
-        case EM_AARCH64: rd_setprocessor(isbe ? "arm64be" : "arm64le"); break;
-
-        case EM_MIPS: {
-            if(this->ehdr.e_flags & EF_MIPS_ABI_EABI64)
-                rd_setprocessor(isbe ? "mips64be" : "mips64le");
-            else
-                rd_setprocessor(isbe ? "mips32be" : "mips32le");
-            break;
-        }
-
-        default: break;
-    }
-}
-
-template<int Bits>
 void ElfFormat<Bits>::parse_section_address(usize i) const {
     const SHDR& shdr = this->shdr.at(i);
     if(!shdr.sh_size) return;

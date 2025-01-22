@@ -319,11 +319,11 @@ RDProcessorPlugin mips32le_processor = {
     .name = "MIPS32 (Little Endian)",
     .address_size = 4,
     .integer_size = 4,
-    .getmnemonic = get_mnemonic,
-    .getregistername = get_register_name,
+    .get_mnemonic = get_mnemonic,
+    .get_registername = get_register_name,
     .decode = decode<false>,
     .emulate = emulate,
-    .renderinstruction = render_instruction,
+    .render_instruction = render_instruction,
 };
 
 RDProcessorPlugin mips32be_processor = {
@@ -332,11 +332,11 @@ RDProcessorPlugin mips32be_processor = {
     .name = "MIPS32 (Big Endian)",
     .address_size = 4,
     .integer_size = 4,
-    .getmnemonic = get_mnemonic,
-    .getregistername = get_register_name,
+    .get_mnemonic = get_mnemonic,
+    .get_registername = get_register_name,
     .decode = decode<true>,
     .emulate = emulate,
-    .renderinstruction = render_instruction,
+    .render_instruction = render_instruction,
 };
 
 } // namespace

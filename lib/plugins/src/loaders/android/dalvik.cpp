@@ -517,15 +517,15 @@ RDProcessorPlugin processor = {
     .address_size = 2,
     .integer_size = 2,
     .setup = dalvik::register_types,
-    .getmnemonic = dalvik::get_mnemonic,
-    .getregistername = dalvik::get_registername,
+    .get_mnemonic = dalvik::get_mnemonic,
+    .get_registername = dalvik::get_registername,
     .decode = [](RDProcessor* self, RDInstruction* instr) { 
         reinterpret_cast<DalvikProcessor*>(self)->decode(instr);
     },
     .emulate = [](RDProcessor* self, RDEmulator* e, const RDInstruction* instr) { 
         reinterpret_cast<DalvikProcessor*>(self)->emulate(e, instr);
     },
-    .renderinstruction = [](const RDProcessor* self, RDRenderer* r, const RDInstruction* instr) { 
+    .render_instruction = [](const RDProcessor* self, RDRenderer* r, const RDInstruction* instr) { 
         reinterpret_cast<const DalvikProcessor*>(self)->render_instruction(r, instr);
     },
 };

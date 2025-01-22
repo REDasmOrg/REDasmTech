@@ -25,7 +25,6 @@ struct ElfFormat {
     [[nodiscard]] std::string get_str(int idx, usize shidx = 0,
                                       const std::string& d = {}) const;
     [[nodiscard]] std::string_view get_strv(int idx, usize shidx = 0) const;
-    void set_processor() const;
     void parse_section_address(usize i) const;
     void parse_section_offset(usize i) const;
 

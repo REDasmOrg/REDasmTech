@@ -42,14 +42,14 @@ typedef struct RDProcessorPlugin {
     int address_size;
     int integer_size;
     RDProcessorPluginSetup setup;
-    RDProcessorPluginGetMnemonic getmnemonic;
-    RDProcessorPluginGetRegisterName getregistername;
+    RDProcessorPluginGetMnemonic get_mnemonic;
+    RDProcessorPluginGetRegisterName get_registername;
     RDProcessorPluginDecode decode;
     RDProcessorPluginEmulate emulate;
     RDProcessorPluginLift lift;
-    RDProcessorPluginRenderSegment rendersegment;
-    RDProcessorPluginRenderFunction renderfunction;
-    RDProcessorPluginRenderInstruction renderinstruction;
+    RDProcessorPluginRenderSegment render_segment;
+    RDProcessorPluginRenderFunction render_function;
+    RDProcessorPluginRenderInstruction render_instruction;
 } RDProcessorPlugin;
 
 REDASM_EXPORT u32 rdemulator_getdslotinfo(const RDEmulator* self,
@@ -74,5 +74,4 @@ REDASM_EXPORT bool rd_registerprocessor(const RDProcessorPlugin* plugin);
 REDASM_EXPORT const RDProcessorPlugin** rd_getprocessorplugins(usize* n);
 REDASM_EXPORT const RDProcessorPlugin* rd_getprocessorplugin(void);
 REDASM_EXPORT const RDProcessor* rd_getprocessor(void);
-REDASM_EXPORT bool rd_setprocessor(const char* name);
 REDASM_EXPORT bool rd_decode(RDAddress address, RDInstruction* instr);

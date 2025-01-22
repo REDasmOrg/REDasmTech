@@ -303,12 +303,12 @@ void register_processor(RDProcessorPlugin* plugin, const char* id,
     plugin->name = name;
     plugin->address_size = addrsize;
     plugin->integer_size = intsize;
-    plugin->getmnemonic = get_mnemonic;
-    plugin->getregistername = get_register_name;
+    plugin->get_mnemonic = get_mnemonic;
+    plugin->get_registername = get_register_name;
     plugin->decode = decode;
     plugin->emulate = emulate;
     plugin->lift = x86_lifter::lift;
-    plugin->renderinstruction = render_instruction;
+    plugin->render_instruction = render_instruction;
 
     plugin->create = [](const RDProcessorPlugin*) {
         auto* self = new X86Processor();

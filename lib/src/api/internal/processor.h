@@ -24,7 +24,6 @@ bool register_processor(const RDProcessorPlugin* plugin, pm::Origin o);
 const RDProcessorPlugin** get_processorplugins(usize* n);
 const RDProcessorPlugin* get_processorplugin();
 const RDProcessor* get_processor();
-bool set_processor(std::string_view id);
 bool decode(RDAddress address, RDInstruction* instr);
 
 } // namespace redasm::api::internal

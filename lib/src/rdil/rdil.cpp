@@ -306,7 +306,7 @@ void get_text_impl(const ILExpr* e, std::string& res) {
                                 break;
 
                             case RDIL_REG: {
-                                res += ctx->processorplugin->getregistername(
+                                res += ctx->processorplugin->get_registername(
                                     ctx->processor, expr->reg);
                                 break;
                             }

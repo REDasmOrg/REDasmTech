@@ -22,13 +22,15 @@ typedef struct RDLoaderRequest {
 
 // clang-format off
 typedef bool (*RDLoaderPluginAccept)(const struct RDLoaderPlugin*, const RDLoaderRequest*);
-typedef bool (*RDLoaderPluginLoad)(struct RDLoader*);
+typedef bool (*RDLoaderPluginLoad)(struct RDLoader*, RDBuffer*);
+typedef const char* (*RDLoaderPluginGetProcessor)(struct RDLoader*);
 // clang-format on
 
 typedef struct RDLoaderPlugin {
     RDPLUGIN_HEADER(RDLoader)
     RDLoaderPluginAccept accept;
     RDLoaderPluginLoad load;
+    RDLoaderPluginGetProcessor get_processor;
 } RDLoaderPlugin;
 
 REDASM_EXPORT bool rd_registerloader(const RDLoaderPlugin* plugin);

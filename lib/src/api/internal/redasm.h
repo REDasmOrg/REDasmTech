@@ -36,7 +36,7 @@ std::string symbolize(std::string s);
 
 RDBuffer* load_file(const std::string& filepath);
 std::vector<RDTestResult> test(RDBuffer* buffer);
-void select(RDContext* context);
+void select(const RDTestResult* tr);
 void free(void* obj);
 bool destroy();
 void discard();

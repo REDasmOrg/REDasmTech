@@ -167,7 +167,7 @@ std::vector<RDTestResult> test(RDBuffer* buffer) {
         auto* ctx = new Context(b);
         state::context = ctx; // Set context as active
 
-        if(ctx->init_plugins(lp)) {
+        if(ctx->try_load(lp)) {
             state::contextlist.push_back(ctx);
 
             res.emplace_back(RDTestResult{
@@ -189,19 +189,21 @@ std::vector<RDTestResult> test(RDBuffer* buffer) {
     return res;
 }
 
-void select(RDContext* context) {
-    spdlog::trace("select({})", fmt::ptr(context));
+void select(const RDTestResult* tr) {
+    spdlog::trace("select({})", fmt::ptr(tr));
 
-    Context* ctx = api::from_c(context);
-
-    state::context = ctx;
-    assume(state::context);
+    if(tr) {
+        state::context = api::from_c(tr->context);
+        state::context->setup(tr->processorplugin);
+    }
+    else
+        state::context = nullptr;
 
     // Discard other contexts
     while(!state::contextlist.empty()) {
         Context* c = state::contextlist.back();
         state::contextlist.pop_back();
-        if(c != ctx) delete c;
+        if(c != state::context) delete c;
     }
 }
 

@@ -2,6 +2,7 @@
 #include "../../error.h"
 #include "../../plugins/pluginmanager.h"
 #include "../internal/loader.h"
+#include "buffer.h"
 #include "common.h"
 #include "plugin.h"
 #include <redasm/loader.h>
@@ -38,20 +39,49 @@ PyObject* loader_accept(PyObject* self, PyObject* args) {
 
 PyObject* loader_load(PyObject* self, PyObject* args) {
     using Instance = typename pm::InstanceForPlugin<RDLoaderPlugin>::Type;
+
+    PyObject *pyinstance = nullptr, *file = nullptr;
+    if(!PyArg_ParseTuple(args, "OO", &self, &file)) return nullptr;
+
     const auto* plugin = plugin::get_bind<RDLoaderPlugin>(self);
     assume(plugin);
     bool b = false;
 
     if(plugin->load) {
-        if(pm::get_origin(plugin) == pm::Origin::PYTHON)
-            b = plugin->load(reinterpret_cast<Instance*>(args));
+        if(pm::get_origin(plugin) == pm::Origin::PYTHON) {
+            b = plugin->load(reinterpret_cast<Instance*>(pyinstance),
+                             python::pyfile_asbuffer(file));
+        }
         else {
             b = plugin->load(reinterpret_cast<Instance*>(
-                PyCapsule_GetPointer(args, nullptr)));
+                                 PyCapsule_GetPointer(pyinstance, nullptr)),
+                             reinterpret_cast<RDBuffer*>(
+                                 PyCapsule_GetPointer(file, nullptr)));
         }
     }
 
     return PyBool_FromLong(b);
+}
+
+PyObject* loader_getprocessor(PyObject* self, PyObject* args) {
+    using Instance = typename pm::InstanceForPlugin<RDLoaderPlugin>::Type;
+    const auto* plugin = plugin::get_bind<RDLoaderPlugin>(self);
+    assume(plugin);
+
+    if(plugin->get_processor) {
+        const char* p = nullptr;
+
+        if(pm::get_origin(plugin) == pm::Origin::PYTHON)
+            p = plugin->get_processor(reinterpret_cast<Instance*>(args));
+        else {
+            p = plugin->get_processor(reinterpret_cast<Instance*>(
+                PyCapsule_GetPointer(args, nullptr)));
+        }
+
+        if(p) return PyUnicode_FromString(p);
+    }
+
+    return Py_None;
 }
 
 // clang-format off
@@ -61,7 +91,8 @@ PyMethodDef loader_methods[] = {
     {"create", reinterpret_cast<PyCFunction>(python::plugin::create<RDLoaderPlugin>), METH_NOARGS, nullptr},
     {"destroy", reinterpret_cast<PyCFunction>(python::plugin::destroy<RDLoaderPlugin>), METH_O, nullptr},
     {"accept", reinterpret_cast<PyCFunction>(python::loader_accept), METH_O, nullptr},
-    {"load", reinterpret_cast<PyCFunction>(python::loader_load), METH_O, nullptr},
+    {"load", reinterpret_cast<PyCFunction>(python::loader_load), METH_VARARGS, nullptr},
+    {"get_processor", reinterpret_cast<PyCFunction>(python::loader_getprocessor), METH_O, nullptr},
     {nullptr},
 };
 // clang-format on
@@ -127,9 +158,10 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
         return false;
     };
 
-    plugin->base.load = [](RDLoader* arg) -> bool {
+    plugin->base.load = [](RDLoader* arg, RDBuffer* file) -> bool {
         auto* self = reinterpret_cast<PyObject*>(arg);
-        PyObject* res = PyObject_CallMethod(self, "load", nullptr);
+        PyObject* res = PyObject_CallMethod(self, "load", "O",
+                                            python::pyfile_frombuffer(file));
 
         if(res) {
             bool ok = Py_IsTrue(res);
@@ -139,6 +171,23 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
 
         python::check_error();
         return false;
+    };
+
+    plugin->base.get_processor = [](RDLoader* arg) -> const char* {
+        auto* self = reinterpret_cast<PyObject*>(arg);
+
+        if(PyObject_HasAttrString(self, "get_processor")) {
+            PyObject* res = PyObject_CallMethod(self, "get_processor", nullptr);
+
+            if(res) {
+                if(Py_IsNone(res)) return nullptr;
+                return PyUnicode_AsUTF8(res);
+            }
+
+            python::check_error();
+        }
+
+        return nullptr;
     };
 
     return PyBool_FromLong(internal::register_loader(

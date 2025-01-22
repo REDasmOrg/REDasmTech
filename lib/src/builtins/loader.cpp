@@ -18,7 +18,7 @@ RDLoaderPlugin binary_loader = {
                  const RDLoaderRequest*) { return true; },
 
     .load =
-        [](RDLoader*) {
+        [](RDLoader*, RDBuffer*) {
             api::internal::memory_map(0, state::context->file->size());
             api::internal::memory_copy(0, 0, state::context->file->size());
             return true;

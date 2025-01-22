@@ -81,7 +81,7 @@ REDASM_EXPORT void rd_setuserdata(const char* k, uptr v);
 REDASM_EXPORT bool rd_getuserdata(const char* k, uptr* v);
 REDASM_EXPORT void rd_log(const char* s);
 REDASM_EXPORT void rd_status(const char* s);
-REDASM_EXPORT void rd_select(RDContext* context);
+REDASM_EXPORT void rd_select(const RDTestResult* tr);
 REDASM_EXPORT void rd_discard(void);
 REDASM_EXPORT bool rd_destroy(void);
 REDASM_EXPORT usize rd_getsegments(const RDSegment** segments);
@@ -94,7 +94,7 @@ REDASM_EXPORT bool rd_tick(const RDWorkerStatus** s);
 
 REDASM_EXPORT void rd_addsearchpath(const char* path);
 REDASM_EXPORT RDBuffer* rd_loadfile(const char* filepath);
-REDASM_EXPORT usize rd_test(RDBuffer* buffer, const RDTestResult** result);
+REDASM_EXPORT usize rd_test(RDBuffer* buffer, RDTestResult** result);
 REDASM_EXPORT void rd_disassemble(void);
 REDASM_EXPORT usize rd_getproblems(const RDProblem** problems);
 

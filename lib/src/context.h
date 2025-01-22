@@ -32,9 +32,10 @@ public:
 
     explicit Context(const std::shared_ptr<AbstractBuffer>& b);
     ~Context() override;
+    bool try_load(const RDLoaderPlugin* plugin);
+    void setup(const RDProcessorPlugin* plugin);
     void set_userdata(const std::string& k, uptr v);
     tl::optional<uptr> get_userdata(const std::string& k) const;
-    bool init_plugins(const RDLoaderPlugin* plugin);
     bool set_function(MIndex idx, usize flags);
     bool set_entry(MIndex idx, const std::string& name = {});
     bool memory_map(RDAddress base, usize size);

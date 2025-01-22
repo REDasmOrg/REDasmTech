@@ -6,7 +6,7 @@ namespace {
 
 bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) { return false; }
 
-bool load(RDLoader*) { return false; }
+bool load(RDLoader*, RDBuffer* file) { return false; }
 
 } // namespace
 

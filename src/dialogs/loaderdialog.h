@@ -17,6 +17,7 @@ private:
 
 public Q_SLOTS:
     void on_loader_changed(int currentrow);
+    void on_processor_changed(int currentrow);
     void accept() override;
     void reject() override;
 
@@ -25,7 +26,7 @@ public:
 
 private:
     ui::LoaderDialog m_ui;
-    const RDTestResult* m_testresult{nullptr};
+    RDTestResult* m_testresult{nullptr};
     const RDProcessorPlugin** m_processors{nullptr};
     usize m_nprocessors{0};
 };

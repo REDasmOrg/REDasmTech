@@ -49,8 +49,8 @@ RDProcessorPlugin null_processor = {
     .flags = PF_LAST,
     .address_size = sizeof(uptr),
     .integer_size = sizeof(int),
-    .rendersegment = builtins::processor::render_segment,
-    .renderfunction = builtins::processor::render_function,
+    .render_segment = builtins::processor::render_segment,
+    .render_function = builtins::processor::render_function,
 };
 
 } // namespace

@@ -142,10 +142,10 @@ Renderer& Renderer::instr() {
 
     p->decode(ctx->processor, &instr);
 
-    if(!instr.length || !p->renderinstruction)
+    if(!instr.length || !p->render_instruction)
         this->unknown();
     else
-        p->renderinstruction(ctx->processor, api::to_c(this), &instr);
+        p->render_instruction(ctx->processor, api::to_c(this), &instr);
 
     return *this;
 }
@@ -297,8 +297,8 @@ Renderer& Renderer::mnem(u32 id, RDThemeKind fg) {
 
     std::string_view mnemstr;
 
-    if(p->getmnemonic) {
-        const char* res = p->getmnemonic(ctx->processor, id);
+    if(p->get_mnemonic) {
+        const char* res = p->get_mnemonic(ctx->processor, id);
         if(res) mnemstr = res;
     }
 
@@ -315,8 +315,8 @@ Renderer& Renderer::reg(int reg) {
 
     std::string_view regname;
 
-    if(p->getregistername) {
-        const char* res = p->getregistername(ctx->processor, reg);
+    if(p->get_registername) {
+        const char* res = p->get_registername(ctx->processor, reg);
         if(res) regname = res;
     }
 

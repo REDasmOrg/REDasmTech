@@ -645,8 +645,8 @@ void Surface::render_segment(const ListingItem& item) {
 
     RDSegment cs = api::to_c(*s);
 
-    if(p->rendersegment)
-        p->rendersegment(ctx->processor, api::to_c(m_renderer.get()), &cs);
+    if(p->render_segment)
+        p->render_segment(ctx->processor, api::to_c(m_renderer.get()), &cs);
     else
         builtins::processor::render_segment(ctx->processor,
                                             api::to_c(m_renderer.get()), &cs);
@@ -664,9 +664,9 @@ void Surface::render_function(const ListingItem& item) {
     const Function* f = state::context->index_to_function(item.index);
     assume(f);
 
-    if(p->renderfunction)
-        p->renderfunction(ctx->processor, api::to_c(m_renderer.get()),
-                          api::to_c(f));
+    if(p->render_function)
+        p->render_function(ctx->processor, api::to_c(m_renderer.get()),
+                           api::to_c(f));
     else
         builtins::processor::render_function(
             ctx->processor, api::to_c(m_renderer.get()), api::to_c(f));

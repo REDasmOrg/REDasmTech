@@ -78,6 +78,4 @@ PyObject* get_strz(PyObject* self, PyObject* args);
 PyObject* get_str(PyObject* self, PyObject* args);
 PyObject* get_type(PyObject* self, PyObject* args);
 
-PyObject* set_processor(PyObject* self, PyObject* args);
-
 } // namespace redasm::api::python

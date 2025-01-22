@@ -14,12 +14,10 @@ bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) {
     return req->ext == "COM"sv && rdbuffer_getlength(req->file) <= MSEG_SIZE;
 }
 
-bool load(RDLoader*) {
-    RDBuffer* file = rdbuffer_getfile();
+bool load(RDLoader*, RDBuffer* file) {
     usize len = rdbuffer_getlength(file);
 
     rd_map_n(0, 0x10000);
-    rd_setprocessor("x86_16_real");
     rd_mapsegment_n("MEM", COM_ENTRY, MSEG_SIZE, 0, len,
                     SEG_HASCODE | SEG_HASDATA);
     rd_setentry(COM_ENTRY, "_COM_EntryPoint_");
@@ -34,6 +32,7 @@ RDLoaderPlugin loader = {
     .name = "COM Executable",
     .accept = com::accept,
     .load = com::load,
+    .get_processor = [](RDLoader*) { return "x86_16_real"; },
 };
 
 } // namespace com

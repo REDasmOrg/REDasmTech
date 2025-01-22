@@ -32,10 +32,9 @@ bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) {
                                      PSXEXE_SIGNATURE_SIZE);
 }
 
-bool load(RDLoader*) {
+bool load(RDLoader*, RDBuffer* file) {
     PsxExeHeader psxheader;
-    rdbuffer_read(rdbuffer_getfile(), 0, &psxheader, sizeof(PsxExeHeader));
-    rd_setprocessor("mips32le");
+    rdbuffer_read(file, 0, &psxheader, sizeof(PsxExeHeader));
     rd_map(PSX_USERRAM_START, PSX_USERRAM_END);
 
     rd_mapsegment_n("TEXT", psxheader.t_addr, psxheader.t_size,
@@ -54,6 +53,7 @@ RDLoaderPlugin loader = {
     .name = "PS-X Executable",
     .accept = psxexe::accept,
     .load = psxexe::load,
+    .get_processor = [](RDLoader*) { return "mips32le"; },
 };
 
 } // namespace psxexe

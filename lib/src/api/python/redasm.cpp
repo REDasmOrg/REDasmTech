@@ -559,14 +559,6 @@ PyObject* get_type(PyObject* /*self*/, PyObject* args) {
     return Py_None;
 }
 
-PyObject* set_processor(PyObject* /*self*/, PyObject* args) {
-    if(!PyUnicode_Check(args)) return python::type_error(args, "string");
-
-    const char* name = PyUnicode_AsUTF8(args);
-    internal::set_processor(name);
-    return Py_None;
-}
-
 PyObject* get_entries(PyObject* /*self*/, PyObject* /*args*/) {
     auto entries = redasm::api::internal::get_entries();
     PyObject* tuple = PyTuple_New(entries.size());
