@@ -6,12 +6,10 @@ namespace {
 QString get_segment_type(const RDSegment& seg) {
     QString s;
 
-    if(seg.type & SEG_HASCODE)
-        s.append("CODE");
+    if(seg.type & SEG_HASCODE) s.append("CODE");
 
     if(seg.type & SEG_HASDATA) {
-        if(!s.isEmpty())
-            s.append(" | ");
+        if(!s.isEmpty()) s.append(" | ");
 
         s.append("DATA");
     }
@@ -26,15 +24,15 @@ SegmentsModel::SegmentsModel(QObject* parent): QAbstractListModel{parent} {
 }
 
 size_t SegmentsModel::address(const QModelIndex& index) const {
-    return m_segments[index.row()].address;
+    return m_segments[index.row()].startaddr;
 }
 
 QVariant SegmentsModel::data(const QModelIndex& index, int role) const {
     if(role == Qt::DisplayRole) {
-        auto address = m_segments[index.row()].address;
-        auto endaddress = m_segments[index.row()].endaddress;
-        auto offset = m_segments[index.row()].offset;
-        auto endoffset = m_segments[index.row()].endoffset;
+        auto address = m_segments[index.row()].startaddr;
+        auto endaddress = m_segments[index.row()].endaddr;
+        auto offset = m_segments[index.row()].startoff;
+        auto endoffset = m_segments[index.row()].endoff;
 
         switch(index.column()) {
             case 0: return m_segments[index.row()].name;
@@ -49,12 +47,9 @@ QVariant SegmentsModel::data(const QModelIndex& index, int role) const {
         }
     }
     else if(role == Qt::ForegroundRole) {
-        if(index.column() == 0)
-            return themeprovider::color(THEME_LABEL);
-        if(index.column() < 7)
-            return themeprovider::color(THEME_ADDRESS);
-        if(index.column() == 7)
-            return themeprovider::color(THEME_DATA);
+        if(index.column() == 0) return themeprovider::color(THEME_LABEL);
+        if(index.column() < 7) return themeprovider::color(THEME_ADDRESS);
+        if(index.column() == 7) return themeprovider::color(THEME_DATA);
     }
     else if(role == Qt::TextAlignmentRole) {
         if(index.column() == 0)
@@ -67,8 +62,7 @@ QVariant SegmentsModel::data(const QModelIndex& index, int role) const {
 
 QVariant SegmentsModel::headerData(int section, Qt::Orientation orientation,
                                    int role) const {
-    if(orientation == Qt::Vertical || role != Qt::DisplayRole)
-        return {};
+    if(orientation == Qt::Vertical || role != Qt::DisplayRole) return {};
 
     switch(section) {
         case 0: return "Name";

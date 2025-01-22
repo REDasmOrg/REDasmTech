@@ -21,6 +21,7 @@ inline constexpr bool AlwaysFalseV = false; // NOLINT
 
 using Data = std::vector<u8>;
 
+char* copy_str(std::string_view v);
 std::string_view trim(std::string_view v);
 
 template<typename T>

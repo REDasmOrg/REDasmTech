@@ -17,8 +17,7 @@ void surface_render(RDSurface* self, usize n) {
 void surface_renderfunction(RDSurface* self, const RDFunction* f) {
     spdlog::trace("surface_renderfunction({}, {})", fmt::ptr(self),
                   fmt::ptr(f));
-    if(f)
-        api::from_c(self)->render_function(*api::from_c(f));
+    if(f) api::from_c(self)->render_function(*api::from_c(f));
 }
 
 bool surface_hasselection(const RDSurface* self) {
@@ -38,14 +37,11 @@ usize surface_getrow(const RDSurface* self, usize idx,
 
     const Surface* s = api::from_c(self);
 
-    if(idx >= s->rows.size())
-        return 0;
+    if(idx >= s->rows.size()) return 0;
 
-    if(row)
-        *row = s->rows[idx].cells.data();
+    if(row) *row = s->rows[idx].cells.data();
 
-    if(len)
-        *len = s->rows[idx].length;
+    if(len) *len = s->rows[idx].length;
 
     return s->rows[idx].cells.size();
 }
@@ -53,15 +49,13 @@ usize surface_getrow(const RDSurface* self, usize idx,
 void surface_getposition(const RDSurface* self, RDSurfacePosition* pos) {
     spdlog::trace("surface_getposition({}, {})", fmt::ptr(self), fmt::ptr(pos));
 
-    if(pos)
-        *pos = api::from_c(self)->position();
+    if(pos) *pos = api::from_c(self)->position();
 }
 
 bool surface_getindex(const RDSurface* self, MIndex* index) {
     spdlog::trace("surface_getindex({})", fmt::ptr(self));
     auto idx = api::from_c(self)->current_index();
-    if(*index)
-        *index = *idx;
+    if(*index) *index = *idx;
     return idx.has_value();
 }
 
@@ -87,8 +81,7 @@ usize surface_getpath(const RDSurface* self, const RDSurfacePath** path) {
     spdlog::trace("surface_getpath({}, {})", fmt::ptr(self), fmt::ptr(path));
     const Surface* s = api::from_c(self);
 
-    if(path)
-        *path = s->get_path().data();
+    if(path) *path = s->get_path().data();
 
     return s->get_path().size();
 }
@@ -96,8 +89,7 @@ usize surface_getpath(const RDSurface* self, const RDSurfacePath** path) {
 void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
     spdlog::trace("surface_getlocation({}, {})", fmt::ptr(self), fmt::ptr(loc));
 
-    if(!loc)
-        return;
+    if(!loc) return;
 
     Context* ctx = state::context;
     const Surface* s = api::from_c(self);
@@ -166,7 +158,7 @@ void surface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
         loc->listingindex.valid = false;
     }
 
-    loc->segment = seg ? seg->name.c_str() : nullptr;
+    loc->segment = seg ? seg->name : nullptr;
 }
 
 std::string_view surface_gettext(const RDSurface* self) {
@@ -185,14 +177,12 @@ bool surface_getaddressunderpos(const RDSurface* self,
     spdlog::trace("surface_getaddressunderpos({}, {}, {})", fmt::ptr(pos),
                   fmt::ptr(self), fmt::ptr(address));
 
-    if(!pos)
-        return false;
+    if(!pos) return false;
 
     auto addr = api::from_c(self)->index_under_pos(*pos).and_then(
         [](usize idx) { return state::context->index_to_address(idx); });
 
-    if(address && addr)
-        *address = *addr;
+    if(address && addr) *address = *addr;
 
     return addr.has_value();
 }
@@ -204,8 +194,7 @@ bool surface_getaddressundercursor(const RDSurface* self, RDAddress* address) {
     auto addr = api::from_c(self)->index_under_cursor().and_then(
         [](usize idx) { return state::context->index_to_address(idx); });
 
-    if(address && addr)
-        *address = *addr;
+    if(address && addr) *address = *addr;
 
     return addr.has_value();
 }

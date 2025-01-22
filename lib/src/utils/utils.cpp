@@ -37,6 +37,13 @@ void detect_base(std::string_view& sv, int* res) {
 
 } // namespace impl
 
+char* copy_str(std::string_view v) {
+    char* res = new char[v.size() + 1];
+    std::ranges::copy_n(v.begin(), v.size(), res);
+    res[v.size()] = 0;
+    return res;
+}
+
 std::string_view trim(std::string_view v) {
     int start = 0, end = v.size() - 1;
 

@@ -74,6 +74,9 @@ void Context::set_userdata(const std::string& k, uptr v) {
 Context::~Context() {
     pm::destroy_instance(this->processorplugin, this->processor);
     pm::destroy_instance(this->loaderplugin, this->loader);
+
+    for(const Segment& s : this->segments)
+        delete[] s.name;
 }
 
 tl::optional<uptr> Context::get_userdata(const std::string& k) const {
@@ -416,7 +419,7 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
     this->memory->at(idx).set(BF_SEGMENT);
 
     this->segments.emplace_back(Segment{
-        .name = name,
+        .name = utils::copy_str(name),
         .type = type,
         .index = idx,
         .endindex = endidx,

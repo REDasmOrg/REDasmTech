@@ -12,8 +12,8 @@ namespace processor {
 
 void render_segment(const RDProcessor*, RDRenderer* r,
                     const RDSegment* segment) {
-    std::string start = api::internal::to_hex(segment->address);
-    std::string end = api::internal::to_hex(segment->endaddress);
+    std::string start = api::internal::to_hex(segment->startaddr);
+    std::string end = api::internal::to_hex(segment->endaddr);
 
     std::string s = fmt::format("segment {} (start: {}, end: {})",
                                 segment->name, start, end);

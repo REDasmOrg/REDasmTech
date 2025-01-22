@@ -10,18 +10,18 @@ RDSegment to_c(const Segment& arg) {
     const Context* ctx = state::context;
 
     RDSegment s;
-    s.name = arg.name.c_str();
+    s.name = arg.name;
     s.type = arg.type;
-    s.offset = arg.offset;
-    s.endoffset = arg.endoffset;
+    s.startoff = arg.offset;
+    s.endoff = arg.endoffset;
 
     auto address = ctx->index_to_address(arg.index);
     assume(address.has_value());
-    s.address = *address;
+    s.startaddr = *address;
 
     address = ctx->index_to_address(arg.endindex);
     assume(address.has_value());
-    s.endaddress = *address;
+    s.endaddr = *address;
 
     return s;
 }

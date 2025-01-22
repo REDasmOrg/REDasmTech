@@ -27,7 +27,7 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
             assume(s);
             symbol->type = SYMBOL_SEGMENT;
             symbol->theme = THEME_SEGMENT;
-            symbol->value = s->name.c_str();
+            symbol->value = s->name;
             break;
         }
 
@@ -97,14 +97,12 @@ bool listing_getsymbol(usize idx, RDSymbol* symbol) {
     const Listing& listing = ctx->listing;
     const Listing::IndexList& symbols = listing.symbols();
 
-    if(idx >= symbols.size())
-        return false;
+    if(idx >= symbols.size()) return false;
 
     usize listingidx = symbols[idx];
     assume(listingidx < listing.size());
 
-    if(symbol)
-        listingindex_tosymbol(listingidx, symbol, value);
+    if(symbol) listingindex_tosymbol(listingidx, symbol, value);
 
     return true;
 }
@@ -113,12 +111,10 @@ tl::optional<LIndex> listing_getindex(RDAddress address) {
     spdlog::trace("listing_getindex({:x})", address);
 
     auto idx = state::context->address_to_index(address);
-    if(!idx)
-        return tl::nullopt;
+    if(!idx) return tl::nullopt;
 
     auto it = state::context->listing.lower_bound(*idx);
-    if(it == state::context->listing.end())
-        return tl::nullopt;
+    if(it == state::context->listing.end()) return tl::nullopt;
 
     return std::distance(state::context->listing.cbegin(), it);
 }
@@ -137,14 +133,12 @@ bool listing_getimport(usize idx, RDSymbol* symbol) {
     const Listing& listing = ctx->listing;
     const Listing::IndexList& imports = listing.imports();
 
-    if(idx >= imports.size())
-        return false;
+    if(idx >= imports.size()) return false;
 
     usize listingidx = imports[idx];
     assume(listingidx < listing.size());
 
-    if(symbol)
-        listingindex_tosymbol(listingidx, symbol, value);
+    if(symbol) listingindex_tosymbol(listingidx, symbol, value);
 
     return true;
 }
@@ -163,14 +157,12 @@ bool listing_getexport(usize idx, RDSymbol* symbol) {
     const Listing& listing = ctx->listing;
     const Listing::IndexList& exports = listing.exports();
 
-    if(idx >= exports.size())
-        return false;
+    if(idx >= exports.size()) return false;
 
     usize listingidx = exports[idx];
     assume(listingidx < listing.size());
 
-    if(symbol)
-        listingindex_tosymbol(listingidx, symbol, value);
+    if(symbol) listingindex_tosymbol(listingidx, symbol, value);
 
     return true;
 }

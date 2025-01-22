@@ -1,12 +1,11 @@
 #pragma once
 
 #include "types.h"
-#include <string>
 
 namespace redasm {
 
 struct Segment {
-    std::string name;
+    const char* name;
     usize type;
     MIndex index;
     MIndex endindex;

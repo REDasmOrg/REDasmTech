@@ -9,9 +9,7 @@ namespace redasm::api::internal {
 
 u32 emulator_getdslotinfo(const RDEmulator* self, const RDInstruction** dslot) {
     const Emulator* e = api::from_c(self);
-
     if(dslot && e->ndslot) *dslot = e->dslotinstr.get();
-
     return e->ndslot;
 }
 
