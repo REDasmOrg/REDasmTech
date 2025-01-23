@@ -295,18 +295,19 @@ PySequenceMethods file_sequence_methods = []() {
     PySequenceMethods seq{};
 
     seq.sq_length = [](PyObject*) -> Py_ssize_t {
-        if(!state::context->file) return 0;
+        if(!state::context->program.file) return 0;
 
-        return state::context->file->size();
+        return state::context->program.file->size();
     };
 
     seq.sq_item = [](PyObject*, Py_ssize_t idx) {
         auto uidx = static_cast<usize>(idx);
 
-        if(!state::context->file || uidx >= state::context->file->size())
+        if(!state::context->program.file ||
+           uidx >= state::context->program.file->size())
             return Py_None;
 
-        auto b = state::context->file->get_byte(uidx);
+        auto b = state::context->program.file->get_byte(uidx);
         if(b) return PyLong_FromSize_t(*b);
         return Py_None;
     };
@@ -387,18 +388,19 @@ PySequenceMethods memory_sequence_methods = []() {
     PySequenceMethods seq{};
 
     seq.sq_length = [](PyObject*) -> Py_ssize_t {
-        if(!state::context->memory) return 0;
+        if(!state::context->program.memory) return 0;
 
-        return state::context->memory->size();
+        return state::context->program.memory->size();
     };
 
     seq.sq_item = [](PyObject*, Py_ssize_t idx) {
         auto uidx = static_cast<usize>(idx);
 
-        if(!state::context->memory || uidx >= state::context->memory->size())
+        if(!state::context->program.memory ||
+           uidx >= state::context->program.memory->size())
             return Py_None;
 
-        Byte b = state::context->memory->at(uidx);
+        Byte b = state::context->program.memory->at(uidx);
         PyObject* pb = python::new_simplenamespace();
 
         // clang-format off

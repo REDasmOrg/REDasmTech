@@ -6,6 +6,7 @@
 #include "listing.h"
 #include "memory/abstractbuffer.h"
 #include "memory/memory.h"
+#include "memory/program.h"
 #include "segment.h"
 #include "typing/typing.h"
 #include "utils/object.h"
@@ -71,7 +72,7 @@ public:
     }
 
     RDAddress end_baseaddress() const {
-        return this->baseaddress + memory->size();
+        return this->baseaddress + this->program.memory->size();
     }
 
     void add_problem(MIndex idx, const std::string& s) {
@@ -91,9 +92,7 @@ public: // Plugins
     std::set<const RDAnalyzerPlugin*, AnalyzerSorter> selectedanalyzerplugins;
 
 public:
-    std::unique_ptr<Memory> memory;
-    std::shared_ptr<AbstractBuffer> file;
-    std::vector<Segment> segments;
+    Program program;
     std::vector<std::pair<usize, RDType>> collectedtypes;
     std::vector<std::pair<MIndex, std::string>> problems;
     std::vector<MIndex> entrypoints;

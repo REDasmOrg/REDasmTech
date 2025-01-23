@@ -39,6 +39,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/memory/memory.cpp
         src/memory/stream.cpp
         src/memory/stringfinder.cpp
+        src/memory/program.cpp
         src/database/database.cpp
         src/surface/surface.cpp
         src/surface/renderer.cpp

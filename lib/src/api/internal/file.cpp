@@ -7,7 +7,7 @@ namespace redasm::api::internal {
 
 usize file_size() {
     spdlog::trace("file_size()");
-    return state::context->file->size();
+    return state::context->program.file->size();
 }
 
 tl::optional<typing::Value> file_map_type(RDOffset offset,
@@ -18,7 +18,7 @@ tl::optional<typing::Value> file_map_type(RDOffset offset,
 
     usize sz = state::context->types.size_of(tname);
     state::context->memory_copy(offset, offset, offset + sz);
-    return state::context->file->get_type(offset, tname);
+    return state::context->program.file->get_type(offset, tname);
 }
 
 tl::optional<typing::Value> file_map_type_as(RDOffset offset,
@@ -28,7 +28,7 @@ tl::optional<typing::Value> file_map_type_as(RDOffset offset,
 
     usize sz = state::context->types.size_of(tname);
     state::context->memory_copy(offset, offset, offset + sz);
-    return state::context->file->get_type(offset, tname);
+    return state::context->program.file->get_type(offset, tname);
 }
 
 } // namespace redasm::api::internal

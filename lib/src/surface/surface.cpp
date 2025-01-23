@@ -130,7 +130,7 @@ tl::optional<usize> Surface::index_under_cursor() const {
 
 const Segment* Surface::current_segment() const {
     if(auto idx = this->current_index(); idx) {
-        for(const Segment& s : state::context->segments) {
+        for(const Segment& s : state::context->program.segments) {
             if(*idx >= s.index && *idx < s.endindex) return &s;
         }
     }
@@ -257,7 +257,7 @@ bool Surface::jump_to_ep() {
 const std::vector<RDSurfacePath>& Surface::get_path() const {
     const Context* ctx = state::context;
     const Listing& lst = ctx->listing;
-    const auto& mem = ctx->memory;
+    const auto& mem = ctx->program.memory;
 
     m_path.clear();
     m_done.clear();
@@ -283,7 +283,7 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
             }
         }
         else if(b.has(BF_JUMP)) {
-            const auto& mem = state::context->memory;
+            const auto& mem = state::context->program.memory;
 
             for(Database::Ref r :
                 ctx->get_refs_from_type(item.index, CR_JUMP)) {
@@ -547,7 +547,7 @@ void Surface::render_range(LIndex start, usize n) {
                 else
                     m_renderer->instr();
 
-                if(state::context->memory->at(it->index).has(BF_REFSFROM))
+                if(state::context->program.memory->at(it->index).has(BF_REFSFROM))
                     this->render_refs(*it);
 
                 this->render_comment(*it);
@@ -560,7 +560,7 @@ void Surface::render_range(LIndex start, usize n) {
                 else
                     this->render_type(*it);
 
-                if(state::context->memory->at(it->index).has(BF_REFSFROM))
+                if(state::context->program.memory->at(it->index).has(BF_REFSFROM))
                     this->render_refs(*it);
 
                 this->render_comment(*it);
@@ -574,7 +574,7 @@ void Surface::render_range(LIndex start, usize n) {
 void Surface::render_hexdump(const ListingItem& item) {
     static constexpr usize HEX_WIDTH = 16;
 
-    const auto& mem = state::context->memory;
+    const auto& mem = state::context->program.memory;
     usize c = 0;
     m_renderer->new_row(item);
 
@@ -611,7 +611,7 @@ void Surface::render_hexdump(const ListingItem& item) {
 
 void Surface::render_fill(const ListingItem& item) {
     const Context* ctx = state::context;
-    Byte b = ctx->memory->at(item.index);
+    Byte b = ctx->program.memory->at(item.index);
 
     m_renderer->new_row(item).chunk(".fill", THEME_FUNCTION).ws();
 
@@ -680,7 +680,7 @@ void Surface::render_type(const ListingItem& item) {
     assume(type);
     const Context* ctx = state::context;
     const typing::TypeDef* td = ctx->types.get_typedef(*type);
-    const auto& mem = ctx->memory;
+    const auto& mem = ctx->program.memory;
     std::string fname;
 
     if(item.field_index) {
@@ -761,9 +761,9 @@ void Surface::render_type(const ListingItem& item) {
             tl::optional<std::string> v;
 
             if(td->get_id() == typing::ids::WSTR)
-                v = state::context->memory->get_wstr(item.index);
+                v = state::context->program.memory->get_wstr(item.index);
             else
-                v = state::context->memory->get_str(item.index);
+                v = state::context->program.memory->get_str(item.index);
 
             if(v.has_value())
                 m_renderer->ws().string(*v).chunk(",").constant(0);
@@ -779,7 +779,7 @@ void Surface::render_type(const ListingItem& item) {
 void Surface::render_comment(const ListingItem& item) {
     if(m_renderer->has_flag(SURFACE_NOCOMMENTS)) return;
 
-    if(Byte b = state::context->memory->at(item.index); !b.has(BF_COMMENT))
+    if(Byte b = state::context->program.memory->at(item.index); !b.has(BF_COMMENT))
         return;
 
     m_renderer->ws(8);
@@ -796,7 +796,7 @@ void Surface::render_refs(const ListingItem& item) {
     if(m_renderer->has_flag(SURFACE_NOREFS)) return;
 
     const Context* ctx = state::context;
-    const auto& mem = ctx->memory;
+    const auto& mem = ctx->program.memory;
     bool paddingdone = false;
 
     for(const auto& [index, _] : ctx->get_refs_from(item.index)) {
@@ -869,7 +869,7 @@ void Surface::render_array(const ListingItem& item) {
 
     if(td->get_id() == typing::ids::CHAR ||
        td->get_id() == typing::ids::WCHAR) {
-        const auto& mem = state::context->memory;
+        const auto& mem = state::context->program.memory;
         usize idx = item.index;
 
         for(usize i = 0; i < type->n && idx < mem->size();

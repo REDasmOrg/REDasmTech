@@ -24,14 +24,14 @@ void Emulator::flow(MIndex index) {
 
     // Avoid inter-segment flow
     if(index >= fromseg->index && index < fromseg->endindex) {
-        state::context->memory->set(this->pc, BF_FLOW);
+        state::context->program.memory->set(this->pc, BF_FLOW);
 
         if(this->ndslot) { // Set delay flow too
             assume(this->dslotinstr->delayslots > 0);
 
             // D-Flow until last delay slot
             if(this->ndslot < this->dslotinstr->delayslots)
-                state::context->memory->set(this->pc, BF_DFLOW);
+                state::context->program.memory->set(this->pc, BF_DFLOW);
         }
 
         this->enqueue_flow(index);
@@ -134,12 +134,13 @@ u32 Emulator::tick() {
         return 0;
 
     Context* ctx = state::context;
-    auto& mem = ctx->memory;
+    auto& mem = ctx->program.memory;
 
     const RDProcessorPlugin* plugin = ctx->processorplugin;
     assume(plugin);
 
-    if(ctx->memory->at(idx).is_code()) return ctx->memory->get_length(idx);
+    if(ctx->program.memory->at(idx).is_code())
+        return ctx->program.memory->get_length(idx);
 
     this->pc = idx;
 
@@ -178,7 +179,7 @@ void Emulator::execute_delayslots(const RDInstruction& instr) {
     *this->dslotinstr = instr;
 
     Context* ctx = state::context;
-    auto& mem = ctx->memory;
+    auto& mem = ctx->program.memory;
 
     // Continue through delay slot(s)
     mem->set(this->pc, BF_DFLOW);
@@ -198,7 +199,8 @@ void Emulator::execute_delayslots(const RDInstruction& instr) {
 }
 
 bool Emulator::has_pending_code() const {
-    return state::context->memory && state::context->processorplugin->emulate &&
+    return state::context->program.memory &&
+           state::context->processorplugin->emulate &&
            (!m_qflow.empty() || !m_qjump.empty() || !m_qcall.empty());
 }
 

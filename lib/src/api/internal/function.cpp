@@ -58,7 +58,7 @@ bool function_isexport(const RDFunction* self) {
 
     if(state::context) {
         const Function* f = api::from_c(self);
-        return state::context->memory->at(f->index).has(BF_EXPORT);
+        return state::context->program.memory->at(f->index).has(BF_EXPORT);
     }
 
     return false;

@@ -137,7 +137,7 @@ usize Listing::push_item(RDListingItemType type, MIndex index) {
 }
 
 void Listing::check_flags(LIndex listingidx, MIndex index) {
-    Byte b = state::context->memory->at(index);
+    Byte b = state::context->program.memory->at(index);
 
     if(b.has(BF_IMPORT))
         m_imports.push_back(listingidx);

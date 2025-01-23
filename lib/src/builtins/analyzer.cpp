@@ -12,7 +12,7 @@ void do_autorename(RDAnalyzer*) {
     Context* ctx = state::context;
 
     for(const Function& f : ctx->functions) {
-        if(Byte b = ctx->memory->at(f.index); !b.has(BF_FLOW)) {
+        if(Byte b = ctx->program.memory->at(f.index); !b.has(BF_FLOW)) {
             if(b.has(BF_JUMP)) {
                 // Search for direct/indirect jumps
                 for(const Database::Ref& ref : ctx->get_refs_from(f.index)) {

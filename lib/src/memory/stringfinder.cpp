@@ -82,7 +82,7 @@ template<typename ToAsciiCallback>
 std::pair<bool, RDStringResult> categorize_as(usize idx, std::string_view tname,
                                               const ToAsciiCallback& cb) {
 
-    const auto& mem = state::context->memory;
+    const auto& mem = state::context->program.memory;
     g_tempstr.clear();
     char ch{};
 
@@ -117,7 +117,7 @@ std::pair<bool, RDStringResult> categorize_as(usize idx, std::string_view tname,
 } // namespace
 
 tl::optional<RDStringResult> classify(usize idx) {
-    const auto& mem = state::context->memory;
+    const auto& mem = state::context->program.memory;
 
     if(idx >= mem->size())
         return tl::nullopt;

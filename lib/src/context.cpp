@@ -60,7 +60,9 @@ constexpr std::array<char, 16> INTHEX_TABLE = {
 
 } // namespace
 
-Context::Context(const std::shared_ptr<AbstractBuffer>& b): file{b} {}
+Context::Context(const std::shared_ptr<AbstractBuffer>& b) {
+    this->program.file = b;
+}
 
 void Context::set_userdata(const std::string& k, uptr v) {
     if(k.empty()) {
@@ -74,9 +76,6 @@ void Context::set_userdata(const std::string& k, uptr v) {
 Context::~Context() {
     pm::destroy_instance(this->processorplugin, this->processor);
     pm::destroy_instance(this->loaderplugin, this->loader);
-
-    for(const Segment& s : this->segments)
-        delete[] s.name;
 }
 
 tl::optional<uptr> Context::get_userdata(const std::string& k) const {
@@ -86,12 +85,14 @@ tl::optional<uptr> Context::get_userdata(const std::string& k) const {
 bool Context::try_load(const RDLoaderPlugin* plugin) {
     assume(plugin);
 
-    m_database = std::make_unique<Database>(plugin->id, this->file->source);
+    m_database =
+        std::make_unique<Database>(plugin->id, this->program.file->source);
     this->loaderplugin = plugin;
     this->loader = pm::create_instance(plugin);
 
     if(this->loaderplugin->load &&
-       this->loaderplugin->load(this->loader, api::to_c(this->file.get()))) {
+       this->loaderplugin->load(this->loader,
+                                api::to_c(this->program.file.get()))) {
 
         // Select proposed processor
         if(this->loaderplugin->get_processor) {
@@ -130,9 +131,9 @@ void Context::setup(const RDProcessorPlugin* plugin) {
 bool Context::set_function(MIndex idx, usize flags) {
     if(const Segment* s = this->index_to_segment(idx); s) {
         if(s->type & SEG_HASCODE) {
-            this->memory->set(idx, BF_FUNCTION);
+            this->program.memory->set(idx, BF_FUNCTION);
 
-            if(!this->memory->at(idx).has(BF_CODE))
+            if(!this->program.memory->at(idx).has(BF_CODE))
                 this->worker.emulator.enqueue_call(idx);
 
             return true;
@@ -145,7 +146,7 @@ bool Context::set_function(MIndex idx, usize flags) {
 
 bool Context::set_entry(MIndex idx, const std::string& name) {
     if(const Segment* s = this->index_to_segment(idx); s) {
-        this->memory->set(idx, BF_EXPORT);
+        this->program.memory->set(idx, BF_EXPORT);
 
         if(s->type & SEG_HASCODE) assume(this->set_function(idx, 0));
 
@@ -159,7 +160,7 @@ bool Context::set_entry(MIndex idx, const std::string& name) {
 }
 
 void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
-    if(fromidx >= this->memory->size()) {
+    if(fromidx >= this->program.memory->size()) {
         this->add_problem(fromidx,
                           fmt::format("Invalid {} reference (from {:x})",
                                       get_refname(type),
@@ -167,7 +168,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         return;
     }
 
-    if(toidx >= this->memory->size()) {
+    if(toidx >= this->program.memory->size()) {
         this->add_problem(fromidx, fmt::format("Invalid {} reference (to {:x})",
                                                get_refname(type),
                                                this->baseaddress + toidx));
@@ -181,21 +182,21 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         case DR_WRITE:
         case DR_ADDRESS: {
             this->m_database->add_ref(fromidx, toidx, type);
-            this->memory->set(fromidx, BF_REFSFROM);
-            this->memory->set(toidx, BF_REFSTO);
+            this->program.memory->set(fromidx, BF_REFSFROM);
+            this->program.memory->set(toidx, BF_REFSTO);
             break;
         }
 
         case CR_JUMP: {
             if(s) {
                 this->m_database->add_ref(fromidx, toidx, type);
-                this->memory->set(fromidx, BF_REFSFROM);
-                this->memory->set(toidx, BF_JUMPDST | BF_REFSTO);
+                this->program.memory->set(fromidx, BF_REFSFROM);
+                this->program.memory->set(toidx, BF_JUMPDST | BF_REFSTO);
             }
 
             if(s && s->type & SEG_HASCODE) {
                 // Check if already decoded
-                if(!this->memory->at(toidx).is_code())
+                if(!this->program.memory->at(toidx).is_code())
                     this->worker.emulator.enqueue_jump(toidx);
             }
             else
@@ -206,13 +207,13 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
         case CR_CALL: {
             if(s) {
                 this->m_database->add_ref(fromidx, toidx, type);
-                this->memory->set(fromidx, BF_REFSFROM);
-                this->memory->set(toidx, BF_FUNCTION | BF_REFSTO);
+                this->program.memory->set(fromidx, BF_REFSFROM);
+                this->program.memory->set(toidx, BF_FUNCTION | BF_REFSTO);
             }
 
             if(s && s->type & SEG_HASCODE) {
                 // Check if already decoded
-                if(!this->memory->at(toidx).is_code())
+                if(!this->program.memory->at(toidx).is_code())
                     this->worker.emulator.enqueue_call(toidx);
             }
             else
@@ -225,15 +226,15 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
 }
 
 bool Context::set_comment(MIndex idx, std::string_view comment) {
-    if(idx >= this->memory->size()) return false;
+    if(idx >= this->program.memory->size()) return false;
 
     this->m_database->set_comment(idx, comment);
-    this->memory->at(idx).set_flag(BF_COMMENT, !comment.empty());
+    this->program.memory->at(idx).set_flag(BF_COMMENT, !comment.empty());
     return true;
 }
 
 bool Context::set_type(MIndex idx, typing::FullTypeName tname, usize flags) {
-    if(idx >= this->memory->size()) {
+    if(idx >= this->program.memory->size()) {
         spdlog::warn("set_type: Invalid address");
         return false;
     }
@@ -243,7 +244,7 @@ bool Context::set_type(MIndex idx, typing::FullTypeName tname, usize flags) {
 }
 
 bool Context::set_type(MIndex idx, RDType t, usize flags) {
-    if(idx >= this->memory->size()) {
+    if(idx >= this->program.memory->size()) {
         spdlog::warn("set_type: Invalid address");
         return false;
     }
@@ -256,9 +257,9 @@ bool Context::set_type(MIndex idx, RDType t, usize flags) {
         case typing::ids::WSTR: {
             tl::optional<std::string> s;
             if(t.id == typing::ids::WSTR)
-                s = this->memory->get_wstr(idx);
+                s = this->program.memory->get_wstr(idx);
             else
-                s = this->memory->get_str(idx);
+                s = this->program.memory->get_str(idx);
 
             if(!s) {
                 this->add_problem(idx, "string not found");
@@ -273,10 +274,10 @@ bool Context::set_type(MIndex idx, RDType t, usize flags) {
     }
 
     m_database->set_type(idx, t);
-    this->memory->unset_n(idx, len);
-    this->memory->set_n(idx, len, BF_DATA);
-    this->memory->set(idx, BF_TYPE);
-    this->memory->set_flags(idx, BF_WEAK, flags & ST_WEAK);
+    this->program.memory->unset_n(idx, len);
+    this->program.memory->set_n(idx, len, BF_DATA);
+    this->program.memory->set(idx, BF_TYPE);
+    this->program.memory->set_flags(idx, BF_WEAK, flags & ST_WEAK);
     return true;
 }
 
@@ -287,7 +288,7 @@ bool Context::memory_map(RDAddress base, usize size) {
     }
 
     this->baseaddress = base;
-    this->memory = std::make_unique<Memory>(size);
+    this->program.memory = std::make_unique<Memory>(size);
 
     // Create collected types
     for(const auto& [idx, t] : this->collectedtypes) {
@@ -311,19 +312,19 @@ tl::optional<MIndex> Context::address_to_index(RDAddress address) const {
     if(address < this->baseaddress) return tl::nullopt;
 
     usize idx = address - this->baseaddress;
-    if(idx >= this->memory->size()) return tl::nullopt;
+    if(idx >= this->program.memory->size()) return tl::nullopt;
 
     return idx;
 }
 
 tl::optional<RDAddress> Context::index_to_address(MIndex index) const {
-    if(index > this->memory->size()) return tl::nullopt;
+    if(index > this->program.memory->size()) return tl::nullopt;
     return this->baseaddress + index;
 }
 
 tl::optional<RDOffset> Context::index_to_offset(MIndex index) const {
-    if(index < this->memory->size()) {
-        for(const Segment& s : this->segments) {
+    if(index < this->program.memory->size()) {
+        for(const Segment& s : this->program.segments) {
             if(index >= s.index && index < s.endindex)
                 return (index - s.index) + s.offset;
         }
@@ -333,12 +334,12 @@ tl::optional<RDOffset> Context::index_to_offset(MIndex index) const {
 }
 
 const Segment* Context::index_to_segment(MIndex index) const {
-    if(index >= this->memory->size()) return nullptr;
+    if(index >= this->program.memory->size()) return nullptr;
 
     const Segment* ls = m_lastsegment;
     if(ls && (index >= ls->index && index < ls->endindex)) return ls;
 
-    for(const Segment& s : this->segments) {
+    for(const Segment& s : this->program.segments) {
         if(index >= s.index && index < s.endindex) {
             ls = &s;
             return ls;
@@ -349,7 +350,7 @@ const Segment* Context::index_to_segment(MIndex index) const {
 }
 
 const Function* Context::index_to_function(usize index) const {
-    if(index >= this->memory->size()) return nullptr;
+    if(index >= this->program.memory->size()) return nullptr;
 
     for(const Function& f : this->functions) {
         if(f.contains(index)) return &f;
@@ -359,22 +360,22 @@ const Function* Context::index_to_function(usize index) const {
 }
 
 bool Context::is_address(RDAddress address) const {
-    return this->memory &&
+    return this->program.memory &&
            (address >= this->baseaddress && address < this->end_baseaddress());
 }
 
 RDAddress Context::memory_copy(MIndex idx, RDOffset start, RDOffset end) const {
-    assume(start < this->file->size());
-    assume(end <= this->file->size());
+    assume(start < this->program.file->size());
+    assume(end <= this->program.file->size());
 
     RDOffset size = end - start;
     RDAddress endidx = idx + size;
-    assume(endidx <= this->memory->size());
+    assume(endidx <= this->program.memory->size());
 
     for(usize i = start; i < end; ++i, ++idx) {
-        auto b = this->file->get_byte(i);
+        auto b = this->program.file->get_byte(i);
         assume(b.has_value());
-        this->memory->at(idx).set_byte(*b);
+        this->program.memory->at(idx).set_byte(*b);
     }
 
     return this->baseaddress + endidx;
@@ -387,12 +388,12 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
         return;
     }
 
-    if(idx >= this->memory->size()) {
+    if(idx >= this->program.memory->size()) {
         spdlog::error("Start address out of range for segment '{}'", name);
         return;
     }
 
-    if(endidx > this->memory->size()) {
+    if(endidx > this->program.memory->size()) {
         spdlog::error("End address out of range for segment '{}'", name);
         return;
     }
@@ -403,12 +404,12 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
             return;
         }
 
-        if(offset >= this->file->size()) {
+        if(offset >= this->program.file->size()) {
             spdlog::error("Start offset out of range for segment '{}'", name);
             return;
         }
 
-        if(endoffset > this->file->size()) {
+        if(endoffset > this->program.file->size()) {
             spdlog::error("End offset out of range for segment '{}'", name);
             return;
         }
@@ -416,9 +417,9 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
         this->memory_copy(idx, offset, endoffset);
     }
 
-    this->memory->at(idx).set(BF_SEGMENT);
+    this->program.memory->at(idx).set(BF_SEGMENT);
 
-    this->segments.emplace_back(Segment{
+    this->program.segments.emplace_back(Segment{
         .name = utils::copy_str(name),
         .type = type,
         .index = idx,
@@ -435,23 +436,24 @@ tl::optional<MIndex> Context::get_index(std::string_view name) const {
 }
 
 tl::optional<RDType> Context::get_type(MIndex idx) const {
-    if(idx >= this->memory->size()) {
+    if(idx >= this->program.memory->size()) {
         spdlog::warn("get_type: Invalid address");
         return tl::nullopt;
     }
 
-    if(this->memory->at(idx).has(BF_TYPE)) return m_database->get_type(idx);
+    if(this->program.memory->at(idx).has(BF_TYPE))
+        return m_database->get_type(idx);
 
     return tl::nullopt;
 }
 
 std::string Context::get_name(MIndex idx) const {
-    if(idx >= this->memory->size()) {
+    if(idx >= this->program.memory->size()) {
         spdlog::warn("get_name: Invalid address");
         return {};
     }
 
-    Byte b = this->memory->at(idx);
+    Byte b = this->program.memory->at(idx);
     std::string name;
 
     if(b.has(BF_NAME)) name = m_database->get_name(idx);
@@ -479,7 +481,7 @@ std::string Context::get_name(MIndex idx) const {
 }
 
 bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
-    if(idx >= this->memory->size()) {
+    if(idx >= this->program.memory->size()) {
         if(!(flags & SN_NOWARN))
             this->add_problem(idx, "Cannot set name, address out of bounds");
 
@@ -489,7 +491,7 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
     std::string dbname = name;
 
     if(!name.empty()) {
-        if(this->memory->at(idx).has(BF_NAME)) {
+        if(this->program.memory->at(idx).has(BF_NAME)) {
             if(!(flags & SN_NOWARN)) {
                 auto addr = this->index_to_address(idx);
                 assume(addr);
@@ -520,7 +522,7 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
         }
     }
 
-    Byte& b = this->memory->at(idx);
+    Byte& b = this->program.memory->at(idx);
     b.set_flag(BF_NAME, !dbname.empty());
     b.set_flag(BF_IMPORT, flags & SN_IMPORT);
 
@@ -529,7 +531,8 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
 }
 
 std::string Context::get_comment(MIndex idx) const {
-    if(idx >= this->memory->size() || !this->memory->at(idx).has(BF_COMMENT))
+    if(idx >= this->program.memory->size() ||
+       !this->program.memory->at(idx).has(BF_COMMENT))
         return {};
 
     return m_database->get_comment(idx);
@@ -537,30 +540,32 @@ std::string Context::get_comment(MIndex idx) const {
 
 Database::RefList Context::get_refs_from_type(MIndex fromidx,
                                               usize type) const {
-    if(fromidx >= this->memory->size() ||
-       !this->memory->at(fromidx).has(BF_REFSFROM))
+    if(fromidx >= this->program.memory->size() ||
+       !this->program.memory->at(fromidx).has(BF_REFSFROM))
         return {};
 
     return m_database->get_refs_from_type(fromidx, type);
 }
 
 Database::RefList Context::get_refs_from(MIndex fromidx) const {
-    if(fromidx >= this->memory->size() ||
-       !this->memory->at(fromidx).has(BF_REFSFROM))
+    if(fromidx >= this->program.memory->size() ||
+       !this->program.memory->at(fromidx).has(BF_REFSFROM))
         return {};
 
     return m_database->get_refs_from(fromidx);
 }
 
 Database::RefList Context::get_refs_to_type(MIndex toidx, usize type) const {
-    if(toidx >= this->memory->size() || !this->memory->at(toidx).has(BF_REFSTO))
+    if(toidx >= this->program.memory->size() ||
+       !this->program.memory->at(toidx).has(BF_REFSTO))
         return {};
 
     return m_database->get_refs_to_type(toidx, type);
 }
 
 Database::RefList Context::get_refs_to(MIndex toidx) const {
-    if(toidx >= this->memory->size() || !this->memory->at(toidx).has(BF_REFSTO))
+    if(toidx >= this->program.memory->size() ||
+       !this->program.memory->at(toidx).has(BF_REFSTO))
         return {};
 
     return m_database->get_refs_to(toidx);

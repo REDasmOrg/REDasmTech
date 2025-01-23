@@ -24,9 +24,9 @@ Renderer::Renderer(usize f): flags{f} {}
 usize Renderer::current_address() const { return m_curraddress; }
 
 const Segment* Renderer::current_segment() const {
-    if(m_currsegment >= state::context->segments.size()) return nullptr;
+    if(m_currsegment >= state::context->program.segments.size()) return nullptr;
 
-    return &state::context->segments[m_currsegment];
+    return &state::context->program.segments[m_currsegment];
 }
 
 void Renderer::highlight_row(int row) {
@@ -183,7 +183,7 @@ Renderer& Renderer::addr(RDAddress address, int flags) {
 
     ctx->address_to_index(address)
         .and_then([&](MIndex idx) -> tl::optional<MIndex> {
-            if(ctx->memory->at(idx).has(BF_REFSTO)) {
+            if(ctx->program.memory->at(idx).has(BF_REFSTO)) {
                 if(flags == RC_NEEDSIGN) {
                     if(static_cast<i64>(address) < 0)
                         this->chunk("-");
@@ -371,14 +371,14 @@ Renderer& Renderer::chunk(std::string_view arg, RDThemeKind fg,
 }
 
 void Renderer::check_current_segment(const ListingItem& item) {
-    if(m_currsegment < state::context->segments.size()) {
-        const Segment& s = state::context->segments[m_currsegment];
+    if(m_currsegment < state::context->program.segments.size()) {
+        const Segment& s = state::context->program.segments[m_currsegment];
 
         if(item.index >= s.index && item.index < s.endindex) return;
     }
 
-    for(usize i = 0; i < state::context->segments.size(); i++) {
-        const Segment& s = state::context->segments[i];
+    for(usize i = 0; i < state::context->program.segments.size(); i++) {
+        const Segment& s = state::context->program.segments[i];
 
         if(item.index >= s.index && item.index < s.endindex) {
             m_currsegment = i;
@@ -386,7 +386,7 @@ void Renderer::check_current_segment(const ListingItem& item) {
         }
     }
 
-    m_currsegment = state::context->segments.size();
+    m_currsegment = state::context->program.segments.size();
 }
 
 std::string Renderer::word_at(const SurfaceRows& rows, int row, int col) {

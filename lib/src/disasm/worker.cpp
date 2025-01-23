@@ -87,13 +87,13 @@ void Worker::execute(usize step) {
 }
 
 void Worker::init_step() {
-    m_status->filepath = state::context->file->source.c_str();
-    m_status->filesize = state::context->file->size();
+    m_status->filepath = state::context->program.file->source.c_str();
+    m_status->filesize = state::context->program.file->size();
     m_status->loader = state::context->loaderplugin->name;
     m_status->processor = state::context->processorplugin->name;
     m_status->analysisstart = std::time(nullptr);
 
-    if(state::context->memory) {
+    if(state::context->program.memory) {
         mem::process_listing(); // Show pre-analysis listing
         m_status->listingchanged = true;
         m_currentstep++;

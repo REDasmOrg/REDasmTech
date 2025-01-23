@@ -322,7 +322,7 @@ usize get_memory(const RDByte** data) {
     spdlog::trace("get_memory({})", fmt::ptr(data));
 
     if(!state::context) return 0;
-    const auto& m = state::context->memory;
+    const auto& m = state::context->program.memory;
     if(!m) return 0;
 
     if(data) *data = api::to_c(m->data());
@@ -333,7 +333,7 @@ usize get_file(const u8** data) {
     spdlog::trace("get_file({})", fmt::ptr(data));
 
     if(!state::context) return 0;
-    const auto& f = state::context->file;
+    const auto& f = state::context->program.file;
     if(!f) return 0;
 
     // HACK: static_cast<> shouldn't be used
@@ -385,7 +385,7 @@ tl::optional<typing::Value> set_type_ex(RDAddress address, const RDType* t,
     if(t) {
         auto idx = state::context->address_to_index(address);
         if(idx && state::context->set_type(*idx, *t, flags))
-            return state::context->memory->get_type(*idx, *t);
+            return state::context->program.memory->get_type(*idx, *t);
     }
 
     return tl::nullopt;
@@ -397,7 +397,7 @@ set_typename_ex(RDAddress address, typing::FullTypeName tname, usize flags) {
 
     auto idx = state::context->address_to_index(address);
     if(idx && state::context->set_type(*idx, tname, flags))
-        return state::context->memory->get_type(*idx, tname);
+        return state::context->program.memory->get_type(*idx, tname);
     return tl::nullopt;
 }
 
@@ -413,7 +413,7 @@ tl::optional<typing::Value> map_type(RDAddress address,
 
     if(!state::context->set_type(*idx, tname, 0)) return tl::nullopt;
 
-    return state::context->memory->get_type(*idx, tname);
+    return state::context->program.memory->get_type(*idx, tname);
 }
 
 tl::optional<typing::Value> get_typename(RDAddress address,
@@ -422,7 +422,7 @@ tl::optional<typing::Value> get_typename(RDAddress address,
 
     if(auto idx = state::context->address_to_index(address); idx)
         return internal::buffer_gettypename(
-            api::to_c(state::context->memory.get()), *idx, tname);
+            api::to_c(state::context->program.memory.get()), *idx, tname);
 
     return tl::nullopt;
 }
@@ -431,7 +431,7 @@ tl::optional<typing::Value> get_type(RDAddress address, const RDType* t) {
     spdlog::trace("get_type({:x}, {})", address, fmt::ptr(t));
 
     if(auto idx = state::context->address_to_index(address); idx)
-        return internal::buffer_gettype(api::to_c(state::context->memory.get()),
+        return internal::buffer_gettype(api::to_c(state::context->program.memory.get()),
                                         *idx, t);
 
     return tl::nullopt;
@@ -450,7 +450,7 @@ tl::optional<typing::Value> map_type_ex(RDOffset offset, RDAddress address,
     state::context->memory_copy(*idx, offset, offset + sz);
 
     if(!state::context->set_type(*idx, *t, 0)) return tl::nullopt;
-    return state::context->file->get_type(*idx, *t);
+    return state::context->program.file->get_type(*idx, *t);
 }
 
 tl::optional<typing::Value> map_typename_ex(RDOffset offset, RDAddress address,
@@ -466,7 +466,7 @@ tl::optional<typing::Value> map_typename_ex(RDOffset offset, RDAddress address,
     state::context->memory_copy(*idx, offset, offset + sz);
 
     if(!state::context->set_type(*idx, tname, 0)) return tl::nullopt;
-    return state::context->file->get_type(*idx, tname);
+    return state::context->program.file->get_type(*idx, tname);
 }
 
 bool set_comment(RDAddress address, std::string_view comment) {
@@ -524,15 +524,15 @@ usize get_segments(const RDSegment** segments) {
 
     if(segments) {
         const Context* ctx = state::context;
-        res.resize(ctx->segments.size());
+        res.resize(ctx->program.segments.size());
 
-        for(usize i = 0; i < ctx->segments.size(); i++)
-            res[i] = api::to_c(ctx->segments[i]);
+        for(usize i = 0; i < ctx->program.segments.size(); i++)
+            res[i] = api::to_c(ctx->program.segments[i]);
 
         *segments = res.data();
     }
 
-    return state::context->segments.size();
+    return state::context->program.segments.size();
 }
 
 bool find_segment(RDAddress address, RDSegment* segment) {
@@ -543,7 +543,7 @@ bool find_segment(RDAddress address, RDSegment* segment) {
 
     const Context* ctx = state::context;
 
-    for(const Segment& s : ctx->segments) {
+    for(const Segment& s : ctx->program.segments) {
         if(s.index < *idx || *idx >= s.endoffset) continue;
 
         if(segment) *segment = api::to_c(s);
@@ -602,11 +602,11 @@ void add_problem(RDAddress address, const std::string& problem) {
 bool address_to_segment(RDAddress address, RDSegment* res) {
     spdlog::trace("address_to_segment({:x}, {})", address, fmt::ptr(res));
     usize idx = address - state::context->baseaddress;
-    if(idx >= state::context->memory->size()) return {};
+    if(idx >= state::context->program.memory->size()) return {};
 
     const Context* ctx = state::context;
 
-    return std::any_of(ctx->segments.begin(), ctx->segments.end(),
+    return std::any_of(ctx->program.segments.begin(), ctx->program.segments.end(),
                        [&](const Segment& s) {
                            if(idx >= s.index && idx < s.endindex) {
                                if(res) *res = api::to_c(s);
@@ -619,11 +619,11 @@ bool address_to_segment(RDAddress address, RDSegment* res) {
 
 bool offset_to_segment(RDOffset offset, RDSegment* res) {
     spdlog::trace("offset_to_segment({:x}, {})", offset, fmt::ptr(res));
-    if(offset >= state::context->file->size()) return {};
+    if(offset >= state::context->program.file->size()) return {};
 
     const Context* ctx = state::context;
 
-    return std::any_of(ctx->segments.begin(), ctx->segments.end(),
+    return std::any_of(ctx->program.segments.begin(), ctx->program.segments.end(),
                        [&](const Segment& s) {
                            if(offset >= s.offset && offset < s.endoffset) {
                                if(res) *res = api::to_c(s);
@@ -639,7 +639,7 @@ tl::optional<RDOffset> to_offset(RDAddress address) {
     if(!state::context) return tl::nullopt;
 
     usize idx = address - state::context->baseaddress;
-    if(idx < state::context->memory->size())
+    if(idx < state::context->program.memory->size())
         return state::context->index_to_offset(idx);
 
     return tl::nullopt;
@@ -649,11 +649,11 @@ tl::optional<RDAddress> to_address(RDOffset offset) {
     spdlog::trace("to_address({:x})", offset);
     if(!state::context) return tl::nullopt;
 
-    if(offset >= state::context->file->size()) return {};
+    if(offset >= state::context->program.file->size()) return {};
 
     RDAddress address = state::context->baseaddress + offset;
 
-    for(const Segment& s : state::context->segments) {
+    for(const Segment& s : state::context->program.segments) {
         if(offset >= s.offset && offset < s.endoffset) {
             address =
                 state::context->baseaddress + s.index + (offset - s.offset);

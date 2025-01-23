@@ -19,8 +19,8 @@ void process_hexdump(const Context* ctx, Listing& listing, MIndex& idx,
                      Function f) {
     usize l = 0, start = idx;
 
-    for(; idx < ctx->memory->size() && f(ctx->memory->at(idx)); l++, idx++) {
-        if(idx != start && ctx->memory->at(idx).has(BF_SEGMENT))
+    for(; idx < ctx->program.memory->size() && f(ctx->program.memory->at(idx)); l++, idx++) {
+        if(idx != start && ctx->program.memory->at(idx).has(BF_SEGMENT))
             break; // Split inter-segment unknowns
 
         if(l && !(l % 0x10)) {
@@ -85,7 +85,7 @@ LIndex process_listing_type(const Context* ctx, Listing& listing, MIndex& idx,
             case typing::ids::U64: idx += td->size; break;
 
             case typing::ids::WSTR:
-            case typing::ids::STR: idx += ctx->memory->get_length(idx); break;
+            case typing::ids::STR: idx += ctx->program.memory->get_length(idx); break;
 
             default: unreachable;
         }
@@ -123,7 +123,7 @@ void process_listing_array(const Context* ctx, Listing& listing, MIndex& idx,
 }
 
 void process_listing_data(const Context* ctx, Listing& listing, MIndex& idx) {
-    Byte b = ctx->memory->at(idx);
+    Byte b = ctx->program.memory->at(idx);
 
     if(b.has(BF_TYPE)) {
         auto type = ctx->get_type(idx);
@@ -135,7 +135,7 @@ void process_listing_data(const Context* ctx, Listing& listing, MIndex& idx) {
             mem::process_listing_type(ctx, listing, idx, *type);
     }
     else if(b.has(BF_FILL)) {
-        usize len = ctx->memory->get_length(idx);
+        usize len = ctx->program.memory->get_length(idx);
         if(len <= 1) except("Invalid length @ {:x} (FILL)", idx);
         listing.fill(idx, idx + len);
         idx += len;
@@ -147,7 +147,7 @@ void process_listing_data(const Context* ctx, Listing& listing, MIndex& idx) {
 }
 
 void process_unknown_data(Context* ctx, MIndex& idx) {
-    auto& mem = ctx->memory;
+    auto& mem = ctx->program.memory;
     usize startidx = idx++;
     Byte startb = mem->at(startidx);
     const Segment* startseg = ctx->index_to_segment(startidx);
@@ -183,7 +183,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
 
     spdlog::info("Creating function graph @ {}", ctx->to_hex(*address));
 
-    const auto& mem = ctx->memory;
+    const auto& mem = ctx->program.memory;
     Function& f = functions.emplace_back(idx);
     std::unordered_set<MIndex> done;
     std::deque<MIndex> pending;
@@ -271,7 +271,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
 
 void process_listing_code(const Context* ctx, Listing& listing,
                           FunctionList& functions, MIndex& idx) {
-    Byte b = ctx->memory->at(idx);
+    Byte b = ctx->program.memory->at(idx);
     assume(b.has(BF_CODE));
 
     if(b.has(BF_FUNCTION)) {
@@ -292,14 +292,14 @@ void process_listing_code(const Context* ctx, Listing& listing,
 
     listing.instruction(idx);
 
-    usize len = ctx->memory->get_length(idx);
+    usize len = ctx->program.memory->get_length(idx);
     if(!len) except("Invalid length @ {:x} (CODE)", idx);
     idx += len;
 }
 
 void process_refsto(Context* ctx, MIndex& idx) {
     auto is_range_unkn = [&](MIndex ridx, usize sz) {
-        return ctx->memory->range_is(ridx, sz,
+        return ctx->program.memory->range_is(ridx, sz,
                                      [](Byte b) { return b.is_unknown(); });
     };
 
@@ -348,9 +348,9 @@ void process_refsto(Context* ctx, MIndex& idx) {
 
 void merge_code(Emulator* e) {
     const Context* ctx = state::context;
-    const auto& mem = ctx->memory;
+    const auto& mem = ctx->program.memory;
 
-    for(const Segment& seg : ctx->segments) {
+    for(const Segment& seg : ctx->program.segments) {
         if(!(seg.type & SEG_HASCODE) || seg.offset == seg.endoffset) continue;
 
         usize idx = seg.index;
@@ -374,7 +374,7 @@ void merge_code(Emulator* e) {
 
 void process_memory() {
     Context* ctx = state::context;
-    auto& mem = ctx->memory;
+    auto& mem = ctx->program.memory;
     FunctionList f;
 
     for(usize idx = 0; idx < mem->size();) {
@@ -399,9 +399,9 @@ void process_listing() {
     Listing l;
     FunctionList f;
 
-    if(ctx->memory) {
-        for(usize idx = 0; idx < ctx->memory->size();) {
-            Byte b = ctx->memory->at(idx);
+    if(ctx->program.memory) {
+        for(usize idx = 0; idx < ctx->program.memory->size();) {
+            Byte b = ctx->program.memory->at(idx);
             if(b.has(BF_SEGMENT)) l.segment(idx);
 
             if(b.is_unknown()) {

@@ -378,7 +378,7 @@ void generate(const Function& f, ILExprList& res) {
 
 void generate(const Function& f, ILExprList& res, usize maxn) {
     const Context* ctx = state::context;
-    const auto& mem = state::context->memory;
+    const auto& mem = state::context->program.memory;
     const RDProcessorPlugin* p = ctx->processorplugin;
     assume(p);
 

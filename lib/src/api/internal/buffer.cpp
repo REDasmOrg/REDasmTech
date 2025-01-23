@@ -9,13 +9,13 @@ namespace redasm::api::internal {
 
 RDBuffer* buffer_getfile() {
     spdlog::trace("buffer_getfile()");
-    if(state::context) return api::to_c(state::context->file.get());
+    if(state::context) return api::to_c(state::context->program.file.get());
     return nullptr;
 }
 
 RDBuffer* buffer_getmemory() {
     spdlog::trace("buffer_getmemory()");
-    if(state::context) return api::to_c(state::context->memory.get());
+    if(state::context) return api::to_c(state::context->program.memory.get());
     return nullptr;
 }
 

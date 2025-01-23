@@ -14,7 +14,7 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
     assume(symbol);
 
     const Context* ctx = state::context;
-    const auto& mem = ctx->memory;
+    const auto& mem = ctx->program.memory;
     const Listing& listing = ctx->listing;
     const ListingItem& item = listing[listingidx];
 
