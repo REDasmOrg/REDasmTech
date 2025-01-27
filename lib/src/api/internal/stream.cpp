@@ -26,8 +26,8 @@ usize stream_getpos(const RDStream* self) {
     return api::from_c(self)->position;
 }
 
-tl::optional<typing::Value> stream_peek_type(const RDStream* self,
-                                             typing::FullTypeName tname) {
+tl::optional<RDValue> stream_peek_type(const RDStream* self,
+                                          typing::FullTypeName tname) {
     return api::from_c(self)->peek_type(tname);
 }
 
@@ -103,8 +103,8 @@ tl::optional<i64> stream_peek_i64be(const RDStream* self) {
     return api::from_c(self)->peek_i64(true);
 }
 
-tl::optional<typing::Value> stream_read_type(RDStream* self,
-                                             std::string_view tname) {
+tl::optional<RDValue> stream_read_type(RDStream* self,
+                                          std::string_view tname) {
     return api::from_c(self)->read_type(tname);
 }
 
@@ -180,14 +180,13 @@ tl::optional<i64> stream_read_i64be(RDStream* self) {
     return api::from_c(self)->read_i64(true);
 }
 
-tl::optional<typing::Value> stream_collect_type(RDStream* self,
-                                                std::string_view tname) {
+tl::optional<RDValue> stream_collect_type(RDStream* self,
+                                             std::string_view tname) {
     AbstractStream* obj = api::from_c(self);
     usize pos = obj->position;
     auto t = obj->read_type(tname);
 
-    if(t)
-        state::context->collectedtypes.emplace_back(pos, t->type);
+    if(t) state::context->collectedtypes.emplace_back(pos, t->type);
 
     return t;
 }

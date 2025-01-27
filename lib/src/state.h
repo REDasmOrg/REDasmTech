@@ -13,6 +13,7 @@ namespace state {
 
 using ContextList = std::vector<Context*>;
 
+inline bool initialized = false;
 inline RDInitParams params;
 inline Theme theme;
 inline ContextList contextlist;

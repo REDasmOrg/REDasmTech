@@ -28,6 +28,12 @@ setup_compiler(${PROJECT_NAME_LIB})
 
 target_sources(${PROJECT_NAME_LIB}
     PRIVATE
+        src/c/str.c
+        src/c/strv.c
+        src/c/vect.c
+        src/c/dict.c
+
+    PRIVATE
         src/utils/process/process_unix.cpp
         src/utils/process/process.cpp
         src/utils/hash.cpp
@@ -70,33 +76,19 @@ target_sources(${PROJECT_NAME_LIB}
         src/builtins/analyzer.cpp
 
     PRIVATE # Internal
-        src/api/marshal.cpp
-        src/api/internal/ui.cpp
-        src/api/internal/hash.cpp
-        src/api/internal/utils.cpp
-        src/api/internal/redasm.cpp
-        src/api/internal/byteorder.cpp
-        src/api/internal/rdil.cpp
-        src/api/internal/byte.cpp
-        src/api/internal/loader.cpp
-        src/api/internal/analyzer.cpp
-        src/api/internal/processor.cpp
-        src/api/internal/theme.cpp
         src/api/internal/typing.cpp
         src/api/internal/buffer.cpp
-        src/api/internal/file.cpp
         src/api/internal/memory.cpp
         src/api/internal/stream.cpp
-        src/api/internal/listing.cpp
         src/api/internal/surface.cpp
         src/api/internal/renderer.cpp
-        src/api/internal/graph.cpp
-        src/api/internal/function.cpp
 
     PRIVATE # C
+        src/api/marshal.cpp
         src/api/c/hash.cpp
         src/api/c/utils.cpp
         src/api/c/ui.cpp
+        src/api/c/plugin.cpp
         src/api/c/redasm.cpp
         src/api/c/byteorder.cpp
         src/api/c/buffer.cpp
@@ -114,19 +106,6 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/c/renderer.cpp
         src/api/c/graph.cpp
         src/api/c/rdil.cpp
-
-    PRIVATE # Python
-        src/api/python/utils.cpp
-        src/api/python/byteorder.cpp
-        src/api/python/rdil.cpp
-        src/api/python/buffer.cpp
-        src/api/python/stream.cpp
-        src/api/python/common.cpp
-        src/api/python/module.cpp
-        src/api/python/typing.cpp
-        src/api/python/analyzer.cpp
-        src/api/python/loader.cpp
-        src/api/python/redasm.cpp
 )
 
 target_include_directories(${PROJECT_NAME_LIB} PUBLIC "${PROJECT_SOURCE_DIR}/include")
@@ -139,7 +118,6 @@ target_link_libraries(${PROJECT_NAME_LIB}
         miniz
         sqlite3
         spdlog::spdlog_header_only
-        Python3::Python
 )
 
 add_library(${PROJECT_NAME}::lib ALIAS ${PROJECT_NAME_LIB})

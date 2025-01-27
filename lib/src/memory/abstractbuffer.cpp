@@ -22,16 +22,16 @@ usize AbstractBuffer::read(usize idx, void* dst, usize n) const {
     return i;
 }
 
-tl::optional<typing::Value>
+tl::optional<RDValue>
 AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* tdef) const {
-    typing::Value v;
+    RDValue v = rdvalue_create();
     v.type = tdef->to_type();
 
     if(tdef->is_struct()) {
         for(const auto& [t, n] : tdef->dict) {
             auto item = this->get_type_impl(pos, t);
             if(item)
-                v.dict[n] = *item;
+                dict_set(RDValueField, &v.dict, str_create(n.c_str()), *item);
             else
                 return tl::nullopt;
         }
@@ -161,7 +161,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* tdef) const {
 
             case typing::ids::STR: {
                 if(auto s = this->get_str(pos); s) {
-                    v.str = *s;
+                    v.str = str_create_n(s->c_str(), 0, s->size());
                     pos += s->size();
                 }
                 else
@@ -171,7 +171,7 @@ AbstractBuffer::get_type_impl(usize& pos, const typing::TypeDef* tdef) const {
 
             case typing::ids::WSTR: {
                 if(auto s = this->get_wstr(pos); s) {
-                    v.str = *s;
+                    v.str = str_create_n(s->c_str(), 0, s->size());
                     pos += s->size();
                 }
                 else
@@ -234,8 +234,8 @@ AbstractBuffer::get_str_impl(usize& idx, usize n,
     return s;
 }
 
-tl::optional<typing::Value> AbstractBuffer::get_type_impl(usize& idx,
-                                                          RDType t) const {
+tl::optional<RDValue> AbstractBuffer::get_type_impl(usize& idx,
+                                                    RDType t) const {
     const typing::TypeDef* td = nullptr;
     if(state::context)
         td = state::get_types().get_typedef(t);
@@ -244,13 +244,14 @@ tl::optional<typing::Value> AbstractBuffer::get_type_impl(usize& idx,
     assume(td);
 
     if(t.n > 0) {
-        typing::Value v;
+        RDValue v = rdvalue_create();
         v.type = t;
+        vect_reserve(&v.list, t.n);
 
         for(usize i = 0; i < t.n; i++) {
             auto item = this->get_type_impl(idx, td);
             if(item)
-                v.list.push_back(*item);
+                vect_append(RDValue, &v.list, *item);
             else
                 return tl::nullopt;
         }
@@ -261,56 +262,59 @@ tl::optional<typing::Value> AbstractBuffer::get_type_impl(usize& idx,
     return this->get_type_impl(idx, td);
 }
 
-tl::optional<typing::Value>
-AbstractBuffer::get_type(usize idx, typing::FullTypeName tn) const {
+tl::optional<RDValue> AbstractBuffer::get_type(usize idx,
+                                               typing::FullTypeName tn) const {
     typing::ParsedType pt = state::get_types().parse(tn);
     return this->get_type(idx, pt.to_type());
 }
 
 [[nodiscard]]
-tl::optional<typing::Value>
-AbstractBuffer::read_struct(usize idx, const typing::Struct& s) const {
-    typing::Value v;
+tl::optional<RDValue>
+AbstractBuffer::read_struct(usize idx, const RDStructField* fields) const {
+    if(!fields) return tl::nullopt;
 
-    for(const auto& [tname, name] : s) {
-        typing::ParsedType pt = state::get_types().parse(tname);
+    RDValue v = rdvalue_create();
+
+    while(fields->type && fields->name) {
+        typing::ParsedType pt = state::get_types().parse(fields->type);
 
         if(pt.n) {
-            typing::Value l;
+            RDValue l = rdvalue_create();
             l.type = pt.to_type();
-            l.list.reserve(pt.n);
+            vect_reserve(&l.list, pt.n);
 
             for(usize i = 0; i < pt.n; i++) {
                 auto val = this->get_type_impl(idx, pt.tdef);
                 if(!val) return tl::nullopt;
-                l.list.push_back(*val);
+                vect_append(RDValue, &l.list, *val);
             }
 
-            v.dict[name] = l;
+            dict_set(RDValueField, &v.dict, str_create(fields->name), l);
         }
         else {
             auto val = this->get_type_impl(idx, pt.tdef);
             if(!val) return tl::nullopt;
-            v.dict[name] = *val;
+            dict_set(RDValueField, &v.dict, str_create(fields->name), *val);
         }
+
+        fields++;
     }
 
     return v;
 }
 
-tl::optional<typing::Value> AbstractBuffer::get_type(usize idx,
-                                                     RDType t) const {
+tl::optional<RDValue> AbstractBuffer::get_type(usize idx, RDType t) const {
     return this->get_type_impl(idx, t);
 }
 
-[[nodiscard]] tl::optional<typing::Value>
+[[nodiscard]] tl::optional<RDValue>
 AbstractBuffer::get_type(usize idx, typing::FullTypeName tn,
                          usize& lastidx) const {
     typing::ParsedType pt = state::get_types().parse(tn);
     return this->get_type(idx, pt.to_type(), lastidx);
 }
 
-[[nodiscard]] tl::optional<typing::Value>
+[[nodiscard]] tl::optional<RDValue>
 AbstractBuffer::get_type(usize idx, RDType t, usize& lastidx) const {
     lastidx = idx;
     return this->get_type_impl(lastidx, t);

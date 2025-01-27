@@ -27,7 +27,7 @@ tl::optional<std::string> surface_checkaddr(T v, bool& isaddr) {
     return tl::nullopt;
 }
 
-std::string surface_valuestr(const typing::Value& v, bool& isaddr) {
+std::string surface_valuestr(const RDValue& v, bool& isaddr) {
     assume(!v.type.n);
 
     const Context* ctx = state::context;
@@ -547,7 +547,8 @@ void Surface::render_range(LIndex start, usize n) {
                 else
                     m_renderer->instr();
 
-                if(state::context->program.memory->at(it->index).has(BF_REFSFROM))
+                if(state::context->program.memory->at(it->index).has(
+                       BF_REFSFROM))
                     this->render_refs(*it);
 
                 this->render_comment(*it);
@@ -560,7 +561,8 @@ void Surface::render_range(LIndex start, usize n) {
                 else
                     this->render_type(*it);
 
-                if(state::context->program.memory->at(it->index).has(BF_REFSFROM))
+                if(state::context->program.memory->at(it->index).has(
+                       BF_REFSFROM))
                     this->render_refs(*it);
 
                 this->render_comment(*it);
@@ -746,11 +748,12 @@ void Surface::render_type(const ListingItem& item) {
         case typing::ids::I64BE:
         case typing::ids::U64BE: {
             mem->get_type(item.index, td->to_type())
-                .map([&](const typing::Value& v) {
+                .map([&](RDValue&& v) {
                     bool isaddr = false;
                     std::string vs = surface_valuestr(v, isaddr);
                     m_renderer->word("=").chunk(vs, isaddr ? THEME_ADDRESS
                                                            : THEME_CONSTANT);
+                    rdvalue_destroy(&v);
                 })
                 .or_else([&]() { m_renderer->word("=").unknown(); });
             break;
@@ -779,7 +782,8 @@ void Surface::render_type(const ListingItem& item) {
 void Surface::render_comment(const ListingItem& item) {
     if(m_renderer->has_flag(SURFACE_NOCOMMENTS)) return;
 
-    if(Byte b = state::context->program.memory->at(item.index); !b.has(BF_COMMENT))
+    if(Byte b = state::context->program.memory->at(item.index);
+       !b.has(BF_COMMENT))
         return;
 
     m_renderer->ws(8);

@@ -51,8 +51,7 @@ double entropy(std::string_view str) {
 }
 
 bool validate_string(std::string_view s) {
-    if(s.empty())
-        return false;
+    if(s.empty()) return false;
 
     auto match_delimiters = [](char open, char close, std::string_view str) {
         return str.size() > 2 && str.front() == open && str.back() == close;
@@ -72,15 +71,14 @@ bool validate_string(std::string_view s) {
     // Count letters and digits only
     // usize c = std::count_if(s.begin(), s.end(), ::isalnum);
 
-    if(s.size() >= STR_MINLENGTH)
-        return true;
+    if(s.size() >= STR_MINLENGTH) return true;
 
     return !stringfinder::is_gibberish(s);
 }
 
 template<typename ToAsciiCallback>
 std::pair<bool, RDStringResult> categorize_as(usize idx, std::string_view tname,
-                                              const ToAsciiCallback& cb) {
+                                              ToAsciiCallback cb) {
 
     const auto& mem = state::context->program.memory;
     g_tempstr.clear();
@@ -90,9 +88,10 @@ std::pair<bool, RDStringResult> categorize_as(usize idx, std::string_view tname,
 
     for(; idx < mem->size(); idx += sz) {
         auto v = mem->get_type(idx, tname);
-        if(!v || !cb(std::forward<typing::Value>(*v), ch))
-            break;
-
+        if(!v) break;
+        bool ok = cb(std::forward<RDValue>(v.value()), ch);
+        rdvalue_destroy(&v.value());
+        if(!ok) break;
         g_tempstr.push_back(ch);
     }
 
@@ -119,21 +118,18 @@ std::pair<bool, RDStringResult> categorize_as(usize idx, std::string_view tname,
 tl::optional<RDStringResult> classify(usize idx) {
     const auto& mem = state::context->program.memory;
 
-    if(idx >= mem->size())
-        return tl::nullopt;
+    if(idx >= mem->size()) return tl::nullopt;
 
-    if(usize r = mem->size() - idx; r < sizeof(u16))
-        return tl::nullopt;
+    if(usize r = mem->size() - idx; r < sizeof(u16)) return tl::nullopt;
 
     Byte b1 = mem->at(idx);
     Byte b2 = mem->at(idx + 1);
 
-    if(!b1.has_byte() || !b2.has_byte())
-        return tl::nullopt;
+    if(!b1.has_byte() || !b2.has_byte()) return tl::nullopt;
 
     if(stringfinder::is_ascii(b1.byte()) && !b2.byte()) {
         auto [ok, c] = stringfinder::categorize_as(
-            idx, "wchar", [](typing::Value&& v, char& outch) {
+            idx, "wchar", [](RDValue&& v, char& outch) {
                 outch = v.ch_v;
                 return stringfinder::is_ascii(v.ch_v);
             });
@@ -154,7 +150,7 @@ tl::optional<RDStringResult> classify(usize idx) {
     }
 
     auto [ok, c] = stringfinder::categorize_as(
-        idx, "char", [](typing::Value&& v, char& outch) {
+        idx, "char", [](RDValue&& v, char& outch) {
             outch = v.ch_v;
             return stringfinder::is_ascii(v.ch_v);
         });
@@ -194,8 +190,7 @@ bool is_gibberish(std::string_view s) {
         return true;
 
     // Step 3: Check structure (no spaces in a long string)
-    if(s.find(' ') == std::string_view::npos && s.size() > 10)
-        return true;
+    if(s.find(' ') == std::string_view::npos && s.size() > 10) return true;
 
     // If none of the conditions for gibberish are met, it's valid
     return false;

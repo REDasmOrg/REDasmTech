@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../typing/typing.h"
 #include "../utils/object.h"
 #include "../utils/utils.h"
 #include "abstractbuffer.h"
@@ -14,14 +13,14 @@ public:
     AbstractStream() = default;
     usize seek(usize o);
 
-    [[nodiscard]] tl::optional<typing::Value>
+    [[nodiscard]] tl::optional<RDValue>
     peek_type(typing::FullTypeName tname) const;
 
     [[nodiscard]] tl::optional<std::string> peek_str(usize n) const;
     [[nodiscard]] tl::optional<std::string> peek_str() const;
     [[nodiscard]] tl::optional<std::string> peek_wstr(usize n) const;
     [[nodiscard]] tl::optional<std::string> peek_wstr() const;
-    tl::optional<typing::Value> read_type(typing::FullTypeName tname);
+    tl::optional<RDValue> read_type(typing::FullTypeName tname);
     tl::optional<std::string> read_str(usize n);
     tl::optional<std::string> read_str();
     tl::optional<std::string> read_wstr(usize n);
@@ -57,8 +56,7 @@ public:
 
     template<typename T>
     tl::optional<T> peek(bool big = false) const {
-        if constexpr(std::is_same_v<T, bool>)
-            return this->peek_bool();
+        if constexpr(std::is_same_v<T, bool>) return this->peek_bool();
         if constexpr(std::is_same_v<T, char>)
             return this->peek_char();
         else if constexpr(std::is_same_v<T, u8>)
@@ -84,8 +82,7 @@ public:
     template<typename T>
     tl::optional<T> read(bool big = false) {
         auto v = this->peek<T>(big);
-        if(v)
-            this->position += sizeof(T);
+        if(v) this->position += sizeof(T);
         return v;
     }
 

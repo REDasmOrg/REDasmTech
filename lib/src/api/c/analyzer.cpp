@@ -1,24 +1,58 @@
-#include "../internal/analyzer.h"
-#include "../../plugins/origin.h"
+#include "../../context.h"
+#include "../../plugins/pluginmanager.h"
+#include "../../state.h"
 #include <redasm/analyzer.h>
+#include <spdlog/spdlog.h>
 
 bool rd_registeranalyzer(const RDAnalyzerPlugin* plugin) {
-    return redasm::api::internal::register_analyzer(plugin,
-                                                    redasm::pm::Origin::NATIVE);
+    spdlog::trace("rd_registeranalyzer({})", fmt::ptr(plugin));
+    return redasm::pm::register_analyzer(plugin, redasm::pm::NATIVE);
+}
+
+bool rd_registeranalyzer_ex(const RDAnalyzerPlugin* plugin,
+                            const char* origin) {
+    spdlog::trace("rd_registeranalyzer_ex({}, '{}')", fmt::ptr(plugin), origin);
+    return redasm::pm::register_analyzer(plugin, origin);
 }
 
 const RDAnalyzerPlugin** rd_getanalyzerplugins(usize* n) {
-    return redasm::api::internal::get_analyzerplugins(n);
+    spdlog::trace("rd_getanalyzerplugins({})", fmt::ptr(n));
+    return redasm::pm::get_analyzerplugins(n);
 }
 
 const RDAnalyzerPlugin** rd_getanalyzers(usize* n) {
-    return redasm::api::internal::get_analyzers(n);
+    spdlog::trace("rd_getanalyzers({})", fmt::ptr(n));
+
+    if(!redasm::state::context) {
+        if(n) *n = 0;
+        return nullptr;
+    }
+
+    if(n) *n = redasm::state::context->analyzerplugins.size();
+    return redasm::state::context->analyzerplugins.data();
 }
 
 bool rdanalyzerplugin_select(const RDAnalyzerPlugin* self, bool select) {
-    return redasm::api::internal::analyzerplugin_select(self, select);
+    spdlog::trace("rdanalyzerplugin_select({}, {})", fmt::ptr(self), select);
+
+    redasm::Context* ctx = redasm::state::context;
+    if(!ctx) return false;
+
+    return std::ranges::any_of(ctx->analyzerplugins,
+                               [&](const RDAnalyzerPlugin* x) {
+                                   if(x != self) return false;
+
+                                   if(select)
+                                       ctx->selectedanalyzerplugins.insert(x);
+                                   else
+                                       ctx->selectedanalyzerplugins.erase(x);
+
+                                   return true;
+                               });
 }
 
 bool rdanalyzerplugin_isselected(const RDAnalyzerPlugin* self) {
-    return redasm::api::internal::analyzerplugin_isselected(self);
+    spdlog::trace("rdanalyzerplugin_isselected({})", fmt::ptr(self));
+    return redasm::state::context &&
+           redasm::state::context->selectedanalyzerplugins.contains(self);
 }

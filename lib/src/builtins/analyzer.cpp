@@ -1,6 +1,6 @@
 #include "analyzer.h"
-#include "../api/internal/analyzer.h"
 #include "../context.h"
+#include "../plugins/pluginmanager.h"
 #include "../state.h"
 #include <redasm/analyzer.h>
 
@@ -49,7 +49,7 @@ RDAnalyzerPlugin autorename_analyzer = {
 } // namespace
 
 void register_analyzers() {
-    api::internal::register_analyzer(&autorename_analyzer, pm::Origin::NATIVE);
+    pm::register_analyzer(&autorename_analyzer, pm::NATIVE);
 }
 
 } // namespace redasm::builtins

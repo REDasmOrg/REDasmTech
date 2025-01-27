@@ -1,8 +1,11 @@
 #include "../internal/typing.h"
+#include "../../context.h"
+#include "../../error.h"
+#include "../../state.h"
 #include "../../typing/base.h"
 #include "../../utils/utils.h"
-#include "../marshal.h"
 #include <redasm/typing.h>
+#include <spdlog/spdlog.h>
 
 const u32 TID_BOOL = redasm::typing::ids::BOOL;
 const u32 TID_CHAR = redasm::typing::ids::CHAR;
@@ -54,75 +57,114 @@ const char* rd_typename(const RDType* t) {
         s.clear();
 
     if(!s.empty()) return s.c_str();
-
     return nullptr;
 }
 
 const char* rd_createstruct(const char* name, const RDStructField* fields) {
-    if(!name || !fields) return nullptr;
+    spdlog::trace("rd_createstruct('{}', {})", name, fmt::ptr(fields));
 
-    static std::string res;
-    redasm::typing::Struct body;
-
-    while(fields->name && fields->type) {
-        body.emplace_back(fields->type, fields->name);
-        fields++;
+    if(redasm::state::context) {
+        const redasm::typing::TypeDef* td =
+            redasm::state::context->types.declare(name, fields);
+        if(td) return td->name.c_str();
     }
 
-    res = redasm::api::internal::create_struct(name, body);
-    return res.c_str();
-}
-
-RDValue* rdvalue_create() {
-    return redasm::api::to_c(redasm::api::internal::create_value());
-}
-
-void rdvalue_destroy(RDValue* v) {}
-
-const RDType* rdvalue_gettype(const RDValue* self) {
-    if(self) return &redasm::api::from_c(self)->type;
     return nullptr;
 }
 
-const char* rdvalue_tostring(const RDValue* self) {
-    if(self) return redasm::api::from_c(self)->str.c_str();
-    return nullptr;
+RDValue rdvalue_create() {
+    spdlog::trace("rdvalue_create()");
+    RDValue self{};
+    self.list = vect_create(RDValue);
+    self.dict = dict_create(RDValueField);
+    self._scratchpad = str_create(nullptr);
+
+    vect_setdestroyitem(&self.list, [](void* item) {
+        rdvalue_destroy(reinterpret_cast<RDValue*>(item));
+    });
+
+    dict_sethash(&self.dict, [](const void* key, size_t) {
+        return str_hash(reinterpret_cast<const Str*>(key));
+    });
+
+    dict_setequals(&self.dict, [](const void* lhs, const void* rhs, size_t) {
+        const auto* s1 = reinterpret_cast<const Str*>(lhs);
+        const auto* s2 = reinterpret_cast<const Str*>(rhs);
+        return str_equals(s1, s2);
+    });
+
+    dict_setdestroykey(&self.dict, [](void* key) {
+        str_destroy(reinterpret_cast<Str*>(key));
+    });
+
+    dict_setdestroyvalue(&self.dict, [](void* value) {
+        rdvalue_destroy(reinterpret_cast<RDValue*>(value));
+    });
+
+    str_destroy(&self.str);
+    str_destroy(&self._scratchpad);
+    return self;
+}
+
+void rdvalue_destroy(RDValue* self) {
+    spdlog::trace("rdvalue_destroy({})", fmt::ptr(self));
+    if(!self) return;
+
+    vect_destroy(&self->list);
+    dict_destroy(&self->dict);
+    str_destroy(&self->str);
+    str_destroy(&self->_scratchpad);
+}
+
+const char* rdvalue_tostring(RDValue* self) {
+    spdlog::trace("rdvalue_tostring({})", fmt::ptr(self));
+
+    if(rdvalue_islist(self)) {
+        str_resize(&self->_scratchpad, vect_getlength(&self->list));
+
+        for(usize i = 0; i < vect_getlength(&self->list); i++) {
+            *str_ref(&self->_scratchpad, i) =
+                vect_at(RDValue, &self->list, i)->ch_v;
+        }
+
+        return str_ptr(&self->_scratchpad);
+    }
+
+    return str_ptr(&self->str);
+}
+
+bool rdvalue_islist(const RDValue* self) {
+    spdlog::trace("rdvalue_islist({})", fmt::ptr(self));
+    return self && self->type.n && !vect_isempty(&self->list);
+}
+
+bool rdvalue_isstruct(const RDValue* self) {
+    spdlog::trace("rdvalue_isstruct({})", fmt::ptr(self));
+    return self && !dict_isempty(&self->dict);
 }
 
 usize rdvalue_getlength(const RDValue* self) {
+    spdlog::trace("rdvalue_getlength({})", fmt::ptr(self));
     if(!self) return 0;
 
-    const redasm::typing::Value* v = redasm::api::from_c(self);
+    if(rdvalue_islist(self)) return vect_getlength(&self->list);
+    if(rdvalue_isstruct(self)) return dict_getlength(&self->dict);
 
-    if(v->is_list()) return v->list.size();
-    if(v->is_struct()) return v->dict.size();
-
-    if(v->type.id == redasm::typing::ids::STR ||
-       v->type.id == redasm::typing::ids::WSTR)
-        return v->str.size();
+    if(self->type.id == redasm::typing::ids::STR ||
+       self->type.id == redasm::typing::ids::WSTR)
+        return str_getlength(&self->str);
 
     except("Cannot get value-length of type '{}'",
-           redasm::api::internal::type_name(v->type));
+           redasm::api::internal::type_name(self->type));
 }
 
-const RDValue* rdvalue_at(const RDValue* self, usize idx) {
-    if(!self) return nullptr;
-
-    const redasm::typing::Value* val = redasm::api::from_c(self);
-
-    if(val->is_list() && idx < val->list.size())
-        return redasm::api::to_c(&val->list[idx]);
-
-    return nullptr;
-}
-
-const RDValue* rdvalue_get(const RDValue* self, const char* q,
-                           const char** error) {
-    return rdvalue_get_n(self, q, q ? std::strlen(q) : 0, error);
-}
-
-const RDValue* rdvalue_get_n(const RDValue* self, const char* q, usize n,
+const RDValue* rdvalue_query(const RDValue* self, const char* q,
                              const char** error) {
+    return rdvalue_query_n(self, q, q ? std::strlen(q) : 0, error);
+}
+
+const RDValue* rdvalue_query_n(const RDValue* self, const char* q, usize n,
+                               const char** error) {
     auto set_error = [&](const char* msg) {
         if(error) *error = msg;
         return false;
@@ -138,31 +180,32 @@ const RDValue* rdvalue_get_n(const RDValue* self, const char* q, usize n,
 
     if(*q == '.' && *(q + 1) == '\0') return self;
 
-    const redasm::typing::Value* curr = redasm::api::from_c(self);
+    const RDValue* curr = self;
     const char *kstart = q, *endq = q + n;
     bool inindex = false;
 
     auto traverse_key = [&](std::string_view key) -> bool {
-        if(!curr->is_struct())
+        if(!rdvalue_isstruct(curr))
             return set_error("Attempted key lookup on non-struct value");
-        if(auto it = curr->dict.find(key); it != curr->dict.end()) {
-            curr = &it->second;
+        if(const auto* f = dict_getstr(RDValueField, &curr->dict, key.data());
+           f) {
+            curr = &f->value;
             return true;
         }
         return set_error("Key not found.");
     };
 
     auto traverse_index = [&](usize index) -> bool {
-        if(!curr->is_list() || index >= curr->list.size())
+        if(!rdvalue_islist(curr) || index >= vect_getlength(&curr->list))
             return set_error("Index out of bounds");
 
-        curr = &curr->list[index];
+        curr = vect_at(RDValue, &curr->list, index);
         return true;
     };
 
     while(q <= endq) {
         if(*q == '.' || *q == '[' || q == endq) {
-            if(!curr->is_list()) {
+            if(!rdvalue_islist(curr)) {
                 usize klen = q - kstart;
                 if(!klen) {
                     set_error("Invalid key: empty segment detected");
@@ -205,126 +248,5 @@ const RDValue* rdvalue_get_n(const RDValue* self, const char* q, usize n,
         return nullptr;
     }
 
-    return redasm::api::to_c(curr);
-}
-
-u8 rdvalue_getu8(const RDValue* self, const char* q, bool* ok) {
-    const char* error = nullptr;
-    const RDValue* res = nullptr;
-
-    if(self) res = rdvalue_get(self, q, &error);
-    if(ok) *ok = self && res;
-
-    if(res) return redasm::api::from_c(res)->u16_v;
-    if(error) spdlog::error("rdvalue_getu8: {} ({})", error, q);
-    return {};
-}
-
-u16 rdvalue_getu16(const RDValue* self, const char* q, bool* ok) {
-    const char* error = nullptr;
-    const RDValue* res = nullptr;
-
-    if(self) res = rdvalue_get(self, q, &error);
-    if(ok) *ok = self && res;
-
-    if(res) return redasm::api::from_c(res)->u16_v;
-    if(error) spdlog::error("rdvalue_getu16: {} ({})", error, q);
-    return {};
-}
-
-u32 rdvalue_getu32(const RDValue* self, const char* q, bool* ok) {
-    const char* error = nullptr;
-    const RDValue* res = nullptr;
-
-    if(self) res = rdvalue_get(self, q, &error);
-    if(ok) *ok = self && res;
-
-    if(res) return redasm::api::from_c(res)->u32_v;
-    if(error) spdlog::error("rdvalue_getu32: {} ({})", error, q);
-    return {};
-}
-
-u64 rdvalue_getu64(const RDValue* self, const char* q, bool* ok) {
-    const char* error = nullptr;
-    const RDValue* res = nullptr;
-
-    if(self) res = rdvalue_get(self, q, &error);
-    if(ok) *ok = self && res;
-
-    if(res) return redasm::api::from_c(res)->u64_v;
-    if(error) spdlog::error("rdvalue_getu64: {} ({})", error, q);
-    return {};
-}
-
-i8 rdvalue_geti8(const RDValue* self, const char* q, bool* ok) {
-    const char* error = nullptr;
-    const RDValue* res = nullptr;
-
-    if(self) res = rdvalue_get(self, q, &error);
-    if(ok) *ok = self && res;
-
-    if(res) return redasm::api::from_c(res)->i8_v;
-    if(error) spdlog::error("rdvalue_geti8: {} ({})", error, q);
-    return {};
-}
-
-i16 rdvalue_geti16(const RDValue* self, const char* q, bool* ok) {
-    const char* error = nullptr;
-    const RDValue* res = nullptr;
-
-    if(self) res = rdvalue_get(self, q, &error);
-    if(ok) *ok = self && res;
-
-    if(res) return redasm::api::from_c(res)->i16_v;
-    if(error) spdlog::error("rdvalue_geti16: {} ({})", error, q);
-    return {};
-}
-
-i32 rdvalue_geti32(const RDValue* self, const char* q, bool* ok) {
-    const char* error = nullptr;
-    const RDValue* res = nullptr;
-
-    if(self) res = rdvalue_get(self, q, &error);
-    if(ok) *ok = self && res;
-
-    if(res) return redasm::api::from_c(res)->i32_v;
-    if(error) spdlog::error("rdvalue_geti32: {} ({})", error, q);
-    return {};
-}
-
-i64 rdvalue_geti64(const RDValue* self, const char* q, bool* ok) {
-    const char* error = nullptr;
-    const RDValue* res = nullptr;
-
-    if(self) res = rdvalue_get(self, q, &error);
-    if(ok) *ok = self && res;
-
-    if(res) return redasm::api::from_c(res)->i64_v;
-    if(error) spdlog::error("rdvalue_geti64: {} ({})", error, q);
-    return {};
-}
-
-const char* rdvalue_getstr(const RDValue* self, const char* q, bool* ok) {
-    const char* error = nullptr;
-    const RDValue* res = nullptr;
-
-    if(self) res = rdvalue_get(self, q, &error);
-    if(ok) *ok = self && res;
-
-    if(res) {
-        const redasm::typing::Value* r = redasm::api::from_c(res);
-
-        if(r->is_list()) { // Try to build a string for char array
-            r->scratchpad.resize(r->list.size() + 1);
-            for(usize i = 0; i < r->list.size(); i++)
-                r->scratchpad[i] = r->list[i].ch_v;
-            r->scratchpad.back() = '\0';
-
-            return r->scratchpad.data();
-        }
-        if(res) return r->str.c_str();
-    }
-
-    if(error) spdlog::error("rdvalue_getstr: {} ({})", error, q);
-    return nullptr;
+    return curr;
 }

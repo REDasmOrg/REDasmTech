@@ -1,19 +1,20 @@
 #pragma once
 
 #include "expression.h"
+#include <redasm/rdil.h>
 #include <vector>
 
 namespace redasm::rdil {
 
 class ILExprList: public ILExprPool {
 public:
-    using Container = std::vector<std::pair<MIndex, const ILExpr*>>;
+    using Container = std::vector<std::pair<MIndex, const RDILExpr*>>;
 
 public:
-    void append(const ILExpr* e);
-    const ILExpr* first() const;
-    const ILExpr* last() const;
-    const ILExpr* at(usize idx) const;
+    void append(const RDILExpr* e);
+    const RDILExpr* first() const;
+    const RDILExpr* last() const;
+    const RDILExpr* at(usize idx) const;
     bool empty() const { return m_expressions.empty(); }
     usize size() const { return m_expressions.size(); }
     void clear() { m_expressions.clear(); }

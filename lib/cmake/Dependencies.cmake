@@ -2,7 +2,6 @@ include(cmake/CPM.cmake)
 include(cmake/CPM_SQLite3.cmake)
 
 find_package(Threads REQUIRED)
-find_package(Python3 COMPONENTS Development)
 
 if(PROJECT_IS_TOP_LEVEL)
     include(CTest)

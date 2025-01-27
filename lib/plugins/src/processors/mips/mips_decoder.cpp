@@ -167,8 +167,8 @@ bool has_delayslot(usize id) {
 
 bool decode(RDAddress address, MIPSDecodedInstruction& dec, bool big,
             bool one) {
-    bool ok = false;
-    dec.instr.word = big ? rd_getu32be(address, &ok) : rd_getu32(address, &ok);
+    bool ok = big ? rd_getu32be(address, &dec.instr.word)
+                  : rd_getu32(address, &dec.instr.word);
 
     if(ok) {
         ok = mips_decoder::check_encoding(dec);

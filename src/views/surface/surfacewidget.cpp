@@ -46,8 +46,7 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
             switch(action) {
                 case QScrollBar::SliderSingleStepAdd: {
                     MIndex idx;
-                    if(!this->get_surface_index(&idx))
-                        return;
+                    if(!this->get_surface_index(&idx)) return;
 
                     if(idx < this->get_listing_length()) {
                         rdsurface_clearselection(m_surface);
@@ -59,8 +58,7 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
 
                 case QScrollBar::SliderSingleStepSub: {
                     MIndex idx;
-                    if(!this->get_surface_index(&idx))
-                        return;
+                    if(!this->get_surface_index(&idx)) return;
 
                     if(idx > 0) {
                         rdsurface_clearselection(m_surface);
@@ -88,7 +86,7 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
 }
 
 SurfaceWidget::~SurfaceWidget() {
-    rd_free(m_surface);
+    rd_destroy(m_surface);
     m_surface = nullptr;
 }
 
@@ -100,14 +98,12 @@ void SurfaceWidget::set_rdil(bool v) const {
 }
 
 void SurfaceWidget::set_location(const RDSurfaceLocation& loc) {
-    if(loc.address.valid)
-        this->jump_to(loc.address.value);
+    if(loc.address.valid) this->jump_to(loc.address.value);
 }
 
 bool SurfaceWidget::go_back() {
     if(rdsurface_goback(m_surface)) {
-        if(!this->sync_location())
-            this->viewport()->update();
+        if(!this->sync_location()) this->viewport()->update();
         Q_EMIT history_updated();
         return true;
     }
@@ -116,8 +112,7 @@ bool SurfaceWidget::go_back() {
 }
 bool SurfaceWidget::go_forward() {
     if(rdsurface_goforward(m_surface)) {
-        if(!this->sync_location())
-            this->viewport()->update();
+        if(!this->sync_location()) this->viewport()->update();
         Q_EMIT history_updated();
         return true;
     }
@@ -142,8 +137,7 @@ void SurfaceWidget::jump_to(RDAddress address) {
         else {
             const usize DIFF = (this->visible_rows() / 4);
             usize relidx = index;
-            if(relidx > DIFF)
-                relidx -= DIFF;
+            if(relidx > DIFF) relidx -= DIFF;
 
             rdsurface_setposition(m_surface, index - relidx, -1);
             this->verticalScrollBar()->setValue(relidx);
@@ -307,8 +301,7 @@ int SurfaceWidget::visible_rows() const {
 qreal SurfaceWidget::row_height() const {
     QTextBlock b = m_document.findBlockByLineNumber(0);
 
-    if(b.isValid())
-        return b.layout()->boundingRect().height();
+    if(b.isValid()) return b.layout()->boundingRect().height();
 
     return utils::cell_height();
 }
@@ -317,8 +310,7 @@ RDSurfacePosition SurfaceWidget::get_surface_coords(QPointF pt) const {
     auto* layout = m_document.documentLayout();
     int pos = layout->hitTest(pt, Qt::FuzzyHit);
 
-    if(pos == -1)
-        qFatal("Invalid position");
+    if(pos == -1) qFatal("Invalid position");
 
     QTextCursor c(const_cast<QTextDocument*>(&m_document));
     c.setPosition(pos);
@@ -391,8 +383,7 @@ bool SurfaceWidget::sync_location() {
 }
 
 void SurfaceWidget::show_popup(const QPoint& pt) {
-    if(!m_surface)
-        return;
+    if(!m_surface) return;
 
     RDSurfacePosition pos = this->get_surface_coords(pt);
     RDAddress address;

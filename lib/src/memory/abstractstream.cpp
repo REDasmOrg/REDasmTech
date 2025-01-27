@@ -10,24 +10,21 @@ usize AbstractStream::seek(usize o) {
 
 usize AbstractStream::index_base() const { return 0; }
 
-tl::optional<typing::Value>
+tl::optional<RDValue>
 AbstractStream::peek_type(typing::FullTypeName tname) const {
     usize idx = this->index_base() + this->position;
     return this->buffer().get_type(idx, tname);
 }
 
-tl::optional<typing::Value>
-AbstractStream::read_type(typing::FullTypeName tname) {
+tl::optional<RDValue> AbstractStream::read_type(typing::FullTypeName tname) {
     usize pos = this->index_base() + this->position;
     auto v = this->buffer().get_type(pos, tname, pos);
-    if(v)
-        this->position = pos;
+    if(v) this->position = pos;
     return v;
 }
 
 tl::optional<std::string> AbstractStream::peek_str(usize n) const {
-    if(this->position + n >= this->size())
-        n = this->size() - this->position;
+    if(this->position + n >= this->size()) n = this->size() - this->position;
 
     return this->buffer().get_str(this->index_base() + this->position, n);
 }
@@ -37,8 +34,7 @@ tl::optional<std::string> AbstractStream::peek_str() const {
 }
 
 tl::optional<std::string> AbstractStream::peek_wstr(usize n) const {
-    if(this->position + n >= this->size())
-        n = this->size() - this->position;
+    if(this->position + n >= this->size()) n = this->size() - this->position;
 
     return this->buffer().get_wstr(this->index_base() + this->position, n);
 }
@@ -49,29 +45,25 @@ tl::optional<std::string> AbstractStream::peek_wstr() const {
 
 tl::optional<std::string> AbstractStream::read_str(usize n) {
     auto s = this->peek_str(n);
-    if(s)
-        this->position += s->size();
+    if(s) this->position += s->size();
     return s;
 }
 
 tl::optional<std::string> AbstractStream::read_str() {
     auto s = this->peek_str();
-    if(s)
-        this->position += s->size();
+    if(s) this->position += s->size();
     return s;
 }
 
 tl::optional<std::string> AbstractStream::read_wstr(usize n) {
     auto s = this->peek_wstr(n);
-    if(s)
-        this->position += s->size();
+    if(s) this->position += s->size();
     return s;
 }
 
 tl::optional<std::string> AbstractStream::read_wstr() {
     auto s = this->peek_wstr();
-    if(s)
-        this->position += s->size();
+    if(s) this->position += s->size();
     return s;
 }
 
@@ -117,71 +109,61 @@ tl::optional<i64> AbstractStream::peek_i64(bool big) const {
 
 tl::optional<bool> AbstractStream::read_bool() {
     auto v = this->peek_bool();
-    if(v)
-        this->position += sizeof(bool);
+    if(v) this->position += sizeof(bool);
     return v;
 }
 
 tl::optional<char> AbstractStream::read_char() {
     auto v = this->peek_char();
-    if(v)
-        this->position += sizeof(char);
+    if(v) this->position += sizeof(char);
     return v;
 }
 
 tl::optional<u8> AbstractStream::read_u8() {
     auto v = this->peek_u8();
-    if(v)
-        this->position += sizeof(u8);
+    if(v) this->position += sizeof(u8);
     return v;
 }
 
 tl::optional<u16> AbstractStream::read_u16(bool big) {
     auto v = this->peek_u16(big);
-    if(v)
-        this->position += sizeof(u16);
+    if(v) this->position += sizeof(u16);
     return v;
 }
 
 tl::optional<u32> AbstractStream::read_u32(bool big) {
     auto v = this->peek_u32(big);
-    if(v)
-        this->position += sizeof(u32);
+    if(v) this->position += sizeof(u32);
     return v;
 }
 
 tl::optional<u64> AbstractStream::read_u64(bool big) {
     auto v = this->peek_u64(big);
-    if(v)
-        this->position += sizeof(u64);
+    if(v) this->position += sizeof(u64);
     return v;
 }
 
 tl::optional<i8> AbstractStream::read_i8() {
     auto v = this->peek_i8();
-    if(v)
-        this->position += sizeof(i8);
+    if(v) this->position += sizeof(i8);
     return v;
 }
 
 tl::optional<i16> AbstractStream::read_i16(bool big) {
     auto v = this->peek_i16(big);
-    if(v)
-        this->position += sizeof(i16);
+    if(v) this->position += sizeof(i16);
     return v;
 }
 
 tl::optional<i32> AbstractStream::read_i32(bool big) {
     auto v = this->peek_i32(big);
-    if(v)
-        this->position += sizeof(i32);
+    if(v) this->position += sizeof(i32);
     return v;
 }
 
 tl::optional<i64> AbstractStream::read_i64(bool big) {
     auto v = this->peek_i64(big);
-    if(v)
-        this->position += sizeof(i64);
+    if(v) this->position += sizeof(i64);
     return v;
 }
 

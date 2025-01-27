@@ -20,7 +20,7 @@ ContextView::ContextView(QWidget* parent): QWidget{parent}, m_ui{this} {
             [&]() { m_active = !m_active; });
 }
 
-ContextView::~ContextView() { rd_destroy(); }
+ContextView::~ContextView() { rdcontext_destroy(); }
 
 void ContextView::tick(const RDWorkerStatus* s) {
     if(s->listingchanged) {

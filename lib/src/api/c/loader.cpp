@@ -1,17 +1,31 @@
-#include "../internal/loader.h"
-#include "../../plugins/origin.h"
+#include "../../context.h"
+#include "../../plugins/pluginmanager.h"
+#include "../../state.h"
+#include <spdlog/spdlog.h>
 
 bool rd_registerloader(const RDLoaderPlugin* plugin) {
-    return redasm::api::internal::register_loader(plugin,
-                                                  redasm::pm::Origin::NATIVE);
+    spdlog::trace("rd_registerloader({})", fmt::ptr(plugin));
+    return redasm::pm::register_loader(plugin, redasm::pm::NATIVE);
+}
+
+bool rd_registerloader_ex(const RDLoaderPlugin* plugin, const char* origin) {
+    spdlog::trace("rd_registerloader_ex({}, '{}')", fmt::ptr(plugin), origin);
+    return redasm::pm::register_loader(plugin, origin);
 }
 
 const RDLoaderPlugin** rd_getloaderplugins(usize* n) {
-    return redasm::api::internal::get_loaderplugins(n);
+    spdlog::trace("rd_getloaderplugins({})", fmt::ptr(n));
+    return redasm::pm::get_loaderplugins(n);
 }
 
 const RDLoaderPlugin* rd_getloaderplugin() {
-    return redasm::api::internal::get_loaderplugin();
+    spdlog::trace("rd_getloaderplugin()");
+    if(redasm::state::context) return redasm::state::context->loaderplugin;
+    return nullptr;
 }
 
-RDLoader* rd_getloader() { return redasm::api::internal::get_loader(); }
+RDLoader* rd_getloader() {
+    spdlog::trace("rd_getloader()");
+    if(redasm::state::context) return redasm::state::context->loader;
+    return nullptr;
+}

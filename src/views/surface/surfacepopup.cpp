@@ -27,7 +27,7 @@ SurfacePopup::SurfacePopup(QWidget* parent): QWidget{parent} {
     m_surface = rdsurface_new(SURFACE_POPUP);
 }
 
-SurfacePopup::~SurfacePopup() { rd_free(m_surface); }
+SurfacePopup::~SurfacePopup() { rd_destroy(m_surface); }
 
 bool SurfacePopup::popup(RDAddress address) {
     LIndex index;
@@ -54,16 +54,14 @@ void SurfacePopup::more_rows() {
 }
 
 void SurfacePopup::less_rows() {
-    if(m_nrows == 1)
-        return;
+    if(m_nrows == 1) return;
 
     m_nrows--;
     this->render();
 }
 
 void SurfacePopup::render() {
-    if(!m_surface)
-        return;
+    if(!m_surface) return;
 
     rdsurface_render(m_surface, m_nrows);
     utils::draw_surface(m_surface, &m_document, 0, m_nrows);

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../../typing/base.h"
-#include "../../typing/value.h"
 #include <redasm/redasm.h>
 #include <string>
 #include <string_view>
@@ -36,15 +34,15 @@ tl::optional<std::string> buffer_getstr(const RDBuffer* self, usize idx,
 tl::optional<std::string> buffer_getwstrz(const RDBuffer* self, usize idx);
 tl::optional<std::string> buffer_getwstr(const RDBuffer* self, usize idx,
                                          usize n);
-tl::optional<typing::Value> buffer_readstruct(const RDBuffer* self, usize idx,
-                                              const typing::Struct& t);
-tl::optional<typing::Value> buffer_gettype(const RDBuffer* self, usize idx,
-                                           const RDType* t);
-tl::optional<typing::Value> buffer_gettypename(const RDBuffer* self, usize idx,
-                                               std::string_view tname);
-tl::optional<typing::Value> buffer_collecttype(const RDBuffer* self, usize idx,
-                                               const RDType* t);
-tl::optional<typing::Value>
-buffer_collecttypename(const RDBuffer* self, usize idx, std::string_view tname);
+tl::optional<RDValue> buffer_readstruct(const RDBuffer* self, usize idx,
+                                        const RDStructField* fields);
+tl::optional<RDValue> buffer_gettype(const RDBuffer* self, usize idx,
+                                     const RDType* t);
+tl::optional<RDValue> buffer_gettypename(const RDBuffer* self, usize idx,
+                                         std::string_view tname);
+tl::optional<RDValue> buffer_collecttype(const RDBuffer* self, usize idx,
+                                         const RDType* t);
+tl::optional<RDValue> buffer_collecttypename(const RDBuffer* self, usize idx,
+                                             std::string_view tname);
 
 } // namespace redasm::api::internal

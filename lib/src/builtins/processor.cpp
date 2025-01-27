@@ -1,9 +1,8 @@
 #include "processor.h"
-#include "../api/internal/function.h"
-#include "../api/internal/processor.h"
-#include "../api/internal/redasm.h"
 #include "../api/internal/renderer.h"
-#include "../api/internal/utils.h"
+#include "../plugins/pluginmanager.h"
+#include <fmt/core.h>
+#include <redasm/function.h>
 #include <redasm/processor.h>
 
 namespace redasm::builtins {
@@ -12,8 +11,8 @@ namespace processor {
 
 void render_segment(const RDProcessor*, RDRenderer* r,
                     const RDSegment* segment) {
-    std::string start = api::internal::to_hex(segment->startaddr);
-    std::string end = api::internal::to_hex(segment->endaddr);
+    const char* start = rd_tohex(segment->startaddr);
+    const char* end = rd_tohex(segment->endaddr);
 
     std::string s = fmt::format("segment {} (start: {}, end: {})",
                                 segment->name, start, end);
@@ -24,13 +23,13 @@ void render_segment(const RDProcessor*, RDRenderer* r,
 void render_function(const RDProcessor*, RDRenderer* r,
                      const RDFunction* function) {
 
-    RDAddress ep = api::internal::function_getentry(function);
-    std::string n = api::internal::get_name(ep);
-    if(n.empty()) n = "???";
+    RDAddress ep = rdfunction_getentry(function);
+    const char* n = rd_getname(ep);
+    if(!n) n = "???";
 
     std::string s;
 
-    if(api::internal::function_isexport(function))
+    if(rdfunction_isexport(function))
         s = fmt::format("export function {}()", n);
     else
         s = fmt::format("function {}()", n);
@@ -56,7 +55,7 @@ RDProcessorPlugin null_processor = {
 } // namespace
 
 void register_processors() {
-    api::internal::register_processor(&null_processor, pm::Origin::NATIVE);
+    pm::register_processor(&null_processor, pm::NATIVE);
 }
 
 } // namespace redasm::builtins

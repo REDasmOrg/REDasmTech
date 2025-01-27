@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../typing/typing.h"
+#include "../typing/base.h"
+#include "../typing/typedef.h"
 #include "../utils/object.h"
 #include "byteorder.h"
 #include <redasm/types.h>
@@ -80,21 +81,21 @@ public:
         return tl::nullopt;
     }
 
-    [[nodiscard]] tl::optional<typing::Value>
-    get_type(usize idx, typing::FullTypeName tn) const;
+    [[nodiscard]] tl::optional<RDValue> get_type(usize idx,
+                                                 typing::FullTypeName tn) const;
 
     [[nodiscard]]
-    tl::optional<typing::Value> read_struct(usize idx,
-                                            const typing::Struct& s) const;
+    tl::optional<RDValue> read_struct(usize idx,
+                                      const RDStructField* fields) const;
 
     [[nodiscard]]
-    tl::optional<typing::Value> get_type(usize idx, RDType t) const;
+    tl::optional<RDValue> get_type(usize idx, RDType t) const;
 
-    [[nodiscard]] tl::optional<typing::Value>
+    [[nodiscard]] tl::optional<RDValue>
     get_type(usize idx, typing::FullTypeName tn, usize& lastidx) const;
 
-    [[nodiscard]] tl::optional<typing::Value> get_type(usize idx, RDType t,
-                                                       usize& lastidx) const;
+    [[nodiscard]] tl::optional<RDValue> get_type(usize idx, RDType t,
+                                                 usize& lastidx) const;
 
 private:
     template<typename U>
@@ -128,10 +129,10 @@ private:
     tl::optional<std::string> get_str_impl(usize& idx, usize n,
                                            typing::TypeName tname) const;
 
-    tl::optional<typing::Value> get_type_impl(usize& idx, RDType t) const;
+    tl::optional<RDValue> get_type_impl(usize& idx, RDType t) const;
 
-    tl::optional<typing::Value> get_type_impl(usize& idx,
-                                              const typing::TypeDef* t) const;
+    tl::optional<RDValue> get_type_impl(usize& idx,
+                                        const typing::TypeDef* t) const;
 
 public:
     std::string source;

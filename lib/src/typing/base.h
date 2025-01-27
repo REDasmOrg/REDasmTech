@@ -2,7 +2,6 @@
 
 #include "../utils/hash.h"
 #include <redasm/typing.h>
-#include <vector>
 
 namespace redasm::typing {
 
@@ -56,8 +55,6 @@ inline constexpr u32 WSTR = hash::static_murmur3(typing::names::WSTR);
 
 using FullTypeName = std::string_view;
 using TypeName = std::string_view;
-using StructField = std::pair<std::string, std::string>;
-using Struct = std::vector<typing::StructField>;
 
 inline TypeId type_id(TypeName tn) { return hash::murmur3(tn); }
 

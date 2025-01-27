@@ -19,9 +19,9 @@ enum class WalkType : u8 {
     WHITESPACE,
 };
 
-void wrap_format(const ILExpr* e, std::string& res);
+void wrap_format(const RDILExpr* e, std::string& res);
 
-bool has_value(const ILExpr* e) {
+bool has_value(const RDILExpr* e) {
     switch(e->op) {
         case RDIL_VAR:
         case RDIL_REG:
@@ -34,7 +34,7 @@ bool has_value(const ILExpr* e) {
     return false;
 }
 
-std::string text_op(const ILExpr* e) {
+std::string text_op(const RDILExpr* e) {
     switch(e->op) {
         case RDIL_ADD: return "+";
         case RDIL_SUB: return "-";
@@ -62,10 +62,10 @@ std::string text_op(const ILExpr* e) {
 }
 
 template<typename ToStringCallback>
-void to_string(const ILExpr* e, ToStringCallback cb);
+void to_string(const RDILExpr* e, ToStringCallback cb);
 
 template<typename ToStringCallback>
-void wrap_walk(const ILExpr* e, ToStringCallback cb) {
+void wrap_walk(const RDILExpr* e, ToStringCallback cb) {
     if(rdil::has_value(e) || (e->op == RDIL_MEM)) {
         rdil::to_string(e, cb);
         return;
@@ -76,7 +76,7 @@ void wrap_walk(const ILExpr* e, ToStringCallback cb) {
     cb(e, ")", WalkType::NORMAL);
 }
 
-bool get_format_impl(const ILExpr* e, std::string& res) {
+bool get_format_impl(const RDILExpr* e, std::string& res) {
     switch(e->op) {
         case RDIL_ADD:
         case RDIL_SUB:
@@ -166,7 +166,7 @@ bool get_format_impl(const ILExpr* e, std::string& res) {
     return true;
 }
 
-void wrap_format(const ILExpr* e, std::string& res) {
+void wrap_format(const RDILExpr* e, std::string& res) {
     if(rdil::has_value(e) || e->op == RDIL_MEM) {
         rdil::get_format_impl(e, res);
         return;
@@ -178,7 +178,7 @@ void wrap_format(const ILExpr* e, std::string& res) {
 }
 
 template<typename ToStringCallback>
-void to_string(const ILExpr* e, ToStringCallback cb) {
+void to_string(const RDILExpr* e, ToStringCallback cb) {
     switch(e->op) {
         case RDIL_ADD:
         case RDIL_SUB:
@@ -292,29 +292,25 @@ void to_string(const ILExpr* e, ToStringCallback cb) {
     }
 }
 
-void get_text_impl(const ILExpr* e, std::string& res) {
-    rdil::to_string(e,
-                    [&res](const ILExpr* expr, const std::string& s, WalkType) {
-                        Context* ctx = state::context;
+void get_text_impl(const RDILExpr* e, std::string& res) {
+    rdil::to_string(e, [&res](const RDILExpr* expr, const std::string& s,
+                              WalkType) {
+        Context* ctx = state::context;
 
-                        switch(expr->op) {
-                            case RDIL_CNST:
-                                res += ctx->to_hex(expr->u_value, -1);
-                                break;
-                            case RDIL_VAR:
-                                res += ctx->to_hex(expr->address);
-                                break;
+        switch(expr->op) {
+            case RDIL_CNST: res += ctx->to_hex(expr->u_value, -1); break;
+            case RDIL_VAR: res += ctx->to_hex(expr->address); break;
 
-                            case RDIL_REG: {
-                                res += ctx->processorplugin->get_registername(
-                                    ctx->processor, expr->reg);
-                                break;
-                            }
+            case RDIL_REG: {
+                res += ctx->processorplugin->get_registername(ctx->processor,
+                                                              expr->reg);
+                break;
+            }
 
-                            case RDIL_SYM: res += expr->sym; break;
-                            default: res += s; break;
-                        }
-                    });
+            case RDIL_SYM: res += expr->sym; break;
+            default: res += s; break;
+        }
+    });
 }
 
 } // namespace
@@ -358,13 +354,13 @@ usize get_op_type(std::string_view id) {
     return RDIL_INVALID;
 }
 
-std::string get_text(const ILExpr* e) {
+std::string get_text(const RDILExpr* e) {
     std::string res;
     rdil::get_text_impl(e, res);
     return res;
 }
 
-std::string get_format(const ILExpr* e) {
+std::string get_format(const RDILExpr* e) {
     if(!e) return {};
 
     std::string fmt;
@@ -409,9 +405,9 @@ void generate(const Function& f, ILExprList& res, usize maxn) {
     }
 }
 
-void render(const ILExpr* e, Renderer& renderer) {
+void render(const RDILExpr* e, Renderer& renderer) {
     rdil::to_string(
-        e, [&](const ILExpr* expr, std::string_view s, WalkType wt) {
+        e, [&](const RDILExpr* expr, std::string_view s, WalkType wt) {
             if(wt == WalkType::MNEMONIC) {
                 switch(expr->op) {
                     case RDIL_GOTO: renderer.chunk(s, THEME_JUMP); break;

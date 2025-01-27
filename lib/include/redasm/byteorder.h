@@ -37,5 +37,5 @@ REDASM_EXPORT u16 rd_tole16(u16 hostval);
 REDASM_EXPORT u32 rd_tole32(u32 hostval);
 REDASM_EXPORT u64 rd_tole64(u64 hostval);
 REDASM_EXPORT u16 rd_tobe16(u16 hostval);
-REDASM_EXPORT u32 rd_tobe2(u32 hostval);
+REDASM_EXPORT u32 rd_tobe32(u32 hostval);
 REDASM_EXPORT u64 rd_tobe64(u64 hostval);

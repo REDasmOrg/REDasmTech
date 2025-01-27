@@ -1,6 +1,7 @@
 #pragma once
 
 #include <redasm/common.h>
+#include <redasm/function.h>
 #include <redasm/types.h>
 
 // clang-format off
@@ -48,7 +49,6 @@
    +---------+-----------+-----------+-----------+----------------------------------+
  */
 
-RD_HANDLE(RDILExpr);
 RD_HANDLE(RDILPool);
 RD_HANDLE(RDILList);
 
@@ -84,6 +84,24 @@ typedef struct RDILValue {
     RDILOp type;
     RD_PRIVATE_RDIL_VALUE_FIELDS
 } RDILValue;
+
+typedef struct RDILExpr {
+    RDILOp op{RDIL_INVALID};
+
+    union {
+        const RDILExpr *n1{nullptr}, *u, *cond;
+    };
+
+    union {
+        const RDILExpr *n2{nullptr}, *dst, *l, *t;
+    };
+
+    union {
+        const RDILExpr *n3{nullptr}, *src, *r, *f;
+    };
+
+    RD_PRIVATE_RDIL_VALUE_FIELDS
+} RDILExpr;
 
 REDASM_EXPORT const RDILExpr* rdil_unknown(RDILPool* self);
 REDASM_EXPORT const RDILExpr* rdil_nop(RDILPool* self);
@@ -144,7 +162,9 @@ REDASM_EXPORT const RDILExpr* rdil_push(RDILPool* self, const RDILExpr* e);
 REDASM_EXPORT const RDILExpr* rdil_pop(RDILPool* self, const RDILExpr* e);
 REDASM_EXPORT const RDILExpr* rdil_int(RDILPool* self, const RDILExpr* e);
 
+REDASM_EXPORT RDILList* rdilist_create();
 REDASM_EXPORT RDILPool* rdillist_getpool(RDILList* self);
+REDASM_EXPORT void rdil_generate(const RDFunction* f, RDILList* l);
 
 REDASM_EXPORT const RDILExpr* rdillist_at(const RDILList* self, usize idx);
 

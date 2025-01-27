@@ -140,30 +140,30 @@ tl::optional<std::string> buffer_getwstr(const RDBuffer* self, usize idx,
     return api::from_c(self)->get_wstr(idx, n);
 }
 
-tl::optional<typing::Value> buffer_readstruct(const RDBuffer* self, usize idx,
-                                              const typing::Struct& t) {
-    spdlog::trace("buffer_readstruct({}, {:x}, <{} fields>)", fmt::ptr(self),
-                  idx, t.size());
-    return api::from_c(self)->read_struct(idx, t);
+tl::optional<RDValue> buffer_readstruct(const RDBuffer* self, usize idx,
+                                        const RDStructField* fields) {
+    spdlog::trace("buffer_readstruct({}, {:x}, {})", fmt::ptr(self), idx,
+                  fmt::ptr(fields));
+    return api::from_c(self)->read_struct(idx, fields);
 }
 
-tl::optional<typing::Value> buffer_gettype(const RDBuffer* self, usize idx,
-                                           const RDType* t) {
+tl::optional<RDValue> buffer_gettype(const RDBuffer* self, usize idx,
+                                     const RDType* t) {
     spdlog::trace("buffer_gettype({}, {:x}, {})", fmt::ptr(self), idx,
                   fmt::ptr(t));
     if(t) return api::from_c(self)->get_type(idx, *t);
     return tl::nullopt;
 }
 
-tl::optional<typing::Value> buffer_gettypename(const RDBuffer* self, usize idx,
-                                               std::string_view tname) {
+tl::optional<RDValue> buffer_gettypename(const RDBuffer* self, usize idx,
+                                         std::string_view tname) {
     spdlog::trace("buffer_gettypename({}, {:x}, '{}')", fmt::ptr(self), idx,
                   tname);
     return api::from_c(self)->get_type(idx, tname);
 }
 
-tl::optional<typing::Value> buffer_collecttype(const RDBuffer* self, usize idx,
-                                               const RDType* t) {
+tl::optional<RDValue> buffer_collecttype(const RDBuffer* self, usize idx,
+                                         const RDType* t) {
     spdlog::trace("buffer_collecttype({}, {:x}, {})", fmt::ptr(self), idx,
                   fmt::ptr(t));
 
@@ -171,20 +171,19 @@ tl::optional<typing::Value> buffer_collecttype(const RDBuffer* self, usize idx,
 
     auto v = api::from_c(self)->get_type(idx, *t);
 
-    v.map([idx](const typing::Value& v) {
+    v.map([idx](const RDValue& v) {
         state::context->collectedtypes.emplace_back(idx, v.type);
     });
 
     return v;
 }
-tl::optional<typing::Value> buffer_collecttypename(const RDBuffer* self,
-                                                   usize idx,
-                                                   std::string_view tname) {
+tl::optional<RDValue> buffer_collecttypename(const RDBuffer* self, usize idx,
+                                             std::string_view tname) {
     spdlog::trace("buffer_collecttypename({}, {:x}, '{}')", fmt::ptr(self), idx,
                   tname);
     auto v = api::from_c(self)->get_type(idx, tname);
 
-    v.map([idx](const typing::Value& v) {
+    v.map([idx](const RDValue& v) {
         state::context->collectedtypes.emplace_back(idx, v.type);
     });
 

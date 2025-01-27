@@ -1,5 +1,4 @@
 #include "../internal/buffer.h"
-#include "../marshal.h"
 #include <redasm/buffer.h>
 
 namespace {
@@ -31,6 +30,18 @@ usize rdbuffer_getlength(const RDBuffer* self) {
 
 usize rdbuffer_read(const RDBuffer* self, usize idx, void* dst, usize n) {
     return redasm::api::internal::buffer_read(self, idx, dst, n);
+}
+
+bool rdbuffer_readstruct(const RDBuffer* self, usize idx,
+                         const RDStructField* fields, RDValue* v) {
+    auto res = redasm::api::internal::buffer_readstruct(self, idx, fields);
+    res.map([&](RDValue& x) {
+        if(v)
+            *v = x;
+        else
+            rdvalue_destroy(&x);
+    });
+    return res.has_value();
 }
 
 bool rdbuffer_getbool(const RDBuffer* self, usize idx, bool* v) {
@@ -166,8 +177,8 @@ bool rdbuffer_gettypename(const RDBuffer* self, usize idx, const char* tname,
 
     auto res = redasm::api::internal::buffer_gettypename(self, idx, tname);
 
-    res.map([&](const redasm::typing::Value& x) {
-        if(v) *redasm::api::from_c(v) = x;
+    res.map([&](const RDValue& x) {
+        if(v) *v = x;
     });
 
     return res.has_value();
@@ -177,8 +188,8 @@ bool rdbuffer_gettype(const RDBuffer* self, usize idx, const RDType* t,
                       RDValue* v) {
     auto res = redasm::api::internal::buffer_gettype(self, idx, t);
 
-    res.map([&](const redasm::typing::Value& x) {
-        if(v) *redasm::api::from_c(v) = x;
+    res.map([&](const RDValue& x) {
+        if(v) *v = x;
     });
 
     return res.has_value();
@@ -190,8 +201,8 @@ bool rdbuffer_collecttypename(const RDBuffer* self, usize idx,
 
     auto res = redasm::api::internal::buffer_collecttypename(self, idx, tname);
 
-    res.map([&](const redasm::typing::Value& x) {
-        if(v) *redasm::api::from_c(v) = x;
+    res.map([&](const RDValue& x) {
+        if(v) *v = x;
     });
 
     return res.has_value();
@@ -201,8 +212,8 @@ bool rdbuffer_collecttype(const RDBuffer* self, usize idx, const RDType* t,
                           RDValue* v) {
     auto res = redasm::api::internal::buffer_collecttype(self, idx, t);
 
-    res.map([&](const redasm::typing::Value& x) {
-        if(v) *redasm::api::from_c(v) = x;
+    res.map([&](const RDValue& x) {
+        if(v) *v = x;
     });
 
     return res.has_value();

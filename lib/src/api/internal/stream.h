@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../typing/typing.h"
+#include "../../typing/base.h"
 #include <redasm/stream.h>
 #include <string>
 #include <tl/optional.hpp>
@@ -14,8 +14,8 @@ usize stream_move(RDStream* self, isize off);
 usize stream_getpos(const RDStream* self);
 void stream_rewind(RDStream* self);
 
-tl::optional<typing::Value> stream_peek_type(const RDStream* self,
-                                             typing::FullTypeName tname);
+tl::optional<RDValue> stream_peek_type(const RDStream* self,
+                                          typing::FullTypeName tname);
 tl::optional<std::string> stream_peek_strz(const RDStream* self);
 tl::optional<std::string> stream_peek_str(const RDStream* self, usize n);
 tl::optional<std::string> stream_peek_wstrz(const RDStream* self);
@@ -35,8 +35,8 @@ tl::optional<i16> stream_peek_i16be(const RDStream* self);
 tl::optional<i32> stream_peek_i32be(const RDStream* self);
 tl::optional<i64> stream_peek_i64be(const RDStream* self);
 
-tl::optional<typing::Value> stream_read_type(RDStream* self,
-                                             std::string_view tname);
+tl::optional<RDValue> stream_read_type(RDStream* self,
+                                          std::string_view tname);
 tl::optional<std::string> stream_read_strz(RDStream* self);
 tl::optional<std::string> stream_read_str(RDStream* self, usize n);
 tl::optional<std::string> stream_read_wstrz(RDStream* self);
@@ -56,8 +56,8 @@ tl::optional<i16> stream_read_i16be(RDStream* self);
 tl::optional<i32> stream_read_i32be(RDStream* self);
 tl::optional<i64> stream_read_i64be(RDStream* self);
 
-tl::optional<typing::Value> stream_collect_type(RDStream* self,
-                                                std::string_view tname);
+tl::optional<RDValue> stream_collect_type(RDStream* self,
+                                             std::string_view tname);
 tl::optional<std::string> stream_collect_strz(RDStream* self);
 tl::optional<std::string> stream_collect_str(RDStream* self, usize n);
 tl::optional<std::string> stream_collect_wstrz(RDStream* self);

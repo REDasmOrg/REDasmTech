@@ -28,16 +28,32 @@ typedef struct RDStructField {
     const char* name;
 } RDStructField;
 
-RD_HANDLE(RDValue);
-RD_HANDLE(RDValueDict);
-RD_HANDLE(RDValueList);
-
 typedef u32 TypeId;
 
 typedef struct RDType {
     TypeId id;
     usize n; // > 0 = array
 } RDType;
+
+typedef struct RDValue {
+    RDType type;
+
+    Vect(RDValue) list;
+    Dict(RDValueField) dict;
+    Str str;
+
+    // clang-format off
+    union {
+        bool b_v; char ch_v;
+        u8 u8_v; u16 u16_v; u32 u32_v; u64 u64_v;
+        i8 i8_v; i16 i16_v; i32 i32_v; i64 i64_v;
+    };
+    // clang-format on
+
+    Str _scratchpad;
+} RDValue;
+
+DictNode(RDValueField, Str, struct RDValue);
 
 REDASM_EXPORT usize rd_nsizeof(const char* tname);
 REDASM_EXPORT usize rd_tsizeof(const RDType* t);
@@ -50,27 +66,16 @@ REDASM_EXPORT const char* rd_createstruct(const char* name,
 
 inline bool rd_istypenull(const RDType* t) { return t && !t->id; }
 
-REDASM_EXPORT RDValue* rdvalue_create();
-REDASM_EXPORT void rdvalue_destroy(RDValue* v);
-REDASM_EXPORT const RDType* rdvalue_gettype(const RDValue* self);
-REDASM_EXPORT const char* rdvalue_tostring(const RDValue* self);
+REDASM_EXPORT RDValue rdvalue_create(void);
+REDASM_EXPORT void rdvalue_destroy(RDValue* self);
+REDASM_EXPORT const char* rdvalue_tostring(RDValue* self);
+REDASM_EXPORT bool rdvalue_islist(const RDValue* self);
+REDASM_EXPORT bool rdvalue_isstruct(const RDValue* self);
 REDASM_EXPORT usize rdvalue_getlength(const RDValue* self);
 
-REDASM_EXPORT const RDValue* rdvalue_at(const RDValue* self, usize idx);
+REDASM_EXPORT const RDValue*
+rdvalue_query(const RDValue* self, const char* q, const char** error);
 
-REDASM_EXPORT const RDValue* rdvalue_get(const RDValue* self, const char* q,
-                                         const char** error);
-
-REDASM_EXPORT const RDValue* rdvalue_get_n(const RDValue* self, const char* q,
-                                           usize n, const char** error);
-
-REDASM_EXPORT u8 rdvalue_getu8(const RDValue* self, const char* q, bool* ok);
-REDASM_EXPORT u16 rdvalue_getu16(const RDValue* self, const char* q, bool* ok);
-REDASM_EXPORT u32 rdvalue_getu32(const RDValue* self, const char* q, bool* ok);
-REDASM_EXPORT u64 rdvalue_getu64(const RDValue* self, const char* q, bool* ok);
-REDASM_EXPORT i8 rdvalue_geti8(const RDValue* self, const char* q, bool* ok);
-REDASM_EXPORT i16 rdvalue_geti16(const RDValue* self, const char* q, bool* ok);
-REDASM_EXPORT i32 rdvalue_geti32(const RDValue* self, const char* q, bool* ok);
-REDASM_EXPORT i64 rdvalue_geti64(const RDValue* self, const char* q, bool* ok);
-REDASM_EXPORT const char* rdvalue_getstr(const RDValue* self, const char* q,
-                                         bool* ok);
+REDASM_EXPORT const RDValue* rdvalue_query_n(const RDValue* self,
+                                                const char* q, usize n,
+                                                const char** error);

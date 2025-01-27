@@ -1,16 +1,17 @@
 #pragma once
 
 #include "../error.h"
-#include "origin.h"
 #include <redasm/redasm.h>
 #include <string_view>
 
 namespace redasm::pm {
 
+constexpr const char* NATIVE = "native";
+
 #define _foreach_plugins(type, item, body)                                     \
     do {                                                                       \
         usize n;                                                               \
-        const auto** plugins = pm::get_##type##s(&n);                          \
+        const auto** plugins = redasm::pm::get_##type##plugins(&n);            \
         for(usize i = 0; i < n; i++) {                                         \
             const auto* item = plugins[i];                                     \
             body                                                               \
@@ -30,15 +31,15 @@ template<> struct InstanceForPlugin<RDAnalyzerPlugin> { using Type = RDAnalyzer;
 
 void create();
 void destroy();
-pm::Origin get_origin(const void* plugin);
+const char* get_origin(const void* plugin);
 
-bool register_loader(const RDLoaderPlugin* plugin, pm::Origin o);
-bool register_processor(const RDProcessorPlugin* plugin, pm::Origin o);
-bool register_analyzer(const RDAnalyzerPlugin* plugin, pm::Origin o);
+bool register_loader(const RDLoaderPlugin* plugin, const char* origin);
+bool register_processor(const RDProcessorPlugin* plugin, const char* origin);
+bool register_analyzer(const RDAnalyzerPlugin* plugin, const char* origin);
 
-const RDLoaderPlugin** get_loaders(usize* n);
-const RDProcessorPlugin** get_processors(usize* n);
-const RDAnalyzerPlugin** get_analyzers(usize* n);
+const RDLoaderPlugin** get_loaderplugins(usize* n);
+const RDProcessorPlugin** get_processorplugins(usize* n);
+const RDAnalyzerPlugin** get_analyzerplugins(usize* n);
 
 const RDLoaderPlugin* find_loader(std::string_view id);
 const RDProcessorPlugin* find_processor(std::string_view id);

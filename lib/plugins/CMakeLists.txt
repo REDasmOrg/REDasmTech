@@ -17,3 +17,6 @@ add_subdirectory(src/loaders/android)
 add_subdirectory(src/processors/capstonebundle)
 add_subdirectory(src/processors/x86)
 add_subdirectory(src/processors/mips)
+
+# Plugins
+add_subdirectory(src/python)

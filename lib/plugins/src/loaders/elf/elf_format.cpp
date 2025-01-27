@@ -5,15 +5,18 @@ namespace {
 
 template<int Bits>
 std::optional<RDAddress> read_address(RDAddress address) {
-    RDAddress addr;
-    bool ok = false;
+    if constexpr(Bits == 64) {
+        u64 v;
+        bool ok = rd_getu64(address, &v);
+        if(ok) return v;
+    }
+    else {
+        u32 v;
+        bool ok = rd_getu32(address, &v);
+        if(ok) return v;
+    }
 
-    if constexpr(Bits == 64)
-        addr = rd_getu64(address, &ok);
-    else
-        addr = rd_getu32(address, &ok);
-
-    return ok ? std::make_optional(addr) : std::nullopt;
+    return std::nullopt;
 }
 
 } // namespace
@@ -122,42 +125,40 @@ void ElfFormat<Bits>::process_init_fini(const SHDR& shdr,
     const usize S = rd_nsizeof(TYPE);
     const usize N = shdr.sh_size / S;
 
-    RDValue* v = rdvalue_create();
+    RDValue v{};
     RDAddress addr = shdr.sh_addr;
 
     for(usize i = 0; i < N; i++, addr += S) {
-        if(!rd_settypename(addr, TYPE, v)) continue;
+        if(!rd_settypename(addr, TYPE, &v)) continue;
 
         RDAddress itemaddr;
-        bool ok = false;
 
         if constexpr(Bits == 64)
-            itemaddr = rdvalue_getu64(v, nullptr, &ok);
+            itemaddr = v.u64_v;
         else
-            itemaddr = rdvalue_getu32(v, nullptr, &ok);
+            itemaddr = v.u32_v;
 
-        if(!ok || !itemaddr || itemaddr == -1ULL) continue;
+        if(!itemaddr || itemaddr == -1ULL) continue;
 
         std::string fn = prefix + rd_tohex_n(addr, 0);
         rd_setfunction(addr);
         rd_setname(addr, fn.c_str());
     }
 
-    rdvalue_destroy(v);
+    rdvalue_destroy(&v);
 }
 
 template<int Bits>
 void ElfFormat<Bits>::process_strings(const SHDR& shdr) const {
     RDAddress address = shdr.sh_addr;
     RDAddress endaddress = address++ + shdr.sh_size; // First is always 00
-    RDValue* v = rdvalue_create();
+    RDValue v{};
 
     while(address < endaddress) {
-        if(!rd_settypename(address, "str", v)) break;
-        address += rdvalue_getlength(v) + 1;
+        if(!rd_settypename(address, "str", &v)) break;
+        address += rdvalue_getlength(&v) + 1;
+        rdvalue_destroy(&v);
     }
-
-    rdvalue_destroy(v);
 }
 
 template<int Bits>

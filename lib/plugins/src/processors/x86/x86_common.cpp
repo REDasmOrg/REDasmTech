@@ -7,10 +7,16 @@ std::optional<RDAddress> read_address(RDAddress address) {
     bool ok = false;
     RDAddress val;
 
-    if(p->address_size == 8)
-        val = rd_getu64(address, &ok);
-    else if(p->address_size == 4)
-        val = rd_getu32(address, &ok);
+    if(p->address_size == 8) {
+        u64 v;
+        ok = rd_getu64(address, &v);
+        val = v;
+    }
+    else if(p->address_size == 4) {
+        u32 v;
+        ok = rd_getu32(address, &v);
+        val = v;
+    }
 
     return ok ? std::make_optional(val) : std::nullopt;
 }

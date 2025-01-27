@@ -12,13 +12,12 @@ SurfaceGraph::SurfaceGraph(QWidget* parent): GraphView{parent} {
 
     connect(this, &SurfaceGraph::customContextMenuRequested, this,
             [&](const QPoint&) {
-                if(this->selected_item())
-                    m_menu->popup(QCursor::pos());
+                if(this->selected_item()) m_menu->popup(QCursor::pos());
             });
 }
 
 SurfaceGraph::~SurfaceGraph() {
-    rd_free(m_surface);
+    rd_destroy(m_surface);
     m_surface = nullptr;
 }
 
@@ -76,8 +75,7 @@ void SurfaceGraph::clear_history() {
 }
 
 void SurfaceGraph::begin_compute() {
-    if(m_surface && m_function)
-        rdsurface_renderfunction(m_surface, m_function);
+    if(m_surface && m_function) rdsurface_renderfunction(m_surface, m_function);
 }
 
 void SurfaceGraph::end_compute() { statusbar::set_location(m_surface); }
@@ -135,8 +133,7 @@ bool SurfaceGraph::event(QEvent* event) {
 SurfaceGraphNode* SurfaceGraph::find_node(RDAddress address) {
     for(GraphViewNode* g : m_nodes) {
         auto* sg = static_cast<SurfaceGraphNode*>(g);
-        if(sg->contains_address(address))
-            return sg;
+        if(sg->contains_address(address)) return sg;
     }
 
     return nullptr;
@@ -145,8 +142,7 @@ SurfaceGraphNode* SurfaceGraph::find_node(RDAddress address) {
 bool SurfaceGraph::seek_to_address(RDAddress address) {
     LIndex idx;
 
-    if(!rdlisting_getindex(address, &idx))
-        return false;
+    if(!rdlisting_getindex(address, &idx)) return false;
 
     rdsurface_seekposition(m_surface, idx);
     return true;
@@ -163,14 +159,12 @@ void SurfaceGraph::set_location(const RDSurfaceLocation& loc, bool seek) {
     else
         m_graph = nullptr;
 
-    if(seek && loc.address.valid)
-        this->seek_to_address(loc.address.value);
+    if(seek && loc.address.valid) this->seek_to_address(loc.address.value);
 
     this->set_graph(m_graph);
 
     if(m_graph) {
-        if(!loc.address.valid)
-            return;
+        if(!loc.address.valid) return;
 
         if(SurfaceGraphNode* n = this->find_node(loc.address.value); n)
             this->set_selected_node(n);
@@ -180,8 +174,7 @@ void SurfaceGraph::set_location(const RDSurfaceLocation& loc, bool seek) {
 }
 
 void SurfaceGraph::show_popup(const QPoint& pt) {
-    if(!m_surface)
-        return;
+    if(!m_surface) return;
 
     QPoint nodepos;
     const auto* n = static_cast<SurfaceGraphNode*>(

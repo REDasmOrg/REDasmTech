@@ -3,9 +3,12 @@
 
 namespace redasm::typing {
 
-const TypeDef* Types::declare(const std::string& name, const Struct& arg) {
+const TypeDef* Types::declare(const std::string& name,
+                              const RDStructField* fields) {
     if(name.empty()) except("Struct name is empty");
-    if(arg.empty()) except("Struct cannot be empty");
+
+    if(!fields || !fields->name || !fields->type)
+        except("Struct cannot be empty");
 
     TypeDef type{};
     type.name = name;
@@ -13,17 +16,19 @@ const TypeDef* Types::declare(const std::string& name, const Struct& arg) {
     if(this->m_registered.contains(type.get_id()))
         except("Struct '{}' already exists", name);
 
-    for(const auto& [tname, name] : arg) {
+    while(fields->name && fields->type) {
         ParsedType pt;
-        type.size += this->size_of(tname, &pt);
+        type.size += this->size_of(fields->type, &pt);
 
         if(pt.tdef->is_var()) {
             except("Type '{}' size is variable and is not supported in structs",
-                   tname);
+                   fields->type);
         }
 
         type.dict.emplace_back(RDType{.id = pt.tdef->get_id(), .n = pt.n},
-                               name);
+                               fields->name);
+
+        fields++;
     }
 
     auto it = this->m_registered.try_emplace(type.get_id(), type);

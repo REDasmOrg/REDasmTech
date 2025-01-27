@@ -34,6 +34,8 @@ typedef struct RDLoaderPlugin {
 } RDLoaderPlugin;
 
 REDASM_EXPORT bool rd_registerloader(const RDLoaderPlugin* plugin);
+REDASM_EXPORT bool rd_registerloader_ex(const RDLoaderPlugin* plugin,
+                                        const char* origin);
 REDASM_EXPORT const RDLoaderPlugin** rd_getloaderplugins(usize* n);
 REDASM_EXPORT const RDLoaderPlugin* rd_getloaderplugin(void);
 REDASM_EXPORT RDLoader* rd_getloader(void);

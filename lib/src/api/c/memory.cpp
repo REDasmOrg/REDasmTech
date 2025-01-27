@@ -4,10 +4,12 @@
 namespace {
 
 template<typename T, typename F>
-T rd_getvalue(RDAddress address, bool* ok, F getter) {
+bool rd_getvalue(RDAddress address, T* v, F getter) {
     auto res = getter(address);
-    if(ok) *ok = res.has_value();
-    return res.value_or(T{});
+    res.map([&](const T& x) {
+        if(v) *v = x;
+    });
+    return res.has_value();
 }
 
 } // namespace
@@ -26,67 +28,67 @@ usize rd_read(RDAddress address, void* data, usize n) {
     return redasm::api::internal::read(address, data, n);
 }
 
-bool rd_getbool(RDAddress address, bool* ok) {
-    return rd_getvalue<bool>(address, ok, redasm::api::internal::get_bool);
+bool rd_getbool(RDAddress address, bool* v) {
+    return rd_getvalue<bool>(address, v, redasm::api::internal::get_bool);
 }
 
-char rd_getchar(RDAddress address, bool* ok) {
+bool rd_getchar(RDAddress address, char* ok) {
     return rd_getvalue<char>(address, ok, redasm::api::internal::get_char);
 }
 
-u8 rd_getu8(RDAddress address, bool* ok) {
+bool rd_getu8(RDAddress address, u8* ok) {
     return rd_getvalue<u8>(address, ok, redasm::api::internal::get_u8);
 }
 
-u16 rd_getu16(RDAddress address, bool* ok) {
+bool rd_getu16(RDAddress address, u16* ok) {
     return rd_getvalue<u16>(address, ok, redasm::api::internal::get_u16);
 }
 
-u32 rd_getu32(RDAddress address, bool* ok) {
+bool rd_getu32(RDAddress address, u32* ok) {
     return rd_getvalue<u32>(address, ok, redasm::api::internal::get_u32);
 }
 
-u64 rd_getu64(RDAddress address, bool* ok) {
+bool rd_getu64(RDAddress address, u64* ok) {
     return rd_getvalue<u64>(address, ok, redasm::api::internal::get_u64);
 }
 
-i8 rd_geti8(RDAddress address, bool* ok) {
+bool rd_geti8(RDAddress address, i8* ok) {
     return rd_getvalue<i8>(address, ok, redasm::api::internal::get_i8);
 }
 
-i16 rd_geti16(RDAddress address, bool* ok) {
+bool rd_geti16(RDAddress address, i16* ok) {
     return rd_getvalue<i16>(address, ok, redasm::api::internal::get_i16);
 }
 
-i32 rd_geti32(RDAddress address, bool* ok) {
+bool rd_geti32(RDAddress address, i32* ok) {
     return rd_getvalue<i32>(address, ok, redasm::api::internal::get_i32);
 }
 
-i64 rd_geti64(RDAddress address, bool* ok) {
+bool rd_geti64(RDAddress address, i64* ok) {
     return rd_getvalue<i64>(address, ok, redasm::api::internal::get_i64);
 }
 
-u16 rd_getu16be(RDAddress address, bool* ok) {
+bool rd_getu16be(RDAddress address, u16* ok) {
     return rd_getvalue<u16>(address, ok, redasm::api::internal::get_u16be);
 }
 
-u32 rd_getu32be(RDAddress address, bool* ok) {
+bool rd_getu32be(RDAddress address, u32* ok) {
     return rd_getvalue<u32>(address, ok, redasm::api::internal::get_u32be);
 }
 
-u64 rd_getu64be(RDAddress address, bool* ok) {
+bool rd_getu64be(RDAddress address, u64* ok) {
     return rd_getvalue<u64>(address, ok, redasm::api::internal::get_u64be);
 }
 
-i16 rd_geti16be(RDAddress address, bool* ok) {
+bool rd_geti16be(RDAddress address, i16* ok) {
     return rd_getvalue<i16>(address, ok, redasm::api::internal::get_i16be);
 }
 
-i32 rd_geti32be(RDAddress address, bool* ok) {
+bool rd_geti32be(RDAddress address, i32* ok) {
     return rd_getvalue<i32>(address, ok, redasm::api::internal::get_i32be);
 }
 
-i64 rd_geti64be(RDAddress address, bool* ok) {
+bool rd_geti64be(RDAddress address, i64* ok) {
     return rd_getvalue<i64>(address, ok, redasm::api::internal::get_i64be);
 }
 

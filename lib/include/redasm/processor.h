@@ -71,6 +71,8 @@ REDASM_EXPORT void rdemulator_addref(RDEmulator* self, RDAddress toaddr,
                                      usize type);
 
 REDASM_EXPORT bool rd_registerprocessor(const RDProcessorPlugin* plugin);
+REDASM_EXPORT bool rd_registerprocessor_ex(const RDProcessorPlugin* plugin,
+                                           const char* origin);
 REDASM_EXPORT const RDProcessorPlugin** rd_getprocessorplugins(usize* n);
 REDASM_EXPORT const RDProcessorPlugin* rd_getprocessorplugin(void);
 REDASM_EXPORT const RDProcessor* rd_getprocessor(void);

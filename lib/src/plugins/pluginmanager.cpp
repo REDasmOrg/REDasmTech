@@ -2,10 +2,10 @@
 #include "../builtins/analyzer.h"
 #include "../builtins/loader.h"
 #include "../builtins/processor.h"
-#include "../error.h"
 #include "../state.h"
 #include "modulemanager.h"
 #include <spdlog/spdlog.h>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -16,7 +16,7 @@ namespace {
 std::vector<const RDLoaderPlugin*> loaders;
 std::vector<const RDProcessorPlugin*> processors;
 std::vector<const RDAnalyzerPlugin*> analyzers;
-std::unordered_map<const void*, pm::Origin> origins;
+std::unordered_map<const void*, std::string> origins;
 
 template<typename T>
 void unregister_plugins(const std::vector<const T*>& plugins) {
@@ -27,8 +27,13 @@ void unregister_plugins(const std::vector<const T*>& plugins) {
 
 template<typename T>
 bool register_plugin(std::vector<const T*>& plugins, const T* plugin,
-                     pm::Origin o) {
+                     const char* origin) {
     if(!plugin) return false;
+
+    if(!origin) {
+        state::error("Invalid plugin origin");
+        return false;
+    }
 
     if(!plugin->id || !(*plugin->id)) {
         state::error("Invalid plugin id");
@@ -58,7 +63,7 @@ bool register_plugin(std::vector<const T*>& plugins, const T* plugin,
     spdlog::info(R"(Registered plugin "{}" ({}))", plugin->name, plugin->id);
     if(plugin->on_init) plugin->on_init(plugin);
     plugins.push_back(plugin);
-    pm::origins[plugin] = o;
+    pm::origins[plugin] = origin;
     return true;
 }
 
@@ -93,18 +98,17 @@ void destroy() {
     mm::unload_all();
 }
 
-pm::Origin get_origin(const void* plugin) {
-    assume(plugin);
+const char* get_origin(const void* plugin) {
     auto it = pm::origins.find(plugin);
-    assume(it != pm::origins.end());
-    return it->second;
+    if(it != pm::origins.end()) return it->second.c_str();
+    return nullptr;
 }
 
-bool register_loader(const RDLoaderPlugin* plugin, pm::Origin o) {
-    return pm::register_plugin(pm::loaders, plugin, o);
+bool register_loader(const RDLoaderPlugin* plugin, const char* origin) {
+    return pm::register_plugin(pm::loaders, plugin, origin);
 }
 
-bool register_processor(const RDProcessorPlugin* plugin, pm::Origin o) {
+bool register_processor(const RDProcessorPlugin* plugin, const char* origin) {
     if(plugin) {
         if(!plugin->address_size) {
             state::error(fmt::format(
@@ -123,24 +127,24 @@ bool register_processor(const RDProcessorPlugin* plugin, pm::Origin o) {
         }
     }
 
-    return pm::register_plugin(pm::processors, plugin, o);
+    return pm::register_plugin(pm::processors, plugin, origin);
 }
 
-bool register_analyzer(const RDAnalyzerPlugin* plugin, pm::Origin o) {
-    return pm::register_plugin(pm::analyzers, plugin, o);
+bool register_analyzer(const RDAnalyzerPlugin* plugin, const char* origin) {
+    return pm::register_plugin(pm::analyzers, plugin, origin);
 }
 
-const RDLoaderPlugin** get_loaders(usize* n) {
+const RDLoaderPlugin** get_loaderplugins(usize* n) {
     if(n) *n = pm::loaders.size();
     return pm::loaders.data();
 }
 
-const RDProcessorPlugin** get_processors(usize* n) {
+const RDProcessorPlugin** get_processorplugins(usize* n) {
     if(n) *n = pm::processors.size();
     return pm::processors.data();
 }
 
-const RDAnalyzerPlugin** get_analyzers(usize* n) {
+const RDAnalyzerPlugin** get_analyzerplugins(usize* n) {
     if(n) *n = pm::analyzers.size();
     return pm::analyzers.data();
 }

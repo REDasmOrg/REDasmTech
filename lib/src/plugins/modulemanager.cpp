@@ -1,5 +1,4 @@
 #include "modulemanager.h"
-#include "../error.h"
 #include <filesystem>
 #include <spdlog/spdlog.h>
 #include <vector>
@@ -26,21 +25,24 @@ using HModule = HMODULE;
 using HModule = void*;
 #endif
 
-using ModuleInitFunc = void (*)();
-using ModuleDeinitFunc = void (*)();
+using ModuleCreateFunc = void (*)();
+using ModuleDestroyFunc = void (*)();
 
 struct Module {
     HModule handle;
-    ModuleInitFunc initfn;
-    ModuleDeinitFunc deinitfn;
+    ModuleCreateFunc createfn;
+    ModuleDestroyFunc destroyfn;
 
-    void init() const {
-        assume(initfn);
-        initfn();
+    [[nodiscard]] bool create() const {
+        if(createfn) {
+            createfn();
+            return true;
+        }
+        return false;
     }
 
-    void deinit() const {
-        if(deinitfn) deinitfn();
+    void destroy() const {
+        if(destroyfn) destroyfn();
     }
 
     explicit operator bool() const { return !!this->handle; }
@@ -79,6 +81,7 @@ Module load(std::string_view modulepath) {
 #endif
 
     if(m.handle) {
+        // TODO(davide): Handle if-statement
     }
     else {
 #ifdef _WIN32
@@ -89,15 +92,15 @@ Module load(std::string_view modulepath) {
 #endif
     }
 
-    m.initfn = mm::get_function<ModuleInitFunc>(m.handle, PLUGIN_CREATE);
+    m.createfn = mm::get_function<ModuleCreateFunc>(m.handle, PLUGIN_CREATE);
 
-    if(!m.initfn) {
+    if(!m.createfn) {
         spdlog::error("{}: '{}' not found", modulepath, PLUGIN_CREATE);
         mm::unload(m);
         return {};
     }
 
-    m.deinitfn = mm::get_function<ModuleDeinitFunc>(m.handle, PLUGIN_DESTROY);
+    m.destroyfn = mm::get_function<ModuleDestroyFunc>(m.handle, PLUGIN_DESTROY);
 
     return m;
 }
@@ -110,8 +113,13 @@ void load_all_from(const std::string& p) {
                entry.path().extension() != SHARED_OBJECT_EXT)
                 continue;
 
-            g_modules.emplace_back(load(entry.path().string()));
-            g_modules.back().init();
+            Module mod = mm::load(entry.path().string());
+            if(mod.create())
+                g_modules.emplace_back(mod);
+            else {
+                mod.destroy();
+                mm::unload(mod);
+            }
         }
     }
 }
@@ -134,7 +142,7 @@ void add_searchpath(const std::string& sp) {
 void unload_all() {
     spdlog::info("Unloading Modules");
     for(const Module& m : g_modules) {
-        m.deinit();
+        m.destroy();
         unload(m);
     }
 

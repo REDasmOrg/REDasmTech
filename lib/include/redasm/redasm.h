@@ -73,7 +73,7 @@ typedef struct RDInitParams {
 
 REDASM_EXPORT bool rd_init(const RDInitParams* params);
 REDASM_EXPORT void rd_deinit(void);
-REDASM_EXPORT void rd_free(void* obj);
+REDASM_EXPORT void rd_destroy(void* obj);
 REDASM_EXPORT void rd_setloglevel(RDLogLevel l);
 REDASM_EXPORT void rd_addsearchpath(const char* sp);
 REDASM_EXPORT usize rd_getsearchpaths(const char*** spaths);
@@ -83,9 +83,9 @@ REDASM_EXPORT void rd_log(const char* s);
 REDASM_EXPORT void rd_status(const char* s);
 REDASM_EXPORT void rd_select(const RDTestResult* tr);
 REDASM_EXPORT void rd_discard(void);
-REDASM_EXPORT bool rd_destroy(void);
 REDASM_EXPORT usize rd_getsegments(const RDSegment** segments);
 REDASM_EXPORT usize rd_getmemory(const RDByte** data);
+REDASM_EXPORT bool rd_getbyte(usize idx, RDByte* b);
 REDASM_EXPORT usize rd_getfile(const u8** data);
 REDASM_EXPORT const char* rd_rendertext(RDAddress address);
 
@@ -128,7 +128,8 @@ REDASM_EXPORT bool rd_setname_ex(RDAddress address, const char* name,
 
 REDASM_EXPORT bool rd_gettypename(RDAddress address, const char* tname,
                                   RDValue* v);
-REDASM_EXPORT bool rd_gettype(RDAddress address, const RDType* t, RDValue* v);
+REDASM_EXPORT bool rd_gettype(RDAddress address, const RDType* t,
+                              RDValue* v);
 
 REDASM_EXPORT bool rd_mapsegment(const char* name, RDAddress address,
                                  RDAddress endaddress, RDOffset offset,
@@ -153,5 +154,6 @@ REDASM_EXPORT bool rd_addresstooffset(RDAddress address, RDOffset* offset);
 REDASM_EXPORT bool rd_addresstoindex(RDAddress address, MIndex* index);
 REDASM_EXPORT bool rd_offsettoaddress(RDOffset offset, RDAddress* address);
 
-REDASM_EXPORT void rdplugin_create(void);
-REDASM_EXPORT void rdplugin_destroy(void);
+REDASM_EXPORT const char* rd_symbolize(const char* s);
+
+REDASM_EXPORT bool rdcontext_destroy(void);

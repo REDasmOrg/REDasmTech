@@ -1,5 +1,7 @@
 #pragma once
 
+#include <redasm/common.h>
+
 #define RDPLUGIN_HEADER(Self)                                                  \
     u32 level;                                                                 \
     const char* id;                                                            \
@@ -11,3 +13,9 @@
     u32 flags;
 
 #define PF_LAST (1u << 31)
+
+// Plugin entry points
+REDASM_EXPORT void rdplugin_create(void);
+REDASM_EXPORT void rdplugin_destroy(void);
+
+const char* rdplugin_getorigin(const void* plugin);

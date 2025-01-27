@@ -1,6 +1,10 @@
 #pragma once
 
 #include <cstdint>
+#include <redasm/types/dict.h>
+#include <redasm/types/str.h>
+#include <redasm/types/strv.h>
+#include <redasm/types/vect.h>
 
 typedef uint8_t u8;
 typedef uint16_t u16;

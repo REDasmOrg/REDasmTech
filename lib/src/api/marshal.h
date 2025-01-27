@@ -7,15 +7,8 @@
 
 namespace redasm {
 
-namespace typing {
-
-struct Value;
-
-};
-
 namespace rdil {
 
-struct ILExpr;
 class ILExprPool;
 class ILExprList;
 
@@ -35,8 +28,7 @@ namespace api {
 
 template<typename T, typename U> // Syntactic sugar for outvalues
 inline void set_if(T* p, const U& v) {
-    if(p)
-        *p = v;
+    if(p) *p = v;
 }
 
 inline Byte from_c(RDByte arg) { return Byte{arg}; }
@@ -67,10 +59,6 @@ inline const rdil::ILExprList* from_c(const RDILList* arg) {
 
 inline rdil::ILExprList* from_c(RDILList* arg) {
     return reinterpret_cast<rdil::ILExprList*>(arg);
-}
-
-inline const rdil::ILExpr* from_c(const RDILExpr* arg) {
-    return reinterpret_cast<const rdil::ILExpr*>(arg);
 }
 
 inline Renderer* from_c(RDRenderer* arg) {
@@ -111,14 +99,6 @@ inline const AbstractBuffer* from_c(const RDBuffer* arg) {
 
 inline AbstractBuffer* from_c(RDBuffer* arg) {
     return reinterpret_cast<AbstractBuffer*>(arg);
-}
-
-inline const typing::Value* from_c(const RDValue* arg) {
-    return reinterpret_cast<const typing::Value*>(arg);
-}
-
-inline typing::Value* from_c(RDValue* arg) {
-    return reinterpret_cast<typing::Value*>(arg);
 }
 
 inline RDByte to_c(Byte arg) { return arg.value; }
@@ -174,16 +154,6 @@ inline RDILPool* to_c(rdil::ILExprPool* arg) {
 inline RDILList* to_c(rdil::ILExprList* arg) {
     return reinterpret_cast<RDILList*>(arg);
 }
-
-inline const RDILExpr* to_c(const rdil::ILExpr* arg) {
-    return reinterpret_cast<const RDILExpr*>(arg);
-}
-
-inline const RDValue* to_c(const typing::Value* v) {
-    return reinterpret_cast<const RDValue*>(v);
-}
-
-inline RDValue* to_c(typing::Value* v) { return reinterpret_cast<RDValue*>(v); }
 
 RDSegment to_c(const Segment& arg);
 RDRef to_c(const Database::Ref& arg);
