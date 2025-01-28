@@ -1,9 +1,8 @@
-#include "../internal/typing.h"
-#include "../../context.h"
-#include "../../error.h"
-#include "../../state.h"
-#include "../../typing/base.h"
-#include "../../utils/utils.h"
+#include "../context.h"
+#include "../error.h"
+#include "../state.h"
+#include "../typing/base.h"
+#include "../utils/utils.h"
 #include <redasm/typing.h>
 #include <spdlog/spdlog.h>
 
@@ -28,31 +27,41 @@ const u32 TID_STR = redasm::typing::ids::STR;
 const u32 TID_WSTR = redasm::typing::ids::WSTR;
 
 usize rd_nsizeof(const char* tname) {
-    if(!tname) return 0;
-    return redasm::api::internal::size_of(tname);
+    spdlog::trace("rd_nsizeof('{}')", tname);
+    return redasm::state::get_types().size_of(tname);
 }
 
-usize rd_tsizeof(const RDType* t) { return redasm::api::internal::size_of(t); }
-
-bool rdtype_create(const char* tname, RDType* t) {
-    if(!tname) return false;
-    return redasm::api::internal::create_type(tname, t);
+usize rd_tsizeof(const RDType* t) {
+    spdlog::trace("rd_tsizeof('{}')", fmt::ptr(t));
+    if(t) return redasm::state::get_types().size_of(*t);
+    return 0;
 }
 
 bool rdtype_create_n(const char* tname, usize n, RDType* t) {
-    if(!tname) return false;
-    return redasm::api::internal::create_type_n(tname, n, t);
+    spdlog::trace("rdtype_create_n('{}', {}, {})", tname, n, fmt::ptr(t));
+    if(!tname || !t) return false;
+    *t = redasm::state::get_types().parse(tname).to_type();
+    t->n = n;
+    return true;
+}
+
+bool rdtype_create(const char* tname, RDType* t) {
+    return rdtype_create_n(tname, 0, t);
 }
 
 bool rd_intfrombytes(usize b, bool sign, RDType* t) {
-    return redasm::api::internal::int_from_bytes(b, sign, t);
+    spdlog::trace("rd_intfrombytes({}, {}, {})", b, sign, fmt::ptr(t));
+    if(!t) return false;
+    auto inttype = redasm::state::get_types().int_from_bytes(b, sign);
+    if(inttype) *t = *inttype;
+    return inttype.has_value();
 }
 
 const char* rd_typename(const RDType* t) {
     static std::string s;
 
     if(t)
-        s = redasm::api::internal::type_name(*t);
+        s = redasm::state::get_types().to_string(*t);
     else
         s.clear();
 
@@ -154,8 +163,7 @@ usize rdvalue_getlength(const RDValue* self) {
        self->type.id == redasm::typing::ids::WSTR)
         return str_getlength(&self->str);
 
-    except("Cannot get value-length of type '{}'",
-           redasm::api::internal::type_name(self->type));
+    except("Cannot get value-length of type '{}'", rd_typename(&self->type));
 }
 
 const RDValue* rdvalue_query(const RDValue* self, const char* q,

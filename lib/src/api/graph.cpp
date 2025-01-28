@@ -1,6 +1,6 @@
-#include "../../graph/layouts/layeredlayout.h"
-#include "../../graph/styledgraph.h"
-#include "../marshal.h"
+#include "../graph/layouts/layeredlayout.h"
+#include "../graph/styledgraph.h"
+#include "marshal.h"
 #include <redasm/graph.h>
 #include <spdlog/spdlog.h>
 

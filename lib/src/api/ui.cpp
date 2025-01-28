@@ -1,5 +1,5 @@
-#include "../../error.h"
-#include "../../state.h"
+#include "../error.h"
+#include "../state.h"
 #include <redasm/ui.h>
 
 #define return_ui_call(f, ...)                                                 \

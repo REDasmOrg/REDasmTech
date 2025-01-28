@@ -1,6 +1,6 @@
-#include "../../context.h"
-#include "../../plugins/pluginmanager.h"
-#include "../../state.h"
+#include "../context.h"
+#include "../plugins/pluginmanager.h"
+#include "../state.h"
 #include <redasm/analyzer.h>
 #include <spdlog/spdlog.h>
 

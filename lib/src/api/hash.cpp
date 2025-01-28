@@ -1,4 +1,4 @@
-#include "../../utils/hash.h"
+#include "../utils/hash.h"
 #include <redasm/hash.h>
 #include <spdlog/spdlog.h>
 

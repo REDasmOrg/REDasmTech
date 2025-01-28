@@ -1,9 +1,7 @@
 #include "loader.h"
-#include "../api/internal/memory.h"
-#include "../context.h"
 #include "../plugins/pluginmanager.h"
-#include "../state.h"
 #include <redasm/loader.h>
+#include <redasm/memory.h>
 
 namespace redasm::builtins {
 
@@ -18,10 +16,10 @@ RDLoaderPlugin binary_loader = {
                  const RDLoaderRequest*) { return true; },
 
     .load =
-        [](RDLoader*, RDBuffer*) {
-            api::internal::memory_map(0, state::context->program.file->size());
-            api::internal::memory_copy(0, 0,
-                                       state::context->program.file->size());
+        [](RDLoader*, RDBuffer* file) {
+            usize n = rdbuffer_getlength(file);
+            rd_map_n(0, n);
+            rd_memorycopy_n(0, 0, n);
             return true;
         },
 };

@@ -1,5 +1,5 @@
-#include "../../theme.h"
-#include "../../state.h"
+#include "../theme.h"
+#include "../state.h"
 #include <redasm/theme.h>
 #include <spdlog/spdlog.h>
 

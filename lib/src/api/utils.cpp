@@ -1,5 +1,5 @@
-#include "../../context.h"
-#include "../../state.h"
+#include "../context.h"
+#include "../state.h"
 #include <redasm/utils.h>
 
 namespace {

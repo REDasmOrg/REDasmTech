@@ -26,9 +26,13 @@ typedef struct RDStringResult {
 } RDStringResult;
 
 REDASM_EXPORT void rd_memoryinfo(RDMemoryInfo* mi);
+REDASM_EXPORT bool rd_memorycopy(RDAddress address, RDOffset start,
+                                 RDOffset end);
+REDASM_EXPORT bool rd_memorycopy_n(RDAddress address, RDOffset start, usize n);
 REDASM_EXPORT bool rd_map(RDAddress startaddr, RDAddress endaddr);
 REDASM_EXPORT bool rd_map_n(RDAddress baseaddress, usize size);
 REDASM_EXPORT bool rd_isaddress(RDAddress address);
+REDASM_EXPORT bool rd_checkstring(RDAddress address, RDStringResult* r);
 
 REDASM_EXPORT usize rd_read(RDAddress address, void* data, usize n);
 REDASM_EXPORT bool rd_getbool(RDAddress address, bool* v);

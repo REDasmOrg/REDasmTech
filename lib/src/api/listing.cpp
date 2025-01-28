@@ -1,7 +1,7 @@
-#include "../../listing.h"
-#include "../../context.h"
-#include "../../state.h"
-#include "../../typing/base.h"
+#include "../listing.h"
+#include "../context.h"
+#include "../state.h"
+#include "../typing/base.h"
 #include <redasm/listing.h>
 
 namespace {

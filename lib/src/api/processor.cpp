@@ -1,8 +1,8 @@
-#include "../../context.h"
-#include "../../error.h"
-#include "../../plugins/pluginmanager.h"
-#include "../../state.h"
-#include "../marshal.h"
+#include "../context.h"
+#include "../error.h"
+#include "../plugins/pluginmanager.h"
+#include "../state.h"
+#include "marshal.h"
 #include <spdlog/spdlog.h>
 
 u32 rdemulator_getdslotinfo(const RDEmulator* self,

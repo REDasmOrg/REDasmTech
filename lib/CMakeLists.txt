@@ -75,37 +75,29 @@ target_sources(${PROJECT_NAME_LIB}
         src/builtins/processor.cpp
         src/builtins/analyzer.cpp
 
-    PRIVATE # Internal
-        src/api/internal/typing.cpp
-        src/api/internal/buffer.cpp
-        src/api/internal/memory.cpp
-        src/api/internal/stream.cpp
-        src/api/internal/surface.cpp
-        src/api/internal/renderer.cpp
-
-    PRIVATE # C
+    PRIVATE # API
         src/api/marshal.cpp
-        src/api/c/hash.cpp
-        src/api/c/utils.cpp
-        src/api/c/ui.cpp
-        src/api/c/plugin.cpp
-        src/api/c/redasm.cpp
-        src/api/c/byteorder.cpp
-        src/api/c/buffer.cpp
-        src/api/c/memory.cpp
-        src/api/c/stream.cpp
-        src/api/c/byte.cpp
-        src/api/c/theme.cpp
-        src/api/c/typing.cpp
-        src/api/c/function.cpp
-        src/api/c/listing.cpp
-        src/api/c/analyzer.cpp
-        src/api/c/loader.cpp
-        src/api/c/surface.cpp
-        src/api/c/processor.cpp
-        src/api/c/renderer.cpp
-        src/api/c/graph.cpp
-        src/api/c/rdil.cpp
+        src/api/hash.cpp
+        src/api/utils.cpp
+        src/api/ui.cpp
+        src/api/plugin.cpp
+        src/api/redasm.cpp
+        src/api/byteorder.cpp
+        src/api/buffer.cpp
+        src/api/memory.cpp
+        src/api/stream.cpp
+        src/api/byte.cpp
+        src/api/theme.cpp
+        src/api/typing.cpp
+        src/api/function.cpp
+        src/api/listing.cpp
+        src/api/analyzer.cpp
+        src/api/loader.cpp
+        src/api/surface.cpp
+        src/api/processor.cpp
+        src/api/renderer.cpp
+        src/api/graph.cpp
+        src/api/rdil.cpp
 )
 
 target_include_directories(${PROJECT_NAME_LIB} PUBLIC "${PROJECT_SOURCE_DIR}/include")

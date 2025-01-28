@@ -1,4 +1,4 @@
-#include "../../memory/byteorder.h"
+#include "../memory/byteorder.h"
 #include <redasm/byteorder.h>
 #include <spdlog/spdlog.h>
 

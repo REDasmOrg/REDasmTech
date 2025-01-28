@@ -1,5 +1,4 @@
 #include "processor.h"
-#include "../api/internal/renderer.h"
 #include "../plugins/pluginmanager.h"
 #include <fmt/core.h>
 #include <redasm/function.h>
@@ -17,7 +16,7 @@ void render_segment(const RDProcessor*, RDRenderer* r,
     std::string s = fmt::format("segment {} (start: {}, end: {})",
                                 segment->name, start, end);
 
-    api::internal::renderer_themed(r, s, THEME_SEGMENT);
+    rdrenderer_themed(r, s.c_str(), THEME_SEGMENT);
 }
 
 void render_function(const RDProcessor*, RDRenderer* r,
@@ -34,7 +33,7 @@ void render_function(const RDProcessor*, RDRenderer* r,
     else
         s = fmt::format("function {}()", n);
 
-    api::internal::renderer_themed(r, s, THEME_FUNCTION);
+    rdrenderer_themed(r, s.c_str(), THEME_FUNCTION);
 }
 
 } // namespace processor

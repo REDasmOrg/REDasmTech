@@ -705,9 +705,7 @@ PyObject* check_string(PyObject* /*self*/, PyObject* args) {
     return Py_None;
 
     RDStringResult r{};
-    // if(!internal::check_string(address, &r)) return Py_None;
-
-    // assume(r.type);
+    if(!rd_checkstring(address, &r)) return Py_None;
 
     PyObject* res = python::new_simplenamespace();
     PyObject* type = PyUnicode_FromString(r.type);

@@ -1,4 +1,4 @@
-#include "../../plugins/pluginmanager.h"
+#include "../plugins/pluginmanager.h"
 #include <redasm/plugin.h>
 
 const char* rdplugin_getorigin(const void* plugin) {

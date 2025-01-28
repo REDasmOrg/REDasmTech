@@ -1,4 +1,4 @@
-#include "../marshal.h"
+#include "marshal.h"
 #include <redasm/byte.h>
 
 bool rdbyte_isunknown(RDByte self) {
