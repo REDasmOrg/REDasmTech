@@ -11,7 +11,7 @@ RDSegment to_c(const Segment& arg) {
 
     RDSegment s;
     s.name = arg.name;
-    s.type = arg.type;
+    s.perm = arg.perm;
     s.startoff = arg.offset;
     s.endoff = arg.endoffset;
 

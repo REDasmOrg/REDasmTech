@@ -7,6 +7,8 @@
 #include <string_view>
 #include <vector>
 
+#define py_addintconstant(m, c) PyModule_AddIntConstant(m, #c, c)
+
 namespace python {
 
 namespace fs = std::filesystem;
@@ -32,24 +34,28 @@ struct PyModuleDef moduledef = { // NOLINT
 // clang-format on
 
 void init_constants(PyObject* m) {
-    PyModule_AddIntConstant(m, "SEG_UNKNOWN", SEG_UNKNOWN);
-    PyModule_AddIntConstant(m, "SEG_HASDATA", SEG_HASDATA);
-    PyModule_AddIntConstant(m, "SEG_HASCODE", SEG_HASCODE);
-    PyModule_AddIntConstant(m, "ANA_RUNONCE", AF_RUNONCE);
-    PyModule_AddIntConstant(m, "ANA_SELECTED", AF_SELECTED);
-    PyModule_AddIntConstant(m, "ANA_EXPERIMENTAL", AF_EXPERIMENTAL);
+    py_addintconstant(m, SP_R);
+    py_addintconstant(m, SP_W);
+    py_addintconstant(m, SP_X);
+    py_addintconstant(m, SP_RW);
+    py_addintconstant(m, SP_RX);
+    py_addintconstant(m, SP_RWX);
+    py_addintconstant(m, SP_WX);
+    py_addintconstant(m, AF_RUNONCE);
+    py_addintconstant(m, AF_SELECTED);
+    py_addintconstant(m, AF_EXPERIMENTAL);
 
-    PyModule_AddIntConstant(m, "DR_READ", DR_READ);
-    PyModule_AddIntConstant(m, "DR_WRITE", DR_WRITE);
-    PyModule_AddIntConstant(m, "DR_ADDRESS", DR_ADDRESS);
-    PyModule_AddIntConstant(m, "CR_CALL", CR_CALL);
-    PyModule_AddIntConstant(m, "CR_JUMP", CR_JUMP);
+    py_addintconstant(m, DR_READ);
+    py_addintconstant(m, DR_WRITE);
+    py_addintconstant(m, DR_ADDRESS);
+    py_addintconstant(m, CR_CALL);
+    py_addintconstant(m, CR_JUMP);
 
-    PyModule_AddIntConstant(m, "SN_NOWARN", SN_NOWARN);
-    PyModule_AddIntConstant(m, "SN_IMPORT", SN_IMPORT);
-    PyModule_AddIntConstant(m, "SN_FORCE", SN_FORCE);
+    py_addintconstant(m, SN_NOWARN);
+    py_addintconstant(m, SN_IMPORT);
+    py_addintconstant(m, SN_FORCE);
 
-    PyModule_AddIntConstant(m, "ST_WEAK", ST_WEAK);
+    py_addintconstant(m, ST_WEAK);
 }
 
 PyMODINIT_FUNC PyInit_redasm() { // NOLINT

@@ -20,7 +20,7 @@ void Emulator::setup() {
 void Emulator::flow(MIndex index) {
     const Segment* fromseg = state::context->index_to_segment(this->pc);
     assume(fromseg);
-    assume(fromseg->type & SEG_HASCODE);
+    assume(fromseg->perm & SP_X);
 
     // Avoid inter-segment flow
     if(index >= fromseg->index && index < fromseg->endindex) {

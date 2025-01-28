@@ -38,8 +38,7 @@ bool load(RDLoader*, RDBuffer* file) {
     rd_map(PSX_USERRAM_START, PSX_USERRAM_END);
 
     rd_mapsegment_n("TEXT", psxheader.t_addr, psxheader.t_size,
-                    PSXEXE_TEXT_OFFSET, psxheader.t_size,
-                    SEG_HASCODE | SEG_HASDATA);
+                    PSXEXE_TEXT_OFFSET, psxheader.t_size, SP_RWX);
 
     rd_setentry(psxheader.pc0, "PSXEXE_EntryPoint");
     return true;

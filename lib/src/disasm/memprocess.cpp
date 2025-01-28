@@ -19,7 +19,8 @@ void process_hexdump(const Context* ctx, Listing& listing, MIndex& idx,
                      Function f) {
     usize l = 0, start = idx;
 
-    for(; idx < ctx->program.memory->size() && f(ctx->program.memory->at(idx)); l++, idx++) {
+    for(; idx < ctx->program.memory->size() && f(ctx->program.memory->at(idx));
+        l++, idx++) {
         if(idx != start && ctx->program.memory->at(idx).has(BF_SEGMENT))
             break; // Split inter-segment unknowns
 
@@ -85,7 +86,9 @@ LIndex process_listing_type(const Context* ctx, Listing& listing, MIndex& idx,
             case typing::ids::U64: idx += td->size; break;
 
             case typing::ids::WSTR:
-            case typing::ids::STR: idx += ctx->program.memory->get_length(idx); break;
+            case typing::ids::STR:
+                idx += ctx->program.memory->get_length(idx);
+                break;
 
             default: unreachable;
         }
@@ -222,7 +225,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
                     ctx->get_refs_from_type(curridx, CR_JUMP)) {
                     const Segment* seg = ctx->index_to_segment(r.index);
 
-                    if(seg && seg->type & SEG_HASCODE) {
+                    if(seg && seg->perm & SP_X) {
                         if(!mem->at(r.index).has(BF_CODE)) continue;
 
                         pending.push_back(r.index);
@@ -281,7 +284,7 @@ void process_listing_code(const Context* ctx, Listing& listing,
 
         const Segment* s = listing.current_segment();
         assume(s);
-        assume(s->type & SEG_HASCODE);
+        assume(s->perm & SP_X);
         mem::process_function_graph(ctx, functions, idx);
     }
     else if(b.has(BF_REFSTO)) {
@@ -299,8 +302,8 @@ void process_listing_code(const Context* ctx, Listing& listing,
 
 void process_refsto(Context* ctx, MIndex& idx) {
     auto is_range_unkn = [&](MIndex ridx, usize sz) {
-        return ctx->program.memory->range_is(ridx, sz,
-                                     [](Byte b) { return b.is_unknown(); });
+        return ctx->program.memory->range_is(
+            ridx, sz, [](Byte b) { return b.is_unknown(); });
     };
 
     Database::RefList refs = ctx->get_refs_to(idx);
@@ -351,7 +354,7 @@ void merge_code(Emulator* e) {
     const auto& mem = ctx->program.memory;
 
     for(const Segment& seg : ctx->program.segments) {
-        if(!(seg.type & SEG_HASCODE) || seg.offset == seg.endoffset) continue;
+        if(!(seg.perm & SP_X) || seg.offset == seg.endoffset) continue;
 
         usize idx = seg.index;
 

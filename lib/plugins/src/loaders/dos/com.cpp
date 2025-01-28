@@ -18,8 +18,7 @@ bool load(RDLoader*, RDBuffer* file) {
     usize len = rdbuffer_getlength(file);
 
     rd_map_n(0, 0x10000);
-    rd_mapsegment_n("MEM", COM_ENTRY, MSEG_SIZE, 0, len,
-                    SEG_HASCODE | SEG_HASDATA);
+    rd_mapsegment_n("MEM", COM_ENTRY, MSEG_SIZE, 0, len, SP_RWX);
     rd_setentry(COM_ENTRY, "_COM_EntryPoint_");
     return true;
 }

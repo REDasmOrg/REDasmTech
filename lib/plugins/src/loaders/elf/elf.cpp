@@ -59,18 +59,18 @@ bool load(RDLoader* self, RDBuffer* file) {
     for(usize i = 0; i < elf->shdr.size(); i++) {
         const auto& seg = elf->shdr[i];
         RDOffset offset = seg.sh_offset, offsize = seg.sh_size;
-        usize type = SEG_UNKNOWN;
+        usize type = 0;
 
         std::string name = elf->get_str(seg.sh_name, elf->ehdr.e_shstrndx,
                                         "seg_" + std::to_string(i));
 
         switch(seg.sh_type) {
             case SHT_PROGBITS:
-                type = seg.sh_flags & SHF_EXECINSTR ? SEG_HASCODE : SEG_HASDATA;
+                type = seg.sh_flags & SHF_EXECINSTR ? SP_RWX : SP_RW;
                 break;
 
             case SHT_NOBITS: offset = offsize = 0; [[fallthrough]];
-            default: type = SEG_HASDATA; break;
+            default: type = SP_RW; break;
         }
 
         rd_mapsegment_n(name.c_str(), seg.sh_addr, seg.sh_size, offset, offsize,

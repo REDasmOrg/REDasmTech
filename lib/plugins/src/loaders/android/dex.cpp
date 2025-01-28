@@ -105,7 +105,7 @@ bool load(RDLoader* l, RDBuffer*) {
     rd_mapsegment_n("CODE", self->dexfile->pHeader->dataOff,
                     self->dexfile->pHeader->dataSize,
                     self->dexfile->pHeader->dataOff,
-                    self->dexfile->pHeader->dataSize, SEG_HASCODE);
+                    self->dexfile->pHeader->dataSize, SP_RWX);
 
     return dex::filter_classes(self);
 }

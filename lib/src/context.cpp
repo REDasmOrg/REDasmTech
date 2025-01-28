@@ -130,7 +130,7 @@ void Context::setup(const RDProcessorPlugin* plugin) {
 
 bool Context::set_function(MIndex idx, usize flags) {
     if(const Segment* s = this->index_to_segment(idx); s) {
-        if(s->type & SEG_HASCODE) {
+        if(s->perm & SP_X) {
             this->program.memory->set(idx, BF_FUNCTION);
 
             if(!this->program.memory->at(idx).has(BF_CODE))
@@ -148,7 +148,7 @@ bool Context::set_entry(MIndex idx, const std::string& name) {
     if(const Segment* s = this->index_to_segment(idx); s) {
         this->program.memory->set(idx, BF_EXPORT);
 
-        if(s->type & SEG_HASCODE) assume(this->set_function(idx, 0));
+        if(s->perm & SP_X) assume(this->set_function(idx, 0));
 
         this->set_name(idx, name, 0);
         this->entrypoints.push_back(idx);
@@ -194,7 +194,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
                 this->program.memory->set(toidx, BF_JUMPDST | BF_REFSTO);
             }
 
-            if(s && s->type & SEG_HASCODE) {
+            if(s && s->perm & SP_X) {
                 // Check if already decoded
                 if(!this->program.memory->at(toidx).is_code())
                     this->worker.emulator.enqueue_jump(toidx);
@@ -211,7 +211,7 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
                 this->program.memory->set(toidx, BF_FUNCTION | BF_REFSTO);
             }
 
-            if(s && s->type & SEG_HASCODE) {
+            if(s && s->perm & SP_X) {
                 // Check if already decoded
                 if(!this->program.memory->at(toidx).is_code())
                     this->worker.emulator.enqueue_call(toidx);
@@ -382,7 +382,7 @@ RDAddress Context::memory_copy(MIndex idx, RDOffset start, RDOffset end) const {
 }
 
 void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
-                          RDOffset offset, RDOffset endoffset, usize type) {
+                          RDOffset offset, RDOffset endoffset, usize perm) {
     if(idx >= endidx) {
         spdlog::error("Invalid address range for segment '{}'", name);
         return;
@@ -421,14 +421,14 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
 
     this->program.segments.emplace_back(Segment{
         .name = utils::copy_str(name),
-        .type = type,
+        .perm = perm,
         .index = idx,
         .endindex = endidx,
         .offset = offset,
         .endoffset = endoffset,
     });
 
-    m_database->add_segment(name, idx, endidx, offset, endoffset, type);
+    m_database->add_segment(name, idx, endidx, offset, endoffset, perm);
 }
 
 tl::optional<MIndex> Context::get_index(std::string_view name) const {

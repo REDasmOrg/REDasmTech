@@ -511,30 +511,30 @@ usize rd_getsegments(const RDSegment** segments) {
 }
 
 bool rd_mapsegment(const char* name, RDAddress address, RDAddress endaddress,
-                   RDOffset offset, RDOffset endoffset, usize type) {
+                   RDOffset offset, RDOffset endoffset, usize perm) {
     spdlog::trace("rd_mapsegment('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
-                  address, endaddress, offset, endoffset, type);
+                  address, endaddress, offset, endoffset, perm);
 
     if(redasm::state::context && name) {
         MIndex startidx = address - redasm::state::context->baseaddress;
         MIndex endidx = endaddress - redasm::state::context->baseaddress;
         redasm::state::context->map_segment(name, startidx, endidx, offset,
-                                            endoffset, type);
+                                            endoffset, perm);
     }
 
     return true;
 }
 
 bool rd_mapsegment_n(const char* name, RDAddress address, usize asize,
-                     RDOffset offset, usize osize, usize type) {
+                     RDOffset offset, usize osize, usize perm) {
     spdlog::trace("rd_mapsegment_n('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
-                  address, asize, offset, osize, type);
+                  address, asize, offset, osize, perm);
 
     if(redasm::state::context && name) {
         MIndex startidx = address - redasm::state::context->baseaddress;
         MIndex endidx = (address + asize) - redasm::state::context->baseaddress;
         redasm::state::context->map_segment(name, startidx, endidx, offset,
-                                            offset + osize, type);
+                                            offset + osize, perm);
     }
 
     return false;

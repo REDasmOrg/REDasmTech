@@ -6,7 +6,7 @@ namespace redasm {
 
 struct Segment {
     const char* name;
-    usize type;
+    usize perm;
     MIndex index;
     MIndex endindex;
     RDOffset offset;

@@ -276,7 +276,7 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
                 ctx->get_refs_to_type(item.index, CR_JUMP)) {
                 const Segment* seg = state::context->index_to_segment(fromidx);
 
-                if(seg && (seg->type & SEG_HASCODE)) {
+                if(seg && (seg->perm & SP_X)) {
                     this->insert_path(mem->at(fromidx),
                                       this->calculate_index(fromidx), i);
                 }
@@ -289,8 +289,7 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
                 ctx->get_refs_from_type(item.index, CR_JUMP)) {
                 const Segment* seg = state::context->index_to_segment(r.index);
 
-                if(seg && (seg->type & SEG_HASCODE) &&
-                   mem->at(r.index).has(BF_CODE)) {
+                if(seg && (seg->perm & SP_X) && mem->at(r.index).has(BF_CODE)) {
                     this->insert_path(b, i, this->calculate_index(r.index));
                 }
             }
