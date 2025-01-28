@@ -26,7 +26,7 @@ typedef struct RDSegment {
 //     const char* name;
 //     RDAddress startaddr;
 //     RDAddress endaddr;
-//     RDOffset off;
+//     RDOffset fileoff;
 //     u16 sel;
 //     u8 perm;
 //     u8 bits;

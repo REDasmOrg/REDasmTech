@@ -41,7 +41,8 @@ concept SQLBindable =
     std::same_as<T, std::string_view> ||
     std::same_as<T, MIndex> || 
     std::same_as<T, u64> ||
-    std::same_as<T, u32>;
+    std::same_as<T, u32> ||
+    std::same_as<T, u8>;
 // clang-format on
 
 template<SQLBindable T>
@@ -58,7 +59,7 @@ void sql_bindparam(sqlite3* db, sqlite3_stmt* stmt, std::string_view n,
         res = sqlite3_bind_text(stmt, idx, v.data(), v.size(), SQLITE_STATIC);
     else if constexpr(std::is_same_v<U, MIndex> || std::is_same_v<U, u64>)
         res = sqlite3_bind_int64(stmt, idx, static_cast<sqlite3_int64>(v));
-    else if constexpr(std::is_same_v<U, u32>)
+    else if constexpr(std::is_same_v<U, u32> || std::is_same_v<U, u8>)
         res = sqlite3_bind_int(stmt, idx, static_cast<int>(v));
 
     if(res != SQLITE_OK) except("SQL: {}", sqlite3_errmsg(db));
@@ -66,9 +67,7 @@ void sql_bindparam(sqlite3* db, sqlite3_stmt* stmt, std::string_view n,
 
 int sql_step(sqlite3* db, sqlite3_stmt* stmt) {
     int res = sqlite3_step(stmt);
-
     if((res == SQLITE_ROW) || (res == SQLITE_DONE)) return res;
-
     except("SQL: {}", sqlite3_errmsg(db));
 }
 
@@ -88,11 +87,11 @@ constexpr std::string_view DB_SCHEMA = R"(
 
     CREATE TABLE Segments(
         name TEXT NOT NULL,
-        type INTEGER NOT NULL,
         idx INTEGER NOT NULL,
         endidx INTEGER NOT NULL,
         off INTEGER NOT NULL,
-        endoff INTEGER NOT NULL
+        endoff INTEGER NOT NULL,
+        perm INTEGER NOT NULL
     );
 
     CREATE TABLE Comments(
@@ -183,18 +182,18 @@ sqlite3_stmt* Database::prepare_query(int q, std::string_view s) const {
 }
 
 void Database::add_segment(std::string_view name, MIndex idx, MIndex endidx,
-                           RDOffset offset, RDOffset endoffset, usize type) {
+                           RDOffset offset, RDOffset endoffset, u8 perm) {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::ADD_SEGMENT, R"(
         INSERT INTO Segments
-            VALUES (:name, :type, :index, :endindex, :offset, :endoffset)
+            VALUES (:name, :index, :endindex, :offset, :endoffset, :perm)
     )");
 
     sql_bindparam(m_db, stmt, ":name", name);
-    sql_bindparam(m_db, stmt, ":type", type);
     sql_bindparam(m_db, stmt, ":index", idx);
     sql_bindparam(m_db, stmt, ":endindex", endidx);
     sql_bindparam(m_db, stmt, ":offset", offset);
     sql_bindparam(m_db, stmt, ":endoffset", endoffset);
+    sql_bindparam(m_db, stmt, ":perm", perm);
     sql_step(m_db, stmt);
 }
 

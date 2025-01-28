@@ -49,7 +49,7 @@ public:
     bool is_address(RDAddress address) const;
 
     void map_segment(const std::string& name, MIndex idx, MIndex endidx,
-                     RDOffset offset, RDOffset endoffset, usize type);
+                     RDOffset offset, RDOffset endoffset, u8 perm);
 
 public: // Database Interface
     void add_ref(MIndex fromidx, MIndex toidx, usize type);

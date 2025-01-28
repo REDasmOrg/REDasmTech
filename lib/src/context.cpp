@@ -382,7 +382,7 @@ RDAddress Context::memory_copy(MIndex idx, RDOffset start, RDOffset end) const {
 }
 
 void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
-                          RDOffset offset, RDOffset endoffset, usize perm) {
+                          RDOffset offset, RDOffset endoffset, u8 perm) {
     if(idx >= endidx) {
         spdlog::error("Invalid address range for segment '{}'", name);
         return;
@@ -421,11 +421,11 @@ void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
 
     this->program.segments.emplace_back(Segment{
         .name = utils::copy_str(name),
-        .perm = perm,
         .index = idx,
         .endindex = endidx,
         .offset = offset,
         .endoffset = endoffset,
+        .perm = perm,
     });
 
     m_database->add_segment(name, idx, endidx, offset, endoffset, perm);

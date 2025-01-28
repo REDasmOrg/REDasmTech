@@ -511,7 +511,7 @@ usize rd_getsegments(const RDSegment** segments) {
 }
 
 bool rd_mapsegment(const char* name, RDAddress address, RDAddress endaddress,
-                   RDOffset offset, RDOffset endoffset, usize perm) {
+                   RDOffset offset, RDOffset endoffset, u8 perm) {
     spdlog::trace("rd_mapsegment('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
                   address, endaddress, offset, endoffset, perm);
 
@@ -526,7 +526,7 @@ bool rd_mapsegment(const char* name, RDAddress address, RDAddress endaddress,
 }
 
 bool rd_mapsegment_n(const char* name, RDAddress address, usize asize,
-                     RDOffset offset, usize osize, usize perm) {
+                     RDOffset offset, usize osize, u8 perm) {
     spdlog::trace("rd_mapsegment_n('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
                   address, asize, offset, osize, perm);
 

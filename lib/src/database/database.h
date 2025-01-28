@@ -37,7 +37,7 @@ public:
     tl::optional<uptr> get_userdata(std::string_view k) const;
 
     void add_segment(std::string_view name, MIndex idx, MIndex endidx,
-                     RDOffset offset, RDOffset endoffset, usize type);
+                     RDOffset offset, RDOffset endoffset, u8 perm);
 
     tl::optional<usize> get_index(std::string_view name,
                                   bool onlydb = false) const;

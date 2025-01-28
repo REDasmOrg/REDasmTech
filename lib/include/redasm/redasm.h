@@ -132,11 +132,11 @@ REDASM_EXPORT bool rd_gettype(RDAddress address, const RDType* t, RDValue* v);
 
 REDASM_EXPORT bool rd_mapsegment(const char* name, RDAddress address,
                                  RDAddress endaddress, RDOffset offset,
-                                 RDOffset endoffset, usize perm);
+                                 RDOffset endoffset, u8 perm);
 
 REDASM_EXPORT bool rd_mapsegment_n(const char* name, RDAddress address,
                                    usize asize, RDOffset offset, usize osize,
-                                   usize perm);
+                                   u8 perm);
 
 REDASM_EXPORT bool rd_getaddress(const char* name, RDAddress* address);
 REDASM_EXPORT const char* rd_getname(RDAddress address);
