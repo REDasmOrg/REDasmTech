@@ -2,6 +2,7 @@
 
 #include <redasm/common.h>
 #include <redasm/function.h>
+#include <redasm/segment.h>
 #include <redasm/theme.h>
 #include <redasm/types.h>
 
@@ -27,45 +28,17 @@ typedef enum RDSurfaceFlags {
     SURFACE_TEXT = ~0u & ~SURFACE_RDIL,
 } RDSurfaceFlags;
 
+// clang-format off
 typedef struct RDSurfaceLocation {
-    struct {
-        usize value;
-        bool valid;
-    } function;
-
-    struct {
-        RDAddress value;
-        bool valid;
-    } cursoraddress;
-
-    struct {
-        RDAddress value;
-        bool valid;
-    } address;
-
-    struct {
-        RDOffset value;
-        bool valid;
-    } offset;
-
-    struct {
-        MIndex value;
-        bool valid;
-    } index;
-
-    struct {
-        LIndex value;
-        bool valid;
-    } startindex;
-
-    struct {
-        int type;
-        LIndex value;
-        bool valid;
-    } listingindex;
-
-    const char* segment;
+    struct { RDAddress value; bool valid; } function;
+    struct { RDAddress value; bool valid; } cursoraddress;
+    struct { RDAddress value; bool valid; } address;
+    struct { RDOffset value; bool valid; } offset;
+    struct { LIndex value; bool valid; } startindex;
+    struct { int type; LIndex value; bool valid; } listingindex;
+    const RDSegmentNew* segment;
 } RDSurfaceLocation;
+// clang-format n
 
 typedef struct RDSurfacePosition {
     int row;

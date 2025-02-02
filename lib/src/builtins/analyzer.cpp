@@ -2,6 +2,7 @@
 #include "../context.h"
 #include "../plugins/pluginmanager.h"
 #include "../state.h"
+#include "../utils/utils.h"
 #include <redasm/analyzer.h>
 
 namespace redasm::builtins {
@@ -12,21 +13,24 @@ void do_autorename(RDAnalyzer*) {
     Context* ctx = state::context;
 
     for(const Function& f : ctx->functions) {
-        if(Byte b = ctx->program.memory->at(f.index); !b.has(BF_FLOW)) {
-            if(b.has(BF_JUMP)) {
+        const RDSegmentNew* seg = ctx->program.find_segment(f.address);
+
+        if(seg && !memory::has_flag(seg, f.address, BF_FLOW)) {
+            if(memory::has_flag(seg, f.address, BF_JUMP)) {
                 // Search for direct/indirect jumps
-                for(const Database::Ref& ref : ctx->get_refs_from(f.index)) {
+                for(const RDRef& ref : ctx->get_refs_from(f.address)) {
                     if(ref.type == CR_JUMP || ref.type == DR_READ) {
-                        ctx->set_name(f.index, "_" + ctx->get_name(ref.index),
+                        ctx->set_name(f.address,
+                                      "_" + ctx->get_name(ref.address),
                                       SN_NOWARN);
                         break;
                     }
                 }
             }
-            else if(b.has(BF_CODE)) {
-                ctx->index_to_address(f.index).map([&](RDAddress x) {
-                    ctx->set_name(f.index, "nullsub_" + ctx->to_hex(x), 0);
-                });
+            else if(memory::has_flag(seg, f.address, BF_COMMENT)) {
+                ctx->set_name(
+                    f.address,
+                    "nullsub_" + utils::to_hex<std::string>(f.address), 0);
             }
         }
     }

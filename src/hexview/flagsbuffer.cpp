@@ -8,7 +8,7 @@ FlagsBuffer::FlagsBuffer(QObject* parent): QHexBuffer{parent} {
 qint64 FlagsBuffer::length() const { return m_size; }
 
 bool FlagsBuffer::accept(qint64 idx) const {
-    if(static_cast<quint64>(idx) < m_size) return rdbyte_hasbyte(m_bytes[idx]);
+    if(static_cast<quint64>(idx) < m_size) return rdbyte_hasbyte(&m_bytes[idx]);
     return false;
 }
 
@@ -22,7 +22,7 @@ QByteArray FlagsBuffer::read(qint64 offset, int length) {
     for(qint64 i = 0; i < std::min<qint64>(length, m_size); i++) {
         u8 b;
 
-        if(rdbyte_getbyte(m_bytes[offset + i], &b))
+        if(rdbyte_getbyte(&m_bytes[offset + i], &b))
             data.push_back(b);
         else
             data.push_back(u8{0});

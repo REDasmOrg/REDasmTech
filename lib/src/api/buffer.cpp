@@ -1,8 +1,11 @@
 #include "../context.h"
 #include "../memory/abstractbuffer.h"
 #include "../state.h"
+#include "../utils/utils.h"
 #include "marshal.h"
+#include <fstream>
 #include <redasm/buffer.h>
+#include <redasm/byte.h>
 #include <spdlog/spdlog.h>
 
 namespace {
@@ -16,18 +19,58 @@ bool rdbuffer_getvalue(const RDBuffer* self, usize idx, T* v, F getter) {
 
 } // namespace
 
-RDBuffer* rdbuffer_getfile() {
-    spdlog::trace("rdbuffer_getfile()");
-    if(redasm::state::context)
-        return redasm::api::to_c(redasm::state::context->program.file.get());
-    return nullptr;
+RDBuffer rdbuffer_createfile(const char* filepath) {
+    spdlog::trace("rdbuffer_createfile('{}')", filepath);
+    if(!filepath) return {};
+
+    std::ifstream ifs(filepath, std::ios::binary | std::ios::ate);
+
+    if(!ifs.is_open()) {
+        spdlog::error("Cannot open '{}'", filepath);
+        return {};
+    }
+
+    RDBuffer self = {
+        .data = reinterpret_cast<u8*>(std::calloc(ifs.tellg(), sizeof(u8))),
+        .len = static_cast<usize>(ifs.tellg()),
+        .src = redasm::utils::copy_str(filepath),
+
+        .get_byte =
+            [](const RDBuffer* self, usize idx, u8* b) {
+                if(idx < self->len) {
+                    if(b) *b = reinterpret_cast<u8*>(self->data)[idx];
+                    return true;
+                }
+
+                return false;
+            },
+    };
+
+    ifs.read(reinterpret_cast<char*>(self.data), self.len);
+    return self;
 }
 
-RDBuffer* rdbuffer_getmemory() {
-    spdlog::trace("rdbuffer_getmemory()");
-    if(redasm::state::context)
-        return redasm::api::to_c(redasm::state::context->program.memory.get());
-    return nullptr;
+RDBuffer rdbuffer_creatememory(usize n) {
+    spdlog::trace("rdbuffer_creatememory({:x})", n);
+    if(!n) return {};
+
+    return {
+        .m_data = reinterpret_cast<RDByte*>(std::calloc(n, sizeof(RDByte))),
+        .len = n,
+        .src = redasm::utils::copy_str("MEMORY"),
+
+        .get_byte =
+            [](const RDBuffer* self, usize idx, u8* b) {
+                if(idx < self->len)
+                    return rdbyte_getbyte(&self->m_data[idx], b);
+
+                return false;
+            },
+    };
+}
+
+bool rdbuffer_isnull(const RDBuffer* self) {
+    return !self || !self->data || !self->get_byte;
 }
 
 usize rdbuffer_getdata(const RDBuffer* self, const u8** data) {
@@ -329,4 +372,13 @@ bool rdbuffer_collecttype(const RDBuffer* self, usize idx, const RDType* t,
     });
 
     return res.has_value();
+}
+
+void rdbuffer_destroy(RDBuffer* self) {
+    if(!self) return;
+    std::free(self->data);
+    delete[] self->src;
+    self->src = nullptr;
+    self->data = nullptr;
+    self->len = 0;
 }

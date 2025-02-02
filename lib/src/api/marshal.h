@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../database/database.h"
 #include "../disasm/function.h"
 #include "../memory/byte.h"
 #include <redasm/redasm.h>
@@ -151,8 +150,6 @@ inline RDILList* to_c(rdil::ILExprList* arg) {
 }
 
 RDSegment to_c(const Segment& arg);
-RDRef to_c(const Database::Ref& arg);
-std::vector<RDRef> to_c(const std::vector<Database::Ref>& arg);
 RDFunctionBasicBlock to_c(const Function::BasicBlock* bb);
 
 } // namespace api

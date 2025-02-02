@@ -76,12 +76,13 @@ target_sources(${PROJECT_NAME_LIB}
         src/builtins/analyzer.cpp
 
     PRIVATE # API
+        src/api/redasm.cpp
+        src/api/program.cpp
         src/api/marshal.cpp
         src/api/hash.cpp
         src/api/utils.cpp
         src/api/ui.cpp
         src/api/plugin.cpp
-        src/api/redasm.cpp
         src/api/byteorder.cpp
         src/api/buffer.cpp
         src/api/memory.cpp

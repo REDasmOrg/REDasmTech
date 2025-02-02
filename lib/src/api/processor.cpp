@@ -16,21 +16,14 @@ u32 rdemulator_getdslotinfo(const RDEmulator* self,
 
 void rdemulator_flow(RDEmulator* self, RDAddress flowaddr) {
     spdlog::trace("rdemulator_flow({}, {:x})", fmt::ptr(self), flowaddr);
-
-    if(redasm::state::context) {
-        redasm::state::context->address_to_index(flowaddr).map(
-            [&](MIndex idx) { redasm::api::from_c(self)->flow(idx); });
-    }
+    if(redasm::state::context) redasm::api::from_c(self)->flow(flowaddr);
 }
 
 void rdemulator_addref(RDEmulator* self, RDAddress toaddr, usize type) {
     spdlog::trace("rdemulator_addref({}, {:x}, {})", fmt::ptr(self), toaddr,
                   type);
 
-    if(redasm::state::context) {
-        redasm::state::context->address_to_index(toaddr).map(
-            [&](MIndex idx) { redasm::api::from_c(self)->add_ref(idx, type); });
-    }
+    if(redasm::state::context) redasm::api::from_c(self)->add_ref(toaddr, type);
 }
 
 u64 rdemulator_getreg(const RDEmulator* self, int regid) {
@@ -120,7 +113,7 @@ bool rd_decode(RDAddress address, RDInstruction* instr) {
     spdlog::trace("rd_decode({:x}, {})", address, fmt::ptr(instr));
 
     const redasm::Context* ctx = redasm::state::context;
-    if(!instr || (ctx && !ctx->is_address(address))) return false;
+    if(!instr || !rd_isaddress(address)) return false;
 
     *instr = {
         .address = address,

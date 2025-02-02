@@ -8,7 +8,7 @@ namespace redasm::rdil {
 
 class ILExprList: public ILExprPool {
 public:
-    using Container = std::vector<std::pair<MIndex, const RDILExpr*>>;
+    using Container = std::vector<std::pair<RDAddress, const RDILExpr*>>;
 
 public:
     void append(const RDILExpr* e);
@@ -29,7 +29,7 @@ private:
     Container m_expressions;
 
 public:
-    MIndex currentindex{};
+    RDAddress currentaddress{};
 };
 
 } // namespace redasm::rdil

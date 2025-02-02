@@ -9,24 +9,19 @@ RDFunction* rd_getfunction(RDAddress address) {
     spdlog::trace("rd_getfunction({:x})", address);
     redasm::Context* ctx = redasm::state::context;
 
-    if(auto idx = ctx->address_to_index(address); idx) {
-        auto it = std::lower_bound(
-            ctx->functions.begin(), ctx->functions.end(), *idx,
-            [](const redasm::Function& f, usize ep) { return f.index < ep; });
+    auto it = std::lower_bound(
+        ctx->functions.begin(), ctx->functions.end(), address,
+        [](const redasm::Function& f, usize ep) { return f.address < ep; });
 
-        if(it != ctx->functions.end() && it->index == *idx)
-            return redasm::api::to_c(std::addressof(*it));
-    }
+    if(it != ctx->functions.end() && it->address == address)
+        return redasm::api::to_c(std::addressof(*it));
 
     return nullptr;
 }
 
 RDAddress rdfunction_getentry(const RDFunction* self) {
     spdlog::trace("rd_functiongetentry({})", fmt::ptr(self));
-    auto address = redasm::state::context->index_to_address(
-        redasm::api::from_c(self)->index);
-    assume(address.has_value());
-    return *address;
+    return redasm::api::from_c(self)->address;
 }
 
 RDGraph* rdfunction_getgraph(RDFunction* self) {
@@ -43,11 +38,12 @@ RDThemeKind rdfunction_gettheme(const RDFunction* self,
 
 bool rdfunction_isexport(const RDFunction* self) {
     spdlog::trace("rdfunction_isexport({})", fmt::ptr(self));
+    const redasm::Context* ctx = redasm::state::context;
 
-    if(redasm::state::context) {
+    if(ctx) {
         const redasm::Function* f = redasm::api::from_c(self);
-        return redasm::state::context->program.memory->at(f->index).has(
-            BF_EXPORT);
+        const RDSegmentNew* seg = ctx->program.find_segment(f->address);
+        return seg && redasm::memory::has_flag(seg, f->address, BF_EXPORT);
     }
 
     return false;
@@ -56,12 +52,8 @@ bool rdfunction_isexport(const RDFunction* self) {
 bool rdfunction_contains(const RDFunction* self, RDAddress address) {
     spdlog::trace("rdfunction_contains({}, {:x})", fmt::ptr(self), address);
 
-    if(redasm::state::context) {
-        if(auto idx = redasm::state::context->address_to_index(address); idx)
-            return redasm::api::from_c(self)->contains(*idx);
-    }
-
-    return false;
+    return redasm::state::context &&
+           redasm::api::from_c(self)->contains(address);
 }
 
 bool rdfunction_getbasicblock(const RDFunction* self, RDGraphNode n,

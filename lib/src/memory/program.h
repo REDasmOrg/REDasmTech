@@ -4,16 +4,40 @@
 #include "abstractbuffer.h"
 #include "memory.h"
 #include <memory>
+#include <redasm/segment.h>
+#include <tl/optional.hpp>
 #include <vector>
 
 namespace redasm {
 
+struct FileMapping {
+    RDAddress base;
+    usize length;
+    RDOffset offset;
+};
+
 struct Program {
     ~Program();
+    bool add_segment(std::string_view name, RDAddress start, RDAddress end,
+                     u32 perm, u32 bits);
+    bool map_file(RDOffset off, RDAddress start, RDAddress end);
 
-    std::vector<Segment> segments;
-    std::unique_ptr<Memory> memory;
-    std::shared_ptr<AbstractBuffer> file;
+    tl::optional<RDOffset> to_offset(RDAddress address) const;
+    tl::optional<RDAddress> to_address(RDOffset offset) const;
+    RDSegmentNew* find_segment(RDAddress address);
+
+    const RDSegmentNew* find_segment(RDAddress address) const {
+        return const_cast<Program*>(this)->find_segment(address);
+    }
+
+    std::vector<RDSegmentNew> segments;
+    std::vector<FileMapping> mappings;
+    RDBuffer file;
+
+    // OLD
+    std::shared_ptr<AbstractBuffer> file_old;
+    std::vector<Segment> segments_old;
+    std::unique_ptr<Memory> memory_old;
 };
 
 } // namespace redasm

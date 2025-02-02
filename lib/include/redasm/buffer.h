@@ -1,20 +1,30 @@
 #pragma once
 
+#include <redasm/byte.h>
 #include <redasm/common.h>
 #include <redasm/types.h>
 #include <redasm/typing.h>
 
-RD_HANDLE(RDBuffer);
+typedef struct RDBuffer {
+    union {
+        u8* data;
+        RDByte* m_data;
+    };
 
-REDASM_EXPORT RDBuffer* rdbuffer_getfile(void);
-REDASM_EXPORT RDBuffer* rdbuffer_getmemory(void);
+    usize len;
+    const char* src;
+    bool (*get_byte)(const struct RDBuffer*, usize, u8*);
+} RDBuffer;
+
+REDASM_EXPORT RDBuffer rdbuffer_createfile(const char* filepath);
+REDASM_EXPORT RDBuffer rdbuffer_creatememory(usize n);
+REDASM_EXPORT bool rdbuffer_isnull(const RDBuffer* self);
 REDASM_EXPORT usize rdbuffer_getdata(const RDBuffer* self, const u8** data);
 REDASM_EXPORT usize rdbuffer_getlength(const RDBuffer* self);
 REDASM_EXPORT usize rdbuffer_read(const RDBuffer* self, usize idx, void* dst,
                                   usize n);
 REDASM_EXPORT bool rdbuffer_readstruct(const RDBuffer* self, usize idx,
-                                       const RDStructField* fields,
-                                       RDValue* v);
+                                       const RDStructField* fields, RDValue* v);
 REDASM_EXPORT bool rdbuffer_getbool(const RDBuffer* self, usize idx, bool* v);
 REDASM_EXPORT bool rdbuffer_getchar(const RDBuffer* self, usize idx, char* v);
 REDASM_EXPORT bool rdbuffer_getu8(const RDBuffer* self, usize idx, u8* v);
@@ -47,3 +57,5 @@ REDASM_EXPORT bool rdbuffer_collecttypename(const RDBuffer* self, usize idx,
                                             const char* tname, RDValue* v);
 REDASM_EXPORT bool rdbuffer_collecttype(const RDBuffer* self, usize idx,
                                         const RDType* t, RDValue* v);
+
+REDASM_EXPORT void rdbuffer_destroy(RDBuffer* self);

@@ -14,10 +14,10 @@ struct RDLoaderPlugin;
 RD_HANDLE(RDLoader);
 
 typedef struct RDLoaderRequest {
+    struct RDBuffer* file;
     const char* path;
     const char* name;
     const char* ext;
-    struct RDBuffer* file;
 } RDLoaderRequest;
 
 // clang-format off

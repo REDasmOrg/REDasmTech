@@ -2,6 +2,7 @@
 #include "../api/marshal.h"
 #include "../context.h"
 #include "../error.h"
+#include "../memory/memory.h"
 #include "../rdil/rdil.h"
 #include "../state.h"
 #include "../utils/utils.h"
@@ -24,9 +25,10 @@ Renderer::Renderer(usize f): flags{f} {}
 usize Renderer::current_address() const { return m_curraddress; }
 
 const Segment* Renderer::current_segment() const {
-    if(m_currsegment >= state::context->program.segments.size()) return nullptr;
+    if(m_currsegment >= state::context->program.segments_old.size())
+        return nullptr;
 
-    return &state::context->program.segments[m_currsegment];
+    return &state::context->program.segments_old[m_currsegment];
 }
 
 void Renderer::highlight_row(int row) {
@@ -124,9 +126,7 @@ void Renderer::fill_columns() {
 }
 
 void Renderer::set_current_item(LIndex lidx, const ListingItem& item) {
-    auto addr = state::context->index_to_address(item.index);
-    assume(addr);
-    m_curraddress = *addr;
+    m_curraddress = item.address;
     m_listingidx = lidx;
     this->check_current_segment(item);
 }
@@ -180,25 +180,20 @@ Renderer& Renderer::rdil() {
 
 Renderer& Renderer::addr(RDAddress address, int flags) {
     const Context* ctx = state::context;
+    const RDSegmentNew* seg = ctx->program.find_segment(address);
 
-    ctx->address_to_index(address)
-        .and_then([&](MIndex idx) -> tl::optional<MIndex> {
-            if(ctx->program.memory->at(idx).has(BF_REFSTO)) {
-                if(flags == RC_NEEDSIGN) {
-                    if(static_cast<i64>(address) < 0)
-                        this->chunk("-");
-                    else
-                        this->chunk("+");
-                }
+    if(seg && memory::has_flag(seg, address, BF_REFSTO)) {
+        if(flags == RC_NEEDSIGN) {
+            if(static_cast<i64>(address) < 0)
+                this->chunk("-");
+            else
+                this->chunk("+");
+        }
 
-                this->chunk(ctx->get_name(idx), THEME_ADDRESS);
-                return idx;
-            }
-            return tl::nullopt;
-        })
-        .or_else([&]() {
-            this->constant(static_cast<u64>(address), 16, flags, THEME_ADDRESS);
-        });
+        this->chunk(ctx->get_name(address), THEME_ADDRESS);
+    }
+    else
+        this->constant(static_cast<u64>(address), 16, flags, THEME_ADDRESS);
 
     return *this;
 }
@@ -371,22 +366,22 @@ Renderer& Renderer::chunk(std::string_view arg, RDThemeKind fg,
 }
 
 void Renderer::check_current_segment(const ListingItem& item) {
-    if(m_currsegment < state::context->program.segments.size()) {
-        const Segment& s = state::context->program.segments[m_currsegment];
+    if(m_currsegment < state::context->program.segments_old.size()) {
+        const Segment& s = state::context->program.segments_old[m_currsegment];
 
-        if(item.index >= s.index && item.index < s.endindex) return;
+        if(item.address >= s.index && item.address < s.endindex) return;
     }
 
-    for(usize i = 0; i < state::context->program.segments.size(); i++) {
-        const Segment& s = state::context->program.segments[i];
+    for(usize i = 0; i < state::context->program.segments_old.size(); i++) {
+        const Segment& s = state::context->program.segments_old[i];
 
-        if(item.index >= s.index && item.index < s.endindex) {
+        if(item.address >= s.index && item.address < s.endindex) {
             m_currsegment = i;
             return;
         }
     }
 
-    m_currsegment = state::context->program.segments.size();
+    m_currsegment = state::context->program.segments_old.size();
 }
 
 std::string Renderer::word_at(const SurfaceRows& rows, int row, int col) {

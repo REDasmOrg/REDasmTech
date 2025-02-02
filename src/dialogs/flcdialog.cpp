@@ -20,7 +20,7 @@ FLCDialog::FLCDialog(QWidget* parent): QDialog{parent}, m_ui{this} {
             });
 }
 
-void FLCDialog::on_address_changed(const QString& s) {
+void FLCDialog::on_address_changed(const QString& s) { // NOLINT
     if(s.isEmpty()) {
         m_ui.pbcopyaddress->setEnabled(false);
         return;
@@ -34,12 +34,12 @@ void FLCDialog::on_address_changed(const QString& s) {
         if(ok) {
             RDOffset offset{};
 
-            if(rd_addresstooffset(val, &offset)) {
+            if(rd_tooffset(val, &offset)) {
                 m_ui.leoffset->setText(rd_tohex(offset));
 
-                RDSegment seg;
-                if(rd_offsettosegment(offset, &seg))
-                    m_ui.lesegment->setText(seg.name);
+                const RDSegmentNew* seg = rd_findsegment(val);
+                if(seg)
+                    m_ui.lesegment->setText(seg->name);
                 else
                     m_ui.lesegment->clear();
             }
@@ -53,7 +53,7 @@ void FLCDialog::on_address_changed(const QString& s) {
     m_ui.pbcopyaddress->setEnabled(ok);
 }
 
-void FLCDialog::on_offset_changed(const QString& s) {
+void FLCDialog::on_offset_changed(const QString& s) { // NOLINT
     if(s.isEmpty()) {
         m_ui.pbcopyoffset->setEnabled(false);
         return;
@@ -67,12 +67,12 @@ void FLCDialog::on_offset_changed(const QString& s) {
         if(ok) {
             RDAddress address{};
 
-            if(rd_offsettoaddress(val, &address)) {
+            if(rd_toaddress(val, &address)) {
                 m_ui.leaddress->setText(rd_tohex(address));
 
-                RDSegment seg;
-                if(rd_addresstosegment(address, &seg))
-                    m_ui.lesegment->setText(seg.name);
+                const RDSegmentNew* seg = rd_findsegment(address);
+                if(seg)
+                    m_ui.lesegment->setText(seg->name);
                 else
                     m_ui.lesegment->clear();
             }

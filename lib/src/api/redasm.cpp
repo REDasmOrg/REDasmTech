@@ -71,22 +71,15 @@ void rd_setloglevel(RDLogLevel l) {
 void rd_addproblem(RDAddress address, const char* problem) {
     spdlog::trace("rd_addproblem({:x}, '{}')", address, problem);
 
-    if(problem && redasm::state::context) {
-        redasm::state::context->add_problem(
-            address - redasm::state::context->baseaddress, problem);
-    }
+    if(problem && redasm::state::context)
+        redasm::state::context->add_problem(address, problem);
 }
 
 void rd_addref(RDAddress fromaddr, RDAddress toaddr, usize type) {
     spdlog::trace("rd_addref({:x}, {:x}, {})", fromaddr, toaddr, type);
 
-    if(redasm::state::context) {
-        auto fromidx = redasm::state::context->address_to_index(fromaddr);
-        auto toidx = redasm::state::context->address_to_index(toaddr);
-
-        if(fromidx && toidx)
-            redasm::state::context->add_ref(*fromidx, *toidx, type);
-    }
+    if(redasm::state::context)
+        redasm::state::context->add_ref(fromaddr, toaddr, type);
 }
 
 usize rd_getrefsfrom(RDAddress fromaddr, const RDRef** refs) {
@@ -94,13 +87,7 @@ usize rd_getrefsfrom(RDAddress fromaddr, const RDRef** refs) {
     if(!redasm::state::context) return 0;
 
     static std::vector<RDRef> r;
-
-    r = redasm::state::context->address_to_index(fromaddr).map_or(
-        [](MIndex x) {
-            return redasm::api::to_c(redasm::state::context->get_refs_from(x));
-        },
-        std::vector<RDRef>{});
-
+    r = redasm::state::context->get_refs_from(fromaddr);
     if(refs) *refs = r.data();
     return r.size();
 }
@@ -111,14 +98,7 @@ usize rd_getrefsfromtype(RDAddress fromaddr, usize type, const RDRef** refs) {
     if(!redasm::state::context) return 0;
 
     static std::vector<RDRef> r;
-
-    r = redasm::state::context->address_to_index(fromaddr).map_or(
-        [type](MIndex x) {
-            return redasm::api::to_c(
-                redasm::state::context->get_refs_from_type(x, type));
-        },
-        std::vector<RDRef>{});
-
+    r = redasm::state::context->get_refs_from_type(fromaddr, type);
     if(refs) *refs = r.data();
     return r.size();
 }
@@ -128,13 +108,7 @@ usize rd_getrefsto(RDAddress toaddr, const RDRef** refs) {
     if(!redasm::state::context) return 0;
 
     static std::vector<RDRef> r;
-
-    r = redasm::state::context->address_to_index(toaddr).map_or(
-        [](MIndex x) {
-            return redasm::api::to_c(redasm::state::context->get_refs_to(x));
-        },
-        std::vector<RDRef>{});
-
+    r = redasm::state::context->get_refs_to(toaddr);
     if(refs) *refs = r.data();
     return r.size();
 }
@@ -144,102 +118,9 @@ usize rd_getrefstotype(RDAddress toaddr, usize type, const RDRef** refs) {
     if(!redasm::state::context) return 0;
 
     static std::vector<RDRef> r;
-
-    r = redasm::state::context->address_to_index(toaddr).map_or(
-        [type](MIndex x) {
-            return redasm::api::to_c(
-                redasm::state::context->get_refs_to_type(x, type));
-        },
-        std::vector<RDRef>{});
-
+    r = redasm::state::context->get_refs_to_type(toaddr, type);
     if(refs) *refs = r.data();
     return r.size();
-}
-
-bool rd_addresstosegment(RDAddress address, RDSegment* res) {
-    spdlog::trace("rd_addresstosegment({:x}, {})", address, fmt::ptr(res));
-
-    const redasm::Context* ctx = redasm::state::context;
-    if(!ctx) return false;
-
-    MIndex idx = address - redasm::state::context->baseaddress;
-    if(idx >= ctx->program.memory->size()) return false;
-
-    return std::any_of(ctx->program.segments.begin(),
-                       ctx->program.segments.end(),
-                       [&](const redasm::Segment& s) {
-                           if(idx >= s.index && idx < s.endindex) {
-                               if(res) *res = redasm::api::to_c(s);
-                               return true;
-                           }
-
-                           return false;
-                       });
-}
-
-bool rd_offsettosegment(RDOffset offset, RDSegment* res) {
-    spdlog::trace("rd_offsettosegment({:x}, {})", offset, fmt::ptr(res));
-
-    const redasm::Context* ctx = redasm::state::context;
-    if(!ctx) return false;
-
-    return std::any_of(ctx->program.segments.begin(),
-                       ctx->program.segments.end(),
-                       [&](const redasm::Segment& s) {
-                           if(offset >= s.offset && offset < s.endoffset) {
-                               if(res) *res = redasm::api::to_c(s);
-                               return true;
-                           }
-
-                           return false;
-                       });
-}
-
-bool rd_addresstooffset(RDAddress address, RDOffset* offset) {
-    spdlog::trace("rd_addresstooffset({:x}, {})", address, fmt::ptr(offset));
-    if(!redasm::state::context) return false;
-
-    MIndex idx = address - redasm::state::context->baseaddress;
-
-    if(idx < redasm::state::context->program.memory->size()) {
-        auto off = redasm::state::context->index_to_offset(idx);
-        off.map([&](RDOffset x) {
-            if(offset) *offset = x;
-        });
-        return off.has_value();
-    }
-
-    return false;
-}
-
-bool rd_addresstoindex(RDAddress address, MIndex* index) {
-    spdlog::trace("rd_addresstoindex({:x}, {})", address, fmt::ptr(index));
-    if(!redasm::state::context) return false;
-
-    auto v = redasm::state::context->address_to_index(address);
-    v.map([&](MIndex x) {
-        if(index) *index = x;
-    });
-    return v.has_value();
-}
-
-bool rd_offsettoaddress(RDOffset offset, RDAddress* address) {
-    spdlog::trace("rd_offsettoaddress({:x}, {})", offset, fmt::ptr(address));
-    if(!redasm::state::context) return false;
-    if(offset >= redasm::state::context->program.file->size()) return false;
-
-    RDAddress addr = redasm::state::context->baseaddress + offset;
-
-    for(const redasm::Segment& s : redasm::state::context->program.segments) {
-        if(offset >= s.offset && offset < s.endoffset) {
-            addr = redasm::state::context->baseaddress + s.index +
-                   (offset - s.offset);
-            break;
-        }
-    }
-
-    if(address) *address = addr;
-    return true;
 }
 
 usize rd_getproblems(const RDProblem** problems) {
@@ -250,8 +131,8 @@ usize rd_getproblems(const RDProblem** problems) {
     if(!ctx) return 0;
 
     res.reserve(ctx->problems.size());
-    for(const auto& [index, problem] : ctx->problems)
-        res.emplace_back(ctx->baseaddress + index, problem.c_str());
+    for(const auto& [address, problem] : ctx->problems)
+        res.emplace_back(address, problem.c_str());
 
     if(problems) *problems = res.data();
     return res.size();
@@ -279,23 +160,22 @@ usize rd_test(RDBuffer* buffer, RDTestResult** result) {
     spdlog::trace("rd_test({}, {})", fmt::ptr(buffer), fmt::ptr(result));
 
     static std::vector<RDTestResult> res;
-    std::shared_ptr<redasm::AbstractBuffer> b{redasm::api::from_c(buffer)};
 
     redasm::state::context = nullptr; // Deselect active context
     redasm::state::contextlist.clear();
     res.clear();
 
     RDLoaderRequest req = {
-        .path = b->source.c_str(),
-        .name = redasm::utils::get_filename(b->source).data(), // NOLINT
-        .ext = redasm::utils::get_ext(b->source).data(),       // NOLINT
-        .file = redasm::api::to_c(b.get()),
+        .file = buffer,
+        .path = buffer->src,
+        .name = redasm::utils::get_filename(buffer->src).data(), // NOLINT
+        .ext = redasm::utils::get_ext(buffer->src).data(),       // NOLINT
     };
 
     foreach_loaders(lp, {
         if(!lp->accept || !lp->accept(lp, &req)) continue;
 
-        auto* ctx = new redasm::Context(b);
+        auto* ctx = new redasm::Context(buffer);
         redasm::state::context = ctx; // Set context as active
 
         if(ctx->try_load(lp)) {
@@ -307,8 +187,10 @@ usize rd_test(RDBuffer* buffer, RDTestResult** result) {
                 redasm::api::to_c(ctx),
             });
         }
-        else
+        else {
+            redasm::state::context = nullptr;
             delete ctx;
+        }
     });
 
     // Sort results by priority
@@ -410,11 +292,8 @@ usize rd_getentries(RDAddress** entries) {
     res.clear();
     res.reserve(redasm::state::context->entrypoints.size());
 
-    for(MIndex ep : redasm::state::context->entrypoints) {
-        auto v = redasm::state::context->index_to_address(ep);
-        assume(v.has_value());
-        res.push_back(*v);
-    }
+    for(RDAddress ep : redasm::state::context->entrypoints)
+        res.push_back(ep);
 
     if(entries) *entries = res.data();
     return res.size();
@@ -424,11 +303,7 @@ bool rd_getaddress(const char* name, RDAddress* address) {
     spdlog::trace("rd_getaddress('{}', {})", name, fmt::ptr(address));
     if(!name || !redasm::state::context) return false;
 
-    auto addr =
-        redasm::state::context->get_index(name).and_then([](MIndex idx) {
-            return redasm::state::context->index_to_address(idx);
-        });
-
+    auto addr = redasm::state::context->get_address(name);
     addr.map([&](RDAddress x) {
         if(address) *address = x;
     });
@@ -439,20 +314,14 @@ const char* rd_getname(RDAddress address) {
     spdlog::trace("rd_getname({:x})", address);
     if(!redasm::state::context) return nullptr;
     static std::string res;
-
-    if(auto idx = redasm::state::context->address_to_index(address); idx)
-        res = redasm::state::context->get_name(*idx);
-
+    res = redasm::state::context->get_name(address);
     return res.empty() ? nullptr : res.c_str();
 }
 
 const char* rd_getcomment(RDAddress address) {
     spdlog::trace("rd_getcomment({:x})", address);
     static std::string res;
-
-    if(auto idx = redasm::state::context->address_to_index(address); idx)
-        res = redasm::state::context->get_comment(*idx);
-
+    res = redasm::state::context->get_comment(address);
     return res.empty() ? nullptr : res.c_str();
 }
 
@@ -461,8 +330,11 @@ bool rd_gettype(RDAddress address, const RDType* t, RDValue* v) {
                   fmt::ptr(v));
     if(!redasm::state::context || !t) return false;
 
-    if(auto idx = redasm::state::context->address_to_index(address); idx) {
-        return redasm::state::context->program.memory->get_type(*idx, *t)
+    const RDSegmentNew* seg =
+        redasm::state::context->program.find_segment(address);
+
+    if(seg) {
+        return redasm::memory::get_type(seg, address, *t)
             .map_or(
                 [&](const RDValue& x) {
                     *v = x;
@@ -479,8 +351,11 @@ bool rd_gettypename(RDAddress address, const char* tname, RDValue* v) {
                   fmt::ptr(v));
     if(!redasm::state::context || !tname) return false;
 
-    if(auto idx = redasm::state::context->address_to_index(address); idx) {
-        return redasm::state::context->program.memory->get_type(*idx, tname)
+    const RDSegmentNew* seg =
+        redasm::state::context->program.find_segment(address);
+
+    if(seg) {
+        return redasm::memory::get_type(seg, address, tname)
             .map_or(
                 [&](const RDValue& x) {
                     *v = x;
@@ -499,15 +374,15 @@ usize rd_getsegments(const RDSegment** segments) {
 
     if(segments) {
         const redasm::Context* ctx = redasm::state::context;
-        res.resize(ctx->program.segments.size());
+        res.resize(ctx->program.segments_old.size());
 
-        for(usize i = 0; i < ctx->program.segments.size(); i++)
-            res[i] = redasm::api::to_c(ctx->program.segments[i]);
+        for(usize i = 0; i < ctx->program.segments_old.size(); i++)
+            res[i] = redasm::api::to_c(ctx->program.segments_old[i]);
 
         *segments = res.data();
     }
 
-    return redasm::state::context->program.segments.size();
+    return redasm::state::context->program.segments_old.size();
 }
 
 bool rd_mapsegment(const char* name, RDAddress address, RDAddress endaddress,
@@ -515,12 +390,12 @@ bool rd_mapsegment(const char* name, RDAddress address, RDAddress endaddress,
     spdlog::trace("rd_mapsegment('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
                   address, endaddress, offset, endoffset, perm);
 
-    if(redasm::state::context && name) {
-        MIndex startidx = address - redasm::state::context->baseaddress;
-        MIndex endidx = endaddress - redasm::state::context->baseaddress;
-        redasm::state::context->map_segment(name, startidx, endidx, offset,
-                                            endoffset, perm);
-    }
+    // if(redasm::state::context && name) {
+    //     MIndex startidx = address - redasm::state::context->baseaddress;
+    //     MIndex endidx = endaddress - redasm::state::context->baseaddress;
+    //     redasm::state::context->map_segment(name, startidx, endidx, offset,
+    //                                         endoffset, perm);
+    // }
 
     return true;
 }
@@ -530,12 +405,13 @@ bool rd_mapsegment_n(const char* name, RDAddress address, usize asize,
     spdlog::trace("rd_mapsegment_n('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
                   address, asize, offset, osize, perm);
 
-    if(redasm::state::context && name) {
-        MIndex startidx = address - redasm::state::context->baseaddress;
-        MIndex endidx = (address + asize) - redasm::state::context->baseaddress;
-        redasm::state::context->map_segment(name, startidx, endidx, offset,
-                                            offset + osize, perm);
-    }
+    // if(redasm::state::context && name) {
+    //     MIndex startidx = address - redasm::state::context->baseaddress;
+    //     MIndex endidx = (address + asize) -
+    //     redasm::state::context->baseaddress;
+    //     redasm::state::context->map_segment(name, startidx, endidx, offset,
+    //                                         offset + osize, perm);
+    // }
 
     return false;
 }
@@ -543,11 +419,8 @@ bool rd_mapsegment_n(const char* name, RDAddress address, usize asize,
 bool rd_setcomment(RDAddress address, const char* comment) {
     spdlog::trace("rd_setcomment({:x}, '{}')", address, comment);
 
-    return redasm::state::context->address_to_index(address).map_or(
-        [&](MIndex idx) {
-            return redasm::state::context->set_comment(idx, comment);
-        },
-        false);
+    return redasm::state::context &&
+           redasm::state::context->set_comment(address, comment);
 }
 
 bool rd_settype(RDAddress address, const RDType* type, RDValue* v) {
@@ -559,21 +432,23 @@ bool rd_settype_ex(RDAddress address, const RDType* type, usize flags,
     spdlog::trace("rd_settype_ex({:x}, {}, {})", address, fmt::ptr(type), flags,
                   fmt::ptr(v));
 
-    if(redasm::state::context && type) {
-        auto idx = redasm::state::context->address_to_index(address);
-        if(idx && redasm::state::context->set_type(*idx, *type, flags)) {
-            auto res =
-                redasm::state::context->program.memory->get_type(*idx, *type);
+    if(!redasm::state::context || !type) return false;
 
-            res.map([&](RDValue& x) {
-                if(v)
-                    *v = x;
-                else
-                    rdvalue_destroy(&x);
-            });
+    const RDSegmentNew* seg =
+        redasm::state::context->program.find_segment(address);
+    if(!seg) return false;
 
-            return res.has_value();
-        }
+    if(redasm::state::context->set_type(address, *type, flags)) {
+        auto res = redasm::memory::get_type(seg, address, *type);
+
+        res.map([&](RDValue& x) {
+            if(v)
+                *v = x;
+            else
+                rdvalue_destroy(&x);
+        });
+
+        return res.has_value();
     }
 
     return false;
@@ -587,23 +462,23 @@ bool rd_settypename_ex(RDAddress address, const char* tname, usize flags,
                        RDValue* v) {
     spdlog::trace("rd_settypename_ex({:x}, '{}', {}, {})", address, tname,
                   flags, fmt::ptr(v));
+    if(!redasm::state::context || !tname) return false;
 
-    if(redasm::state::context && tname) {
-        auto idx = redasm::state::context->address_to_index(address);
+    const RDSegmentNew* seg =
+        redasm::state::context->program.find_segment(address);
+    if(!seg) return false;
 
-        if(idx && redasm::state::context->set_type(*idx, tname, flags)) {
-            auto res =
-                redasm::state::context->program.memory->get_type(*idx, tname);
+    if(redasm::state::context->set_type(address, tname, flags)) {
+        auto res = redasm::memory::get_type(seg, address, tname);
 
-            res.map([&](RDValue& x) {
-                if(v)
-                    *v = x;
-                else
-                    rdvalue_destroy(&x);
-            });
+        res.map([&](RDValue& x) {
+            if(v)
+                *v = x;
+            else
+                rdvalue_destroy(&x);
+        });
 
-            return res.has_value();
-        }
+        return res.has_value();
     }
 
     return false;
@@ -622,18 +497,18 @@ bool rd_maptype_ex(RDOffset offset, RDAddress address, const RDType* t,
     spdlog::trace("rd_maptype_ex({:x}, {:x}, {}, {})", offset, address,
                   fmt::ptr(t), flags);
 
-    if(redasm::state::context && t) {
-        auto idx = redasm::state::context->address_to_index(address);
-        if(!idx) return false;
-
-        usize sz = redasm::state::context->types.size_of(*t);
-        redasm::state::context->memory_copy(*idx, offset, offset + sz);
-
-        if(!redasm::state::context->set_type(*idx, *t, 0)) return false;
-        auto v = redasm::state::context->program.file->get_type(*idx, *t);
-        v.map([](RDValue& x) { rdvalue_destroy(&x); });
-        return v.has_value();
-    }
+    // if(redasm::state::context && t) {
+    //     auto idx = redasm::state::context->address_to_index(address);
+    //     if(!idx) return false;
+    //
+    //     usize sz = redasm::state::context->types.size_of(*t);
+    //     redasm::state::context->memory_copy(*idx, offset, offset + sz);
+    //
+    //     if(!redasm::state::context->set_type(*idx, *t, 0)) return false;
+    //     auto v = redasm::state::context->program.file_old->get_type(*idx,
+    //     *t); v.map([](RDValue& x) { rdvalue_destroy(&x); }); return
+    //     v.has_value();
+    // }
 
     return false;
 }
@@ -642,18 +517,19 @@ bool rd_maptypename_ex(RDOffset offset, RDAddress address, const char* tname,
                        usize flags) {
     spdlog::trace("rd_maptypename_ex({:x}, {:x}, '{}', {})", offset, address,
                   tname, flags);
-    if(redasm::state::context && tname) {
-        auto idx = redasm::state::context->address_to_index(address);
-        if(!idx) return false;
-
-        usize sz = redasm::state::context->types.size_of(tname);
-        redasm::state::context->memory_copy(*idx, offset, offset + sz);
-
-        if(!redasm::state::context->set_type(*idx, tname, 0)) return false;
-        auto v = redasm::state::context->program.file->get_type(*idx, tname);
-        v.map([](RDValue& x) { rdvalue_destroy(&x); });
-        return v.has_value();
-    }
+    // if(redasm::state::context && tname) {
+    //     auto idx = redasm::state::context->address_to_index(address);
+    //     if(!idx) return false;
+    //
+    //     usize sz = redasm::state::context->types.size_of(tname);
+    //     redasm::state::context->memory_copy(*idx, offset, offset + sz);
+    //
+    //     if(!redasm::state::context->set_type(*idx, tname, 0)) return false;
+    //     auto v =
+    //         redasm::state::context->program.file_old->get_type(*idx, tname);
+    //     v.map([](RDValue& x) { rdvalue_destroy(&x); });
+    //     return v.has_value();
+    // }
 
     return false;
 }
@@ -663,11 +539,8 @@ bool rd_setfunction(RDAddress address) { return rd_setfunction_ex(address, 0); }
 bool rd_setfunction_ex(RDAddress address, usize flags) {
     spdlog::trace("rd_setfunction_ex({:x}, {})", address, flags);
 
-    return redasm::state::context->address_to_index(address).map_or(
-        [&](MIndex idx) {
-            return redasm::state::context->set_function(idx, flags);
-        },
-        false);
+    return redasm::state::context &&
+           redasm::state::context->set_function(address, flags);
 }
 
 bool rd_setentry(RDAddress address, const char* name) {
@@ -675,9 +548,8 @@ bool rd_setentry(RDAddress address, const char* name) {
     std::string n;
     if(name) n = name;
 
-    return redasm::state::context->address_to_index(address).map_or(
-        [&](MIndex idx) { return redasm::state::context->set_entry(idx, n); },
-        false);
+    return redasm::state::context &&
+           redasm::state::context->set_entry(address, n);
 }
 
 bool rd_setname(RDAddress address, const char* name) {
@@ -686,13 +558,8 @@ bool rd_setname(RDAddress address, const char* name) {
 
 bool rd_setname_ex(RDAddress address, const char* name, usize flags) {
     spdlog::trace("rd_setname_ex({:x}, '{}', {:x})", address, name, flags);
-    if(!name || !redasm::state::context) return false;
-
-    return redasm::state::context->address_to_index(address).map_or(
-        [&](MIndex idx) {
-            return redasm::state::context->set_name(idx, name, flags);
-        },
-        false);
+    return name && redasm::state::context &&
+           redasm::state::context->set_name(address, name, flags);
 }
 
 bool rd_tick(const RDWorkerStatus** s) {
@@ -705,7 +572,7 @@ usize rd_getmemory(const RDByte** data) {
     spdlog::trace("rd_getmemory({})", fmt::ptr(data));
 
     if(!redasm::state::context) return 0;
-    const auto& m = redasm::state::context->program.memory;
+    const auto& m = redasm::state::context->program.memory_old;
     if(!m) return 0;
 
     if(data) *data = redasm::api::to_c(m->data());
@@ -716,7 +583,7 @@ bool rd_getbyte(usize idx, RDByte* b) {
     spdlog::trace("rd_getbyte({}, {})", idx, fmt::ptr(b));
     if(!redasm::state::context) return false;
 
-    const auto& mem = redasm::state::context->program.memory;
+    const auto& mem = redasm::state::context->program.memory_old;
     if(idx >= mem->size()) return false;
     if(b) *b = redasm::api::to_c(mem->at(idx));
     return true;
@@ -727,7 +594,7 @@ usize rd_getfile(const u8** data) {
 
     if(!redasm::state::context) return 0;
 
-    const auto& f = redasm::state::context->program.file;
+    const auto& f = redasm::state::context->program.file_old;
     if(!f) return 0;
 
     // HACK: static_cast<> shouldn't be used
@@ -740,18 +607,16 @@ const char* rd_rendertext(RDAddress address) {
     if(!redasm::state::context) return nullptr;
     static std::string s;
 
-    auto idx = redasm::state::context->address_to_index(address);
-    if(!idx) return "";
-
-    auto it = redasm::state::context->listing.lower_bound(*idx);
+    auto it = redasm::state::context->listing.lower_bound(address);
 
     // Find first code item
-    while(it != redasm::state::context->listing.end() && it->index == *idx) {
+    while(it != redasm::state::context->listing.end() &&
+          it->address == address) {
         if(it->type == LISTINGITEM_INSTRUCTION) break;
         it++;
     }
 
-    if(it == redasm::state::context->listing.end() || it->index != *idx)
+    if(it == redasm::state::context->listing.end() || it->address != address)
         return "";
 
     LIndex lidx = std::distance(redasm::state::context->listing.cbegin(), it);
@@ -762,6 +627,34 @@ const char* rd_rendertext(RDAddress address) {
 
     s = sf.get_text();
     return s.c_str();
+}
+
+bool rd_tooffset(RDAddress address, RDOffset* offset) {
+    spdlog::trace("rd_tooffset({:x}, {})", address, fmt::ptr(offset));
+    if(!redasm::state::context) return false;
+
+    auto off = redasm::state::context->program.to_offset(address);
+    off.map([&](RDOffset x) {
+        if(offset) *offset = x;
+    });
+    return off.has_value();
+}
+
+bool rd_toaddress(RDOffset offset, RDAddress* address) {
+    spdlog::trace("rd_address({:x}, {})", offset, fmt::ptr(address));
+    if(!redasm::state::context) return false;
+
+    auto addr = redasm::state::context->program.to_address(offset);
+    addr.map([&](RDOffset x) {
+        if(address) *address = x;
+    });
+    return addr.has_value();
+}
+
+const RDSegmentNew* rd_findsegment(RDAddress address) {
+    spdlog::trace("rd_findsegment({:x})", address);
+    if(!redasm::state::context) return nullptr;
+    return redasm::state::context->program.find_segment(address);
 }
 
 void rd_log(const char* s) {

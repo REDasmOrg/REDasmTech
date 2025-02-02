@@ -28,13 +28,18 @@ typedef struct _Vect {
 #define vect_create_n(T, n) _vect_create(sizeof(T), n)
 #define vect_at(T, self, idx) ((const T*)_vect_at((self), idx))
 #define vect_ref(T, self, idx) ((T*)_vect_ref((self), idx))
+#define vect_ptr(T, self) (T*)_vect_ptr((self))
+#define vect_cptr(T, self) (const T*)_vect_cptr((self))
 
 #define vect_append(T, self, ...)                                              \
-    ((T*)_vect_checkcapacity(self))[(self)->length++] = __VA_ARGS__
+    *((T*)_vect_insert((self), (self)->length)) = __VA_ARGS__
+
+#define vect_insert(T, self, i, ...)                                           \
+    *((T*)_vect_insert((self), i)) = __VA_ARGS__
 
 #define vect_foreach(T, n, self)                                               \
     if((self)->data)                                                           \
-        for(T* n = (T*)((self)->data);                                         \
+        for(T* n = (T*)((self)->data); /* NOLINT */                            \
             (n) < ((T*)((self)->data) + (self)->length); (n)++)
 
 REDASM_EXPORT void vect_setdestroyitem(_Vect* self, VectDestroyItem cb);
@@ -42,13 +47,16 @@ REDASM_EXPORT bool vect_isempty(const _Vect* self);
 REDASM_EXPORT size_t vect_getlength(const _Vect* self);
 REDASM_EXPORT size_t vect_getcapacity(const _Vect* self);
 REDASM_EXPORT void vect_reserve(_Vect* self, size_t n);
+REDASM_EXPORT void vect_resize(_Vect* self, size_t n);
 REDASM_EXPORT void vect_clear(_Vect* self);
 REDASM_EXPORT void vect_destroy(_Vect* self);
 
 // Private API
 // NOLINTBEGIN
+REDASM_EXPORT void* _vect_ptr(_Vect* self);
+REDASM_EXPORT const void* _vect_cptr(const _Vect* self);
 REDASM_EXPORT _Vect _vect_create(size_t esize, size_t cap);
-REDASM_EXPORT void* _vect_checkcapacity(_Vect* self);
+REDASM_EXPORT void* _vect_insert(_Vect* self, size_t idx);
 REDASM_EXPORT const void* _vect_at(const _Vect* self, size_t idx);
 REDASM_EXPORT void* _vect_ref(_Vect* self, size_t idx);
 // NOLINTEND

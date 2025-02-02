@@ -9,19 +9,19 @@ namespace redasm {
 
 struct Function {
     struct BasicBlock {
-        BasicBlock(RDGraphNode n, MIndex s): node{n}, start{s}, end{s} {}
+        BasicBlock(RDGraphNode n, RDAddress s): node{n}, start{s}, end{s} {}
 
         RDGraphNode node;
-        MIndex start;
-        MIndex end;
+        RDAddress start;
+        RDAddress end;
         std::unordered_map<RDGraphNode, RDThemeKind> theme;
     };
 
     using Blocks = std::vector<BasicBlock>;
 
-    explicit Function(MIndex ep);
-    bool contains(MIndex idx) const;
-    RDGraphNode try_add_block(MIndex start);
+    explicit Function(RDAddress ep);
+    bool contains(RDAddress address) const;
+    RDGraphNode try_add_block(RDAddress start);
     BasicBlock* get_basic_block(RDGraphNode n);
     RDThemeKind get_theme(const RDGraphEdge& e) const;
 
@@ -40,7 +40,7 @@ struct Function {
         return const_cast<Function*>(this)->get_basic_block(n);
     }
 
-    MIndex index;
+    MIndex address;
     StyledGraph graph;
     Blocks blocks;
 };

@@ -374,18 +374,14 @@ void generate(const Function& f, ILExprList& res) {
 
 void generate(const Function& f, ILExprList& res, usize maxn) {
     const Context* ctx = state::context;
-    const auto& mem = state::context->program.memory;
     const RDProcessorPlugin* p = ctx->processorplugin;
     assume(p);
 
     for(const Function::BasicBlock& bb : f.blocks) {
-        for(MIndex idx = bb.start; idx <= bb.end;) {
-            res.currentindex = idx;
+        for(RDAddress address = bb.start; address <= bb.end;) {
+            res.currentaddress = address;
 
-            auto address = ctx->index_to_address(idx);
-            assume(address.has_value());
-
-            RDInstruction instr{.address = *address};
+            RDInstruction instr{.address = address};
             if(p->decode) p->decode(ctx->processor, &instr);
 
             if(!instr.length || !p->lift ||
@@ -395,9 +391,13 @@ void generate(const Function& f, ILExprList& res, usize maxn) {
 
             if(res.size() >= maxn) return;
 
-            if(auto nextidx = mem->get_next(idx); nextidx) {
-                assume(*nextidx > idx);
-                idx = *nextidx;
+            const RDSegmentNew* seg = ctx->program.find_segment(address);
+            assume(seg);
+
+            if(auto nextaddr = redasm::memory::get_next(seg, address);
+               nextaddr) {
+                assume(*nextaddr > address);
+                address = *nextaddr;
             }
             else
                 break;

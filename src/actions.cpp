@@ -120,7 +120,8 @@ void show_details() {
 
     MIndex index;
 
-    if(!rd_addresstoindex(address, &index)) return;
+    // FIXME: if(!rd_addresstoindex(address, &index)) return;
+    return;
 
     const RDByte* bytes;
     usize nbytes = rd_getmemory(&bytes);
@@ -130,7 +131,7 @@ void show_details() {
     RDByte b = bytes[index];
 
     RDOffset offset;
-    bool hasoffset = rd_addresstooffset(address, &offset);
+    bool hasoffset = rd_tooffset(address, &offset);
 
     QString s = DETAIL_TEMPLATE.arg(rd_tohex(address))
                     .arg(hasoffset ? rd_tohex(offset) : "N/A")

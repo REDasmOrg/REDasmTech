@@ -13,6 +13,7 @@
 #include <redasm/memory.h>
 #include <redasm/plugin.h>
 #include <redasm/processor.h>
+#include <redasm/program.h>
 #include <redasm/rdil.h>
 #include <redasm/renderer.h>
 #include <redasm/segment.h>
@@ -88,6 +89,9 @@ REDASM_EXPORT usize rd_getmemory(const RDByte** data);
 REDASM_EXPORT bool rd_getbyte(usize idx, RDByte* b);
 REDASM_EXPORT usize rd_getfile(const u8** data);
 REDASM_EXPORT const char* rd_rendertext(RDAddress address);
+REDASM_EXPORT bool rd_tooffset(RDAddress address, RDOffset* offset);
+REDASM_EXPORT bool rd_toaddress(RDOffset offset, RDAddress* address);
+REDASM_EXPORT const RDSegmentNew* rd_findsegment(RDAddress address);
 
 REDASM_EXPORT usize rd_getentries(RDAddress** entries);
 REDASM_EXPORT bool rd_tick(const RDWorkerStatus** s);
@@ -147,11 +151,6 @@ REDASM_EXPORT usize rd_getrefsfromtype(RDAddress fromaddr, usize type,
 REDASM_EXPORT usize rd_getrefsto(RDAddress toaddr, const RDRef** refs);
 REDASM_EXPORT usize rd_getrefstotype(RDAddress toaddr, usize type,
                                      const RDRef** refs);
-REDASM_EXPORT bool rd_addresstosegment(RDAddress address, RDSegment* s);
-REDASM_EXPORT bool rd_offsettosegment(RDOffset offset, RDSegment* s);
-REDASM_EXPORT bool rd_addresstooffset(RDAddress address, RDOffset* offset);
-REDASM_EXPORT bool rd_addresstoindex(RDAddress address, MIndex* index);
-REDASM_EXPORT bool rd_offsettoaddress(RDOffset offset, RDAddress* address);
 
 REDASM_EXPORT const char* rd_symbolize(const char* s);
 

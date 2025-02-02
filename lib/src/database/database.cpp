@@ -1,7 +1,5 @@
 #include "database.h"
-#include "../context.h"
 #include "../error.h"
-#include "../state.h"
 #include "../utils/utils.h"
 #include <cctype>
 #include <filesystem>
@@ -95,25 +93,25 @@ constexpr std::string_view DB_SCHEMA = R"(
     );
 
     CREATE TABLE Comments(
-        idx INTEGER PRIMARY KEY,
+        address INTEGER PRIMARY KEY,
         comment TEXT NOT NULL
     );
 
     CREATE TABLE Refs(
-        fromidx INTEGER NOT NULL,
-        toidx INTEGER NOT NULL,
+        fromaddr INTEGER NOT NULL,
+        toaddr INTEGER NOT NULL,
         type INTEGER NOT NULL,
-        UNIQUE(fromidx, toidx)
+        UNIQUE(fromaddr, toaddr)
     );
 
     CREATE TABLE Types(
-        idx INTEGER PRIMARY KEY,
+        address INTEGER PRIMARY KEY,
         id INTEGER NOT NULL,
         n INTEGER NOT NULL
     );
 
     CREATE TABLE Names(
-        idx INTEGER PRIMARY KEY,
+        address INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     );
 )";
@@ -197,14 +195,14 @@ void Database::add_segment(std::string_view name, MIndex idx, MIndex endidx,
     sql_step(m_db, stmt);
 }
 
-std::string Database::get_name(MIndex idx) const {
+std::string Database::get_name(RDAddress address) const {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_NAME, R"(
         SELECT name 
         FROM Names 
-        WHERE idx = :idx
+        WHERE address = :address
     )");
 
-    sql_bindparam(m_db, stmt, ":idx", idx);
+    sql_bindparam(m_db, stmt, ":address", address);
 
     if(sql_step(m_db, stmt) == SQLITE_ROW)
         return reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
@@ -212,121 +210,122 @@ std::string Database::get_name(MIndex idx) const {
     return {};
 }
 
-void Database::add_ref(MIndex fromidx, MIndex toidx, usize type) {
+void Database::add_ref(RDAddress fromaddr, RDAddress toaddr, usize type) {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::ADD_REF, R"(
         INSERT INTO Refs
-            VALUES (:fromidx, :toidx, :type)
+            VALUES (:fromaddr, :toaddr, :type)
         ON CONFLICT DO 
             UPDATE SET type = EXCLUDED.type
     )");
 
-    sql_bindparam(m_db, stmt, ":fromidx", fromidx);
-    sql_bindparam(m_db, stmt, ":toidx", toidx);
+    sql_bindparam(m_db, stmt, ":fromaddr", fromaddr);
+    sql_bindparam(m_db, stmt, ":toaddr", toaddr);
     sql_bindparam(m_db, stmt, ":type", type);
     sql_step(m_db, stmt);
 }
 
-void Database::set_comment(MIndex idx, std::string_view comment) {
+void Database::set_comment(RDAddress address, std::string_view comment) {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::SET_COMMENT, R"(
-        INSERT INTO Comments (idx, comment) 
-            VALUES (:idx, :comment)
+        INSERT INTO Comments (address, comment) 
+            VALUES (:address, :comment)
         ON CONFLICT DO 
             UPDATE SET comment = EXCLUDED.comment
     )");
 
-    sql_bindparam(m_db, stmt, ":idx", idx);
+    sql_bindparam(m_db, stmt, ":address", address);
     sql_bindparam(m_db, stmt, ":comment", comment);
     sql_step(m_db, stmt);
 }
 
-Database::RefList Database::get_refs_from_type(MIndex fromidx,
+Database::RefList Database::get_refs_from_type(RDAddress fromaddr,
                                                usize type) const {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_REFS_FROM_TYPE, R"(
-        SELECT toidx, type 
+        SELECT toaddr, type 
         FROM Refs
-        WHERE fromidx = :fromidx AND type = :type
+        WHERE fromaddr = :fromaddr AND type = :type
     )");
 
-    sql_bindparam(m_db, stmt, ":fromidx", fromidx);
+    sql_bindparam(m_db, stmt, ":fromaddr", fromaddr);
     sql_bindparam(m_db, stmt, ":type", type);
 
     RefList res;
 
     while(sql_step(m_db, stmt) == SQLITE_ROW) {
-        res.emplace_back(static_cast<MIndex>(sqlite3_column_int64(stmt, 0)),
-                         static_cast<MIndex>(sqlite3_column_int64(stmt, 1)));
+        res.emplace_back(static_cast<RDAddress>(sqlite3_column_int64(stmt, 0)),
+                         static_cast<usize>(sqlite3_column_int64(stmt, 1)));
     }
 
     return res;
 }
 
-Database::RefList Database::get_refs_from(MIndex fromidx) const {
+Database::RefList Database::get_refs_from(RDAddress fromaddr) const {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_REFS_FROM, R"(
-        SELECT toidx, type
+        SELECT toaddr, type
         FROM Refs
-        WHERE fromidx = :fromidx
+        WHERE fromaddr = :fromaddr
     )");
 
-    sql_bindparam(m_db, stmt, ":fromidx", fromidx);
+    sql_bindparam(m_db, stmt, ":fromaddr", fromaddr);
 
     RefList rl;
 
     while(sql_step(m_db, stmt) == SQLITE_ROW) {
-        rl.emplace_back(static_cast<MIndex>(sqlite3_column_int64(stmt, 0)),
-                        static_cast<MIndex>(sqlite3_column_int64(stmt, 1)));
+        rl.emplace_back(static_cast<RDAddress>(sqlite3_column_int64(stmt, 0)),
+                        static_cast<usize>(sqlite3_column_int64(stmt, 1)));
     }
 
     return rl;
 }
 
-Database::RefList Database::get_refs_to_type(MIndex toidx, usize type) const {
+Database::RefList Database::get_refs_to_type(RDAddress toaddr,
+                                             usize type) const {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_REFS_TO_TYPE, R"(
-        SELECT fromidx, type
+        SELECT fromaddr, type
         FROM Refs
-        WHERE toidx = :toidx AND type = :type
+        WHERE toidx = :toaddr AND type = :type
     )");
 
-    sql_bindparam(m_db, stmt, ":toidx", toidx);
+    sql_bindparam(m_db, stmt, ":toaddr", toaddr);
     sql_bindparam(m_db, stmt, ":type", type);
 
     RefList res;
 
     while(sql_step(m_db, stmt) == SQLITE_ROW) {
-        res.emplace_back(static_cast<MIndex>(sqlite3_column_int64(stmt, 0)),
-                         static_cast<MIndex>(sqlite3_column_int64(stmt, 1)));
+        res.emplace_back(static_cast<RDAddress>(sqlite3_column_int64(stmt, 0)),
+                         static_cast<usize>(sqlite3_column_int64(stmt, 1)));
     }
 
     return res;
 }
 
-Database::RefList Database::get_refs_to(MIndex toidx) const {
+Database::RefList Database::get_refs_to(RDAddress toaddr) const {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_REFS_TO, R"(
-        SELECT fromidx, type 
+        SELECT fromaddr, type 
         FROM Refs
-        WHERE toidx = :toidx
+        WHERE toaddr = :toaddr
     )");
 
-    sql_bindparam(m_db, stmt, ":toidx", toidx);
+    sql_bindparam(m_db, stmt, ":toaddr", toaddr);
 
     RefList res;
 
     while(sql_step(m_db, stmt) == SQLITE_ROW) {
-        res.emplace_back(static_cast<MIndex>(sqlite3_column_int64(stmt, 0)),
-                         static_cast<MIndex>(sqlite3_column_int64(stmt, 1)));
+        res.emplace_back(static_cast<RDAddress>(sqlite3_column_int64(stmt, 0)),
+                         static_cast<usize>(sqlite3_column_int64(stmt, 1)));
     }
 
     return res;
 }
 
-void Database::set_name(MIndex idx, std::string_view name) {
+void Database::set_name(RDAddress address, std::string_view name) {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::SET_NAME, R"(
         INSERT INTO Names
-            VALUES (:idx, :name)
+            VALUES (:address, :name)
         ON CONFLICT DO 
             UPDATE SET name = EXCLUDED.name
     )");
 
-    sql_bindparam(m_db, stmt, ":idx", idx);
+    sql_bindparam(m_db, stmt, ":address", address);
     sql_bindparam(m_db, stmt, ":name", name);
     sql_step(m_db, stmt);
 }
@@ -375,12 +374,12 @@ tl::optional<uptr> Database::get_userdata(std::string_view k) const {
     return tl::nullopt;
 }
 
-tl::optional<MIndex> Database::get_index(std::string_view name,
-                                         bool onlydb) const {
+tl::optional<RDAddress> Database::get_address(std::string_view name,
+                                              bool onlydb) const {
     if(name.empty()) return tl::nullopt;
 
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_INDEX, R"(
-        SELECT idx 
+        SELECT address 
         FROM Names 
         WHERE name = :name
     )");
@@ -388,7 +387,7 @@ tl::optional<MIndex> Database::get_index(std::string_view name,
     sql_bindparam(m_db, stmt, ":name", name);
 
     if(sql_step(m_db, stmt) == SQLITE_ROW)
-        return static_cast<u64>(sqlite3_column_int64(stmt, 0));
+        return static_cast<RDAddress>(sqlite3_column_int64(stmt, 0));
 
     if(onlydb) return tl::nullopt;
 
@@ -402,21 +401,20 @@ tl::optional<MIndex> Database::get_index(std::string_view name,
 
     if(++idx < name.size()) {
         std::string_view saddr{name.data() + idx};
-        return utils::to_integer<RDAddress>(saddr, 16).and_then(
-            [](RDAddress x) { return state::context->address_to_index(x); });
+        return utils::to_integer<RDAddress>(saddr, 16);
     }
 
     return tl::nullopt;
 }
 
-std::string Database::get_comment(MIndex idx) const {
+std::string Database::get_comment(RDAddress address) const {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_COMMENT, R"(
         SELECT comment 
         FROM Comments 
-        WHERE idx = :idx
+        WHERE address = :address
     )");
 
-    sql_bindparam(m_db, stmt, ":idx", idx);
+    sql_bindparam(m_db, stmt, ":address", address);
 
     if(sql_step(m_db, stmt) == SQLITE_ROW)
         return reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0));
@@ -424,14 +422,14 @@ std::string Database::get_comment(MIndex idx) const {
     return {};
 }
 
-tl::optional<RDType> Database::get_type(MIndex idx) const {
+tl::optional<RDType> Database::get_type(RDAddress address) const {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_COMMENT, R"(
         SELECT id,n
         FROM Types
-        WHERE idx = :idx
+        WHERE address = :address
     )");
 
-    sql_bindparam(m_db, stmt, ":idx", idx);
+    sql_bindparam(m_db, stmt, ":address", address);
 
     if(sql_step(m_db, stmt) == SQLITE_ROW) {
         return RDType{

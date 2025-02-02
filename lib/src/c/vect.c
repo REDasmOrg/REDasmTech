@@ -4,16 +4,41 @@
 
 #define VECT_DEFAULT_CAPACITY 1024
 
-void* _vect_checkcapacity(_Vect* self) { // NOLINT
-    if(self->data && (self->length + 1 < self->capacity)) return self->data;
-    vect_reserve(self, self->capacity ? (self->capacity << 1)
-                                      : VECT_DEFAULT_CAPACITY);
-    return self->data;
+void _vect_checkcapacity(_Vect* self) { // NOLINT
+    if(!self->data || (self->length >= self->capacity)) {
+        vect_reserve(self, self->capacity ? (self->capacity << 1)
+                                          : VECT_DEFAULT_CAPACITY);
+    }
+}
+
+void* _vect_insert(_Vect* self, size_t idx) {
+    if(!self) return NULL;
+    _vect_checkcapacity(self);
+
+    // Shift elements to make room
+    if(idx < self->length) {
+        memmove((uint8_t*)self->data + ((idx + 1) * self->esize),
+                (uint8_t*)self->data + (idx * self->esize),
+                (self->length - idx) * self->esize);
+    }
+
+    self->length++;
+    return (uint8_t*)self->data + (idx + self->esize);
+}
+
+void* _vect_ptr(_Vect* self) {
+    if(self) return self->data;
+    return NULL;
+}
+
+const void* _vect_cptr(const _Vect* self) {
+    if(self) return self->data;
+    return NULL;
 }
 
 _Vect _vect_create(size_t esize, size_t cap) {
     _Vect self = {.esize = esize};
-    if(cap) vect_reserve(&self, cap);
+    if(cap) vect_resize(&self, cap);
     return self;
 }
 
@@ -58,6 +83,13 @@ void vect_reserve(_Vect* self, size_t n) {
     }
     else
         self->data = calloc(n, self->esize);
+}
+
+void vect_resize(_Vect* self, size_t n) {
+    if(!self) return;
+
+    vect_reserve(self, n);
+    self->length = n;
 }
 
 void vect_clear(_Vect* self) {

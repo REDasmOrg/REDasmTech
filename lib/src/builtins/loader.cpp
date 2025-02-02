@@ -18,8 +18,8 @@ RDLoaderPlugin binary_loader = {
     .load =
         [](RDLoader*, RDBuffer* file) {
             usize n = rdbuffer_getlength(file);
-            rd_map_n(0, n);
-            rd_memorycopy_n(0, 0, n);
+            rd_mapfile_n(0, 0, n);
+            rd_addsegment_n("BINARY", 0, n, SP_RWX, rd_countbits(n));
             return true;
         },
 };

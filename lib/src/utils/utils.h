@@ -21,12 +21,12 @@ inline constexpr bool AlwaysFalseV = false; // NOLINT
 
 using Data = std::vector<u8>;
 
+usize count_bits(i64 n);
 char* copy_str(std::string_view v);
 std::string_view trim(std::string_view v);
 
-template<typename T>
-static std::string_view to_string(T value, int base, bool sign = false,
-                                  int w = 0) {
+template<typename Ret = std::string_view, typename T>
+Ret to_string(T value, int base = 10, bool sign = false, int w = 0) {
     constexpr std::string_view DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     static std::array<char, 66> out;
 
@@ -59,7 +59,13 @@ static std::string_view to_string(T value, int base, bool sign = false,
         c -= nzeros;
     }
 
-    return std::string_view{&out[c], out.size() - c - 1};
+    return Ret{&out[c], out.size() - c - 1};
+}
+
+template<typename Ret = std::string_view, typename T>
+static Ret to_hex(T value, int w = 0) {
+    if(!w) w = sizeof(T) * 2;
+    return utils::to_string<Ret, T>(value, 16, false, w);
 }
 
 template<typename T = usize>

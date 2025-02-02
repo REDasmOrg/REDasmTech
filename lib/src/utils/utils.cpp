@@ -37,6 +37,10 @@ void detect_base(std::string_view& sv, int* res) {
 
 } // namespace impl
 
+usize count_bits(i64 n) {
+    return std::bit_width(static_cast<u64>(n < 0 ? ~n : n));
+}
+
 char* copy_str(std::string_view v) {
     char* res = new char[v.size() + 1];
     std::ranges::copy_n(v.begin(), v.size(), res);

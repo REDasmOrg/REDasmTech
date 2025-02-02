@@ -71,7 +71,7 @@ bool Worker::execute(const RDWorkerStatus** s) {
         }
     }
     else {
-        mem::process_listing();
+        memprocess::process_listing();
         m_status->listingchanged = true;
     }
 
@@ -87,34 +87,29 @@ void Worker::execute(usize step) {
 }
 
 void Worker::init_step() {
-    m_status->filepath = state::context->program.file->source.c_str();
-    m_status->filesize = state::context->program.file->size();
+    m_status->filepath = state::context->program.file.src;
+    m_status->filesize = state::context->program.file.len;
     m_status->loader = state::context->loaderplugin->name;
     m_status->processor = state::context->processorplugin->name;
     m_status->analysisstart = std::time(nullptr);
 
-    if(state::context->program.memory) {
-        mem::process_listing(); // Show pre-analysis listing
-        m_status->listingchanged = true;
-        m_currentstep++;
-    }
-    else
-        m_currentstep = WS_DONE;
+    memprocess::process_listing(); // Show pre-analysis listing
+    m_status->listingchanged = true;
+    m_currentstep++;
 }
 
 void Worker::emulate_step() {
     if(emulator.has_pending_code()) {
         emulator.tick();
-        auto a = state::context->index_to_address(emulator.pc);
-        a.map([&](RDAddress address) { m_status->address.value = address; });
-        m_status->address.valid = a.has_value();
+        m_status->address.value = emulator.pc;
+        m_status->address.valid = true;
     }
     else
         m_currentstep++;
 }
 
 void Worker::analyze_step() {
-    mem::process_memory(); // Show pre-analysis listing
+    memprocess::process_memory(); // Show pre-analysis listing
     m_status->listingchanged = true;
 
     const Context* ctx = state::context;
@@ -151,7 +146,7 @@ void Worker::mergecode_step() {
         return;
     }
 
-    mem::merge_code(&this->emulator);
+    memprocess::merge_code(&this->emulator);
 
     if(this->emulator.has_pending_code())
         m_currentstep = WS_EMULATE2;
@@ -160,12 +155,12 @@ void Worker::mergecode_step() {
 }
 
 void Worker::mergedata_step() {
-    mem::process_memory();
+    memprocess::process_memory();
     m_currentstep++;
 }
 
 void Worker::finalize_step() {
-    mem::process_listing();
+    memprocess::process_listing();
     m_status->listingchanged = true;
     m_currentstep++;
 }

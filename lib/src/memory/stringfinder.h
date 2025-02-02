@@ -6,7 +6,7 @@
 
 namespace redasm::stringfinder {
 
-tl::optional<RDStringResult> classify(usize idx);
+tl::optional<RDStringResult> classify(RDAddress address);
 bool is_gibberish(std::string_view s);
 
 } // namespace redasm::stringfinder

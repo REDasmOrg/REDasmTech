@@ -4,18 +4,18 @@
 
 namespace redasm {
 
-Function::Function(MIndex ep): index{ep} {}
+Function::Function(RDAddress ep): address{ep} {}
 
-bool Function::contains(MIndex idx) const {
-    return std::any_of(
-        this->blocks.begin(), this->blocks.end(),
-        [idx](const BasicBlock& x) { return idx >= x.start && idx <= x.end; });
+bool Function::contains(RDAddress address) const {
+    return std::any_of(this->blocks.begin(), this->blocks.end(),
+                       [address](const BasicBlock& x) {
+                           return address >= x.start && address <= x.end;
+                       });
 }
 
-RDGraphNode Function::try_add_block(MIndex start) {
+RDGraphNode Function::try_add_block(RDAddress start) {
     for(const BasicBlock& bb : this->blocks) {
-        if(bb.start == start)
-            return bb.node;
+        if(bb.start == start) return bb.node;
     }
 
     auto it = std::lower_bound(
@@ -27,8 +27,7 @@ RDGraphNode Function::try_add_block(MIndex start) {
 
 Function::BasicBlock* Function::get_basic_block(RDGraphNode n) {
     for(BasicBlock& bb : this->blocks) {
-        if(bb.node == n)
-            return &bb;
+        if(bb.node == n) return &bb;
     }
 
     return nullptr;
@@ -39,8 +38,7 @@ RDThemeKind Function::get_theme(const RDGraphEdge& e) const {
 
     if(bb) {
         for(const auto& [dst, theme] : bb->theme) {
-            if(e.dst == dst)
-                return theme;
+            if(e.dst == dst) return theme;
         }
     }
 

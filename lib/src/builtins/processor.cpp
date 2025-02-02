@@ -9,26 +9,26 @@ namespace redasm::builtins {
 namespace processor {
 
 void render_segment(const RDProcessor*, RDRenderer* r,
-                    const RDSegment* segment) {
-    const char* start = rd_tohex(segment->startaddr);
-    const char* end = rd_tohex(segment->endaddr);
+                    const RDSegmentNew* seg) {
+    const char* start = rd_tohex(seg->start);
+    const char* end = rd_tohex(seg->end);
 
-    std::string s = fmt::format("segment {} (start: {}, end: {})",
-                                segment->name, start, end);
+    std::string s =
+        fmt::format("segment {} (start: {}, end: {})", seg->name, start, end);
 
     rdrenderer_themed(r, s.c_str(), THEME_SEGMENT);
 }
 
 void render_function(const RDProcessor*, RDRenderer* r,
-                     const RDFunction* function) {
+                     const RDFunction* func) {
 
-    RDAddress ep = rdfunction_getentry(function);
+    RDAddress ep = rdfunction_getentry(func);
     const char* n = rd_getname(ep);
     if(!n) n = "???";
 
     std::string s;
 
-    if(rdfunction_isexport(function))
+    if(rdfunction_isexport(func))
         s = fmt::format("export function {}()", n);
     else
         s = fmt::format("function {}()", n);

@@ -40,11 +40,11 @@ std::string_view get_refname(usize reftype) {
     unreachable;
 }
 
-void add_noncodeproblem(const Segment* s, MIndex index, usize type) {
-    if(s) {
+void add_noncodeproblem(const RDSegmentNew* seg, MIndex index, usize type) {
+    if(seg) {
         state::context->add_problem(
             index, fmt::format("Trying to {} in non-code segment '{}'",
-                               get_refname(type), s->name));
+                               get_refname(type), seg->name));
     }
     else {
         state::context->add_problem(
@@ -60,9 +60,7 @@ constexpr std::array<char, 16> INTHEX_TABLE = {
 
 } // namespace
 
-Context::Context(const std::shared_ptr<AbstractBuffer>& b) {
-    this->program.file = b;
-}
+Context::Context(RDBuffer* b) { this->program.file = *b; }
 
 void Context::set_userdata(const std::string& k, uptr v) {
     if(k.empty()) {
@@ -74,6 +72,7 @@ void Context::set_userdata(const std::string& k, uptr v) {
 }
 
 Context::~Context() {
+    if(state::context == this) rdbuffer_destroy(&this->program.file);
     pm::destroy_instance(this->processorplugin, this->processor);
     pm::destroy_instance(this->loaderplugin, this->loader);
 }
@@ -86,13 +85,13 @@ bool Context::try_load(const RDLoaderPlugin* plugin) {
     assume(plugin);
 
     m_database =
-        std::make_unique<Database>(plugin->id, this->program.file->source);
+        std::make_unique<Database>(plugin->id, this->program.file_old->source);
     this->loaderplugin = plugin;
     this->loader = pm::create_instance(plugin);
 
     if(this->loaderplugin->load &&
        this->loaderplugin->load(this->loader,
-                                api::to_c(this->program.file.get()))) {
+                                api::to_c(this->program.file_old.get()))) {
 
         // Select proposed processor
         if(this->loaderplugin->get_processor) {
@@ -128,96 +127,88 @@ void Context::setup(const RDProcessorPlugin* plugin) {
     this->worker.emulator.setup();
 }
 
-bool Context::set_function(MIndex idx, usize flags) {
-    if(const Segment* s = this->index_to_segment(idx); s) {
-        if(s->perm & SP_X) {
-            this->program.memory->set(idx, BF_FUNCTION);
+bool Context::set_function(RDAddress address, usize flags) {
+    if(RDSegmentNew* seg = this->program.find_segment(address); seg) {
+        if(seg->perm & SP_X) {
+            memory::set_flag(seg, address, BF_FUNCTION);
 
-            if(!this->program.memory->at(idx).has(BF_CODE))
-                this->worker.emulator.enqueue_call(idx);
+            if(!memory::has_flag(seg, address, BF_CODE))
+                this->worker.emulator.enqueue_call(address);
 
             return true;
         }
     }
 
-    this->add_problem(idx, "Invalid function location");
+    this->add_problem(address, "Invalid function location");
     return false;
 }
 
-bool Context::set_entry(MIndex idx, const std::string& name) {
-    if(const Segment* s = this->index_to_segment(idx); s) {
-        this->program.memory->set(idx, BF_EXPORT);
-
-        if(s->perm & SP_X) assume(this->set_function(idx, 0));
-
-        this->set_name(idx, name, 0);
-        this->entrypoints.push_back(idx);
+bool Context::set_entry(RDAddress address, const std::string& name) {
+    if(RDSegmentNew* seg = this->program.find_segment(address); seg) {
+        memory::set_flag(seg, address, BF_EXPORT);
+        if(seg->perm & SP_X) assume(this->set_function(address, 0));
+        this->set_name(address, name, 0);
+        this->entrypoints.push_back(address);
         return true;
     }
 
-    this->add_problem(idx, "Invalid entry location");
+    this->add_problem(address, "Invalid entry location");
     return false;
 }
 
-void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
-    if(fromidx >= this->program.memory->size()) {
-        this->add_problem(fromidx,
-                          fmt::format("Invalid {} reference (from {:x})",
-                                      get_refname(type),
-                                      this->baseaddress + fromidx));
+void Context::add_ref(RDAddress fromaddr, MIndex toaddr, usize type) {
+    RDSegmentNew* fromseg = this->program.find_segment(fromaddr);
+    RDSegmentNew* toseg = this->program.find_segment(toaddr);
+
+    if(!fromseg) {
+        this->add_problem(fromaddr, fmt::format("Invalid FROM {} reference",
+                                                get_refname(type), fromaddr));
         return;
     }
 
-    if(toidx >= this->program.memory->size()) {
-        this->add_problem(fromidx, fmt::format("Invalid {} reference (to {:x})",
-                                               get_refname(type),
-                                               this->baseaddress + toidx));
+    if(!toseg) {
+        this->add_problem(
+            toaddr, fmt::format("Invalid TO {} reference", get_refname(type)));
         return;
     }
-
-    const Segment* s = this->index_to_segment(toidx);
 
     switch(type) {
         case DR_READ:
         case DR_WRITE:
         case DR_ADDRESS: {
-            this->m_database->add_ref(fromidx, toidx, type);
-            this->program.memory->set(fromidx, BF_REFSFROM);
-            this->program.memory->set(toidx, BF_REFSTO);
+            this->m_database->add_ref(fromaddr, toaddr, type);
+            memory::set_flag(fromseg, fromaddr, BF_REFSFROM);
+            memory::set_flag(toseg, toaddr, BF_REFSTO);
             break;
         }
 
         case CR_JUMP: {
-            if(s) {
-                this->m_database->add_ref(fromidx, toidx, type);
-                this->program.memory->set(fromidx, BF_REFSFROM);
-                this->program.memory->set(toidx, BF_JUMPDST | BF_REFSTO);
-            }
+            this->m_database->add_ref(fromaddr, toaddr, type);
+            memory::set_flag(fromseg, fromaddr, BF_REFSFROM);
+            memory::set_flag(toseg, toaddr, BF_JUMPDST | BF_REFSTO);
 
-            if(s && s->perm & SP_X) {
+            if(toseg->perm & SP_X) {
                 // Check if already decoded
-                if(!this->program.memory->at(toidx).is_code())
-                    this->worker.emulator.enqueue_jump(toidx);
+                if(!memory::has_flag(toseg, toaddr, BF_CODE))
+                    this->worker.emulator.enqueue_call(toaddr);
             }
             else
-                add_noncodeproblem(s, fromidx, type);
+                add_noncodeproblem(toseg, fromaddr, type);
             break;
         }
 
         case CR_CALL: {
-            if(s) {
-                this->m_database->add_ref(fromidx, toidx, type);
-                this->program.memory->set(fromidx, BF_REFSFROM);
-                this->program.memory->set(toidx, BF_FUNCTION | BF_REFSTO);
-            }
+            this->m_database->add_ref(fromaddr, toaddr, type);
+            memory::set_flag(fromseg, fromaddr, BF_REFSFROM);
+            memory::set_flag(toseg, toaddr, BF_FUNCTION | BF_REFSTO);
 
-            if(s && s->perm & SP_X) {
+            if(toseg->perm & SP_X) {
                 // Check if already decoded
-                if(!this->program.memory->at(toidx).is_code())
-                    this->worker.emulator.enqueue_call(toidx);
+                if(!memory::has_flag(toseg, toaddr, BF_CODE))
+                    this->worker.emulator.enqueue_call(toaddr);
             }
             else
-                add_noncodeproblem(s, fromidx, type);
+                add_noncodeproblem(toseg, toaddr, type);
             break;
         }
 
@@ -225,26 +216,30 @@ void Context::add_ref(MIndex fromidx, MIndex toidx, usize type) {
     }
 }
 
-bool Context::set_comment(MIndex idx, std::string_view comment) {
-    if(idx >= this->program.memory->size()) return false;
+bool Context::set_comment(RDAddress address, std::string_view comment) {
+    RDSegmentNew* seg = this->program.find_segment(address);
+    if(!seg) return false;
 
-    this->m_database->set_comment(idx, comment);
-    this->program.memory->at(idx).set_flag(BF_COMMENT, !comment.empty());
+    this->m_database->set_comment(address, comment);
+    memory::set_flag(seg, address, BF_CODE, !comment.empty());
     return true;
 }
 
-bool Context::set_type(MIndex idx, typing::FullTypeName tname, usize flags) {
-    if(idx >= this->program.memory->size()) {
+bool Context::set_type(RDAddress address, typing::FullTypeName tname,
+                       usize flags) {
+    const RDSegmentNew* seg = this->program.find_segment(address);
+    if(!seg) {
         spdlog::warn("set_type: Invalid address");
         return false;
     }
 
     typing::ParsedType pt = this->types.parse(tname);
-    return this->set_type(idx, pt.to_type(), flags);
+    return this->set_type(address, pt.to_type(), flags);
 }
 
-bool Context::set_type(MIndex idx, RDType t, usize flags) {
-    if(idx >= this->program.memory->size()) {
+bool Context::set_type(RDAddress address, RDType t, usize flags) {
+    RDSegmentNew* seg = this->program.find_segment(address);
+    if(!seg) {
         spdlog::warn("set_type: Invalid address");
         return false;
     }
@@ -256,13 +251,13 @@ bool Context::set_type(MIndex idx, RDType t, usize flags) {
         case typing::ids::STR:
         case typing::ids::WSTR: {
             tl::optional<std::string> s;
-            if(t.id == typing::ids::WSTR)
-                s = this->program.memory->get_wstr(idx);
-            else
-                s = this->program.memory->get_str(idx);
+            // if(t.id == typing::ids::WSTR)
+            //     s = this->program.memory_old->get_wstr(idx);
+            // else
+            //     s = this->program.memory_old->get_str(idx);
 
             if(!s) {
-                this->add_problem(idx, "string not found");
+                this->add_problem(address, "string not found");
                 return false;
             }
 
@@ -273,11 +268,11 @@ bool Context::set_type(MIndex idx, RDType t, usize flags) {
         default: len = std::max<usize>(t.n, 1) * td->size; break;
     }
 
-    m_database->set_type(idx, t);
-    this->program.memory->unset_n(idx, len);
-    this->program.memory->set_n(idx, len, BF_DATA);
-    this->program.memory->set(idx, BF_TYPE);
-    this->program.memory->set_flags(idx, BF_WEAK, flags & ST_WEAK);
+    m_database->set_type(address, t);
+    // this->program.memory_old->unset_n(idx, len);
+    // this->program.memory_old->set_n(idx, len, BF_DATA);
+    // this->program.memory_old->set(idx, BF_TYPE);
+    // this->program.memory_old->set_flags(idx, BF_WEAK, flags & ST_WEAK);
     return true;
 }
 
@@ -287,8 +282,8 @@ bool Context::memory_map(RDAddress base, usize size) {
         return false;
     }
 
-    this->baseaddress = base;
-    this->program.memory = std::make_unique<Memory>(size);
+    // this->baseaddress = base;
+    // this->program.memory_old = std::make_unique<Memory>(size);
 
     // Create collected types
     for(const auto& [idx, t] : this->collectedtypes) {
@@ -300,8 +295,8 @@ bool Context::memory_map(RDAddress base, usize size) {
             continue;
         }
 
-        this->memory_copy_n(idx, idx, this->types.size_of(t));
-        this->set_type(idx, t, 0);
+        // this->memory_copy_n(idx, idx, this->types.size_of(t));
+        // this->set_type(idx, t, 0);
     }
 
     this->collectedtypes.clear();
@@ -309,181 +304,82 @@ bool Context::memory_map(RDAddress base, usize size) {
 }
 
 tl::optional<MIndex> Context::address_to_index(RDAddress address) const {
-    if(address < this->baseaddress) return tl::nullopt;
-
-    usize idx = address - this->baseaddress;
-    if(idx >= this->program.memory->size()) return tl::nullopt;
-
-    return idx;
-}
-
-tl::optional<RDAddress> Context::index_to_address(MIndex index) const {
-    if(index > this->program.memory->size()) return tl::nullopt;
-    return this->baseaddress + index;
-}
-
-tl::optional<RDOffset> Context::index_to_offset(MIndex index) const {
-    if(index < this->program.memory->size()) {
-        for(const Segment& s : this->program.segments) {
-            if(index >= s.index && index < s.endindex)
-                return (index - s.index) + s.offset;
-        }
-    }
-
+    // if(address < this->baseaddress) return tl::nullopt;
+    // usize idx = address - this->baseaddress;
+    // if(idx >= this->program.memory_old->size()) return tl::nullopt;
+    // return idx;
     return tl::nullopt;
 }
 
-const Segment* Context::index_to_segment(MIndex index) const {
-    if(index >= this->program.memory->size()) return nullptr;
-
-    const Segment* ls = m_lastsegment;
-    if(ls && (index >= ls->index && index < ls->endindex)) return ls;
-
-    for(const Segment& s : this->program.segments) {
-        if(index >= s.index && index < s.endindex) {
-            ls = &s;
-            return ls;
-        }
-    }
-
-    return nullptr;
-}
-
-const Function* Context::index_to_function(usize index) const {
-    if(index >= this->program.memory->size()) return nullptr;
+const Function* Context::find_function(RDAddress address) const {
+    if(!this->program.find_segment(address)) return nullptr;
 
     for(const Function& f : this->functions) {
-        if(f.contains(index)) return &f;
+        if(f.contains(address)) return &f;
     }
 
     return nullptr;
 }
 
-bool Context::is_address(RDAddress address) const {
-    return this->program.memory &&
-           (address >= this->baseaddress && address < this->end_baseaddress());
+tl::optional<RDAddress> Context::get_address(std::string_view name) const {
+    return m_database->get_address(name);
 }
 
-RDAddress Context::memory_copy(MIndex idx, RDOffset start, RDOffset end) const {
-    assume(start < this->program.file->size());
-    assume(end <= this->program.file->size());
+tl::optional<RDType> Context::get_type(RDAddress address) const {
+    const RDSegmentNew* seg = this->program.find_segment(address);
 
-    RDOffset size = end - start;
-    RDAddress endidx = idx + size;
-    assume(endidx <= this->program.memory->size());
-
-    for(usize i = start; i < end; ++i, ++idx) {
-        auto b = this->program.file->get_byte(i);
-        assume(b.has_value());
-        this->program.memory->at(idx).set_byte(*b);
-    }
-
-    return this->baseaddress + endidx;
-}
-
-void Context::map_segment(const std::string& name, MIndex idx, MIndex endidx,
-                          RDOffset offset, RDOffset endoffset, u8 perm) {
-    if(idx >= endidx) {
-        spdlog::error("Invalid address range for segment '{}'", name);
-        return;
-    }
-
-    if(idx >= this->program.memory->size()) {
-        spdlog::error("Start address out of range for segment '{}'", name);
-        return;
-    }
-
-    if(endidx > this->program.memory->size()) {
-        spdlog::error("End address out of range for segment '{}'", name);
-        return;
-    }
-
-    if(offset != endoffset) {
-        if(offset > endoffset) {
-            spdlog::error("Invalid offset range for segment '{}'", name);
-            return;
-        }
-
-        if(offset >= this->program.file->size()) {
-            spdlog::error("Start offset out of range for segment '{}'", name);
-            return;
-        }
-
-        if(endoffset > this->program.file->size()) {
-            spdlog::error("End offset out of range for segment '{}'", name);
-            return;
-        }
-
-        this->memory_copy(idx, offset, endoffset);
-    }
-
-    this->program.memory->at(idx).set(BF_SEGMENT);
-
-    this->program.segments.emplace_back(Segment{
-        .name = utils::copy_str(name),
-        .index = idx,
-        .endindex = endidx,
-        .offset = offset,
-        .endoffset = endoffset,
-        .perm = perm,
-    });
-
-    m_database->add_segment(name, idx, endidx, offset, endoffset, perm);
-}
-
-tl::optional<MIndex> Context::get_index(std::string_view name) const {
-    return m_database->get_index(name);
-}
-
-tl::optional<RDType> Context::get_type(MIndex idx) const {
-    if(idx >= this->program.memory->size()) {
-        spdlog::warn("get_type: Invalid address");
-        return tl::nullopt;
-    }
-
-    if(this->program.memory->at(idx).has(BF_TYPE))
-        return m_database->get_type(idx);
-
-    return tl::nullopt;
-}
-
-std::string Context::get_name(MIndex idx) const {
-    if(idx >= this->program.memory->size()) {
+    if(!seg) {
         spdlog::warn("get_name: Invalid address");
         return {};
     }
 
-    Byte b = this->program.memory->at(idx);
+    if(memory::has_flag(seg, address, BF_TYPE))
+        return m_database->get_type(address);
+
+    return tl::nullopt;
+}
+
+std::string Context::get_name(RDAddress address) const {
+    const RDSegmentNew* seg = this->program.find_segment(address);
+
+    if(!seg) {
+        spdlog::warn("get_name: Invalid address");
+        return {};
+    }
+
     std::string name;
 
-    if(b.has(BF_NAME)) name = m_database->get_name(idx);
+    if(memory::has_flag(seg, address, BF_NAME))
+        name = m_database->get_name(address);
 
     if(name.empty()) {
         std::string prefix = "loc";
 
-        if(b.has(BF_TYPE)) {
-            auto type = this->get_type(idx);
+        if(memory::has_flag(seg, address, BF_TYPE)) {
+            auto type = this->get_type(address);
             assume(type);
 
             const typing::TypeDef* td = this->types.get_typedef(*type);
             assume(td);
             prefix = utils::to_lower(td->name);
         }
-        else if(b.has(BF_FUNCTION))
+        else if(memory::has_flag(seg, address, BF_FUNCTION))
             prefix = "sub";
 
-        auto address = this->index_to_address(idx);
-        assume(address.has_value());
-        name = prefix + "_" + this->to_hex(*address, -1);
+        name = prefix + "_" + this->to_hex(address, -1); // TODO: SEGM-BITS!!!
     }
 
     return name;
 }
 
-bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
-    if(idx >= this->program.memory->size()) {
+bool Context::set_name(RDAddress address, const std::string& name,
+                       usize flags) {
+    RDSegmentNew* seg = this->program.find_segment(address);
+
+    if(!seg) {
         if(!(flags & SN_NOWARN))
-            this->add_problem(idx, "Cannot set name, address out of bounds");
+            this->add_problem(address,
+                              "Cannot set name, address out of bounds");
 
         return false;
     }
@@ -491,84 +387,71 @@ bool Context::set_name(MIndex idx, const std::string& name, usize flags) {
     std::string dbname = name;
 
     if(!name.empty()) {
-        if(this->program.memory->at(idx).has(BF_NAME)) {
+        if(memory::has_flag(seg, address, BF_NAME)) {
             if(!(flags & SN_NOWARN)) {
-                auto addr = this->index_to_address(idx);
-                assume(addr);
                 this->add_problem(
-                    idx,
+                    address,
                     fmt::format("Name already set @ {:x} (trying to set '{}')",
-                                *addr, name));
+                                address, name));
             }
             return false;
         }
 
-        auto nameidx = m_database->get_index(dbname, true);
+        auto nameidx = m_database->get_address(dbname, true);
 
         if(nameidx && (flags & SN_FORCE)) {
             usize n = 0;
 
             while(nameidx) {
                 dbname = fmt::format("{}_{}", name, ++n);
-                nameidx = m_database->get_index(dbname, true);
+                nameidx = m_database->get_address(dbname, true);
             }
         }
         else if(nameidx) {
             if(!(flags & SN_NOWARN)) {
                 this->add_problem(
-                    idx, fmt::format("name '{}' already exists", name));
+                    address, fmt::format("name '{}' already exists", name));
             }
             return false;
         }
     }
 
-    Byte& b = this->program.memory->at(idx);
-    b.set_flag(BF_NAME, !dbname.empty());
-    b.set_flag(BF_IMPORT, flags & SN_IMPORT);
-
-    m_database->set_name(idx, dbname);
+    memory::set_flag(seg, address, BF_NAME, !dbname.empty());
+    memory::set_flag(seg, address, BF_IMPORT, flags & SN_IMPORT);
+    m_database->set_name(address, dbname);
     return true;
 }
 
-std::string Context::get_comment(MIndex idx) const {
-    if(idx >= this->program.memory->size() ||
-       !this->program.memory->at(idx).has(BF_COMMENT))
-        return {};
-
-    return m_database->get_comment(idx);
+std::string Context::get_comment(RDAddress address) const {
+    const RDSegmentNew* seg = this->program.find_segment(address);
+    if(!seg || !memory::has_flag(seg, address, BF_COMMENT)) return {};
+    return m_database->get_comment(address);
 }
 
-Database::RefList Context::get_refs_from_type(MIndex fromidx,
+Database::RefList Context::get_refs_from_type(RDAddress fromaddr,
                                               usize type) const {
-    if(fromidx >= this->program.memory->size() ||
-       !this->program.memory->at(fromidx).has(BF_REFSFROM))
-        return {};
-
-    return m_database->get_refs_from_type(fromidx, type);
+    const RDSegmentNew* seg = this->program.find_segment(fromaddr);
+    if(!seg || !memory::has_flag(seg, fromaddr, BF_REFSFROM)) return {};
+    return m_database->get_refs_from_type(fromaddr, type);
 }
 
-Database::RefList Context::get_refs_from(MIndex fromidx) const {
-    if(fromidx >= this->program.memory->size() ||
-       !this->program.memory->at(fromidx).has(BF_REFSFROM))
-        return {};
-
-    return m_database->get_refs_from(fromidx);
+Database::RefList Context::get_refs_from(RDAddress fromaddr) const {
+    const RDSegmentNew* seg = this->program.find_segment(fromaddr);
+    if(!seg || !memory::has_flag(seg, fromaddr, BF_REFSFROM)) return {};
+    return m_database->get_refs_from(fromaddr);
 }
 
-Database::RefList Context::get_refs_to_type(MIndex toidx, usize type) const {
-    if(toidx >= this->program.memory->size() ||
-       !this->program.memory->at(toidx).has(BF_REFSTO))
-        return {};
-
-    return m_database->get_refs_to_type(toidx, type);
+Database::RefList Context::get_refs_to_type(RDAddress toaddr,
+                                            usize type) const {
+    const RDSegmentNew* seg = this->program.find_segment(toaddr);
+    if(!seg || !memory::has_flag(seg, toaddr, BF_REFSTO)) return {};
+    return m_database->get_refs_to_type(toaddr, type);
 }
 
-Database::RefList Context::get_refs_to(MIndex toidx) const {
-    if(toidx >= this->program.memory->size() ||
-       !this->program.memory->at(toidx).has(BF_REFSTO))
-        return {};
-
-    return m_database->get_refs_to(toidx);
+Database::RefList Context::get_refs_to(RDAddress toaddr) const {
+    const RDSegmentNew* seg = this->program.find_segment(toaddr);
+    if(!seg || !memory::has_flag(seg, toaddr, BF_REFSTO)) return {};
+    return m_database->get_refs_to(toaddr);
 }
 
 std::string Context::to_hex(usize v, int n) const {

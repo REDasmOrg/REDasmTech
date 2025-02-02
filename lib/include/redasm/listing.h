@@ -25,7 +25,6 @@ typedef enum RDListingItemType {
 
 typedef struct RDSymbol {
     RDAddress address;
-    usize index;
     usize type;
     RDThemeKind theme;
     const char* value;

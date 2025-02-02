@@ -4,7 +4,7 @@ namespace redasm::rdil {
 
 void ILExprList::append(const RDILExpr* e) {
     e = this->check(e);
-    m_expressions.emplace_back(this->currentindex, e);
+    m_expressions.emplace_back(this->currentaddress, e);
 }
 
 const RDILExpr* ILExprList::first() const {

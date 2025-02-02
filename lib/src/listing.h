@@ -1,8 +1,8 @@
 #pragma once
 
-#include "segment.h"
 #include <deque>
 #include <redasm/listing.h>
+#include <redasm/segment.h>
 #include <redasm/types.h>
 #include <redasm/typing.h>
 #include <tl/optional.hpp>
@@ -14,11 +14,11 @@ struct ListingItem {
     RDListingItemType type;
 
     union {
-        MIndex start_index;
-        MIndex index;
+        RDAddress start_address;
+        RDAddress address;
     };
 
-    MIndex end_index;
+    RDAddress end_address;
     usize indent;
 
     tl::optional<RDType> dtype_context;
@@ -38,7 +38,7 @@ private:
     static constexpr usize INDENT = 2;
 
 public:
-    using IndexList = std::vector<usize>;
+    using AddressList = std::vector<RDAddress>;
 
     auto cbegin() const { return m_items.cbegin(); }
     auto cend() const { return m_items.cend(); }
@@ -55,32 +55,32 @@ public:
     ValueType& operator[](LIndex idx) { return m_items.at(idx); }
     const ValueType& operator[](LIndex idx) const { return m_items.at(idx); }
 
-    ConstIterator upper_bound(MIndex idx) const {
-        return this->upper_bound(idx, m_items.begin());
+    ConstIterator upper_bound(RDAddress address) const {
+        return this->upper_bound(address, m_items.begin());
     }
 
-    ConstIterator lower_bound(MIndex idx) const {
-        return this->lower_bound(idx, m_items.begin());
+    ConstIterator lower_bound(RDAddress address) const {
+        return this->lower_bound(address, m_items.begin());
     }
 
-    const IndexList& symbols() const { return m_symbols; }
-    const IndexList& imports() const { return m_imports; }
-    const IndexList& exports() const { return m_exports; }
+    const AddressList& symbols() const { return m_symbols; }
+    const AddressList& imports() const { return m_imports; }
+    const AddressList& exports() const { return m_exports; }
 
-    ConstIterator lower_bound(MIndex idx, ConstIterator begin) const;
-    ConstIterator upper_bound(MIndex idx, ConstIterator begin) const;
-    void hex_dump(MIndex startindex, MIndex endindex);
-    void fill(MIndex index, MIndex endindex);
-    usize type(MIndex index, RDType t);
-    usize instruction(MIndex index);
-    usize label(MIndex index);
-    usize function(MIndex index);
-    usize segment(MIndex index);
+    ConstIterator lower_bound(RDAddress address, ConstIterator begin) const;
+    ConstIterator upper_bound(RDAddress address, ConstIterator begin) const;
+    void hex_dump(RDAddress startaddr, RDAddress endaddr);
+    void fill(RDAddress startaddr, MIndex endaddr);
+    usize type(RDAddress address, RDType t);
+    usize instruction(RDAddress address);
+    usize label(RDAddress address);
+    usize function(RDAddress address);
+    usize segment(const RDSegmentNew* seg);
 
 public: // State management functions
     tl::optional<usize> field_index() const;
     tl::optional<RDType> current_type() const;
-    const Segment* current_segment() const { return m_currentsegment; }
+    const RDSegmentNew* current_segment() const { return m_currentsegment; }
     void clear();
     void push_indent(int c = 1);
     void pop_indent(int c = 1);
@@ -91,13 +91,13 @@ public: // State management functions
 
 private:
     usize push_item(RDListingItemType type, MIndex index);
-    void check_flags(LIndex listingidx, MIndex index);
+    void check_flags(LIndex listingidx, RDAddress address);
 
 private:
     std::deque<usize> m_fieldindex;
     std::deque<RDType> m_currtype;
-    const Segment* m_currentsegment{nullptr};
-    IndexList m_symbols, m_exports, m_imports;
+    const RDSegmentNew* m_currentsegment{nullptr};
+    AddressList m_symbols, m_exports, m_imports;
     usize m_indent{0};
     Type m_items;
 };

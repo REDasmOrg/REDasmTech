@@ -1,3 +1,4 @@
+#include "../utils/utils.h"
 #include "../context.h"
 #include "../state.h"
 #include <redasm/utils.h>
@@ -32,6 +33,11 @@ const char* rd_tohex(usize val) {
     static std::string res;
     if(redasm::state::context) res = redasm::state::context->to_hex(val);
     return res.empty() ? nullptr : res.c_str();
+}
+
+usize rd_countbits(i64 val) {
+    spdlog::trace("rd_countbits({:x})", val);
+    return redasm::utils::count_bits(val);
 }
 
 u16 rd_rol16(u16 val, u16 amt) {

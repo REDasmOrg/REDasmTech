@@ -46,9 +46,13 @@ typedef enum RDByteFlags {
     BF_CONT = 1U << 31,  // Continuation of Range
 } RDByteFlags;
 
-REDASM_EXPORT bool rdbyte_isunknown(RDByte self);
+REDASM_EXPORT bool rdbyte_isunknown(const RDByte* self);
 REDASM_EXPORT bool rdbyte_iscode(RDByte self);
 REDASM_EXPORT bool rdbyte_isdata(RDByte self);
-REDASM_EXPORT bool rdbyte_has(RDByte self, usize f);
-REDASM_EXPORT bool rdbyte_hasbyte(RDByte self);
-REDASM_EXPORT bool rdbyte_getbyte(RDByte self, u8* b);
+REDASM_EXPORT bool rdbyte_hascommon(const RDByte* self);
+REDASM_EXPORT bool rdbyte_hasflag(const RDByte* self, usize f);
+REDASM_EXPORT bool rdbyte_hasbyte(const RDByte* self);
+REDASM_EXPORT bool rdbyte_getbyte(const RDByte* self, u8* b);
+REDASM_EXPORT void rdbyte_setflag(RDByte* self, u32 f, bool s);
+REDASM_EXPORT void rdbyte_setbyte(RDByte* self, u8 b);
+REDASM_EXPORT void rdbyte_clear(RDByte* self);

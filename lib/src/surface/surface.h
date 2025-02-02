@@ -38,11 +38,11 @@ public:
     bool can_goback() const { return !m_histback.empty(); }
     bool can_goforward() const { return !m_histforward.empty(); }
     tl::optional<LIndex> current_listing_index() const;
-    tl::optional<MIndex> current_index() const;
-    tl::optional<usize> index_under_pos(RDSurfacePosition pos) const;
-    tl::optional<usize> index_under_cursor() const;
+    tl::optional<RDAddress> current_address() const;
+    tl::optional<RDAddress> address_under_pos(RDSurfacePosition pos) const;
+    tl::optional<RDAddress> address_under_cursor() const;
     const Function* current_function() const;
-    const Segment* current_segment() const;
+    const RDSegmentNew* current_segment() const;
     RDSurfacePosition position() const;
     RDSurfacePosition start_selection() const;
     RDSurfacePosition end_selection() const;
@@ -51,8 +51,8 @@ public:
     const std::vector<RDSurfacePath>& get_path() const;
     bool has_selection() const;
     bool has_rdil() const;
-    int index_of(MIndex index) const;
-    int last_index_of(MIndex index) const;
+    int index_of(RDAddress address) const;
+    int last_index_of(RDAddress address) const;
     void clear_selection();
     void clear_history();
     void render_function(const Function& f);
@@ -66,14 +66,14 @@ public:
     bool go_forward();
     void seek_position(LIndex index);
     void seek(LIndex index);
-    bool jump_to(MIndex index);
+    bool jump_to(RDAddress address);
     bool jump_to_ep();
 
 private:
     const ListingItem& get_listing_item(const SurfaceRow& sfrow) const;
-    int calculate_index(usize idx) const;
+    int calculate_index(RDAddress address) const;
     void update_history(History& history) const;
-    void insert_path(Byte b, int fromrow, int torow) const;
+    void insert_path(RDByte b, int fromrow, int torow) const;
     void render_finalize();
     void render_range(LIndex start, usize n);
     void render_hexdump(const ListingItem& item);

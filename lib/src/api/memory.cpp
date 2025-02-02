@@ -14,7 +14,7 @@ using AbstractBuffer = redasm::AbstractBuffer;
     if(!ctx) return false;                                                     \
     auto idx = ctx->address_to_index(address);                                 \
     if(!idx) return false;                                                     \
-    auto res = ctx->program.memory->get_##T(*idx);                             \
+    auto res = ctx->program.memory_old->get_##T(*idx);                         \
     res.map([&](const T& x) {                                                  \
         if(v) *(v) = x;                                                        \
     });                                                                        \
@@ -25,7 +25,7 @@ using AbstractBuffer = redasm::AbstractBuffer;
     if(!ctx) return false;                                                     \
     auto idx = ctx->address_to_index(address);                                 \
     if(!idx) return false;                                                     \
-    auto res = ctx->program.memory->get_##T(*idx, b);                          \
+    auto res = ctx->program.memory_old->get_##T(*idx, b);                      \
     res.map([&](const T& x) {                                                  \
         if(v) *(v) = x;                                                        \
     });                                                                        \
@@ -38,40 +38,11 @@ void rd_memoryinfo(RDMemoryInfo* mi) {
 
     if(!mi) return;
 
-    *mi = {
-        .baseaddress = redasm::state::context->baseaddress,
-        .end_baseaddress = redasm::state::context->end_baseaddress(),
-        .size = redasm::state::context->program.memory->size(),
-    };
-}
-
-bool rd_memorycopy(RDAddress address, RDOffset start, RDOffset end) {
-    spdlog::trace("rd_memorycopy({:x}, {:x}, {:x})", address, start, end);
-    if(redasm::state::context) {
-        redasm::state::context->memory_copy(address, start, end);
-        return true;
-    }
-    return false;
-}
-
-bool rd_memorycopy_n(RDAddress address, RDOffset start, usize n) {
-    spdlog::trace("rd_memorycopy_n({:x}, {:x}, {:x})", address, start, n);
-    if(redasm::state::context) {
-        redasm::state::context->memory_copy_n(address, start, n);
-        return true;
-    }
-    return false;
-}
-
-bool rd_map(RDAddress startaddr, RDAddress endaddr) {
-    spdlog::trace("rd_map({:x}, {:x})", startaddr, endaddr);
-    if(startaddr >= endaddr) return false;
-    return redasm::state::context->memory_map(startaddr, endaddr - startaddr);
-}
-
-bool rd_map_n(RDAddress base, usize size) {
-    spdlog::trace("rd_map_n({:x}, {:x})", base, size);
-    return redasm::state::context->memory_map(base, size);
+    // *mi = {
+    //     .baseaddress = redasm::state::context->baseaddress,
+    //     .end_baseaddress = redasm::state::context->end_baseaddress(),
+    //     .size = redasm::state::context->program.memory_old->size(),
+    // };
 }
 
 usize rd_read(RDAddress address, void* data, usize n) {
@@ -79,7 +50,8 @@ usize rd_read(RDAddress address, void* data, usize n) {
     if(!redasm::state::context) return false;
 
     auto idx = redasm::state::context->address_to_index(address);
-    if(idx) return redasm::state::context->program.memory->read(*idx, data, n);
+    if(idx)
+        return redasm::state::context->program.memory_old->read(*idx, data, n);
     return n;
 }
 
@@ -110,7 +82,7 @@ const char* rd_getstr(RDAddress address, usize n) {
     static std::string res;
 
     if(auto idx = ctx->address_to_index(address); idx) {
-        auto str = ctx->program.memory->get_str(*idx, n);
+        auto str = ctx->program.memory_old->get_str(*idx, n);
 
         if(str) {
             res = *str;
@@ -129,7 +101,7 @@ const char* rd_getwstr(RDAddress address, usize n) {
     static std::string res;
 
     if(auto idx = ctx->address_to_index(address); idx) {
-        auto str = ctx->program.memory->get_wstr(*idx, n);
+        auto str = ctx->program.memory_old->get_wstr(*idx, n);
 
         if(str) {
             res = *str;
@@ -148,7 +120,7 @@ const char* rd_getstrz(RDAddress address) {
     if(!ctx) return nullptr;
 
     if(auto idx = ctx->address_to_index(address); idx) {
-        auto str = ctx->program.memory->get_str(*idx);
+        auto str = ctx->program.memory_old->get_str(*idx);
 
         if(str) {
             res = *str;
@@ -167,7 +139,7 @@ const char* rd_getwstrz(RDAddress address) {
     if(!ctx) return nullptr;
 
     if(auto idx = ctx->address_to_index(address); idx) {
-        auto str = ctx->program.memory->get_wstr(*idx);
+        auto str = ctx->program.memory_old->get_wstr(*idx);
 
         if(str) {
             res = *str;
@@ -181,19 +153,12 @@ const char* rd_getwstrz(RDAddress address) {
 bool rd_isaddress(RDAddress address) {
     spdlog::trace("rd_isaddress({:x})", address);
     const redasm::Context* ctx = redasm::state::context;
-    return ctx && ctx->is_address(address);
+    return ctx && ctx->program.find_segment(address) != nullptr;
 }
 
 bool rd_checkstring(RDAddress address, RDStringResult* r) {
     spdlog::trace("rd_checkstring({:x}, {})", address, fmt::ptr(r));
-    auto idx = redasm::state::context->address_to_index(address);
-
-    if(!idx) {
-        if(r) *r = {};
-        return false;
-    }
-
-    auto res = redasm::stringfinder::classify(*idx);
+    auto res = redasm::stringfinder::classify(address);
     if(res && r) *r = *res;
     return res.has_value();
 }

@@ -29,26 +29,26 @@ public:
     void del_state(std::string_view s);
     u64 take_state(std::string_view s);
     u64 upd_state(std::string_view s, u64 val, u64 mask);
-    void flow(MIndex idx);
-    void add_ref(MIndex toidx, usize type);
-    void enqueue_flow(MIndex index);
-    void enqueue_jump(MIndex index);
-    void enqueue_call(MIndex index);
+    void flow(RDAddress address);
+    void add_ref(RDAddress toaddr, usize type);
+    void enqueue_flow(RDAddress address);
+    void enqueue_jump(RDAddress address);
+    void enqueue_call(RDAddress address);
     u32 tick();
 
 private:
-    void execute_delayslots(const RDInstruction& instr);
+    void execute_delayslots(RDSegmentNew* seg, const RDInstruction& instr);
 
 public:
-    MIndex pc{};
+    RDAddress pc{};
     std::unique_ptr<RDInstruction> dslotinstr;
     u32 ndslot{0}; // =0 no delay slot
 
 private:
     EmulatorState m_state;
-    std::deque<MIndex> m_qflow;
-    std::deque<MIndex> m_qjump;
-    std::deque<MIndex> m_qcall;
+    std::deque<RDAddress> m_qflow;
+    std::deque<RDAddress> m_qjump;
+    std::deque<RDAddress> m_qcall;
 };
 
 } // namespace redasm

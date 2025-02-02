@@ -2,6 +2,7 @@
 #include "../api/marshal.h"
 #include "../builtins/processor.h"
 #include "../context.h"
+#include "../memory/memory.h"
 #include "../state.h"
 #include "../typing/base.h"
 #include "../utils/utils.h"
@@ -17,70 +18,63 @@ constexpr usize COLUMN_PADDING = 6;
 template<typename T>
 tl::optional<std::string> surface_checkaddr(T v, bool& isaddr) {
     const Context* ctx = state::context;
-    isaddr = ctx->is_address(v);
-
-    if(isaddr) {
-        return ctx->address_to_index(static_cast<RDAddress>(v))
-            .map([&](MIndex idx) { return ctx->get_name(idx); });
-    }
-
+    isaddr = ctx->program.find_segment(v) != nullptr;
+    if(isaddr) return ctx->get_name(static_cast<RDAddress>(v));
     return tl::nullopt;
 }
 
 std::string surface_valuestr(const RDValue& v, bool& isaddr) {
     assume(!v.type.n);
 
-    const Context* ctx = state::context;
-
     switch(v.type.id) {
         case typing::ids::I8: {
-            if(v.i8_v < 0) return std::to_string(v.i8_v);
+            if(v.i8_v < 0) return utils::to_string<std::string>(v.i8_v);
             return surface_checkaddr(v.i8_v, isaddr)
-                .value_or(ctx->to_hex(v.i8_v, sizeof(i8) * 2));
+                .value_or(utils::to_hex<std::string>(v.i8_v));
         }
 
         case typing::ids::I16:
         case typing::ids::I16BE: {
-            if(v.i16_v < 0) return std::to_string(v.i16_v);
+            if(v.i16_v < 0) return utils::to_string<std::string>(v.i16_v);
             return surface_checkaddr(v.i16_v, isaddr)
-                .value_or(ctx->to_hex(v.i16_v, sizeof(i16) * 2));
+                .value_or(utils::to_hex<std::string>(v.i16_v));
         }
 
         case typing::ids::I32:
         case typing::ids::I32BE: {
-            if(v.i32_v < 0) return std::to_string(v.i32_v);
+            if(v.i32_v < 0) return utils::to_string<std::string>(v.i32_v);
             return surface_checkaddr(v.i32_v, isaddr)
-                .value_or(ctx->to_hex(v.i32_v, sizeof(i32) * 2));
+                .value_or(utils::to_hex<std::string>(v.i32_v));
         }
 
         case typing::ids::I64:
         case typing::ids::I64BE: {
-            if(v.i64_v < 0) return std::to_string(v.i64_v);
+            if(v.i64_v < 0) return utils::to_string<std::string>(v.i64_v);
             return surface_checkaddr(v.i64_v, isaddr)
-                .value_or(ctx->to_hex(v.i64_v, sizeof(i64) * 2));
+                .value_or(utils::to_hex<std::string>(v.i64_v));
         }
 
         case typing::ids::U8: {
             return surface_checkaddr(v.u8_v, isaddr)
-                .value_or(ctx->to_hex(v.u8_v, sizeof(u8) * 2));
+                .value_or(utils::to_hex<std::string>(v.u8_v));
         }
 
         case typing::ids::U16:
         case typing::ids::U16BE: {
             return surface_checkaddr(v.u16_v, isaddr)
-                .value_or(ctx->to_hex(v.u16_v, sizeof(u16) * 2));
+                .value_or(utils::to_hex<std::string>(v.u16_v));
         }
 
         case typing::ids::U32:
         case typing::ids::U32BE: {
             return surface_checkaddr(v.u32_v, isaddr)
-                .value_or(ctx->to_hex(v.u32_v, sizeof(u32) * 2));
+                .value_or(utils::to_hex<std::string>(v.u32_v));
         }
 
         case typing::ids::U64:
         case typing::ids::U64BE: {
             return surface_checkaddr(v.u64_v, isaddr)
-                .value_or(ctx->to_hex(v.u64_v, sizeof(u64) * 2));
+                .value_or(utils::to_hex<std::string>(v.u64_v));
         }
 
         default: break;
@@ -93,7 +87,6 @@ std::string surface_valuestr(const RDValue& v, bool& isaddr) {
 
 Surface::Surface(usize flags) {
     m_renderer = std::make_unique<Renderer>(flags);
-
     this->lock_history([&]() { this->jump_to_ep(); });
 }
 
@@ -105,42 +98,39 @@ tl::optional<LIndex> Surface::current_listing_index() const {
     return std::min(*this->start + m_row, state::context->listing.size() - 1);
 }
 
-tl::optional<MIndex> Surface::current_index() const {
+tl::optional<RDAddress> Surface::current_address() const {
     return this->current_listing_index().map(
-        [](LIndex index) { return state::context->listing[index].index; });
+        [](LIndex index) { return state::context->listing[index].address; });
 }
 
-tl::optional<usize> Surface::index_under_pos(RDSurfacePosition pos) const {
+tl::optional<usize> Surface::address_under_pos(RDSurfacePosition pos) const {
     if(!this->start) return tl::nullopt;
 
     if(std::string w = Renderer::word_at(this->rows, pos.row, pos.col);
        !w.empty()) {
-        return state::context->get_index(w);
+        return state::context->get_address(w);
     }
 
     return tl::nullopt;
 }
 
-tl::optional<usize> Surface::index_under_cursor() const {
-    return this->index_under_pos({
+tl::optional<RDAddress> Surface::address_under_cursor() const {
+    return this->address_under_pos({
         .row = m_row,
         .col = m_col,
     });
 }
 
-const Segment* Surface::current_segment() const {
-    if(auto idx = this->current_index(); idx) {
-        for(const Segment& s : state::context->program.segments) {
-            if(*idx >= s.index && *idx < s.endindex) return &s;
-        }
-    }
+const RDSegmentNew* Surface::current_segment() const {
+    if(auto addr = this->current_address(); addr)
+        return state::context->program.find_segment(*addr);
 
     return nullptr;
 }
 
 const Function* Surface::current_function() const {
-    if(auto idx = this->current_index(); idx)
-        return state::context->index_to_function(*idx);
+    if(auto idx = this->current_address(); idx)
+        return state::context->find_function(*idx);
 
     return nullptr;
 }
@@ -230,9 +220,9 @@ void Surface::seek(LIndex index) { // Seek doesn't update back/forward stack
     this->start = std::min(index, state::context->listing.size());
 }
 
-bool Surface::jump_to(MIndex index) {
+bool Surface::jump_to(RDAddress address) {
     Context* ctx = state::context;
-    auto it = ctx->listing.lower_bound(index);
+    auto it = ctx->listing.lower_bound(address);
 
     if(it != ctx->listing.end()) {
         this->update_history(m_histback);
@@ -257,7 +247,6 @@ bool Surface::jump_to_ep() {
 const std::vector<RDSurfacePath>& Surface::get_path() const {
     const Context* ctx = state::context;
     const Listing& lst = ctx->listing;
-    const auto& mem = ctx->program.memory;
 
     m_path.clear();
     m_done.clear();
@@ -269,28 +258,29 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
         const ListingItem& item = lst[lidx];
         if(item.type != LISTINGITEM_INSTRUCTION) continue;
 
-        Byte b = mem->at(item.index);
+        const RDSegmentNew* seg = ctx->program.find_segment(item.address);
+        assume(seg);
 
-        if(b.has(BF_JUMPDST)) {
-            for(const auto& [fromidx, type] :
-                ctx->get_refs_to_type(item.index, CR_JUMP)) {
-                const Segment* seg = state::context->index_to_segment(fromidx);
+        if(memory::has_flag(seg, item.address, BF_JUMPDST)) {
+            for(const auto& [toaddr, type] :
+                ctx->get_refs_to_type(item.address, CR_JUMP)) {
+                seg = ctx->program.find_segment(toaddr);
 
                 if(seg && (seg->perm & SP_X)) {
-                    this->insert_path(mem->at(fromidx),
-                                      this->calculate_index(fromidx), i);
+                    this->insert_path(memory::get_mbyte(seg, toaddr),
+                                      this->calculate_index(toaddr), i);
                 }
             }
         }
-        else if(b.has(BF_JUMP)) {
-            const auto& mem = state::context->program.memory;
+        else if(memory::has_flag(seg, item.address, BF_JUMP)) {
+            for(const auto& [fromaddr, type] :
+                ctx->get_refs_from_type(item.address, CR_JUMP)) {
+                seg = ctx->program.find_segment(fromaddr);
 
-            for(Database::Ref r :
-                ctx->get_refs_from_type(item.index, CR_JUMP)) {
-                const Segment* seg = state::context->index_to_segment(r.index);
-
-                if(seg && (seg->perm & SP_X) && mem->at(r.index).has(BF_CODE)) {
-                    this->insert_path(b, i, this->calculate_index(r.index));
+                if(seg && (seg->perm & SP_X) &&
+                   memory::has_flag(seg, fromaddr, BF_CODE)) {
+                    this->insert_path(memory::get_mbyte(seg, fromaddr), i,
+                                      this->calculate_index(fromaddr));
                 }
             }
         }
@@ -442,13 +432,13 @@ const ListingItem& Surface::get_listing_item(const SurfaceRow& sfrow) const {
     return state::context->listing[sfrow.listingindex];
 }
 
-int Surface::calculate_index(usize idx) const {
+int Surface::calculate_index(RDAddress address) const {
     if(!this->rows.empty()) {
         const ListingItem& first = this->get_listing_item(this->rows.front());
-        if(idx < first.index) return -1;
+        if(address < first.address) return -1;
 
         const ListingItem& last = this->get_listing_item(this->rows.back());
-        if(idx > last.index) return this->rows.size() + 1;
+        if(address > last.address) return this->rows.size() + 1;
     }
 
     int residx = -1;
@@ -456,13 +446,13 @@ int Surface::calculate_index(usize idx) const {
     for(usize i = this->rows.size(); i-- > 0;) {
         const ListingItem& item = this->get_listing_item(this->rows[i]);
 
-        if(item.index == idx) {
+        if(item.address == address) {
             residx = i;
 
             if(item.type == LISTINGITEM_INSTRUCTION) break;
         }
 
-        if(item.index < idx) break;
+        if(item.address < address) break;
     }
 
     return residx;
@@ -483,13 +473,13 @@ void Surface::update_history(History& history) const {
         history.emplace_front(hitem);
 }
 
-void Surface::insert_path(Byte b, int fromrow, int torow) const {
+void Surface::insert_path(RDByte b, int fromrow, int torow) const {
     if(fromrow == torow) return;
 
     if(auto it = m_done.emplace(fromrow, torow); !it.second) return;
 
     if(fromrow > torow) { // Loop
-        if(b.has(BF_FLOW)) {
+        if(rdbyte_hasflag(&b, BF_FLOW)) {
             m_path.push_back(
                 RDSurfacePath{fromrow, torow, THEME_GRAPHEDGELOOPCOND});
         }
@@ -499,12 +489,10 @@ void Surface::insert_path(Byte b, int fromrow, int torow) const {
         }
     }
     else {
-        if(b.has(BF_FLOW)) {
+        if(rdbyte_hasflag(&b, BF_FLOW))
             m_path.push_back(RDSurfacePath{fromrow, torow, THEME_SUCCESS});
-        }
-        else {
+        else
             m_path.push_back(RDSurfacePath{fromrow, torow, THEME_GRAPHEDGE});
-        }
     }
 }
 
@@ -546,10 +534,7 @@ void Surface::render_range(LIndex start, usize n) {
                 else
                     m_renderer->instr();
 
-                if(state::context->program.memory->at(it->index).has(
-                       BF_REFSFROM))
-                    this->render_refs(*it);
-
+                this->render_refs(*it);
                 this->render_comment(*it);
                 break;
             }
@@ -560,10 +545,7 @@ void Surface::render_range(LIndex start, usize n) {
                 else
                     this->render_type(*it);
 
-                if(state::context->program.memory->at(it->index).has(
-                       BF_REFSFROM))
-                    this->render_refs(*it);
-
+                this->render_refs(*it);
                 this->render_comment(*it);
                 break;
 
@@ -575,15 +557,19 @@ void Surface::render_range(LIndex start, usize n) {
 void Surface::render_hexdump(const ListingItem& item) {
     static constexpr usize HEX_WIDTH = 16;
 
-    const auto& mem = state::context->program.memory;
+    const RDSegmentNew* seg =
+        state::context->program.find_segment(item.address);
+    assume(seg);
     usize c = 0;
     m_renderer->new_row(item);
 
-    for(usize i = item.start_index; i < item.end_index; i++, c += 3) {
-        Byte b = mem->at(i);
+    for(RDAddress addr = item.start_address; addr < item.end_address;
+        addr++, c += 3) {
+        RDByte mb = memory::get_mbyte(seg, addr);
+        u8 b;
 
-        if(b.has_byte())
-            m_renderer->chunk(state::context->to_hex(b.byte(), 2));
+        if(rdbyte_getbyte(&mb, &b))
+            m_renderer->chunk(utils::to_hex(b));
         else
             m_renderer->nop("??");
 
@@ -595,12 +581,13 @@ void Surface::render_hexdump(const ListingItem& item) {
 
     c = 0;
 
-    for(usize i = item.start_index; i < item.end_index; i++, c++) {
-        Byte b = mem->at(i);
+    for(RDAddress addr = item.start_address; addr < item.end_address;
+        addr++, c++) {
+        RDByte mb = memory::get_mbyte(seg, addr);
+        u8 b;
 
-        if(b.has_byte()) {
-            std::string s{std::isprint(b.byte()) ? static_cast<char>(b.byte())
-                                                 : '.'};
+        if(rdbyte_getbyte(&mb, &b)) {
+            std::string s{std::isprint(b) ? static_cast<char>(b) : '.'};
             m_renderer->chunk(s);
         }
         else
@@ -612,23 +599,26 @@ void Surface::render_hexdump(const ListingItem& item) {
 
 void Surface::render_fill(const ListingItem& item) {
     const Context* ctx = state::context;
-    Byte b = ctx->program.memory->at(item.index);
+    const RDSegmentNew* seg = ctx->program.find_segment(item.address);
+    assume(seg);
 
     m_renderer->new_row(item).chunk(".fill", THEME_FUNCTION).ws();
+    RDByte mb = memory::get_mbyte(seg, item.address);
+    u8 b;
 
-    if(b.has_byte())
-        m_renderer->chunk(ctx->to_hex(b.byte(), 2), THEME_CONSTANT);
+    if(rdbyte_getbyte(&mb, &b))
+        m_renderer->chunk(utils::to_hex(b), THEME_CONSTANT);
     else
         m_renderer->chunk("??", THEME_NOP);
 
     m_renderer->ws()
         .chunk("(")
-        .constant(item.end_index - item.start_index, 16)
+        .constant(item.end_address - item.start_address, 16)
         .chunk(")");
 }
 
 void Surface::render_label(const ListingItem& item) {
-    std::string name = state::context->get_name(item.index);
+    std::string name = state::context->get_name(item.address);
     m_renderer->new_row(item).chunk(name + ":", THEME_ADDRESS);
 }
 
@@ -641,16 +631,14 @@ void Surface::render_segment(const ListingItem& item) {
     const RDProcessorPlugin* p = ctx->processorplugin;
     assume(p);
 
-    const Segment* s = state::context->index_to_segment(item.index);
+    const RDSegmentNew* s = ctx->program.find_segment(item.address);
     assume(s);
 
-    RDSegment cs = api::to_c(*s);
-
     if(p->render_segment)
-        p->render_segment(ctx->processor, api::to_c(m_renderer.get()), &cs);
+        p->render_segment(ctx->processor, api::to_c(m_renderer.get()), s);
     else
         builtins::processor::render_segment(ctx->processor,
-                                            api::to_c(m_renderer.get()), &cs);
+                                            api::to_c(m_renderer.get()), s);
 }
 
 void Surface::render_function(const ListingItem& item) {
@@ -662,7 +650,7 @@ void Surface::render_function(const ListingItem& item) {
     const RDProcessorPlugin* p = ctx->processorplugin;
     assume(p);
 
-    const Function* f = state::context->index_to_function(item.index);
+    const Function* f = state::context->find_function(item.address);
     assume(f);
 
     if(p->render_function)
@@ -679,9 +667,12 @@ void Surface::render_type(const ListingItem& item) {
 
     auto type = item.dtype_context;
     assume(type);
+
     const Context* ctx = state::context;
+    const RDSegmentNew* seg = ctx->program.find_segment(item.address);
+    assume(seg);
+
     const typing::TypeDef* td = ctx->types.get_typedef(*type);
-    const auto& mem = ctx->program.memory;
     std::string fname;
 
     if(item.field_index) {
@@ -692,7 +683,7 @@ void Surface::render_type(const ListingItem& item) {
         td = ctx->types.get_typedef(*type);
     }
     else
-        fname = ctx->get_name(item.index);
+        fname = ctx->get_name(item.address);
 
     assume(type);
     std::string t = ctx->types.to_string(*type);
@@ -703,7 +694,7 @@ void Surface::render_type(const ListingItem& item) {
 
     if(td->is_struct()) {
         if(!item.array_index) {
-            std::string label = ctx->get_name(item.index);
+            std::string label = ctx->get_name(item.address);
             m_renderer->function("struct").ws().type(td->name).ws().chunk(
                 label);
         }
@@ -720,9 +711,9 @@ void Surface::render_type(const ListingItem& item) {
             tl::optional<char> ch;
 
             if(td->get_id() == typing::ids::WCHAR)
-                ch = mem->get_wchar(item.index);
+                ch = memory::get_wchar(seg, item.address);
             else
-                ch = mem->get_char(item.index);
+                ch = memory::get_char(seg, item.address);
 
             if(ch.has_value())
                 m_renderer->word("=").quote(std::string_view{&ch.value(), 1},
@@ -746,7 +737,7 @@ void Surface::render_type(const ListingItem& item) {
         case typing::ids::U32BE:
         case typing::ids::I64BE:
         case typing::ids::U64BE: {
-            mem->get_type(item.index, td->to_type())
+            memory::get_type(seg, item.address, td->to_type())
                 .map([&](RDValue&& v) {
                     bool isaddr = false;
                     std::string vs = surface_valuestr(v, isaddr);
@@ -763,9 +754,9 @@ void Surface::render_type(const ListingItem& item) {
             tl::optional<std::string> v;
 
             if(td->get_id() == typing::ids::WSTR)
-                v = state::context->program.memory->get_wstr(item.index);
+                v = memory::get_wstr(seg, item.address);
             else
-                v = state::context->program.memory->get_str(item.index);
+                v = memory::get_str(seg, item.address);
 
             if(v.has_value())
                 m_renderer->ws().string(*v).chunk(",").constant(0);
@@ -781,15 +772,18 @@ void Surface::render_type(const ListingItem& item) {
 void Surface::render_comment(const ListingItem& item) {
     if(m_renderer->has_flag(SURFACE_NOCOMMENTS)) return;
 
-    if(Byte b = state::context->program.memory->at(item.index);
-       !b.has(BF_COMMENT))
-        return;
+    const RDSegmentNew* seg =
+        state::context->program.find_segment(item.address);
+    assume(seg);
+
+    if(!memory::has_flag(seg, item.address, BF_COMMENT)) return;
 
     m_renderer->ws(8);
     int i = 0;
 
     utils::split_each(
-        state::context->get_comment(item.index), '\n', [&](std::string_view x) {
+        state::context->get_comment(item.address), '\n',
+        [&](std::string_view x) {
             m_renderer->comment(i++ > 0 ? " | " : "# ").comment(x);
             return true;
         });
@@ -799,18 +793,18 @@ void Surface::render_refs(const ListingItem& item) {
     if(m_renderer->has_flag(SURFACE_NOREFS)) return;
 
     const Context* ctx = state::context;
-    const auto& mem = ctx->program.memory;
     bool paddingdone = false;
 
-    for(const auto& [index, _] : ctx->get_refs_from(item.index)) {
-        if(!mem->at(index).has(BF_TYPE)) continue;
+    for(const auto& [fromaddr, _] : ctx->get_refs_from(item.address)) {
+        const RDSegmentNew* seg = ctx->program.find_segment(fromaddr);
+        if(!seg || !memory::has_flag(seg, fromaddr, BF_TYPE)) continue;
 
         if(!paddingdone) {
             m_renderer->ws(COLUMN_PADDING);
             paddingdone = true;
         }
 
-        auto type = ctx->get_type(index);
+        auto type = ctx->get_type(fromaddr);
         assume(type);
         const typing::TypeDef* td = ctx->types.get_typedef(*type);
         assume(td);
@@ -818,40 +812,47 @@ void Surface::render_refs(const ListingItem& item) {
         switch(td->get_id()) {
             case typing::ids::CHAR: {
                 if(type->n > 0) {
-                    mem->get_str(index, type->n).map([&](const std::string& x) {
-                        m_renderer->string(x);
-                    });
+                    memory::get_str(seg, fromaddr, type->n)
+                        .map([&](const std::string& x) {
+                            m_renderer->string(x);
+                        });
                 }
                 else {
-                    mem->get_str(index, 1).map(
-                        [&](const std::string& x) { m_renderer->string(x); });
+                    memory::get_str(seg, fromaddr, 1)
+                        .map([&](const std::string& x) {
+                            m_renderer->string(x);
+                        });
                 }
                 break;
             }
 
             case typing::ids::WCHAR: {
                 if(type->n > 0) {
-                    mem->get_wstr(index, type->n)
+                    memory::get_wstr(seg, fromaddr, type->n)
                         .map([&](const std::string& x) {
                             m_renderer->string(x);
                         });
                 }
                 else {
-                    mem->get_wstr(index, 1).map(
-                        [&](const std::string& x) { m_renderer->string(x); });
+                    memory::get_wstr(seg, fromaddr, 1)
+                        .map([&](const std::string& x) {
+                            m_renderer->string(x);
+                        });
                 }
                 break;
             }
 
             case typing::ids::STR: {
-                mem->get_str(index).map(
-                    [&](const std::string& x) { m_renderer->string(x); });
+                memory::get_str(seg, fromaddr).map([&](const std::string& x) {
+                    m_renderer->string(x);
+                });
                 break;
             }
 
             case typing::ids::WSTR: {
-                mem->get_wstr(index).map(
-                    [&](const std::string& x) { m_renderer->string(x); });
+                memory::get_wstr(seg, fromaddr).map([&](const std::string& x) {
+                    m_renderer->string(x);
+                });
                 break;
             }
 
@@ -864,6 +865,7 @@ void Surface::render_array(const ListingItem& item) {
     assume(item.dtype_context);
     assume(item.dtype);
 
+    const Context* ctx = state::context;
     auto type = item.dtype;
     std::string chars;
 
@@ -872,12 +874,13 @@ void Surface::render_array(const ListingItem& item) {
 
     if(td->get_id() == typing::ids::CHAR ||
        td->get_id() == typing::ids::WCHAR) {
-        const auto& mem = state::context->program.memory;
-        usize idx = item.index;
+        const RDSegmentNew* seg = ctx->program.find_segment(item.address);
+        assume(seg);
+        RDAddress addr = item.address;
 
-        for(usize i = 0; i < type->n && idx < mem->size();
-            i++, idx += td->size) {
-            auto b = mem->get_type(idx, td->to_type());
+        for(usize i = 0; i < type->n && addr < seg->end;
+            i++, addr += td->size) {
+            auto b = memory::get_type(seg, addr, td->to_type());
 
             if(!b) {
                 chars += "\",?\"";
@@ -894,16 +897,14 @@ void Surface::render_array(const ListingItem& item) {
     if(item.field_index) {
         auto ptc = item.dtype_context;
         assume(ptc);
-        const typing::TypeDef* ptd = state::context->types.get_typedef(*ptc);
+        const typing::TypeDef* ptd = ctx->types.get_typedef(*ptc);
 
         assume(*item.field_index < ptd->dict.size());
         auto field = ptd->dict[*item.field_index];
-
         m_renderer->new_row(item);
-
         if(td->is_struct()) m_renderer->function("struct ");
 
-        m_renderer->type(state::context->types.to_string(*type))
+        m_renderer->type(ctx->types.to_string(*type))
             .ws()
             .chunk(field.second)
             .word("=");
@@ -915,15 +916,11 @@ void Surface::render_array(const ListingItem& item) {
 
         if(td->is_struct()) m_renderer->function("struct ");
 
-        std::string name = state::context->get_name(item.index);
-        m_renderer->type(state::context->types.to_string(*type))
-            .ws()
-            .chunk(name);
+        std::string name = ctx->get_name(item.address);
+        m_renderer->type(ctx->types.to_string(*type)).ws().chunk(name);
 
         if(item.array_index) m_renderer->arr_index(*item.array_index);
-
         m_renderer->word("=");
-
         if(!chars.empty()) m_renderer->string(chars);
     }
 }
@@ -945,21 +942,21 @@ void Surface::fit(int& row, int& col) {
     }
 }
 
-int Surface::index_of(MIndex index) const {
+int Surface::index_of(RDAddress address) const {
     for(usize i = 0; i < this->rows.size(); i++) {
         const SurfaceRow& sfrow = this->rows[i];
         const ListingItem& item = this->get_listing_item(sfrow);
-        if(item.index == index) return static_cast<int>(i);
+        if(item.address == address) return static_cast<int>(i);
     }
 
     return -1;
 }
 
-int Surface::last_index_of(MIndex index) const {
+int Surface::last_index_of(RDAddress address) const {
     for(usize i = this->rows.size(); i-- > 0;) {
         const SurfaceRow& sfrow = this->rows[i];
         const ListingItem& item = this->get_listing_item(sfrow);
-        if(item.index == index) return static_cast<int>(i);
+        if(item.address == address) return static_cast<int>(i);
     }
 
     return -1;

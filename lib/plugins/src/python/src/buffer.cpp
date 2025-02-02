@@ -327,10 +327,10 @@ PySequenceMethods memory_sequence_methods = []() {
 
         PyObject* pb = python::new_simplenamespace();
         // clang-format off
-        PyObject_SetAttrString(pb, "name", PyBool_FromLong(rdbyte_has(b, BF_NAME)));
-        PyObject_SetAttrString(pb, "segment", PyBool_FromLong(rdbyte_has(b, BF_SEGMENT)));
-        PyObject_SetAttrString(pb, "import", PyBool_FromLong(rdbyte_has(b, BF_IMPORT)));
-        PyObject_SetAttrString(pb, "export", PyBool_FromLong(rdbyte_has(b, BF_EXPORT)));
+        PyObject_SetAttrString(pb, "name", PyBool_FromLong(rdbyte_hasflag(&b, BF_NAME)));
+        PyObject_SetAttrString(pb, "segment", PyBool_FromLong(rdbyte_hasflag(&b, BF_SEGMENT)));
+        PyObject_SetAttrString(pb, "import", PyBool_FromLong(rdbyte_hasflag(&b, BF_IMPORT)));
+        PyObject_SetAttrString(pb, "export", PyBool_FromLong(rdbyte_hasflag(&b, BF_EXPORT)));
         PyObject_SetAttrString(pb, "unknown", PyBool_FromLong(rdbyte_isunknown(b)));
         PyObject_SetAttrString(pb, "data", PyBool_FromLong(rdbyte_isdata(b)));
         PyObject_SetAttrString(pb, "code", PyBool_FromLong(rdbyte_iscode(b)));

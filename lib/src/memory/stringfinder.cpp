@@ -1,5 +1,6 @@
 #include "stringfinder.h"
 #include "../context.h"
+#include "../memory/memory.h"
 #include "../state.h"
 #include "../typing/base.h"
 #include <cmath>
@@ -77,17 +78,16 @@ bool validate_string(std::string_view s) {
 }
 
 template<typename ToAsciiCallback>
-std::pair<bool, RDStringResult> categorize_as(usize idx, std::string_view tname,
-                                              ToAsciiCallback cb) {
-
-    const auto& mem = state::context->program.memory;
+std::pair<bool, RDStringResult>
+categorize_as(const RDSegmentNew* seg, RDAddress address,
+              std::string_view tname, ToAsciiCallback cb) {
     g_tempstr.clear();
     char ch{};
 
     usize sz = state::context->types.size_of(tname);
 
-    for(; idx < mem->size(); idx += sz) {
-        auto v = mem->get_type(idx, tname);
+    for(; address < seg->end; address += sz) {
+        auto v = memory::get_type(seg, address, tname);
         if(!v) break;
         bool ok = cb(std::forward<RDValue>(v.value()), ch);
         rdvalue_destroy(&v.value());
@@ -115,21 +115,22 @@ std::pair<bool, RDStringResult> categorize_as(usize idx, std::string_view tname,
 
 } // namespace
 
-tl::optional<RDStringResult> classify(usize idx) {
-    const auto& mem = state::context->program.memory;
+tl::optional<RDStringResult> classify(RDAddress address) {
+    const RDSegmentNew* seg = state::context->program.find_segment(address);
+    if(!seg) return tl::nullopt;
 
-    if(idx >= mem->size()) return tl::nullopt;
+    if(usize r = seg->end - address; r < sizeof(u16)) return tl::nullopt;
 
-    if(usize r = mem->size() - idx; r < sizeof(u16)) return tl::nullopt;
+    RDByte mb1 = memory::get_mbyte(seg, address);
+    RDByte mb2 = memory::get_mbyte(seg, address + 1);
 
-    Byte b1 = mem->at(idx);
-    Byte b2 = mem->at(idx + 1);
+    u8 b1, b2;
+    if(!rdbyte_getbyte(&mb1, &b1) || !rdbyte_getbyte(&mb2, &b2))
+        return tl::nullopt;
 
-    if(!b1.has_byte() || !b2.has_byte()) return tl::nullopt;
-
-    if(stringfinder::is_ascii(b1.byte()) && !b2.byte()) {
+    if(stringfinder::is_ascii(b1) && !b2) {
         auto [ok, c] = stringfinder::categorize_as(
-            idx, "wchar", [](RDValue&& v, char& outch) {
+            seg, address, "wchar", [](RDValue&& v, char& outch) {
                 outch = v.ch_v;
                 return stringfinder::is_ascii(v.ch_v);
             });
@@ -150,7 +151,7 @@ tl::optional<RDStringResult> classify(usize idx) {
     }
 
     auto [ok, c] = stringfinder::categorize_as(
-        idx, "char", [](RDValue&& v, char& outch) {
+        seg, address, "char", [](RDValue&& v, char& outch) {
             outch = v.ch_v;
             return stringfinder::is_ascii(v.ch_v);
         });

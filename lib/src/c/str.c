@@ -10,7 +10,7 @@ Str str_create(const char* s) { return str_create_n(s, 0, s ? strlen(s) : 0); }
 
 Str str_create_n(const char* s, size_t start, size_t n) {
     Str self = {0};
-    str_reserve(&self, n);
+    str_resize(&self, n);
 
     if(s) {
         if(!str_issmall(&self)) {

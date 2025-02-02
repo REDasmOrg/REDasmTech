@@ -1,5 +1,6 @@
 #include "../listing.h"
 #include "../context.h"
+#include "../memory/memory.h"
 #include "../state.h"
 #include "../typing/base.h"
 #include <redasm/listing.h>
@@ -9,28 +10,25 @@ namespace {
 void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
                            std::string& value) {
     assume(symbol);
-
     const redasm::Context* ctx = redasm::state::context;
     assume(ctx);
-    const auto& mem = ctx->program.memory;
     const redasm::Listing& listing = ctx->listing;
     const redasm::ListingItem& item = listing[listingidx];
 
-    symbol->address = ctx->baseaddress + item.index;
-    symbol->index = item.index;
+    symbol->address = item.address;
 
     switch(item.type) {
         case LISTINGITEM_SEGMENT: {
-            const redasm::Segment* s = ctx->index_to_segment(item.index);
-            assume(s);
+            const RDSegmentNew* seg = ctx->program.find_segment(item.address);
+            assume(seg);
             symbol->type = SYMBOL_SEGMENT;
             symbol->theme = THEME_SEGMENT;
-            symbol->value = s->name;
+            symbol->value = seg->name;
             break;
         }
 
         case LISTINGITEM_FUNCTION: {
-            value = ctx->get_name(item.index);
+            value = ctx->get_name(item.address);
             symbol->type = SYMBOL_FUNCTION;
             symbol->theme = THEME_FUNCTION;
             symbol->value = value.c_str();
@@ -38,28 +36,30 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
         }
 
         case LISTINGITEM_TYPE: {
+            const RDSegmentNew* seg = ctx->program.find_segment(item.address);
+            assume(seg);
             tl::optional<std::string> s;
             assume(item.dtype);
 
             switch(item.dtype->id) {
                 case redasm::typing::ids::STR:
-                    s = mem->get_str(item.index);
+                    s = redasm::memory::get_str(seg, item.address);
                     break;
                 case redasm::typing::ids::WSTR:
-                    s = mem->get_wstr(item.index);
+                    s = redasm::memory::get_wstr(seg, item.address);
                     break;
 
                 case redasm::typing::ids::CHAR: {
-                    usize len = mem->get_length(item.index);
+                    usize len = redasm::memory::get_length(seg, item.address);
                     assume(len > 0);
-                    s = mem->get_str(item.index, len);
+                    s = redasm::memory::get_str(seg, item.address, len);
                     break;
                 }
 
                 case redasm::typing::ids::WCHAR: {
-                    usize len = mem->get_length(item.index);
+                    usize len = redasm::memory::get_length(seg, item.address);
                     assume(len > 0);
-                    s = mem->get_wstr(item.index, len);
+                    s = redasm::memory::get_wstr(seg, item.address, len);
                     break;
                 }
 
@@ -67,7 +67,7 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
             }
 
             if(!s) {
-                value = ctx->get_name(item.index);
+                value = ctx->get_name(item.address);
 
                 symbol->type = SYMBOL_TYPE;
                 symbol->theme = THEME_DEFAULT;
@@ -95,10 +95,7 @@ bool rdlisting_getindex(RDAddress address, LIndex* idx) {
 
     if(!redasm::state::context) return false;
 
-    auto lidx = redasm::state::context->address_to_index(address);
-    if(!lidx) return false;
-
-    auto it = redasm::state::context->listing.lower_bound(*lidx);
+    auto it = redasm::state::context->listing.lower_bound(address);
     if(it == redasm::state::context->listing.end()) return false;
 
     if(idx) *idx = std::distance(redasm::state::context->listing.cbegin(), it);
@@ -113,7 +110,7 @@ bool rdlisting_getsymbol(usize idx, RDSymbol* symbol) {
     if(!ctx) return false;
 
     const redasm::Listing& listing = ctx->listing;
-    const redasm::Listing::IndexList& symbols = listing.symbols();
+    const redasm::Listing::AddressList& symbols = listing.symbols();
     if(idx >= symbols.size()) return false;
 
     usize listingidx = symbols[idx];
@@ -137,7 +134,7 @@ bool rdlisting_getimport(usize idx, RDSymbol* symbol) {
     if(!ctx) return false;
 
     const redasm::Listing& listing = ctx->listing;
-    const redasm::Listing::IndexList& imports = listing.imports();
+    const redasm::Listing::AddressList& imports = listing.imports();
     if(idx >= imports.size()) return false;
 
     usize listingidx = imports[idx];
@@ -161,7 +158,7 @@ bool rdlisting_getexport(usize idx, RDSymbol* symbol) {
     if(!ctx) return false;
 
     const redasm::Listing& listing = ctx->listing;
-    const redasm::Listing::IndexList& exports = listing.exports();
+    const redasm::Listing::AddressList& exports = listing.exports();
     if(idx >= exports.size()) return false;
 
     usize listingidx = exports[idx];

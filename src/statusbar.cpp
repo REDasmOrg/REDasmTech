@@ -63,14 +63,9 @@ void set_location(const RDSurface* surface) {
                  .arg(rd_tohex(loc.offset.value));
     }
 
-    if(loc.index.valid) {
-        s += QString::fromWCharArray(L"<b>Index: </b>%1\u00A0\u00A0")
-                 .arg(loc.index.value, 0, 16);
-    }
-
     if(loc.segment) {
         s += QString::fromWCharArray(L"<b>Segment: </b>%1\u00A0\u00A0")
-                 .arg(loc.segment);
+                 .arg(loc.segment->name);
     }
 
     g_lblstatuslabel->setText(s);

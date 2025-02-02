@@ -18,11 +18,7 @@ bool rdsurface_getaddressunderpos(const RDSurface* self,
 
     if(!pos) return false;
 
-    auto addr = redasm::api::from_c(self)->index_under_pos(*pos).and_then(
-        [](usize idx) {
-            return redasm::state::context->index_to_address(idx);
-        });
-
+    auto addr = redasm::api::from_c(self)->address_under_pos(*pos);
     if(address && addr) *address = *addr;
     return addr.has_value();
 }
@@ -32,11 +28,7 @@ bool rdsurface_getaddressundercursor(const RDSurface* self,
     spdlog::trace("rdsurface_getaddressundercursor({}, {})", fmt::ptr(self),
                   fmt::ptr(address));
 
-    auto addr =
-        redasm::api::from_c(self)->index_under_cursor().and_then([](usize idx) {
-            return redasm::state::context->index_to_address(idx);
-        });
-
+    auto addr = redasm::api::from_c(self)->address_under_cursor();
     if(address && addr) *address = *addr;
     return addr.has_value();
 }
@@ -91,100 +83,66 @@ void rdsurface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
                   fmt::ptr(loc));
 
     if(!loc) return;
+    loc = {}; // Initialize struct to 0
 
     const redasm::Context* ctx = redasm::state::context;
     const redasm::Surface* s = redasm::api::from_c(self);
-    const redasm::Segment* seg = s->current_segment();
-    auto index = s->current_index();
 
-    if(index) {
-        loc->index.value = *index;
-        loc->index.valid = true;
+    loc->segment = s->current_segment();
+    auto address = s->current_address();
 
-        auto cursorindex = s->index_under_cursor();
+    if(loc->segment && address) {
+        loc->address.value = *address;
+        loc->address.valid = true;
 
-        if(cursorindex) {
-            auto cursoraddress = ctx->index_to_address(*cursorindex);
-            cursoraddress.map(
-                [&](RDAddress address) { loc->cursoraddress.value = address; });
-            loc->cursoraddress.valid = cursoraddress.has_value();
+        if(auto cursoraddress = s->address_under_cursor(); cursoraddress) {
+            loc->cursoraddress.value = *cursoraddress;
+            loc->cursoraddress.valid = true;
         }
         else
             loc->cursoraddress.valid = false;
 
-        const redasm::Function* func = s->current_function();
-
-        if(func) {
-            auto ep = ctx->index_to_address(func->index);
-            ep.map([&](RDAddress ep) { loc->function.value = ep; });
-            loc->function.valid = ep.has_value();
+        if(const redasm::Function* func = s->current_function(); func) {
+            loc->function.value = func->address;
+            loc->function.valid = true;
         }
-        else
-            loc->function.valid = false;
 
-        auto address = ctx->index_to_address(*index);
-        address.map([&](RDAddress address) { loc->address.value = address; });
-        loc->address.valid = address.has_value();
-
-        auto offset = ctx->index_to_offset(*index);
+        auto offset = ctx->program.to_offset(*address);
         offset.map([&](RDOffset offset) { loc->offset.value = offset; });
         loc->offset.valid = offset.has_value();
-    }
-    else {
-        loc->function.valid = false;
-        loc->index.valid = false;
-        loc->cursoraddress.valid = false;
-        loc->address.valid = false;
-        loc->offset.valid = false;
     }
 
     if(s->start) {
         loc->startindex.value = *s->start;
         loc->startindex.valid = s->start < ctx->listing.size();
 
-        s->current_listing_index()
-            .map([&](LIndex index) {
-                loc->listingindex.valid = index < ctx->listing.size();
+        s->current_listing_index().map([&](LIndex index) {
+            loc->listingindex.valid = index < ctx->listing.size();
 
-                if(loc->listingindex.valid) {
-                    const redasm::ListingItem& item = ctx->listing[index];
-                    loc->listingindex.type = item.type;
-                    loc->listingindex.value = index;
-                }
-            })
-            .or_else([&]() { loc->listingindex.valid = false; });
+            if(loc->listingindex.valid) {
+                const redasm::ListingItem& item = ctx->listing[index];
+                loc->listingindex.type = item.type;
+                loc->listingindex.value = index;
+            }
+        });
     }
-    else {
-        loc->startindex.valid = false;
-        loc->listingindex.valid = false;
-    }
-
-    loc->segment = seg ? seg->name : nullptr;
 }
 
 bool rdsurface_getindex(const RDSurface* self, MIndex* index) {
     spdlog::trace("rdsurface_getindex({})", fmt::ptr(self));
-    auto idx = redasm::api::from_c(self)->current_index();
+    auto idx = redasm::api::from_c(self)->current_address();
     if(*index) *index = *idx;
     return idx.has_value();
 }
 
 int rdsurface_indexof(const RDSurface* self, RDAddress address) {
     spdlog::trace("rdsurface_indexof({}, {:x})", fmt::ptr(self), address);
-
-    if(auto idx = redasm::state::context->address_to_index(address); idx)
-        return redasm::api::from_c(self)->index_of(*idx);
-
-    return -1;
+    return redasm::api::from_c(self)->index_of(address);
 }
 
 int rdsurface_lastindexof(const RDSurface* self, RDAddress address) {
     spdlog::trace("rdsurface_lastindexof({}, {:x})", fmt::ptr(self), address);
-
-    if(auto idx = redasm::state::context->address_to_index(address); idx)
-        return redasm::api::from_c(self)->last_index_of(*idx);
-
-    return -1;
+    return redasm::api::from_c(self)->last_index_of(address);
 }
 
 const char* rdsurface_gettext(const RDSurface* self) {

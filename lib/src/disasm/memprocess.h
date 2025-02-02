@@ -4,12 +4,12 @@ namespace redasm {
 
 class Emulator;
 
-namespace mem {
+namespace memprocess {
 
 void merge_code(Emulator* e);
 void process_memory();
 void process_listing();
 
-} // namespace mem
+} // namespace memprocess
 
 } // namespace redasm

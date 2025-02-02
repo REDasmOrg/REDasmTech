@@ -35,11 +35,9 @@ bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) {
 bool load(RDLoader*, RDBuffer* file) {
     PsxExeHeader psxheader;
     rdbuffer_read(file, 0, &psxheader, sizeof(PsxExeHeader));
-    rd_map(PSX_USERRAM_START, PSX_USERRAM_END);
 
-    rd_mapsegment_n("TEXT", psxheader.t_addr, psxheader.t_size,
-                    PSXEXE_TEXT_OFFSET, psxheader.t_size, SP_RWX);
-
+    rd_addsegment_n("TEXT", psxheader.t_addr, psxheader.t_size, SP_RWX, 32);
+    rd_mapfile_n(PSXEXE_TEXT_OFFSET, psxheader.t_addr, psxheader.t_size);
     rd_setentry(psxheader.pc0, "PSXEXE_EntryPoint");
     return true;
 }
