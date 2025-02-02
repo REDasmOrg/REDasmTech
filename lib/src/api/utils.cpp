@@ -23,16 +23,12 @@ T ror_impl(T val, T amt) {
 
 const char* rd_tohex_n(usize val, usize n) {
     spdlog::trace("rd_tohex_n({}, {})", val, n);
-    static std::string res;
-    if(redasm::state::context) res = redasm::state::context->to_hex(val, n);
-    return res.empty() ? nullptr : res.c_str();
+    return redasm::utils::to_hex(val, n).data();
 }
 
 const char* rd_tohex(usize val) {
     spdlog::trace("rd_tohex({})", val);
-    static std::string res;
-    if(redasm::state::context) res = redasm::state::context->to_hex(val);
-    return res.empty() ? nullptr : res.c_str();
+    return redasm::utils::to_hex(val).data();
 }
 
 usize rd_countbits(i64 val) {

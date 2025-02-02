@@ -40,7 +40,7 @@ std::string_view get_refname(usize reftype) {
     unreachable;
 }
 
-void add_noncodeproblem(const RDSegmentNew* seg, MIndex index, usize type) {
+void add_noncodeproblem(const RDSegment* seg, MIndex index, usize type) {
     if(seg) {
         state::context->add_problem(
             index, fmt::format("Trying to {} in non-code segment '{}'",
@@ -84,15 +84,12 @@ tl::optional<uptr> Context::get_userdata(const std::string& k) const {
 bool Context::try_load(const RDLoaderPlugin* plugin) {
     assume(plugin);
 
-    m_database =
-        std::make_unique<Database>(plugin->id, this->program.file_old->source);
+    m_database = std::make_unique<Database>(plugin->id, this->program.file.src);
     this->loaderplugin = plugin;
     this->loader = pm::create_instance(plugin);
 
     if(this->loaderplugin->load &&
-       this->loaderplugin->load(this->loader,
-                                api::to_c(this->program.file_old.get()))) {
-
+       this->loaderplugin->load(this->loader, &this->program.file)) {
         // Select proposed processor
         if(this->loaderplugin->get_processor) {
             const char* p = this->loaderplugin->get_processor(loader);
@@ -128,7 +125,7 @@ void Context::setup(const RDProcessorPlugin* plugin) {
 }
 
 bool Context::set_function(RDAddress address, usize flags) {
-    if(RDSegmentNew* seg = this->program.find_segment(address); seg) {
+    if(RDSegment* seg = this->program.find_segment(address); seg) {
         if(seg->perm & SP_X) {
             memory::set_flag(seg, address, BF_FUNCTION);
 
@@ -144,7 +141,7 @@ bool Context::set_function(RDAddress address, usize flags) {
 }
 
 bool Context::set_entry(RDAddress address, const std::string& name) {
-    if(RDSegmentNew* seg = this->program.find_segment(address); seg) {
+    if(RDSegment* seg = this->program.find_segment(address); seg) {
         memory::set_flag(seg, address, BF_EXPORT);
         if(seg->perm & SP_X) assume(this->set_function(address, 0));
         this->set_name(address, name, 0);
@@ -157,8 +154,8 @@ bool Context::set_entry(RDAddress address, const std::string& name) {
 }
 
 void Context::add_ref(RDAddress fromaddr, MIndex toaddr, usize type) {
-    RDSegmentNew* fromseg = this->program.find_segment(fromaddr);
-    RDSegmentNew* toseg = this->program.find_segment(toaddr);
+    RDSegment* fromseg = this->program.find_segment(fromaddr);
+    RDSegment* toseg = this->program.find_segment(toaddr);
 
     if(!fromseg) {
         this->add_problem(fromaddr, fmt::format("Invalid FROM {} reference",
@@ -217,7 +214,7 @@ void Context::add_ref(RDAddress fromaddr, MIndex toaddr, usize type) {
 }
 
 bool Context::set_comment(RDAddress address, std::string_view comment) {
-    RDSegmentNew* seg = this->program.find_segment(address);
+    RDSegment* seg = this->program.find_segment(address);
     if(!seg) return false;
 
     this->m_database->set_comment(address, comment);
@@ -227,7 +224,7 @@ bool Context::set_comment(RDAddress address, std::string_view comment) {
 
 bool Context::set_type(RDAddress address, typing::FullTypeName tname,
                        usize flags) {
-    const RDSegmentNew* seg = this->program.find_segment(address);
+    const RDSegment* seg = this->program.find_segment(address);
     if(!seg) {
         spdlog::warn("set_type: Invalid address");
         return false;
@@ -238,7 +235,7 @@ bool Context::set_type(RDAddress address, typing::FullTypeName tname,
 }
 
 bool Context::set_type(RDAddress address, RDType t, usize flags) {
-    RDSegmentNew* seg = this->program.find_segment(address);
+    RDSegment* seg = this->program.find_segment(address);
     if(!seg) {
         spdlog::warn("set_type: Invalid address");
         return false;
@@ -251,10 +248,10 @@ bool Context::set_type(RDAddress address, RDType t, usize flags) {
         case typing::ids::STR:
         case typing::ids::WSTR: {
             tl::optional<std::string> s;
-            // if(t.id == typing::ids::WSTR)
-            //     s = this->program.memory_old->get_wstr(idx);
-            // else
-            //     s = this->program.memory_old->get_str(idx);
+            if(t.id == typing::ids::WSTR)
+                s = memory::get_wstr(seg, address);
+            else
+                s = memory::get_str(seg, address);
 
             if(!s) {
                 this->add_problem(address, "string not found");
@@ -269,10 +266,10 @@ bool Context::set_type(RDAddress address, RDType t, usize flags) {
     }
 
     m_database->set_type(address, t);
-    // this->program.memory_old->unset_n(idx, len);
-    // this->program.memory_old->set_n(idx, len, BF_DATA);
-    // this->program.memory_old->set(idx, BF_TYPE);
-    // this->program.memory_old->set_flags(idx, BF_WEAK, flags & ST_WEAK);
+    memory::unset_n(seg, address, len);
+    memory::set_n(seg, address, len, BF_DATA);
+    memory::set_flag(seg, address, BF_TYPE);
+    memory::set_flag(seg, address, BF_WEAK, flags & ST_WEAK);
     return true;
 }
 
@@ -303,14 +300,6 @@ bool Context::memory_map(RDAddress base, usize size) {
     return true;
 }
 
-tl::optional<MIndex> Context::address_to_index(RDAddress address) const {
-    // if(address < this->baseaddress) return tl::nullopt;
-    // usize idx = address - this->baseaddress;
-    // if(idx >= this->program.memory_old->size()) return tl::nullopt;
-    // return idx;
-    return tl::nullopt;
-}
-
 const Function* Context::find_function(RDAddress address) const {
     if(!this->program.find_segment(address)) return nullptr;
 
@@ -326,7 +315,7 @@ tl::optional<RDAddress> Context::get_address(std::string_view name) const {
 }
 
 tl::optional<RDType> Context::get_type(RDAddress address) const {
-    const RDSegmentNew* seg = this->program.find_segment(address);
+    const RDSegment* seg = this->program.find_segment(address);
 
     if(!seg) {
         spdlog::warn("get_name: Invalid address");
@@ -340,7 +329,7 @@ tl::optional<RDType> Context::get_type(RDAddress address) const {
 }
 
 std::string Context::get_name(RDAddress address) const {
-    const RDSegmentNew* seg = this->program.find_segment(address);
+    const RDSegment* seg = this->program.find_segment(address);
 
     if(!seg) {
         spdlog::warn("get_name: Invalid address");
@@ -374,7 +363,7 @@ std::string Context::get_name(RDAddress address) const {
 
 bool Context::set_name(RDAddress address, const std::string& name,
                        usize flags) {
-    RDSegmentNew* seg = this->program.find_segment(address);
+    RDSegment* seg = this->program.find_segment(address);
 
     if(!seg) {
         if(!(flags & SN_NOWARN))
@@ -423,33 +412,33 @@ bool Context::set_name(RDAddress address, const std::string& name,
 }
 
 std::string Context::get_comment(RDAddress address) const {
-    const RDSegmentNew* seg = this->program.find_segment(address);
+    const RDSegment* seg = this->program.find_segment(address);
     if(!seg || !memory::has_flag(seg, address, BF_COMMENT)) return {};
     return m_database->get_comment(address);
 }
 
 Database::RefList Context::get_refs_from_type(RDAddress fromaddr,
                                               usize type) const {
-    const RDSegmentNew* seg = this->program.find_segment(fromaddr);
+    const RDSegment* seg = this->program.find_segment(fromaddr);
     if(!seg || !memory::has_flag(seg, fromaddr, BF_REFSFROM)) return {};
     return m_database->get_refs_from_type(fromaddr, type);
 }
 
 Database::RefList Context::get_refs_from(RDAddress fromaddr) const {
-    const RDSegmentNew* seg = this->program.find_segment(fromaddr);
+    const RDSegment* seg = this->program.find_segment(fromaddr);
     if(!seg || !memory::has_flag(seg, fromaddr, BF_REFSFROM)) return {};
     return m_database->get_refs_from(fromaddr);
 }
 
 Database::RefList Context::get_refs_to_type(RDAddress toaddr,
                                             usize type) const {
-    const RDSegmentNew* seg = this->program.find_segment(toaddr);
+    const RDSegment* seg = this->program.find_segment(toaddr);
     if(!seg || !memory::has_flag(seg, toaddr, BF_REFSTO)) return {};
     return m_database->get_refs_to_type(toaddr, type);
 }
 
 Database::RefList Context::get_refs_to(RDAddress toaddr) const {
-    const RDSegmentNew* seg = this->program.find_segment(toaddr);
+    const RDSegment* seg = this->program.find_segment(toaddr);
     if(!seg || !memory::has_flag(seg, toaddr, BF_REFSTO)) return {};
     return m_database->get_refs_to(toaddr);
 }

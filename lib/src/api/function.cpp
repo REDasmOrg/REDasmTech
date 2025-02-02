@@ -42,7 +42,7 @@ bool rdfunction_isexport(const RDFunction* self) {
 
     if(ctx) {
         const redasm::Function* f = redasm::api::from_c(self);
-        const RDSegmentNew* seg = ctx->program.find_segment(f->address);
+        const RDSegment* seg = ctx->program.find_segment(f->address);
         return seg && redasm::memory::has_flag(seg, f->address, BF_EXPORT);
     }
 

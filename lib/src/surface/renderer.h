@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../listing.h"
-#include "../segment.h"
 #include <redasm/renderer.h>
 #include <redasm/surface.h>
 #include <redasm/theme.h>
@@ -121,14 +120,14 @@ public:
     usize flags;
 
 private:
-    const Segment* current_segment() const;
+    const RDSegment* current_segment() const;
     void check_current_segment(const ListingItem& item);
 
 private:
     SurfaceRows m_rows;
     RDAddress m_curraddress{};
     LIndex m_listingidx{};
-    usize m_currsegment{0};
+    usize m_segmidx{0};
 };
 
 } // namespace redasm

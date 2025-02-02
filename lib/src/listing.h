@@ -75,12 +75,12 @@ public:
     usize instruction(RDAddress address);
     usize label(RDAddress address);
     usize function(RDAddress address);
-    usize segment(const RDSegmentNew* seg);
+    usize segment(const RDSegment* seg);
 
 public: // State management functions
     tl::optional<usize> field_index() const;
     tl::optional<RDType> current_type() const;
-    const RDSegmentNew* current_segment() const { return m_currentsegment; }
+    const RDSegment* current_segment() const { return m_currentsegment; }
     void clear();
     void push_indent(int c = 1);
     void pop_indent(int c = 1);
@@ -96,7 +96,7 @@ private:
 private:
     std::deque<usize> m_fieldindex;
     std::deque<RDType> m_currtype;
-    const RDSegmentNew* m_currentsegment{nullptr};
+    const RDSegment* m_currentsegment{nullptr};
     AddressList m_symbols, m_exports, m_imports;
     usize m_indent{0};
     Type m_items;

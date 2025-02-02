@@ -38,7 +38,7 @@ tl::optional<std::pair<MIndex, MIndex>> find_range(const RDBuffer* self,
     return std::make_pair(rstart, rend);
 }
 
-tl::optional<std::string> get_str_impl(const RDSegmentNew* self,
+tl::optional<std::string> get_str_impl(const RDSegment* self,
                                        RDAddress address,
                                        typing::TypeName tname) {
     if(address >= self->end) return tl::nullopt;
@@ -62,7 +62,7 @@ tl::optional<std::string> get_str_impl(const RDSegmentNew* self,
     return s;
 }
 
-tl::optional<std::string> get_str_impl(const RDSegmentNew* self,
+tl::optional<std::string> get_str_impl(const RDSegment* self,
                                        RDAddress address, usize n,
                                        std::string_view tname) {
     std::string s;
@@ -83,10 +83,10 @@ tl::optional<std::string> get_str_impl(const RDSegmentNew* self,
     return s;
 }
 
-tl::optional<RDValue> get_type_impl(const RDSegmentNew* self,
+tl::optional<RDValue> get_type_impl(const RDSegment* self,
                                     RDAddress& address, RDType t);
 
-tl::optional<RDValue> get_type_impl(const RDSegmentNew* self,
+tl::optional<RDValue> get_type_impl(const RDSegment* self,
                                     RDAddress& address,
                                     const typing::TypeDef* tdef) {
     RDValue v = rdvalue_create();
@@ -250,7 +250,7 @@ tl::optional<RDValue> get_type_impl(const RDSegmentNew* self,
     return v;
 }
 
-tl::optional<RDValue> get_type_impl(const RDSegmentNew* self,
+tl::optional<RDValue> get_type_impl(const RDSegment* self,
                                     RDAddress& address, RDType t) {
     const typing::TypeDef* td = state::get_types().get_typedef(t);
     assume(td);
@@ -276,13 +276,13 @@ tl::optional<RDValue> get_type_impl(const RDSegmentNew* self,
 
 } // namespace
 
-usize get_length(const RDSegmentNew* self, RDAddress address) {
+usize get_length(const RDSegment* self, RDAddress address) {
     if(auto r = memory::find_range(&self->mem, address - self->start); r)
         return r->second - r->first + 1;
     return 0;
 }
 
-tl::optional<RDAddress> get_next(const RDSegmentNew* self, RDAddress address) {
+tl::optional<RDAddress> get_next(const RDSegment* self, RDAddress address) {
     if(address >= self->end) return tl::nullopt;
 
     if(usize len = memory::get_length(self, address); len > 0)
@@ -290,31 +290,47 @@ tl::optional<RDAddress> get_next(const RDSegmentNew* self, RDAddress address) {
     return tl::nullopt;
 }
 
-bool is_unknown(const RDSegmentNew* self, RDAddress address) {
+usize read(const RDSegment* self, RDAddress address, void* dst, usize n) {
+    if(!dst || (address + n > self->end)) return 0;
+
+    usize i = 0;
+    auto* p = reinterpret_cast<u8*>(dst);
+
+    for(; i < n; i++, p++) {
+        if(auto b = memory::get_byte(self, address + i); b)
+            *p = *b;
+        else
+            break;
+    }
+
+    return i;
+}
+
+bool is_unknown(const RDSegment* self, RDAddress address) {
     return rdbyte_isunknown(&self->mem.m_data[address - self->start]);
 }
 
-bool has_common(const RDSegmentNew* self, RDAddress address) {
+bool has_common(const RDSegment* self, RDAddress address) {
     return rdbyte_hascommon(&self->mem.m_data[address - self->start]);
 }
 
-bool has_byte(const RDSegmentNew* self, RDAddress address) {
+bool has_byte(const RDSegment* self, RDAddress address) {
     return rdbyte_hasbyte(&self->mem.m_data[address - self->start]);
 }
 
-bool has_flag(const RDSegmentNew* self, RDAddress address, u32 f) {
+bool has_flag(const RDSegment* self, RDAddress address, u32 f) {
     return rdbyte_hasflag(&self->mem.m_data[address - self->start], f);
 }
 
-void set_flag(RDSegmentNew* self, RDAddress address, u32 f, bool b) {
+void set_flag(RDSegment* self, RDAddress address, u32 f, bool b) {
     rdbyte_setflag(&self->mem.m_data[address - self->start], f, b);
 }
 
-void clear(RDSegmentNew* self, RDAddress address) {
+void clear(RDSegment* self, RDAddress address) {
     rdbyte_clear(&self->mem.m_data[address - self->start]);
 }
 
-void set_n(RDSegmentNew* self, RDAddress address, usize n, u32 flags) {
+void set_n(RDSegment* self, RDAddress address, usize n, u32 flags) {
     assume(self);
     usize idx = address - self->start;
     if(idx >= self->mem.len || !n) return;
@@ -329,7 +345,7 @@ void set_n(RDSegmentNew* self, RDAddress address, usize n, u32 flags) {
     memory::set_flag(self, end - 1, flags | BF_END);
 }
 
-void unset_n(RDSegmentNew* self, RDAddress address, usize n) {
+void unset_n(RDSegment* self, RDAddress address, usize n) {
     assume(self);
     usize idx = address - self->start;
     usize end = std::min(idx + n, self->mem.len);
@@ -352,13 +368,13 @@ void unset_n(RDSegmentNew* self, RDAddress address, usize n) {
     }
 }
 
-RDByte get_mbyte(const RDSegmentNew* self, RDAddress address) {
+RDByte get_mbyte(const RDSegment* self, RDAddress address) {
     usize idx = address - self->start;
     if(idx < self->mem.len) return self->mem.m_data[idx];
     except("memory::get_byte(): address out of range");
 }
 
-tl::optional<u8> get_byte(const RDSegmentNew* self, RDAddress address) {
+tl::optional<u8> get_byte(const RDSegment* self, RDAddress address) {
     u8 b;
     if((address >= self->start && address < self->end) &&
        self->mem.get_byte(&self->mem, address - self->start, &b))
@@ -367,49 +383,49 @@ tl::optional<u8> get_byte(const RDSegmentNew* self, RDAddress address) {
     return tl::nullopt;
 }
 
-tl::optional<RDValue> get_type(const RDSegmentNew* self, RDAddress address,
+tl::optional<RDValue> get_type(const RDSegment* self, RDAddress address,
                                typing::FullTypeName tn) {
     typing::ParsedType pt = state::get_types().parse(tn);
     return memory::get_type(self, address, pt.to_type());
 }
 
-tl::optional<RDValue> get_type(const RDSegmentNew* self, RDAddress address,
+tl::optional<RDValue> get_type(const RDSegment* self, RDAddress address,
                                RDType t) {
     return memory::get_type_impl(self, address, t);
 }
 
-tl::optional<std::string> get_str(const RDSegmentNew* self, RDAddress address) {
+tl::optional<std::string> get_str(const RDSegment* self, RDAddress address) {
     return memory::get_str_impl(self, address, typing::names::CHAR);
 }
 
-tl::optional<std::string> get_str(const RDSegmentNew* self, RDAddress address,
+tl::optional<std::string> get_str(const RDSegment* self, RDAddress address,
                                   usize n) {
     return memory::get_str_impl(self, address, n, typing::names::CHAR);
 }
 
-tl::optional<std::string> get_wstr(const RDSegmentNew* self,
+tl::optional<std::string> get_wstr(const RDSegment* self,
                                    RDAddress address) {
     return memory::get_str_impl(self, address, typing::names::WCHAR);
 }
 
-tl::optional<std::string> get_wstr(const RDSegmentNew* self, RDAddress address,
+tl::optional<std::string> get_wstr(const RDSegment* self, RDAddress address,
                                    usize n) {
     return memory::get_str_impl(self, address, n, typing::names::WCHAR);
 }
 
-tl::optional<bool> get_bool(const RDSegmentNew* self, RDAddress address) {
+tl::optional<bool> get_bool(const RDSegment* self, RDAddress address) {
     auto b = memory::get_byte(self, address);
     if(b) return !!(*b);
     return tl::nullopt;
 }
 
-tl::optional<char> get_char(const RDSegmentNew* self, RDAddress address) {
+tl::optional<char> get_char(const RDSegment* self, RDAddress address) {
     auto b = memory::get_byte(self, address);
     if(b) return static_cast<char>(*b);
     return tl::nullopt;
 }
 
-tl::optional<char> get_wchar(const RDSegmentNew* self, RDAddress address) {
+tl::optional<char> get_wchar(const RDSegment* self, RDAddress address) {
     auto b = memory::get_u16(self, address, false);
     if(b) return static_cast<char>(*b & 0xFF);
     return tl::nullopt;

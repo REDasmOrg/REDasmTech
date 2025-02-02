@@ -36,7 +36,7 @@ typedef struct RDSurfaceLocation {
     struct { RDOffset value; bool valid; } offset;
     struct { LIndex value; bool valid; } startindex;
     struct { int type; LIndex value; bool valid; } listingindex;
-    const RDSegmentNew* segment;
+    const RDSegment* segment;
 } RDSurfaceLocation;
 // clang-format n
 

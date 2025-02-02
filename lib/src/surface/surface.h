@@ -42,7 +42,7 @@ public:
     tl::optional<RDAddress> address_under_pos(RDSurfacePosition pos) const;
     tl::optional<RDAddress> address_under_cursor() const;
     const Function* current_function() const;
-    const RDSegmentNew* current_segment() const;
+    const RDSegment* current_segment() const;
     RDSurfacePosition position() const;
     RDSurfacePosition start_selection() const;
     RDSurfacePosition end_selection() const;

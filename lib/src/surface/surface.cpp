@@ -121,7 +121,7 @@ tl::optional<RDAddress> Surface::address_under_cursor() const {
     });
 }
 
-const RDSegmentNew* Surface::current_segment() const {
+const RDSegment* Surface::current_segment() const {
     if(auto addr = this->current_address(); addr)
         return state::context->program.find_segment(*addr);
 
@@ -258,7 +258,7 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
         const ListingItem& item = lst[lidx];
         if(item.type != LISTINGITEM_INSTRUCTION) continue;
 
-        const RDSegmentNew* seg = ctx->program.find_segment(item.address);
+        const RDSegment* seg = ctx->program.find_segment(item.address);
         assume(seg);
 
         if(memory::has_flag(seg, item.address, BF_JUMPDST)) {
@@ -557,7 +557,7 @@ void Surface::render_range(LIndex start, usize n) {
 void Surface::render_hexdump(const ListingItem& item) {
     static constexpr usize HEX_WIDTH = 16;
 
-    const RDSegmentNew* seg =
+    const RDSegment* seg =
         state::context->program.find_segment(item.address);
     assume(seg);
     usize c = 0;
@@ -599,7 +599,7 @@ void Surface::render_hexdump(const ListingItem& item) {
 
 void Surface::render_fill(const ListingItem& item) {
     const Context* ctx = state::context;
-    const RDSegmentNew* seg = ctx->program.find_segment(item.address);
+    const RDSegment* seg = ctx->program.find_segment(item.address);
     assume(seg);
 
     m_renderer->new_row(item).chunk(".fill", THEME_FUNCTION).ws();
@@ -631,7 +631,7 @@ void Surface::render_segment(const ListingItem& item) {
     const RDProcessorPlugin* p = ctx->processorplugin;
     assume(p);
 
-    const RDSegmentNew* s = ctx->program.find_segment(item.address);
+    const RDSegment* s = ctx->program.find_segment(item.address);
     assume(s);
 
     if(p->render_segment)
@@ -669,7 +669,7 @@ void Surface::render_type(const ListingItem& item) {
     assume(type);
 
     const Context* ctx = state::context;
-    const RDSegmentNew* seg = ctx->program.find_segment(item.address);
+    const RDSegment* seg = ctx->program.find_segment(item.address);
     assume(seg);
 
     const typing::TypeDef* td = ctx->types.get_typedef(*type);
@@ -772,7 +772,7 @@ void Surface::render_type(const ListingItem& item) {
 void Surface::render_comment(const ListingItem& item) {
     if(m_renderer->has_flag(SURFACE_NOCOMMENTS)) return;
 
-    const RDSegmentNew* seg =
+    const RDSegment* seg =
         state::context->program.find_segment(item.address);
     assume(seg);
 
@@ -796,7 +796,7 @@ void Surface::render_refs(const ListingItem& item) {
     bool paddingdone = false;
 
     for(const auto& [fromaddr, _] : ctx->get_refs_from(item.address)) {
-        const RDSegmentNew* seg = ctx->program.find_segment(fromaddr);
+        const RDSegment* seg = ctx->program.find_segment(fromaddr);
         if(!seg || !memory::has_flag(seg, fromaddr, BF_TYPE)) continue;
 
         if(!paddingdone) {
@@ -874,7 +874,7 @@ void Surface::render_array(const ListingItem& item) {
 
     if(td->get_id() == typing::ids::CHAR ||
        td->get_id() == typing::ids::WCHAR) {
-        const RDSegmentNew* seg = ctx->program.find_segment(item.address);
+        const RDSegment* seg = ctx->program.find_segment(item.address);
         assume(seg);
         RDAddress addr = item.address;
 

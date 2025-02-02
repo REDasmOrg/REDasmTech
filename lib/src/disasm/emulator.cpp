@@ -18,7 +18,7 @@ void Emulator::setup() {
 }
 
 void Emulator::flow(RDAddress address) {
-    RDSegmentNew* fromseg = state::context->program.find_segment(this->pc);
+    RDSegment* fromseg = state::context->program.find_segment(this->pc);
     assume(fromseg);
     assume(fromseg->perm & SP_X);
 
@@ -141,7 +141,7 @@ u32 Emulator::tick() {
     const RDProcessorPlugin* plugin = ctx->processorplugin;
     assume(plugin);
 
-    RDSegmentNew* seg = ctx->program.find_segment(address);
+    RDSegment* seg = ctx->program.find_segment(address);
     assume(seg);
 
     if(memory::has_flag(seg, address, BF_CODE))
@@ -177,7 +177,7 @@ u32 Emulator::tick() {
     return instr.length;
 }
 
-void Emulator::execute_delayslots(RDSegmentNew* seg,
+void Emulator::execute_delayslots(RDSegment* seg,
                                   const RDInstruction& instr) {
     *this->dslotinstr = instr;
 

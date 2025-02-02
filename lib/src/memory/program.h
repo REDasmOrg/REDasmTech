@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../segment.h"
 #include "abstractbuffer.h"
 #include "memory.h"
 #include <memory>
@@ -24,19 +23,18 @@ struct Program {
 
     tl::optional<RDOffset> to_offset(RDAddress address) const;
     tl::optional<RDAddress> to_address(RDOffset offset) const;
-    RDSegmentNew* find_segment(RDAddress address);
+    RDSegment* find_segment(RDAddress address);
 
-    const RDSegmentNew* find_segment(RDAddress address) const {
+    const RDSegment* find_segment(RDAddress address) const {
         return const_cast<Program*>(this)->find_segment(address);
     }
 
-    std::vector<RDSegmentNew> segments;
+    std::vector<RDSegment> segments;
     std::vector<FileMapping> mappings;
     RDBuffer file;
 
     // OLD
     std::shared_ptr<AbstractBuffer> file_old;
-    std::vector<Segment> segments_old;
     std::unique_ptr<Memory> memory_old;
 };
 

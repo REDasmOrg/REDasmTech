@@ -13,7 +13,7 @@ void do_autorename(RDAnalyzer*) {
     Context* ctx = state::context;
 
     for(const Function& f : ctx->functions) {
-        const RDSegmentNew* seg = ctx->program.find_segment(f.address);
+        const RDSegment* seg = ctx->program.find_segment(f.address);
 
         if(seg && !memory::has_flag(seg, f.address, BF_FLOW)) {
             if(memory::has_flag(seg, f.address, BF_JUMP)) {

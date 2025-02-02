@@ -5,7 +5,6 @@
 #include "disasm/worker.h"
 #include "listing.h"
 #include "memory/program.h"
-#include "segment.h"
 #include "typing/typing.h"
 #include "utils/object.h"
 #include <memory>
@@ -38,7 +37,6 @@ public:
     bool set_function(RDAddress address, usize flags);
     bool set_entry(RDAddress address, const std::string& name = {});
     bool memory_map(RDAddress base, usize size);
-    tl::optional<MIndex> address_to_index(RDAddress address) const;
     const Function* find_function(RDAddress address) const;
 
 public: // Database Interface

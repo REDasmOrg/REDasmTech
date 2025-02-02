@@ -14,7 +14,7 @@ bool range_overlaps(T s1, T e1, T s2, T e2) {
 } // namespace
 
 Program::~Program() {
-    for(RDSegmentNew& s : this->segments) {
+    for(RDSegment& s : this->segments) {
         rdbuffer_destroy(&s.mem);
         delete[] s.name;
     }
@@ -65,12 +65,12 @@ bool Program::add_segment(std::string_view name, RDAddress start, RDAddress end,
     auto it = std::ranges::lower_bound(
         this->segments, start,
         [](RDAddress endaddr, RDAddress addr) { return endaddr <= addr; },
-        [](const RDSegmentNew& s) { return s.end; });
+        [](const RDSegment& s) { return s.end; });
 
     if(it != this->segments.end() && it->start < end)
         return false; // Overlap detected
 
-    RDSegmentNew s = {
+    RDSegment s = {
         .name = utils::copy_str(name),
         .start = start,
         .end = end,
@@ -111,7 +111,7 @@ bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
         .offset = off,
     };
 
-    for(RDSegmentNew& s : this->segments) {
+    for(RDSegment& s : this->segments) {
         if(start < s.end && end > s.start) {
             usize overlapstart = std::max(start, s.start);
             usize overlapend = std::min(end, s.end);
@@ -133,11 +133,11 @@ bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
     return true;
 }
 
-RDSegmentNew* Program::find_segment(RDAddress address) {
+RDSegment* Program::find_segment(RDAddress address) {
     auto it = std::ranges::lower_bound(
         this->segments, address,
         [](RDAddress start, RDAddress addr) { return start < addr; },
-        [](const RDSegmentNew& s) { return s.start; });
+        [](const RDSegment& s) { return s.start; });
 
     if(it != this->segments.end() && address < it->end)
         return std::addressof(*it);

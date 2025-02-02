@@ -67,7 +67,6 @@ target_sources(${PROJECT_NAME_LIB}
         src/listing.cpp
         src/context.cpp
         src/state.cpp
-        src/segment.cpp
         src/theme.cpp
 
     PRIVATE # Builtins

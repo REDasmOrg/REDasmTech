@@ -99,7 +99,7 @@ usize Listing::function(RDAddress address) {
     return lidx;
 }
 
-usize Listing::segment(const RDSegmentNew* seg) {
+usize Listing::segment(const RDSegment* seg) {
     usize idx = this->push_item(LISTINGITEM_SEGMENT, seg->start);
     m_symbols.push_back(seg->start);
     m_currentsegment = seg;

@@ -79,7 +79,7 @@ bool validate_string(std::string_view s) {
 
 template<typename ToAsciiCallback>
 std::pair<bool, RDStringResult>
-categorize_as(const RDSegmentNew* seg, RDAddress address,
+categorize_as(const RDSegment* seg, RDAddress address,
               std::string_view tname, ToAsciiCallback cb) {
     g_tempstr.clear();
     char ch{};
@@ -116,7 +116,7 @@ categorize_as(const RDSegmentNew* seg, RDAddress address,
 } // namespace
 
 tl::optional<RDStringResult> classify(RDAddress address) {
-    const RDSegmentNew* seg = state::context->program.find_segment(address);
+    const RDSegment* seg = state::context->program.find_segment(address);
     if(!seg) return tl::nullopt;
 
     if(usize r = seg->end - address; r < sizeof(u16)) return tl::nullopt;

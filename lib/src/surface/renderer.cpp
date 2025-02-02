@@ -24,11 +24,9 @@ std::string_view render_int(T val, int base) {
 Renderer::Renderer(usize f): flags{f} {}
 usize Renderer::current_address() const { return m_curraddress; }
 
-const Segment* Renderer::current_segment() const {
-    if(m_currsegment >= state::context->program.segments_old.size())
-        return nullptr;
-
-    return &state::context->program.segments_old[m_currsegment];
+const RDSegment* Renderer::current_segment() const {
+    if(m_segmidx >= state::context->program.segments.size()) return nullptr;
+    return &state::context->program.segments[m_segmidx];
 }
 
 void Renderer::highlight_row(int row) {
@@ -180,7 +178,7 @@ Renderer& Renderer::rdil() {
 
 Renderer& Renderer::addr(RDAddress address, int flags) {
     const Context* ctx = state::context;
-    const RDSegmentNew* seg = ctx->program.find_segment(address);
+    const RDSegment* seg = ctx->program.find_segment(address);
 
     if(seg && memory::has_flag(seg, address, BF_REFSTO)) {
         if(flags == RC_NEEDSIGN) {
@@ -246,7 +244,7 @@ Renderer& Renderer::new_row(const ListingItem& item) {
     if(this->columns) m_rows.back().cells.reserve(this->columns);
 
     if(!this->has_flag(SURFACE_NOADDRESS)) {
-        if(const Segment* s = this->current_segment(); s)
+        if(const RDSegment* s = this->current_segment(); s)
             this->chunk(s->name).chunk(":");
 
         const RDProcessorPlugin* p = state::context->processorplugin;
@@ -366,22 +364,21 @@ Renderer& Renderer::chunk(std::string_view arg, RDThemeKind fg,
 }
 
 void Renderer::check_current_segment(const ListingItem& item) {
-    if(m_currsegment < state::context->program.segments_old.size()) {
-        const Segment& s = state::context->program.segments_old[m_currsegment];
-
-        if(item.address >= s.index && item.address < s.endindex) return;
+    if(m_segmidx < state::context->program.segments.size()) {
+        const RDSegment& s = state::context->program.segments[m_segmidx];
+        if(item.address >= s.start && item.address < s.end) return;
     }
 
-    for(usize i = 0; i < state::context->program.segments_old.size(); i++) {
-        const Segment& s = state::context->program.segments_old[i];
+    for(usize i = 0; i < state::context->program.segments.size(); i++) {
+        const RDSegment& s = state::context->program.segments[i];
 
-        if(item.address >= s.index && item.address < s.endindex) {
-            m_currsegment = i;
+        if(item.address >= s.start && item.address < s.end) {
+            m_segmidx = i;
             return;
         }
     }
 
-    m_currsegment = state::context->program.segments_old.size();
+    m_segmidx = state::context->program.segments.size();
 }
 
 std::string Renderer::word_at(const SurfaceRows& rows, int row, int col) {

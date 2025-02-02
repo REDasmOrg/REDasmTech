@@ -19,7 +19,7 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
 
     switch(item.type) {
         case LISTINGITEM_SEGMENT: {
-            const RDSegmentNew* seg = ctx->program.find_segment(item.address);
+            const RDSegment* seg = ctx->program.find_segment(item.address);
             assume(seg);
             symbol->type = SYMBOL_SEGMENT;
             symbol->theme = THEME_SEGMENT;
@@ -36,7 +36,7 @@ void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
         }
 
         case LISTINGITEM_TYPE: {
-            const RDSegmentNew* seg = ctx->program.find_segment(item.address);
+            const RDSegment* seg = ctx->program.find_segment(item.address);
             assume(seg);
             tl::optional<std::string> s;
             assume(item.dtype);

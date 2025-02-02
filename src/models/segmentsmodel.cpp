@@ -18,32 +18,27 @@ SegmentsModel::SegmentsModel(QObject* parent): QAbstractListModel{parent} {
 }
 
 size_t SegmentsModel::address(const QModelIndex& index) const {
-    return m_segments[index.row()].startaddr;
+    return m_segments[index.row()].start;
 }
 
 QVariant SegmentsModel::data(const QModelIndex& index, int role) const {
     if(role == Qt::DisplayRole) {
-        auto address = m_segments[index.row()].startaddr;
-        auto endaddress = m_segments[index.row()].endaddr;
-        auto offset = m_segments[index.row()].startoff;
-        auto endoffset = m_segments[index.row()].endoff;
+        auto address = m_segments[index.row()].start;
+        auto endaddress = m_segments[index.row()].end;
 
         switch(index.column()) {
             case 0: return m_segments[index.row()].name;
             case 1: return rd_tohex(address);
             case 2: return rd_tohex(endaddress);
             case 3: return rd_tohex(endaddress - address);
-            case 4: return rd_tohex(offset);
-            case 5: return rd_tohex(endoffset);
-            case 6: return rd_tohex(endoffset - offset);
-            case 7: return get_segment_type(m_segments[index.row()]);
+            case 4: return QString::number(m_segments[index.row()].bits);
+            case 5: return get_segment_type(m_segments[index.row()]);
             default: break;
         }
     }
     else if(role == Qt::ForegroundRole) {
         if(index.column() == 0) return themeprovider::color(THEME_LABEL);
-        if(index.column() < 7) return themeprovider::color(THEME_ADDRESS);
-        if(index.column() == 7) return themeprovider::color(THEME_DATA);
+        if(index.column() < 3) return themeprovider::color(THEME_ADDRESS);
     }
     else if(role == Qt::TextAlignmentRole) {
         if(index.column() == 0)
@@ -62,16 +57,14 @@ QVariant SegmentsModel::headerData(int section, Qt::Orientation orientation,
         case 0: return "Name";
         case 1: return "Start Address";
         case 2: return "End Address";
-        case 3: return "Address Size";
-        case 4: return "Offset";
-        case 5: return "End Offset";
-        case 6: return "Offset Size";
-        case 7: return "Type";
+        case 3: return "Size";
+        case 4: return "Bits";
+        case 5: return "Perm";
         default: break;
     }
 
     return {};
 }
 
-int SegmentsModel::columnCount(const QModelIndex&) const { return 8; }
+int SegmentsModel::columnCount(const QModelIndex&) const { return 6; }
 int SegmentsModel::rowCount(const QModelIndex&) const { return m_nsegments; }

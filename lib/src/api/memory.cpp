@@ -1,3 +1,4 @@
+#include "../memory/memory.h"
 #include "../context.h"
 #include "../memory/stringfinder.h"
 #include "../state.h"
@@ -7,29 +8,29 @@
 
 namespace {
 
-using AbstractBuffer = redasm::AbstractBuffer;
-
 #define return_getvalue(T, v, address)                                         \
     const redasm::Context* ctx = redasm::state::context;                       \
     if(!ctx) return false;                                                     \
-    auto idx = ctx->address_to_index(address);                                 \
-    if(!idx) return false;                                                     \
-    auto res = ctx->program.memory_old->get_##T(*idx);                         \
-    res.map([&](const T& x) {                                                  \
-        if(v) *(v) = x;                                                        \
-    });                                                                        \
-    return res.has_value();
+    if(const RDSegment* seg = ctx->program.find_segment(address); seg) {    \
+        auto res = redasm::memory::get_##T(seg, address);                      \
+        res.map([&](const T& x) {                                              \
+            if(v) *(v) = x;                                                    \
+        });                                                                    \
+        return res.has_value();                                                \
+    }                                                                          \
+    return false;
 
 #define return_getvalue_b(T, v, address, b)                                    \
     const redasm::Context* ctx = redasm::state::context;                       \
     if(!ctx) return false;                                                     \
-    auto idx = ctx->address_to_index(address);                                 \
-    if(!idx) return false;                                                     \
-    auto res = ctx->program.memory_old->get_##T(*idx, b);                      \
-    res.map([&](const T& x) {                                                  \
-        if(v) *(v) = x;                                                        \
-    });                                                                        \
-    return res.has_value();
+    if(const RDSegment* seg = ctx->program.find_segment(address); seg) {    \
+        auto res = redasm::memory::get_##T(seg, address, b);                   \
+        res.map([&](const T& x) {                                              \
+            if(v) *(v) = x;                                                    \
+        });                                                                    \
+        return res.has_value();                                                \
+    }                                                                          \
+    return false;
 
 } // namespace
 
@@ -47,12 +48,13 @@ void rd_memoryinfo(RDMemoryInfo* mi) {
 
 usize rd_read(RDAddress address, void* data, usize n) {
     spdlog::trace("rd_read({}, {}, {})", address, fmt::ptr(data), n);
-    if(!redasm::state::context) return false;
+    const redasm::Context* ctx = redasm::state::context;
+    if(!ctx) return 0;
 
-    auto idx = redasm::state::context->address_to_index(address);
-    if(idx)
-        return redasm::state::context->program.memory_old->read(*idx, data, n);
-    return n;
+    if(const RDSegment* seg = ctx->program.find_segment(address); seg)
+        return redasm::memory::read(seg, address, data, n);
+
+    return 0;
 }
 
 // clang-format off
@@ -81,8 +83,8 @@ const char* rd_getstr(RDAddress address, usize n) {
 
     static std::string res;
 
-    if(auto idx = ctx->address_to_index(address); idx) {
-        auto str = ctx->program.memory_old->get_str(*idx, n);
+    if(const RDSegment* seg = ctx->program.find_segment(address); seg) {
+        auto str = redasm::memory::get_str(seg, address, n);
 
         if(str) {
             res = *str;
@@ -100,8 +102,8 @@ const char* rd_getwstr(RDAddress address, usize n) {
 
     static std::string res;
 
-    if(auto idx = ctx->address_to_index(address); idx) {
-        auto str = ctx->program.memory_old->get_wstr(*idx, n);
+    if(const RDSegment* seg = ctx->program.find_segment(address); seg) {
+        auto str = redasm::memory::get_wstr(seg, address, n);
 
         if(str) {
             res = *str;
@@ -114,13 +116,13 @@ const char* rd_getwstr(RDAddress address, usize n) {
 
 const char* rd_getstrz(RDAddress address) {
     spdlog::trace("rd_getstrz({:x})", address);
-    static std::string res;
-
     const redasm::Context* ctx = redasm::state::context;
     if(!ctx) return nullptr;
 
-    if(auto idx = ctx->address_to_index(address); idx) {
-        auto str = ctx->program.memory_old->get_str(*idx);
+    static std::string res;
+
+    if(const RDSegment* seg = ctx->program.find_segment(address); seg) {
+        auto str = redasm::memory::get_str(seg, address);
 
         if(str) {
             res = *str;
@@ -133,13 +135,13 @@ const char* rd_getstrz(RDAddress address) {
 
 const char* rd_getwstrz(RDAddress address) {
     spdlog::trace("rd_getwstrz({:x})", address);
-    static std::string res;
-
     const redasm::Context* ctx = redasm::state::context;
     if(!ctx) return nullptr;
 
-    if(auto idx = ctx->address_to_index(address); idx) {
-        auto str = ctx->program.memory_old->get_wstr(*idx);
+    static std::string res;
+
+    if(const RDSegment* seg = ctx->program.find_segment(address); seg) {
+        auto str = redasm::memory::get_wstr(seg, address);
 
         if(str) {
             res = *str;

@@ -17,7 +17,7 @@ void process_listing_array(const Context* ctx, Listing& l, RDAddress& address,
 
 template<typename Function>
 void process_hexdump(Listing& l, RDAddress& address, Function f) {
-    const RDSegmentNew* seg = l.current_segment();
+    const RDSegment* seg = l.current_segment();
     assume(seg);
 
     RDAddress start = address;
@@ -35,7 +35,7 @@ void process_hexdump(Listing& l, RDAddress& address, Function f) {
 
 void process_listing_unknown(Listing& l, RDAddress& address) {
     memprocess::process_hexdump(l, address,
-                                [](const RDSegmentNew* seg, RDAddress addr) {
+                                [](const RDSegment* seg, RDAddress addr) {
                                     return memory::is_unknown(seg, addr);
                                 });
 }
@@ -89,7 +89,7 @@ LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
 
             case typing::ids::WSTR:
             case typing::ids::STR: {
-                const RDSegmentNew* seg = l.current_segment();
+                const RDSegment* seg = l.current_segment();
                 assume(seg);
                 address += memory::get_length(seg, address);
                 break;
@@ -131,7 +131,7 @@ void process_listing_array(const Context* ctx, Listing& l, RDAddress& address,
 }
 
 void process_listing_data(const Context* ctx, Listing& l, RDAddress& address) {
-    const RDSegmentNew* seg = l.current_segment();
+    const RDSegment* seg = l.current_segment();
     assume(seg);
 
     if(memory::has_flag(seg, address, BF_TYPE)) {
@@ -155,7 +155,7 @@ void process_listing_data(const Context* ctx, Listing& l, RDAddress& address) {
     }
 }
 
-void process_unknown_data(Context* ctx, RDSegmentNew* seg, RDAddress& address) {
+void process_unknown_data(Context* ctx, RDSegment* seg, RDAddress& address) {
     RDAddress startaddr = address++;
 
     while(address < seg->end) {
@@ -202,7 +202,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
 
         MIndex endaddr = startaddr;
 
-        const RDSegmentNew* seg = ctx->program.find_segment(startaddr);
+        const RDSegment* seg = ctx->program.find_segment(startaddr);
         if(!seg) continue;
 
         // Find basic block end
@@ -222,7 +222,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
             if(memory::has_flag(seg, curraddr, BF_JUMP)) {
                 for(const RDRef& r :
                     ctx->get_refs_from_type(curraddr, CR_JUMP)) {
-                    const RDSegmentNew* jseg =
+                    const RDSegment* jseg =
                         ctx->program.find_segment(r.address);
 
                     if(seg && seg->perm & SP_X) {
@@ -275,7 +275,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
 
 void process_listing_code(const Context* ctx, Listing& l,
                           FunctionList& functions, RDAddress& address) {
-    const RDSegmentNew* seg = l.current_segment();
+    const RDSegment* seg = l.current_segment();
     assume(seg);
 
     assume(memory::has_flag(seg, address, BF_CODE));
@@ -285,7 +285,7 @@ void process_listing_code(const Context* ctx, Listing& l,
         l.function(address);
         l.push_indent(2);
 
-        const RDSegmentNew* s = l.current_segment();
+        const RDSegment* s = l.current_segment();
         assume(s);
         assume(s->perm & SP_X);
         memprocess::process_function_graph(ctx, functions, address);
@@ -303,7 +303,7 @@ void process_listing_code(const Context* ctx, Listing& l,
     address += len;
 }
 
-void process_refsto(Context* ctx, const RDSegmentNew* seg, RDAddress& address) {
+void process_refsto(Context* ctx, const RDSegment* seg, RDAddress& address) {
     auto is_range_unkn = [&](RDAddress raddr, usize n) {
         return memory::range_is(seg, raddr, n,
                                 [](RDByte b) { return rdbyte_isunknown(&b); });
@@ -382,7 +382,7 @@ void process_memory() {
     Context* ctx = state::context;
     FunctionList f;
 
-    for(RDSegmentNew& seg : ctx->program.segments) {
+    for(RDSegment& seg : ctx->program.segments) {
         for(RDAddress address = seg.start; address < seg.end;) {
 
             if(memory::has_flag(&seg, address, BF_FUNCTION))
@@ -408,7 +408,7 @@ void process_listing() {
     Listing l;
     FunctionList f;
 
-    for(const RDSegmentNew& seg : ctx->program.segments) {
+    for(const RDSegment& seg : ctx->program.segments) {
         l.segment(&seg);
 
         for(RDAddress address = seg.start; address < seg.end;) {

@@ -330,7 +330,7 @@ bool rd_gettype(RDAddress address, const RDType* t, RDValue* v) {
                   fmt::ptr(v));
     if(!redasm::state::context || !t) return false;
 
-    const RDSegmentNew* seg =
+    const RDSegment* seg =
         redasm::state::context->program.find_segment(address);
 
     if(seg) {
@@ -351,7 +351,7 @@ bool rd_gettypename(RDAddress address, const char* tname, RDValue* v) {
                   fmt::ptr(v));
     if(!redasm::state::context || !tname) return false;
 
-    const RDSegmentNew* seg =
+    const RDSegment* seg =
         redasm::state::context->program.find_segment(address);
 
     if(seg) {
@@ -370,19 +370,8 @@ bool rd_gettypename(RDAddress address, const char* tname, RDValue* v) {
 usize rd_getsegments(const RDSegment** segments) {
     spdlog::trace("rd_getsegments({})", fmt::ptr(segments));
     if(!redasm::state::context) return 0;
-    static std::vector<RDSegment> res;
-
-    if(segments) {
-        const redasm::Context* ctx = redasm::state::context;
-        res.resize(ctx->program.segments_old.size());
-
-        for(usize i = 0; i < ctx->program.segments_old.size(); i++)
-            res[i] = redasm::api::to_c(ctx->program.segments_old[i]);
-
-        *segments = res.data();
-    }
-
-    return redasm::state::context->program.segments_old.size();
+    if(segments) *segments = redasm::state::context->program.segments.data();
+    return redasm::state::context->program.segments.size();
 }
 
 bool rd_mapsegment(const char* name, RDAddress address, RDAddress endaddress,
@@ -434,7 +423,7 @@ bool rd_settype_ex(RDAddress address, const RDType* type, usize flags,
 
     if(!redasm::state::context || !type) return false;
 
-    const RDSegmentNew* seg =
+    const RDSegment* seg =
         redasm::state::context->program.find_segment(address);
     if(!seg) return false;
 
@@ -464,7 +453,7 @@ bool rd_settypename_ex(RDAddress address, const char* tname, usize flags,
                   flags, fmt::ptr(v));
     if(!redasm::state::context || !tname) return false;
 
-    const RDSegmentNew* seg =
+    const RDSegment* seg =
         redasm::state::context->program.find_segment(address);
     if(!seg) return false;
 
@@ -589,17 +578,10 @@ bool rd_getbyte(usize idx, RDByte* b) {
     return true;
 }
 
-usize rd_getfile(const u8** data) {
-    spdlog::trace("rd_getfile({})", fmt::ptr(data));
-
-    if(!redasm::state::context) return 0;
-
-    const auto& f = redasm::state::context->program.file_old;
-    if(!f) return 0;
-
-    // HACK: static_cast<> shouldn't be used
-    if(data) *data = static_cast<const redasm::File*>(f.get())->data();
-    return f->size();
+RDBuffer* rd_getfile() {
+    spdlog::trace("rd_getfile()");
+    if(!redasm::state::context) return nullptr;
+    return &redasm::state::context->program.file;
 }
 
 const char* rd_rendertext(RDAddress address) {
@@ -651,7 +633,7 @@ bool rd_toaddress(RDOffset offset, RDAddress* address) {
     return addr.has_value();
 }
 
-const RDSegmentNew* rd_findsegment(RDAddress address) {
+const RDSegment* rd_findsegment(RDAddress address) {
     spdlog::trace("rd_findsegment({:x})", address);
     if(!redasm::state::context) return nullptr;
     return redasm::state::context->program.find_segment(address);

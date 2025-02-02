@@ -21,7 +21,6 @@ class Context;
 class Surface;
 class StyledGraph;
 struct Function;
-struct Segment;
 
 namespace api {
 
@@ -149,7 +148,6 @@ inline RDILList* to_c(rdil::ILExprList* arg) {
     return reinterpret_cast<RDILList*>(arg);
 }
 
-RDSegment to_c(const Segment& arg);
 RDFunctionBasicBlock to_c(const Function::BasicBlock* bb);
 
 } // namespace api

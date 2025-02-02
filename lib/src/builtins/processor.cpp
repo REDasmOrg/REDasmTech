@@ -9,7 +9,7 @@ namespace redasm::builtins {
 namespace processor {
 
 void render_segment(const RDProcessor*, RDRenderer* r,
-                    const RDSegmentNew* seg) {
+                    const RDSegment* seg) {
     const char* start = rd_tohex(seg->start);
     const char* end = rd_tohex(seg->end);
 

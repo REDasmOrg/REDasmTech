@@ -391,7 +391,7 @@ void generate(const Function& f, ILExprList& res, usize maxn) {
 
             if(res.size() >= maxn) return;
 
-            const RDSegmentNew* seg = ctx->program.find_segment(address);
+            const RDSegment* seg = ctx->program.find_segment(address);
             assume(seg);
 
             if(auto nextaddr = redasm::memory::get_next(seg, address);

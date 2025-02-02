@@ -37,7 +37,7 @@ public:
     u32 tick();
 
 private:
-    void execute_delayslots(RDSegmentNew* seg, const RDInstruction& instr);
+    void execute_delayslots(RDSegment* seg, const RDInstruction& instr);
 
 public:
     RDAddress pc{};
