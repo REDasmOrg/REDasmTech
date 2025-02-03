@@ -72,7 +72,7 @@ REDASM_EXPORT void rdsurface_getposition(const RDSurface* self,
                                          RDSurfacePosition* pos);
 REDASM_EXPORT void rdsurface_getlocation(const RDSurface* self,
                                          RDSurfaceLocation* loc);
-REDASM_EXPORT bool rdsurface_getindex(const RDSurface* self, MIndex* index);
+REDASM_EXPORT bool rdsurface_getaddress(const RDSurface* self, RDAddress* address);
 REDASM_EXPORT int rdsurface_indexof(const RDSurface* self, RDAddress address);
 REDASM_EXPORT int rdsurface_lastindexof(const RDSurface* self,
                                         RDAddress address);

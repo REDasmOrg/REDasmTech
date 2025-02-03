@@ -125,20 +125,17 @@ tl::optional<RDAddress> Surface::address_under_cursor() const {
 const RDSegment* Surface::current_segment() const {
     if(auto addr = this->current_address(); addr)
         return state::context->program.find_segment(*addr);
-
     return nullptr;
 }
 
 const Function* Surface::current_function() const {
     if(auto idx = this->current_address(); idx)
         return state::context->find_function(*idx);
-
     return nullptr;
 }
 
 void Surface::render_function(const Function& f) {
     m_renderer->clear();
-
     const Listing& listing = state::context->listing;
 
     for(const Function::BasicBlock& bb : f.blocks) {

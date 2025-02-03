@@ -20,7 +20,7 @@ RDGraphNode Function::try_add_block(RDAddress start) {
 
     auto it = std::lower_bound(
         this->blocks.begin(), this->blocks.end(), start,
-        [](const BasicBlock& a, MIndex b) { return a.start < b; });
+        [](const BasicBlock& a, RDAddress b) { return a.start < b; });
 
     return this->blocks.emplace(it, this->graph.add_node(), start)->node;
 }

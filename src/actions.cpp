@@ -118,8 +118,7 @@ void show_details() {
     else
         return;
 
-    MIndex index;
-
+    // MIndex index;
     // FIXME: if(!rd_addresstoindex(address, &index)) return;
     return;
 
@@ -129,99 +128,102 @@ void show_details() {
     // if(index >= nbytes) return;
     return;
 
-    RDMByte b = bytes[index];
+    // RDMByte b = bytes[index];
 
-    RDOffset offset;
-    bool hasoffset = rd_tooffset(address, &offset);
-
-    QString s = DETAIL_TEMPLATE.arg(rd_tohex(address))
-                    .arg(hasoffset ? rd_tohex(offset) : "N/A")
-                    .arg(rd_tohex(index))
-                    .arg(rd_tohex_n(b, 8));
-
-    RDInstruction instr;
-
-    if(rdmbyte_iscode(b) && rd_decode(address, &instr)) {
-        QString strinstr = INSTR_TEMPLATE.arg(rd_tohex(instr.address))
-                               .arg(rd_tohex(instr.id))
-                               .arg(instrfeatures_tostring(&instr))
-                               .arg(rd_tohex(instr.length))
-                               .arg(instr.delayslots)
-                               .arg(rd_tohex(instr.uservalue));
-
-        foreach_operand(i, op, &instr) {
-            QString strop = OP_TEMPLATE.arg(i)
-                                .arg(optype_tostring(op))
-                                .arg(rd_tohex(op->userdata1))
-                                .arg(rd_tohex(op->userdata2));
-
-            switch(op->type) {
-                case OP_REG: {
-                    strop.append(QString("<b>reg:</b> %1<br>").arg(op->reg));
-                    break;
-                }
-
-                case OP_IMM: {
-                    strop.append(
-                        QString("<b>imm:</b> %1<br>").arg(rd_tohex(op->imm)));
-                    break;
-                }
-
-                case OP_ADDR: {
-                    strop.append(
-                        QString("<b>addr:</b> %1<br>").arg(rd_tohex(op->addr)));
-                    break;
-                }
-
-                case OP_MEM: {
-                    strop.append(
-                        QString("<b>mem:</b> %1<br>").arg(rd_tohex(op->mem)));
-                    break;
-                }
-
-                case OP_PHRASE: {
-                    strop.append(QString("<b>base:</b> %1<br>")
-                                     .arg(rd_tohex(op->phrase.base)));
-                    strop.append(QString("<b>index:</b> %1<br>")
-                                     .arg(rd_tohex(op->phrase.index)));
-                    break;
-                }
-
-                case OP_DISPL: {
-                    strop.append(QString("<b>base:</b> %1<br>")
-                                     .arg(rd_tohex(op->displ.base)));
-                    strop.append(QString("<b>index:</b> %1<br>")
-                                     .arg(rd_tohex(op->displ.index)));
-                    strop.append(QString("<b>displ:</b> %1<br>")
-                                     .arg(rd_tohex(op->displ.displ)));
-                    break;
-                }
-
-                default: {
-                    strop.append(QString("<b>reg1:</b> %1<br>")
-                                     .arg(rd_tohex(op->user.reg1)));
-                    strop.append(QString("<b>reg2:</b> %1<br>")
-                                     .arg(rd_tohex(op->user.reg2)));
-                    strop.append(QString("<b>reg3:</b> %1<br>")
-                                     .arg(rd_tohex(op->user.reg3)));
-                    strop.append(QString("<b>val1:</b> %1<br>")
-                                     .arg(rd_tohex(op->user.val1)));
-                    strop.append(QString("<b>val2:</b> %1<br>")
-                                     .arg(rd_tohex(op->user.val2)));
-                    strop.append(QString("<b>val3:</b> %1<br>")
-                                     .arg(rd_tohex(op->user.val3)));
-                    break;
-                }
-            }
-
-            strinstr.append(strop);
-        }
-
-        s.append(strinstr);
-    }
+    // RDOffset offset;
+    // bool hasoffset = rd_tooffset(address, &offset);
+    //
+    // QString s = DETAIL_TEMPLATE.arg(rd_tohex(address))
+    //                 .arg(hasoffset ? rd_tohex(offset) : "N/A")
+    //                 .arg(rd_tohex(index))
+    //                 .arg(rd_tohex_n(b, 8));
+    //
+    // RDInstruction instr;
+    //
+    // if(rdmbyte_iscode(b) && rd_decode(address, &instr)) {
+    //     QString strinstr = INSTR_TEMPLATE.arg(rd_tohex(instr.address))
+    //                            .arg(rd_tohex(instr.id))
+    //                            .arg(instrfeatures_tostring(&instr))
+    //                            .arg(rd_tohex(instr.length))
+    //                            .arg(instr.delayslots)
+    //                            .arg(rd_tohex(instr.uservalue));
+    //
+    //     foreach_operand(i, op, &instr) {
+    //         QString strop = OP_TEMPLATE.arg(i)
+    //                             .arg(optype_tostring(op))
+    //                             .arg(rd_tohex(op->userdata1))
+    //                             .arg(rd_tohex(op->userdata2));
+    //
+    //         switch(op->type) {
+    //             case OP_REG: {
+    //                 strop.append(QString("<b>reg:</b> %1<br>").arg(op->reg));
+    //                 break;
+    //             }
+    //
+    //             case OP_IMM: {
+    //                 strop.append(
+    //                     QString("<b>imm:</b>
+    //                     %1<br>").arg(rd_tohex(op->imm)));
+    //                 break;
+    //             }
+    //
+    //             case OP_ADDR: {
+    //                 strop.append(
+    //                     QString("<b>addr:</b>
+    //                     %1<br>").arg(rd_tohex(op->addr)));
+    //                 break;
+    //             }
+    //
+    //             case OP_MEM: {
+    //                 strop.append(
+    //                     QString("<b>mem:</b>
+    //                     %1<br>").arg(rd_tohex(op->mem)));
+    //                 break;
+    //             }
+    //
+    //             case OP_PHRASE: {
+    //                 strop.append(QString("<b>base:</b> %1<br>")
+    //                                  .arg(rd_tohex(op->phrase.base)));
+    //                 strop.append(QString("<b>index:</b> %1<br>")
+    //                                  .arg(rd_tohex(op->phrase.index)));
+    //                 break;
+    //             }
+    //
+    //             case OP_DISPL: {
+    //                 strop.append(QString("<b>base:</b> %1<br>")
+    //                                  .arg(rd_tohex(op->displ.base)));
+    //                 strop.append(QString("<b>index:</b> %1<br>")
+    //                                  .arg(rd_tohex(op->displ.index)));
+    //                 strop.append(QString("<b>displ:</b> %1<br>")
+    //                                  .arg(rd_tohex(op->displ.displ)));
+    //                 break;
+    //             }
+    //
+    //             default: {
+    //                 strop.append(QString("<b>reg1:</b> %1<br>")
+    //                                  .arg(rd_tohex(op->user.reg1)));
+    //                 strop.append(QString("<b>reg2:</b> %1<br>")
+    //                                  .arg(rd_tohex(op->user.reg2)));
+    //                 strop.append(QString("<b>reg3:</b> %1<br>")
+    //                                  .arg(rd_tohex(op->user.reg3)));
+    //                 strop.append(QString("<b>val1:</b> %1<br>")
+    //                                  .arg(rd_tohex(op->user.val1)));
+    //                 strop.append(QString("<b>val2:</b> %1<br>")
+    //                                  .arg(rd_tohex(op->user.val2)));
+    //                 strop.append(QString("<b>val3:</b> %1<br>")
+    //                                  .arg(rd_tohex(op->user.val3)));
+    //                 break;
+    //             }
+    //         }
+    //
+    //         strinstr.append(strop);
+    //     }
+    //
+    //     s.append(strinstr);
+    // }
 
     auto* dlg = new DetailDialog(cv);
-    dlg->set_html(s);
+    // dlg->set_html(s);
     dlg->show();
 }
 

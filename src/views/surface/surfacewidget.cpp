@@ -40,46 +40,46 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
     m_document.setUndoRedoEnabled(false);
     m_document.setDocumentMargin(0);
 
-    connect(
-        this->verticalScrollBar(), &QScrollBar::actionTriggered, this,
-        [&](int action) {
-            switch(action) {
-                case QScrollBar::SliderSingleStepAdd: {
-                    MIndex idx;
-                    if(!this->get_surface_index(&idx)) return;
-
-                    if(idx < this->get_listing_length()) {
-                        rdsurface_clearselection(m_surface);
-                        rdsurface_seekposition(m_surface, idx + SCROLL_SPEED);
-                        this->viewport()->update();
+    connect(this->verticalScrollBar(), &QScrollBar::actionTriggered, this,
+            [&](int action) {
+                switch(action) {
+                    case QScrollBar::SliderSingleStepAdd: {
+                        // RDAddress idx;
+                        // if(!this->get_surface_address(&idx)) return;
+                        //
+                        // if(idx < this->get_listing_length()) {
+                        //     rdsurface_clearselection(m_surface);
+                        //     rdsurface_seekposition(m_surface, idx +
+                        //     SCROLL_SPEED); this->viewport()->update();
+                        // }
+                        break;
                     }
-                    break;
-                }
 
-                case QScrollBar::SliderSingleStepSub: {
-                    MIndex idx;
-                    if(!this->get_surface_index(&idx)) return;
-
-                    if(idx > 0) {
-                        rdsurface_clearselection(m_surface);
-                        rdsurface_seekposition(m_surface, idx - SCROLL_SPEED);
-                        this->viewport()->update();
+                    case QScrollBar::SliderSingleStepSub: {
+                        // MIndex idx;
+                        // if(!this->get_surface_address(&idx)) return;
+                        //
+                        // if(idx > 0) {
+                        //     rdsurface_clearselection(m_surface);
+                        //     rdsurface_seekposition(m_surface, idx -
+                        //     SCROLL_SPEED); this->viewport()->update();
+                        // }
+                        break;
                     }
-                    break;
+
+                    case QScrollBar::SliderMove: {
+                        rdsurface_clearselection(m_surface);
+                        rdsurface_seek(
+                            m_surface,
+                            this->verticalScrollBar()->sliderPosition());
+
+                        this->viewport()->update();
+                        break;
+                    }
+
+                    default: break;
                 }
-
-                case QScrollBar::SliderMove: {
-                    rdsurface_clearselection(m_surface);
-                    rdsurface_seek(m_surface,
-                                   this->verticalScrollBar()->sliderPosition());
-
-                    this->viewport()->update();
-                    break;
-                }
-
-                default: break;
-            }
-        });
+            });
 
     this->update_scrollbars();
     this->sync_location();
@@ -333,8 +333,8 @@ RDSurfaceLocation SurfaceWidget::location() const {
     return loc;
 }
 
-bool SurfaceWidget::get_surface_index(MIndex* index) const {
-    return rdsurface_getindex(m_surface, index);
+bool SurfaceWidget::get_surface_address(RDAddress* address) const {
+    return rdsurface_getaddress(m_surface, address);
 }
 
 usize SurfaceWidget::get_listing_length() const {

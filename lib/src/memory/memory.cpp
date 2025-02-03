@@ -7,33 +7,32 @@ namespace redasm::memory {
 
 namespace {
 
-tl::optional<std::pair<MIndex, MIndex>> find_range(const RDBuffer* self,
-                                                   usize idx) {
+tl::optional<std::pair<RDAddress, RDAddress>> find_range(const RDSegment* self,
+                                                         RDAddress addr) {
     assume(self);
-    if(idx >= self->length) return tl::nullopt;
+    if(addr >= self->end) return tl::nullopt;
 
     // Single item range
-    if(mbyte::has_flag(self->m_data[idx], BF_START | BF_END))
-        return std::make_pair(idx, idx);
+    if(memory::has_flag(self, addr, BF_START | BF_END))
+        return std::make_pair(addr, addr);
 
-    usize rstart = idx, rend = idx;
+    RDAddress rstart = addr, rend = addr;
 
     // Traverse backward to find the range start
-    while(rstart > 0 && mbyte::has_flag(self->m_data[rstart], BF_CONT))
+    while(rstart > 0 && memory::has_flag(self, rstart, BF_CONT))
         rstart--;
 
-    if(rstart >= self->length ||
-       !mbyte::has_flag(self->m_data[rstart], BF_START))
+    if(rstart >= self->end || !memory::has_flag(self, rstart, BF_START))
         return tl::nullopt; // Not part of a valid range
 
     // Traverse forward to find the range end
-    while(rend < self->length ||
-          (mbyte::has_flag(self->m_data[rend], BF_START) ||
-           (mbyte::has_flag(self->m_data[rend], BF_CONT) &&
-            !mbyte::has_flag(self->m_data[rend], BF_END))))
+    while(rend < self->end && (memory::has_flag(self, rend, BF_START) ||
+                               (memory::has_flag(self, rend, BF_CONT) &&
+                                !memory::has_flag(self, rend, BF_END)))) {
         rend++;
+    }
 
-    if(rend >= self->length || !mbyte::has_flag(self->m_data[rend], BF_END))
+    if(rend >= self->end || !memory::has_flag(self, rend, BF_END))
         return tl::nullopt; // Not part of a valid range
 
     assume(rstart <= rend);
@@ -233,7 +232,7 @@ tl::optional<RDValue> get_type_impl(const RDSegment* self, RDAddress& address,
 } // namespace
 
 usize get_length(const RDSegment* self, RDAddress address) {
-    if(auto r = memory::find_range(&self->mem, address - self->start); r)
+    if(auto r = memory::find_range(self, address); r)
         return r->second - r->first + 1;
     return 0;
 }
@@ -272,14 +271,13 @@ void clear(RDSegment* self, RDAddress address) {
 
 void set_n(RDSegment* self, RDAddress address, usize n, u32 flags) {
     assume(self);
-    usize idx = address - self->start;
-    if(idx >= self->mem.length || !n) return;
+    if(!n) return;
 
-    usize end = std::min(idx + n, self->mem.length);
-    memory::set_flag(self, idx, flags | BF_START);
+    RDAddress end = std::min(address + n, self->end);
+    memory::set_flag(self, address, flags | BF_START);
 
-    for(usize i = idx + 1; i < end - 1; i++)
-        memory::set_flag(self, i, flags | BF_CONT);
+    for(RDAddress addr = address + 1; addr < end - 1; addr++)
+        memory::set_flag(self, addr, flags | BF_CONT);
 
     if(n > 1) memory::set_flag(self, end - 1, flags | BF_CONT);
     memory::set_flag(self, end - 1, flags | BF_END);
@@ -287,24 +285,23 @@ void set_n(RDSegment* self, RDAddress address, usize n, u32 flags) {
 
 void unset_n(RDSegment* self, RDAddress address, usize n) {
     assume(self);
-    usize idx = address - self->start;
-    usize end = std::min(idx + n, self->mem.length);
+    RDAddress end = std::min(address + n, self->end);
 
-    for(usize i = idx; i < end; i++) {
-        if(memory::has_flag(self, i, BF_START) ||
-           memory::has_flag(self, i, BF_CONT)) {
-            auto r = memory::find_range(&self->mem, i);
+    for(RDAddress addr = address; addr < end; addr++) {
+        if(memory::has_flag(self, addr, BF_START) ||
+           memory::has_flag(self, addr, BF_CONT)) {
+            auto r = memory::find_range(self, addr);
             assume(r);
 
             // Unset the overlapping range
-            for(MIndex j = r->first; j <= r->second; j++)
-                memory::clear(self, j);
+            for(RDAddress raddr = r->first; raddr <= r->second; raddr++)
+                memory::clear(self, raddr);
 
             // Skip to the end of the cleared range
-            i = r->second;
+            addr = r->second;
         }
         else
-            memory::clear(self, i);
+            memory::clear(self, addr);
     }
 }
 

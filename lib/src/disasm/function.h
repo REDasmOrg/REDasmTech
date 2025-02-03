@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../graph/styledgraph.h"
-#include "../types.h"
 #include <redasm/theme.h>
 #include <vector>
 
@@ -40,7 +39,7 @@ struct Function {
         return const_cast<Function*>(this)->get_basic_block(n);
     }
 
-    MIndex address;
+    RDAddress address;
     StyledGraph graph;
     Blocks blocks;
 };

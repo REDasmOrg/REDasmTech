@@ -32,6 +32,7 @@ RDBuffer rdbuffer_createfile(const char* filepath) {
             },
     };
 
+    ifs.seekg(0);
     ifs.read(reinterpret_cast<char*>(self.data), self.length);
     return self;
 }
@@ -47,10 +48,8 @@ RDBuffer rdbuffer_creatememory(usize n) {
 
         .get_byte =
             [](const RDBuffer* self, usize idx, u8* b) {
-                if(idx < self->length)
-                    return rdmbyte_getbyte(self->m_data[idx], b);
-
-                return false;
+                return idx < self->length &&
+                       rdmbyte_getbyte(self->m_data[idx], b);
             },
     };
 }

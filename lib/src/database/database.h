@@ -28,12 +28,12 @@ public:
     void add_ref(RDAddress fromaddr, RDAddress toaddr, usize type);
     void set_comment(RDAddress address, std::string_view comment);
     void set_name(RDAddress address, std::string_view name);
-    void set_type(MIndex idx, RDType t);
+    void set_type(RDAddress address, RDType t);
     void set_userdata(std::string_view k, uptr v);
     tl::optional<uptr> get_userdata(std::string_view k) const;
 
-    void add_segment(std::string_view name, MIndex idx, MIndex endidx,
-                     RDOffset offset, RDOffset endoffset, u8 perm);
+    void add_segment(std::string_view name, RDAddress startaddr,
+                     RDAddress endaddr, u32 perm, u32 bits);
 
     tl::optional<RDAddress> get_address(std::string_view name,
                                         bool onlydb = false) const;

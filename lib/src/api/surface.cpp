@@ -88,7 +88,7 @@ void rdsurface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
                   fmt::ptr(loc));
 
     if(!loc) return;
-    loc = {}; // Initialize struct to 0
+    *loc = {}; // Initialize struct to 0
 
     const redasm::Context* ctx = redasm::state::context;
     const redasm::Surface* s = redasm::api::from_c(self);
@@ -133,11 +133,11 @@ void rdsurface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
     }
 }
 
-bool rdsurface_getindex(const RDSurface* self, MIndex* index) {
+bool rdsurface_getaddress(const RDSurface* self, RDAddress* address) {
     spdlog::trace("rdsurface_getindex({})", fmt::ptr(self));
-    auto idx = redasm::api::from_c(self)->current_address();
-    if(*index) *index = *idx;
-    return idx.has_value();
+    auto addr = redasm::api::from_c(self)->current_address();
+    if(address) *address = *addr;
+    return addr.has_value();
 }
 
 int rdsurface_indexof(const RDSurface* self, RDAddress address) {

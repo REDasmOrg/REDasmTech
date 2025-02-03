@@ -324,7 +324,7 @@ void MainWindow::open_file(const QString& filepath) {
             [&]() { this->select_analyzers(); });
 
     connect(dlgloader, &LoaderDialog::rejected, this,
-            [&buffer]() { rdbuffer_destroy(&buffer); });
+            [buffer]() mutable { rdbuffer_destroy(&buffer); });
 
     dlgloader->open();
 }

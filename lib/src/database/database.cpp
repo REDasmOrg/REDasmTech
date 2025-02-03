@@ -37,7 +37,7 @@ template<typename T>
 concept SQLBindable =
     std::same_as<T, std::string> || 
     std::same_as<T, std::string_view> ||
-    std::same_as<T, MIndex> || 
+    std::same_as<T, RDAddress> || 
     std::same_as<T, u64> ||
     std::same_as<T, u32> ||
     std::same_as<T, u8>;
@@ -55,7 +55,7 @@ void sql_bindparam(sqlite3* db, sqlite3_stmt* stmt, std::string_view n,
     if constexpr(std::is_same_v<U, std::string> ||
                  std::is_same_v<U, std::string_view>)
         res = sqlite3_bind_text(stmt, idx, v.data(), v.size(), SQLITE_STATIC);
-    else if constexpr(std::is_same_v<U, MIndex> || std::is_same_v<U, u64>)
+    else if constexpr(std::is_same_v<U, RDAddress> || std::is_same_v<U, u64>)
         res = sqlite3_bind_int64(stmt, idx, static_cast<sqlite3_int64>(v));
     else if constexpr(std::is_same_v<U, u32> || std::is_same_v<U, u8>)
         res = sqlite3_bind_int(stmt, idx, static_cast<int>(v));
@@ -85,11 +85,10 @@ constexpr std::string_view DB_SCHEMA = R"(
 
     CREATE TABLE Segments(
         name TEXT NOT NULL,
-        idx INTEGER NOT NULL,
-        endidx INTEGER NOT NULL,
-        off INTEGER NOT NULL,
-        endoff INTEGER NOT NULL,
-        perm INTEGER NOT NULL
+        startaddr INTEGER NOT NULL,
+        endaddr INTEGER NOT NULL,
+        perm INTEGER NOT NULL,
+        bits INTEGER NOT NULL
     );
 
     CREATE TABLE Comments(
@@ -179,19 +178,18 @@ sqlite3_stmt* Database::prepare_query(int q, std::string_view s) const {
     return stmt;
 }
 
-void Database::add_segment(std::string_view name, MIndex idx, MIndex endidx,
-                           RDOffset offset, RDOffset endoffset, u8 perm) {
+void Database::add_segment(std::string_view name, RDAddress startaddr,
+                           RDAddress endaddr, u32 perm, u32 bits) {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::ADD_SEGMENT, R"(
         INSERT INTO Segments
-            VALUES (:name, :index, :endindex, :offset, :endoffset, :perm)
+            VALUES (:name, :startaddr, :endaddr, :perm, :bits)
     )");
 
     sql_bindparam(m_db, stmt, ":name", name);
-    sql_bindparam(m_db, stmt, ":index", idx);
-    sql_bindparam(m_db, stmt, ":endindex", endidx);
-    sql_bindparam(m_db, stmt, ":offset", offset);
-    sql_bindparam(m_db, stmt, ":endoffset", endoffset);
+    sql_bindparam(m_db, stmt, ":startaddr", startaddr);
+    sql_bindparam(m_db, stmt, ":endaddr", endaddr);
     sql_bindparam(m_db, stmt, ":perm", perm);
+    sql_bindparam(m_db, stmt, ":bits", bits);
     sql_step(m_db, stmt);
 }
 
@@ -330,15 +328,15 @@ void Database::set_name(RDAddress address, std::string_view name) {
     sql_step(m_db, stmt);
 }
 
-void Database::set_type(MIndex idx, RDType t) {
+void Database::set_type(RDAddress address, RDType t) {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::SET_TYPE, R"(
         INSERT INTO Types
-            VALUES (:idx, :id, :n)
+            VALUES (:address, :id, :n)
         ON CONFLICT DO 
             UPDATE SET id = EXCLUDED.id, n = EXCLUDED.n
     )");
 
-    sql_bindparam(m_db, stmt, ":idx", idx);
+    sql_bindparam(m_db, stmt, ":address", address);
     sql_bindparam(m_db, stmt, ":id", t.id);
     sql_bindparam(m_db, stmt, ":n", t.n);
     sql_step(m_db, stmt);

@@ -106,6 +106,7 @@ bool rdlisting_getindex(RDAddress address, LIndex* idx) {
 bool rdlisting_getsymbol(usize idx, RDSymbol* symbol) {
     spdlog::trace("rdlisting_getsymbol({}, {})", idx, fmt::ptr(symbol));
 
+    return false;
     static std::string value;
     const redasm::Context* ctx = redasm::state::context;
     if(!ctx) return false;

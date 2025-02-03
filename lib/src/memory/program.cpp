@@ -141,7 +141,7 @@ RDSegment* Program::find_segment(RDAddress address) {
         [](RDAddress start, RDAddress addr) { return start < addr; },
         [](const RDSegment& s) { return s.start; });
 
-    if(it != this->segments.end() && address < it->end)
+    if(it != this->segments.end() && address >= it->start && address < it->end)
         return std::addressof(*it);
 
     if(it != this->segments.begin()) {

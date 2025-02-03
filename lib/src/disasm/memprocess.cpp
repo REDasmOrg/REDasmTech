@@ -7,6 +7,7 @@
 #include "../memory/stringfinder.h"
 #include "../state.h"
 #include "../typing/base.h"
+#include "../utils/utils.h"
 #include "function.h"
 #include <unordered_set>
 
@@ -25,7 +26,7 @@ void process_hexdump(Listing& l, RDAddress& address, Function f) {
     RDAddress start = address;
     usize len = 0;
 
-    for(; address < seg->mem.length && f(seg, address); len++, address++) {
+    for(; address < seg->end && f(seg, address); len++, address++) {
         if(len && !(len % 0x10)) {
             l.hex_dump(start, address);
             start = address;
@@ -152,8 +153,8 @@ void process_listing_data(const Context* ctx, Listing& l, RDAddress& address) {
         address += len;
     }
     else {
-        // except("Unhandled data byte @ {:x}, value {}", address,
-        //        ctx->to_hex(b.value, 8));
+        except("Unhandled data byte @ {:x}, value {}", address,
+               utils::to_hex(memory::get_mbyte(seg, address), 32));
     }
 }
 
@@ -169,15 +170,13 @@ void process_unknown_data(Context* ctx, RDSegment* seg, RDAddress& address) {
              (memory::get_byte(seg, address) !=
               memory::get_byte(seg, startaddr)))))
             break;
-
         address++;
     }
 
-    usize len = address - startaddr;
+    usize n = address - startaddr;
 
-    if(len > 1 &&
-       len > static_cast<usize>(ctx->processorplugin->integer_size)) {
-        memory::set_n(seg, startaddr, len, BF_DATA);
+    if(n > 1 && n > static_cast<usize>(ctx->processorplugin->integer_size)) {
+        memory::set_n(seg, startaddr, n, BF_DATA);
         memory::set_flag(seg, startaddr, BF_FILL);
     }
 }
@@ -187,7 +186,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
     spdlog::info("Creating function graph @ {:x}", address);
 
     Function& f = functions.emplace_back(address);
-    std::unordered_set<MIndex> done;
+    std::unordered_set<RDAddress> done;
     std::deque<RDAddress> pending;
     pending.push_back(address);
 
@@ -202,7 +201,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
         RDGraphNode n = f.try_add_block(startaddr);
         if(startaddr == address) f.graph.set_root(n);
 
-        MIndex endaddr = startaddr;
+        RDAddress endaddr = startaddr;
 
         const RDSegment* seg = ctx->program.find_segment(startaddr);
         if(!seg) continue;

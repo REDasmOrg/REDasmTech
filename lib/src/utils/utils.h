@@ -26,7 +26,7 @@ char* copy_str(std::string_view v);
 std::string_view trim(std::string_view v);
 
 template<typename Ret = std::string_view, typename T>
-Ret to_string(T value, int base = 10, bool sign = false, int w = 0) {
+Ret to_string(T value, int base = 10, bool sign = false, int bits = 0) {
     constexpr std::string_view DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     static std::array<char, 66> out;
 
@@ -51,6 +51,7 @@ Ret to_string(T value, int base = 10, bool sign = false, int w = 0) {
     if(isneg) out[--c] = '-';
 
     // Zero pad
+    int w = bits / 4;
     if(int ndigits = out.size() - c - 1; w > ndigits) {
         int nzeros = w - ndigits;
         for(int i = c - 1; i >= c - nzeros && i >= 0; --i)
@@ -63,9 +64,9 @@ Ret to_string(T value, int base = 10, bool sign = false, int w = 0) {
 }
 
 template<typename Ret = std::string_view, typename T>
-static Ret to_hex(T value, int w = 0) {
-    if(!w) w = sizeof(T) * 2;
-    return utils::to_string<Ret, T>(value, 16, false, w);
+static Ret to_hex(T value, int bits = 0) {
+    if(!bits) bits = sizeof(T) * CHAR_BIT;
+    return utils::to_string<Ret, T>(value, 16, false, bits);
 }
 
 template<typename T = usize>

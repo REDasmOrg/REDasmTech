@@ -25,7 +25,6 @@ typedef intptr_t iptr;
 typedef u64 RDAddress;
 typedef u64 RDOffset;
 
-typedef usize MIndex;
 typedef usize LIndex;
 
 #define RD_HANDLE(name)                                                        \

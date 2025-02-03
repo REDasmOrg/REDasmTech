@@ -41,15 +41,15 @@ std::string_view get_refname(usize reftype) {
     unreachable;
 }
 
-void add_noncodeproblem(const RDSegment* seg, MIndex index, usize type) {
+void add_noncodeproblem(const RDSegment* seg, RDAddress address, usize type) {
     if(seg) {
         state::context->add_problem(
-            index, fmt::format("Trying to {} in non-code segment '{}'",
-                               get_refname(type), seg->name));
+            address, fmt::format("Trying to {} in non-code segment '{}'",
+                                 get_refname(type), seg->name));
     }
     else {
         state::context->add_problem(
-            index,
+            address,
             fmt::format("Trying to {} outside of segments", get_refname(type)));
     }
 }
@@ -155,7 +155,7 @@ bool Context::set_entry(RDAddress address, const std::string& name) {
     return false;
 }
 
-void Context::add_ref(RDAddress fromaddr, MIndex toaddr, usize type) {
+void Context::add_ref(RDAddress fromaddr, RDAddress toaddr, usize type) {
     RDSegment* fromseg = this->program.find_segment(fromaddr);
     RDSegment* toseg = this->program.find_segment(toaddr);
 

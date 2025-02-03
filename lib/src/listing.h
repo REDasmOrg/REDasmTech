@@ -70,7 +70,7 @@ public:
     ConstIterator lower_bound(RDAddress address, ConstIterator begin) const;
     ConstIterator upper_bound(RDAddress address, ConstIterator begin) const;
     void hex_dump(RDAddress startaddr, RDAddress endaddr);
-    void fill(RDAddress startaddr, MIndex endaddr);
+    void fill(RDAddress startaddr, RDAddress endaddr);
     usize type(RDAddress address, RDType t);
     usize instruction(RDAddress address);
     usize label(RDAddress address);
@@ -90,7 +90,7 @@ public: // State management functions
     void pop_type();
 
 private:
-    usize push_item(RDListingItemType type, MIndex index);
+    usize push_item(RDListingItemType type, RDAddress address);
     void check_flags(LIndex listingidx, RDAddress address);
 
 private:

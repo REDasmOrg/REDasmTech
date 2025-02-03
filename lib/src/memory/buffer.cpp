@@ -329,7 +329,7 @@ tl::optional<RDValue> get_type(const RDBuffer* self, usize idx, RDType t,
 
 tl::optional<u8> get_byte(const RDBuffer* self, usize idx) {
     u8 b;
-    if((idx < self->length) && self->get_byte(self, idx, &b)) return b;
+    if(self->get_byte(self, idx, &b)) return b;
     return tl::nullopt;
 }
 
