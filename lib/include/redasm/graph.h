@@ -24,6 +24,7 @@ typedef union RDGraphData {
 
 // Graph
 REDASM_EXPORT RDGraph* rdgraph_create(void);
+REDASM_EXPORT void rdgraph_destroy(RDGraph* self);
 
 REDASM_EXPORT const RDGraphEdge*
 rdgraph_getedge(const RDGraph* self, RDGraphNode src, RDGraphNode tgt);

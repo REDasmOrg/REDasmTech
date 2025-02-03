@@ -1,6 +1,4 @@
 #include "../memory/buffer.h"
-#include "../context.h"
-#include "../state.h"
 #include "../utils/utils.h"
 #include <fstream>
 #include <redasm/buffer.h>
@@ -261,40 +259,6 @@ bool rdbuffer_gettype(const RDBuffer* self, usize idx, const RDType* t,
 
     auto res = redasm::buffer::get_type(self, idx, *t);
     if(res) {
-        if(v)
-            *v = *res;
-        else
-            rdvalue_destroy(&res.value());
-    }
-    return res.has_value();
-}
-
-bool rdbuffer_collecttypename(const RDBuffer* self, usize idx,
-                              const char* tname, RDValue* v) {
-    spdlog::trace("rdbuffer_collecttypename({}, {:x}, '{}', {})",
-                  fmt::ptr(self), idx, tname, fmt::ptr(v));
-    if(!tname) return false;
-
-    auto res = redasm::buffer::get_type(self, idx, tname);
-    if(res) {
-        redasm::state::context->collectedtypes.emplace_back(idx, res->type);
-        if(v)
-            *v = *res;
-        else
-            rdvalue_destroy(&res.value());
-    }
-    return res.has_value();
-}
-
-bool rdbuffer_collecttype(const RDBuffer* self, usize idx, const RDType* t,
-                          RDValue* v) {
-    spdlog::trace("rdbuffer_collecttype({}, {:x}, {}, {})", fmt::ptr(self), idx,
-                  fmt::ptr(t), fmt::ptr(v));
-    if(!t) return false;
-
-    auto res = redasm::buffer::get_type(self, idx, *t);
-    if(res) {
-        redasm::state::context->collectedtypes.emplace_back(idx, res->type);
         if(v)
             *v = *res;
         else

@@ -14,7 +14,7 @@
 static constexpr int SCROLL_SPEED = 3;
 
 SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
-    m_surface = rdsurface_new(SURFACE_DEFAULT);
+    m_surface = rdsurface_create(SURFACE_DEFAULT);
     m_popup = new SurfacePopup(this);
 
     this->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -86,7 +86,7 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
 }
 
 SurfaceWidget::~SurfaceWidget() {
-    rd_destroy(m_surface);
+    rdsurface_destroy(m_surface);
     m_surface = nullptr;
 }
 

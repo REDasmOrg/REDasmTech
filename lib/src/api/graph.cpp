@@ -9,6 +9,11 @@ RDGraph* rdgraph_create() {
     return redasm::api::to_c(new redasm::StyledGraph{});
 }
 
+void rdgraph_destroy(RDGraph* self) {
+    spdlog::trace("rdgraph_destroy({})", fmt::ptr(self));
+    delete redasm::api::from_c(self);
+}
+
 const RDGraphEdge* rdgraph_getedge(const RDGraph* self, RDGraphNode src,
                                    RDGraphNode tgt) {
     spdlog::trace("rdgraph_getedge({}, {}, {})", fmt::ptr(self), src, tgt);

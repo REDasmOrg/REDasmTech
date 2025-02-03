@@ -74,7 +74,6 @@ typedef struct RDInitParams {
 
 REDASM_EXPORT bool rd_init(const RDInitParams* params);
 REDASM_EXPORT void rd_deinit(void);
-REDASM_EXPORT void rd_destroy(void* obj);
 REDASM_EXPORT void rd_setloglevel(RDLogLevel l);
 REDASM_EXPORT void rd_addsearchpath(const char* sp);
 REDASM_EXPORT usize rd_getsearchpaths(const char*** spaths);

@@ -1,18 +1,18 @@
 #pragma once
 
-#include "../utils/object.h"
 #include <redasm/graph.h>
 #include <string>
 #include <vector>
 
 namespace redasm {
 
-class Graph: public Object {
+class Graph {
 public:
     using Nodes = std::vector<RDGraphNode>;
     using Edges = std::vector<RDGraphEdge>;
 
 public:
+    virtual ~Graph() = default;
     virtual void clear();
     void remove_edge(const RDGraphEdge* edge);
     void remove_node(RDGraphNode n);

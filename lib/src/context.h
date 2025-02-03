@@ -6,7 +6,6 @@
 #include "listing.h"
 #include "memory/program.h"
 #include "typing/typing.h"
-#include "utils/object.h"
 #include <memory>
 #include <redasm/analyzer.h>
 #include <redasm/loader.h>
@@ -18,7 +17,7 @@
 
 namespace redasm {
 
-class Context: public Object {
+class Context {
     struct AnalyzerSorter {
         bool operator()(const RDAnalyzerPlugin* a,
                         const RDAnalyzerPlugin* b) const {
@@ -30,14 +29,13 @@ public:
     static constexpr usize DEFAULT_MIN_STRING = 4;
 
     explicit Context(RDBuffer* b);
-    ~Context() override;
+    ~Context();
     bool try_load(const RDLoaderPlugin* plugin);
     void setup(const RDProcessorPlugin* plugin);
     void set_userdata(const std::string& k, uptr v);
     tl::optional<uptr> get_userdata(const std::string& k) const;
     bool set_function(RDAddress address, usize flags);
     bool set_entry(RDAddress address, const std::string& name = {});
-    bool memory_map(RDAddress base, usize size);
     const Function* find_function(RDAddress address) const;
 
 public: // Database Interface
@@ -73,7 +71,6 @@ public: // Plugins
 
 public:
     Program program;
-    std::vector<std::pair<usize, RDType>> collectedtypes;
     std::vector<std::pair<RDAddress, std::string>> problems;
     std::vector<RDAddress> entrypoints;
     Worker worker;

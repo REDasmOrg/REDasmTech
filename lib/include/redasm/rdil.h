@@ -162,7 +162,8 @@ REDASM_EXPORT const RDILExpr* rdil_push(RDILPool* self, const RDILExpr* e);
 REDASM_EXPORT const RDILExpr* rdil_pop(RDILPool* self, const RDILExpr* e);
 REDASM_EXPORT const RDILExpr* rdil_int(RDILPool* self, const RDILExpr* e);
 
-REDASM_EXPORT RDILList* rdilist_create();
+REDASM_EXPORT RDILList* rdilist_create(void);
+REDASM_EXPORT void rdilist_destroy(RDILList* self);
 REDASM_EXPORT RDILPool* rdillist_getpool(RDILList* self);
 REDASM_EXPORT void rdil_generate(const RDFunction* f, RDILList* l);
 

@@ -193,6 +193,11 @@ RDILList* rdilist_create() {
     return redasm::api::to_c(new redasm::rdil::ILExprList());
 }
 
+void rdilist_destroy(RDILList* self) {
+    spdlog::trace("rdil_destroy({})", fmt::ptr(self));
+    delete redasm::api::from_c(self);
+}
+
 RDILPool* rdillist_getpool(RDILList* self) {
     spdlog::trace("rdillist_getpool({})", fmt::ptr(self));
     redasm::rdil::ILExprList* l = redasm::api::from_c(self);

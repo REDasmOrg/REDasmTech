@@ -275,33 +275,6 @@ bool Context::set_type(RDAddress address, RDType t, usize flags) {
     return true;
 }
 
-bool Context::memory_map(RDAddress base, usize size) {
-    if(!size) {
-        spdlog::error("memory_map: Invalid size");
-        return false;
-    }
-
-    // this->baseaddress = base;
-    // this->program.memory_old = std::make_unique<Memory>(size);
-
-    // Create collected types
-    for(const auto& [idx, t] : this->collectedtypes) {
-        if(idx >= size) {
-            spdlog::warn(
-                "Context::memory_map({:#x}, {:#x}): Ignoring type '{}', "
-                "out of bounds",
-                base, size, this->types.to_string(t));
-            continue;
-        }
-
-        // this->memory_copy_n(idx, idx, this->types.size_of(t));
-        // this->set_type(idx, t, 0);
-    }
-
-    this->collectedtypes.clear();
-    return true;
-}
-
 const Function* Context::find_function(RDAddress address) const {
     if(!this->program.find_segment(address)) return nullptr;
 

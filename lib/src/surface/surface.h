@@ -2,7 +2,6 @@
 
 #include "../disasm/function.h"
 #include "../listing.h"
-#include "../utils/object.h"
 #include "renderer.h"
 #include <deque>
 #include <memory>
@@ -13,7 +12,7 @@
 
 namespace redasm {
 
-class Surface: public Object {
+class Surface {
 private:
     struct HistoryItem {
         LIndex start;

@@ -57,7 +57,8 @@ typedef struct RDSurfacePath {
     u8 style;
 } RDSurfacePath;
 
-REDASM_EXPORT RDSurface* rdsurface_new(usize flags);
+REDASM_EXPORT RDSurface* rdsurface_create(usize flags);
+REDASM_EXPORT void rdsurface_destroy(RDSurface* self);
 REDASM_EXPORT void rdsurface_render(RDSurface* self, usize n);
 REDASM_EXPORT void rdsurface_renderfunction(RDSurface* self,
                                             const RDFunction* f);

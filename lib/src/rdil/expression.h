@@ -1,12 +1,11 @@
 #pragma once
 
-#include "../utils/object.h"
 #include <forward_list>
 #include <redasm/rdil.h>
 
 namespace redasm::rdil {
 
-class ILExprPool: public Object {
+class ILExprPool {
 private:
     using Pool = std::forward_list<RDILExpr>;
 

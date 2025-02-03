@@ -5,9 +5,14 @@
 #include <redasm/surface.h>
 #include <spdlog/spdlog.h>
 
-RDSurface* rdsurface_new(usize flags) {
+RDSurface* rdsurface_create(usize flags) {
     spdlog::trace("rdsurface_new({:x})", flags);
     return redasm::api::to_c(new redasm::Surface(flags));
+}
+
+void rdsurface_destroy(RDSurface* self) {
+    spdlog::trace("rdsurface_destroy({})", fmt::ptr(self));
+    delete redasm::api::from_c(self);
 }
 
 bool rdsurface_getaddressunderpos(const RDSurface* self,

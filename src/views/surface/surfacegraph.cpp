@@ -6,7 +6,7 @@
 SurfaceGraph::SurfaceGraph(QWidget* parent): GraphView{parent} {
     this->setContextMenuPolicy(Qt::CustomContextMenu);
 
-    m_surface = rdsurface_new(SURFACE_GRAPH);
+    m_surface = rdsurface_create(SURFACE_GRAPH);
     m_popup = new SurfacePopup(this);
     m_menu = utils::create_surface_menu(m_surface, this);
 
@@ -17,7 +17,7 @@ SurfaceGraph::SurfaceGraph(QWidget* parent): GraphView{parent} {
 }
 
 SurfaceGraph::~SurfaceGraph() {
-    rd_destroy(m_surface);
+    rdsurface_destroy(m_surface);
     m_surface = nullptr;
 }
 

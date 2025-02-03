@@ -24,10 +24,10 @@ SurfacePopup::SurfacePopup(QWidget* parent): QWidget{parent} {
     m_document.setDefaultFont(this->font());
     m_document.setUndoRedoEnabled(false);
 
-    m_surface = rdsurface_new(SURFACE_POPUP);
+    m_surface = rdsurface_create(SURFACE_POPUP);
 }
 
-SurfacePopup::~SurfacePopup() { rd_destroy(m_surface); }
+SurfacePopup::~SurfacePopup() { rdsurface_destroy(m_surface); }
 
 bool SurfacePopup::popup(RDAddress address) {
     LIndex index;

@@ -59,12 +59,3 @@ REDASM_EXPORT bool rdstream_read_u64be(RDStream* self, u64* v);
 REDASM_EXPORT bool rdstream_read_i16be(RDStream* self, i16* v);
 REDASM_EXPORT bool rdstream_read_i32be(RDStream* self, i32* v);
 REDASM_EXPORT bool rdstream_read_i64be(RDStream* self, i64* v);
-
-REDASM_EXPORT bool rdstream_collect_type(RDStream* self, const char* tname,
-                                         RDValue* v);
-REDASM_EXPORT bool rdstream_collect_strz(RDStream* self, const char** v);
-REDASM_EXPORT bool rdstream_collect_str(RDStream* self, usize n,
-                                        const char** v);
-REDASM_EXPORT bool rdstream_collect_wstrz(RDStream* self, const char** v);
-REDASM_EXPORT bool rdstream_collect_wstr(RDStream* self, usize n,
-                                         const char** v);

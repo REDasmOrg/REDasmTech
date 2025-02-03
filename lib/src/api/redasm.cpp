@@ -46,11 +46,6 @@ void rd_deinit() {
     redasm::pm::destroy();
 }
 
-void rd_destroy(void* obj) {
-    spdlog::trace("rd_destroy({})", fmt::ptr(obj));
-    delete reinterpret_cast<redasm::Object*>(obj);
-}
-
 void rd_setloglevel(RDLogLevel l) {
     spdlog::trace("rd_setloglevel('{}')", static_cast<int>(l));
 
