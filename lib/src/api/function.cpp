@@ -1,4 +1,5 @@
 #include "../context.h"
+#include "../memory/memory.h"
 #include "../state.h"
 #include "marshal.h"
 #include <algorithm>

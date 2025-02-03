@@ -85,8 +85,6 @@ REDASM_EXPORT void rd_status(const char* s);
 REDASM_EXPORT void rd_select(const RDTestResult* tr);
 REDASM_EXPORT void rd_discard(void);
 REDASM_EXPORT usize rd_getsegments(const RDSegment** segments);
-REDASM_EXPORT usize rd_getmemory(const RDByte** data);
-REDASM_EXPORT bool rd_getbyte(usize idx, RDByte* b);
 REDASM_EXPORT RDBuffer* rd_getfile(void);
 REDASM_EXPORT const char* rd_rendertext(RDAddress address);
 REDASM_EXPORT bool rd_tooffset(RDAddress address, RDOffset* offset);
@@ -97,7 +95,6 @@ REDASM_EXPORT usize rd_getentries(RDAddress** entries);
 REDASM_EXPORT bool rd_tick(const RDWorkerStatus** s);
 
 REDASM_EXPORT void rd_addsearchpath(const char* path);
-REDASM_EXPORT RDBuffer* rd_loadfile(const char* filepath);
 REDASM_EXPORT usize rd_test(RDBuffer* buffer, RDTestResult** result);
 REDASM_EXPORT void rd_disassemble(void);
 REDASM_EXPORT usize rd_getproblems(const RDProblem** problems);

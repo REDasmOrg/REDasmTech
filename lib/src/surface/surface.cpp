@@ -2,6 +2,7 @@
 #include "../api/marshal.h"
 #include "../builtins/processor.h"
 #include "../context.h"
+#include "../memory/mbyte.h"
 #include "../memory/memory.h"
 #include "../state.h"
 #include "../typing/base.h"
@@ -473,13 +474,13 @@ void Surface::update_history(History& history) const {
         history.emplace_front(hitem);
 }
 
-void Surface::insert_path(RDByte b, int fromrow, int torow) const {
+void Surface::insert_path(RDMByte b, int fromrow, int torow) const {
     if(fromrow == torow) return;
 
     if(auto it = m_done.emplace(fromrow, torow); !it.second) return;
 
     if(fromrow > torow) { // Loop
-        if(rdbyte_hasflag(&b, BF_FLOW)) {
+        if(mbyte::has_flag(b, BF_FLOW)) {
             m_path.push_back(
                 RDSurfacePath{fromrow, torow, THEME_GRAPHEDGELOOPCOND});
         }
@@ -489,7 +490,7 @@ void Surface::insert_path(RDByte b, int fromrow, int torow) const {
         }
     }
     else {
-        if(rdbyte_hasflag(&b, BF_FLOW))
+        if(mbyte::has_flag(b, BF_FLOW))
             m_path.push_back(RDSurfacePath{fromrow, torow, THEME_SUCCESS});
         else
             m_path.push_back(RDSurfacePath{fromrow, torow, THEME_GRAPHEDGE});
@@ -557,19 +558,17 @@ void Surface::render_range(LIndex start, usize n) {
 void Surface::render_hexdump(const ListingItem& item) {
     static constexpr usize HEX_WIDTH = 16;
 
-    const RDSegment* seg =
-        state::context->program.find_segment(item.address);
+    const RDSegment* seg = state::context->program.find_segment(item.address);
     assume(seg);
     usize c = 0;
     m_renderer->new_row(item);
 
     for(RDAddress addr = item.start_address; addr < item.end_address;
         addr++, c += 3) {
-        RDByte mb = memory::get_mbyte(seg, addr);
-        u8 b;
+        RDMByte mb = memory::get_mbyte(seg, addr);
 
-        if(rdbyte_getbyte(&mb, &b))
-            m_renderer->chunk(utils::to_hex(b));
+        if(mbyte::has_byte(mb))
+            m_renderer->chunk(utils::to_hex(mbyte::get_byte(mb)));
         else
             m_renderer->nop("??");
 
@@ -583,10 +582,10 @@ void Surface::render_hexdump(const ListingItem& item) {
 
     for(RDAddress addr = item.start_address; addr < item.end_address;
         addr++, c++) {
-        RDByte mb = memory::get_mbyte(seg, addr);
-        u8 b;
+        RDMByte mb = memory::get_mbyte(seg, addr);
 
-        if(rdbyte_getbyte(&mb, &b)) {
+        if(mbyte::has_byte(mb)) {
+            u8 b = mbyte::get_byte(mb);
             std::string s{std::isprint(b) ? static_cast<char>(b) : '.'};
             m_renderer->chunk(s);
         }
@@ -603,11 +602,10 @@ void Surface::render_fill(const ListingItem& item) {
     assume(seg);
 
     m_renderer->new_row(item).chunk(".fill", THEME_FUNCTION).ws();
-    RDByte mb = memory::get_mbyte(seg, item.address);
-    u8 b;
+    RDMByte mb = memory::get_mbyte(seg, item.address);
 
-    if(rdbyte_getbyte(&mb, &b))
-        m_renderer->chunk(utils::to_hex(b), THEME_CONSTANT);
+    if(mbyte::has_byte(mb))
+        m_renderer->chunk(utils::to_hex(mbyte::get_byte(mb)), THEME_CONSTANT);
     else
         m_renderer->chunk("??", THEME_NOP);
 
@@ -772,8 +770,7 @@ void Surface::render_type(const ListingItem& item) {
 void Surface::render_comment(const ListingItem& item) {
     if(m_renderer->has_flag(SURFACE_NOCOMMENTS)) return;
 
-    const RDSegment* seg =
-        state::context->program.find_segment(item.address);
+    const RDSegment* seg = state::context->program.find_segment(item.address);
     assume(seg);
 
     if(!memory::has_flag(seg, item.address, BF_COMMENT)) return;

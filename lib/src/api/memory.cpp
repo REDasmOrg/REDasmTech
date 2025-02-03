@@ -11,7 +11,7 @@ namespace {
 #define return_getvalue(T, v, address)                                         \
     const redasm::Context* ctx = redasm::state::context;                       \
     if(!ctx) return false;                                                     \
-    if(const RDSegment* seg = ctx->program.find_segment(address); seg) {    \
+    if(const RDSegment* seg = ctx->program.find_segment(address); seg) {       \
         auto res = redasm::memory::get_##T(seg, address);                      \
         res.map([&](const T& x) {                                              \
             if(v) *(v) = x;                                                    \
@@ -23,7 +23,7 @@ namespace {
 #define return_getvalue_b(T, v, address, b)                                    \
     const redasm::Context* ctx = redasm::state::context;                       \
     if(!ctx) return false;                                                     \
-    if(const RDSegment* seg = ctx->program.find_segment(address); seg) {    \
+    if(const RDSegment* seg = ctx->program.find_segment(address); seg) {       \
         auto res = redasm::memory::get_##T(seg, address, b);                   \
         res.map([&](const T& x) {                                              \
             if(v) *(v) = x;                                                    \

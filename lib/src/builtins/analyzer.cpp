@@ -1,5 +1,6 @@
 #include "analyzer.h"
 #include "../context.h"
+#include "../memory/memory.h"
 #include "../plugins/pluginmanager.h"
 #include "../state.h"
 #include "../utils/utils.h"

@@ -10,7 +10,7 @@ RD_HANDLE(RDRenderer);
 typedef struct RDRendererParams {
     RDRenderer* renderer;
     RDAddress address;
-    RDByte byte;
+    RDMByte byte;
 
     union {
         usize segment_index;

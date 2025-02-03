@@ -123,12 +123,13 @@ void show_details() {
     // FIXME: if(!rd_addresstoindex(address, &index)) return;
     return;
 
-    const RDByte* bytes;
-    usize nbytes = rd_getmemory(&bytes);
+    const RDMByte* bytes;
+    // usize nbytes = rd_getmemory(&bytes);
 
-    if(index >= nbytes) return;
+    // if(index >= nbytes) return;
+    return;
 
-    RDByte b = bytes[index];
+    RDMByte b = bytes[index];
 
     RDOffset offset;
     bool hasoffset = rd_tooffset(address, &offset);
@@ -140,7 +141,7 @@ void show_details() {
 
     RDInstruction instr;
 
-    if(rdbyte_iscode(b) && rd_decode(address, &instr)) {
+    if(rdmbyte_iscode(b) && rd_decode(address, &instr)) {
         QString strinstr = INSTR_TEMPLATE.arg(rd_tohex(instr.address))
                                .arg(rd_tohex(instr.id))
                                .arg(instrfeatures_tostring(&instr))

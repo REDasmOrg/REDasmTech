@@ -1,6 +1,4 @@
 #include "../utils/utils.h"
-#include "../context.h"
-#include "../state.h"
 #include <redasm/utils.h>
 
 namespace {

@@ -1,6 +1,8 @@
 #include "emulator.h"
 #include "../api/marshal.h"
 #include "../context.h"
+#include "../error.h"
+#include "../memory/memory.h"
 #include "../state.h"
 
 namespace redasm {
@@ -177,8 +179,7 @@ u32 Emulator::tick() {
     return instr.length;
 }
 
-void Emulator::execute_delayslots(RDSegment* seg,
-                                  const RDInstruction& instr) {
+void Emulator::execute_delayslots(RDSegment* seg, const RDInstruction& instr) {
     *this->dslotinstr = instr;
 
     // Continue through delay slot(s)

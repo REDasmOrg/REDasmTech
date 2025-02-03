@@ -1,5 +1,6 @@
 #include "stringfinder.h"
 #include "../context.h"
+#include "../memory/mbyte.h"
 #include "../memory/memory.h"
 #include "../state.h"
 #include "../typing/base.h"
@@ -79,8 +80,8 @@ bool validate_string(std::string_view s) {
 
 template<typename ToAsciiCallback>
 std::pair<bool, RDStringResult>
-categorize_as(const RDSegment* seg, RDAddress address,
-              std::string_view tname, ToAsciiCallback cb) {
+categorize_as(const RDSegment* seg, RDAddress address, std::string_view tname,
+              ToAsciiCallback cb) {
     g_tempstr.clear();
     char ch{};
 
@@ -121,12 +122,13 @@ tl::optional<RDStringResult> classify(RDAddress address) {
 
     if(usize r = seg->end - address; r < sizeof(u16)) return tl::nullopt;
 
-    RDByte mb1 = memory::get_mbyte(seg, address);
-    RDByte mb2 = memory::get_mbyte(seg, address + 1);
+    RDMByte mb1 = memory::get_mbyte(seg, address);
+    RDMByte mb2 = memory::get_mbyte(seg, address + 1);
 
-    u8 b1, b2;
-    if(!rdbyte_getbyte(&mb1, &b1) || !rdbyte_getbyte(&mb2, &b2))
-        return tl::nullopt;
+    if(!mbyte::has_byte(mb1) || !mbyte::has_byte(mb2)) return tl::nullopt;
+
+    u8 b1 = mbyte::get_byte(mb1);
+    u8 b2 = mbyte::get_byte(mb2);
 
     if(stringfinder::is_ascii(b1) && !b2) {
         auto [ok, c] = stringfinder::categorize_as(

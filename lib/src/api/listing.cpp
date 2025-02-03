@@ -1,5 +1,6 @@
 #include "../listing.h"
 #include "../context.h"
+#include "../error.h"
 #include "../memory/memory.h"
 #include "../state.h"
 #include "../typing/base.h"

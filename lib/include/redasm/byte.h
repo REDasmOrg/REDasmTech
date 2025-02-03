@@ -3,9 +3,9 @@
 #include <redasm/common.h>
 #include <redasm/types.h>
 
-typedef u32 RDByte;
+typedef u32 RDMByte;
 
-typedef enum RDByteFlags {
+typedef enum RDMByteFlags {
     // Internal Use
     BF_MBYTE = 0x000000ff, // Mask for byte extraction
     BF_MUNKN = 0x8c000000, // Mask for unknown flags
@@ -44,15 +44,17 @@ typedef enum RDByteFlags {
     BF_START = 1U << 29, // Start of Range
     BF_END = 1U << 30,   // End of Range
     BF_CONT = 1U << 31,  // Continuation of Range
-} RDByteFlags;
+} RDMByteFlags;
 
-REDASM_EXPORT bool rdbyte_isunknown(const RDByte* self);
-REDASM_EXPORT bool rdbyte_iscode(RDByte self);
-REDASM_EXPORT bool rdbyte_isdata(RDByte self);
-REDASM_EXPORT bool rdbyte_hascommon(const RDByte* self);
-REDASM_EXPORT bool rdbyte_hasflag(const RDByte* self, usize f);
-REDASM_EXPORT bool rdbyte_hasbyte(const RDByte* self);
-REDASM_EXPORT bool rdbyte_getbyte(const RDByte* self, u8* b);
-REDASM_EXPORT void rdbyte_setflag(RDByte* self, u32 f, bool s);
-REDASM_EXPORT void rdbyte_setbyte(RDByte* self, u8 b);
-REDASM_EXPORT void rdbyte_clear(RDByte* self);
+REDASM_EXPORT bool rdmbyte_isunknown(RDMByte self);
+REDASM_EXPORT bool rdmbyte_iscode(RDMByte self);
+REDASM_EXPORT bool rdmbyte_isdata(RDMByte self);
+REDASM_EXPORT bool rdmbyte_hascommon(RDMByte self);
+REDASM_EXPORT bool rdmbyte_hasflag(RDMByte self, usize f);
+REDASM_EXPORT bool rdmbyte_hasbyte(RDMByte self);
+REDASM_EXPORT bool rdmbyte_getbyte(RDMByte self, u8* b);
+REDASM_EXPORT void rdmbyte_setflag(RDMByte* self, u32 f, bool s);
+REDASM_EXPORT void rdmbyte_set(RDMByte* self, u32 f);
+REDASM_EXPORT void rdmbyte_unset(RDMByte* self, u32 f);
+REDASM_EXPORT void rdmbyte_setbyte(RDMByte* self, u8 b);
+REDASM_EXPORT void rdmbyte_clear(RDMByte* self);

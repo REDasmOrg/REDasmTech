@@ -1,93 +1,49 @@
 #include "memory.h"
+#include "../error.h"
 #include "../state.h"
+#include "mbyte.h"
 
-namespace redasm {
-
-namespace memory {
+namespace redasm::memory {
 
 namespace {
 
 tl::optional<std::pair<MIndex, MIndex>> find_range(const RDBuffer* self,
                                                    usize idx) {
     assume(self);
-    if(idx >= self->len) return tl::nullopt;
+    if(idx >= self->length) return tl::nullopt;
 
     // Single item range
-    if(rdbyte_hasflag(&self->m_data[idx], BF_START | BF_END))
+    if(mbyte::has_flag(self->m_data[idx], BF_START | BF_END))
         return std::make_pair(idx, idx);
 
     usize rstart = idx, rend = idx;
 
     // Traverse backward to find the range start
-    while(rstart > 0 && rdbyte_hasflag(&self->m_data[rstart], BF_CONT))
+    while(rstart > 0 && mbyte::has_flag(self->m_data[rstart], BF_CONT))
         rstart--;
 
-    if(rstart >= self->len || !rdbyte_hasflag(&self->m_data[rstart], BF_START))
+    if(rstart >= self->length ||
+       !mbyte::has_flag(self->m_data[rstart], BF_START))
         return tl::nullopt; // Not part of a valid range
 
     // Traverse forward to find the range end
-    while(rend < self->len || (rdbyte_hasflag(&self->m_data[rend], BF_START) ||
-                               (rdbyte_hasflag(&self->m_data[rend], BF_CONT) &&
-                                !rdbyte_hasflag(&self->m_data[rend], BF_END))))
+    while(rend < self->length ||
+          (mbyte::has_flag(self->m_data[rend], BF_START) ||
+           (mbyte::has_flag(self->m_data[rend], BF_CONT) &&
+            !mbyte::has_flag(self->m_data[rend], BF_END))))
         rend++;
 
-    if(rend >= self->len || !rdbyte_hasflag(&self->m_data[rend], BF_END))
+    if(rend >= self->length || !mbyte::has_flag(self->m_data[rend], BF_END))
         return tl::nullopt; // Not part of a valid range
 
     assume(rstart <= rend);
     return std::make_pair(rstart, rend);
 }
 
-tl::optional<std::string> get_str_impl(const RDSegment* self,
-                                       RDAddress address,
-                                       typing::TypeName tname) {
-    if(address >= self->end) return tl::nullopt;
+tl::optional<RDValue> get_type_impl(const RDSegment* self, RDAddress& address,
+                                    RDType t);
 
-    const typing::TypeDef* t = state::get_types().get_typedef(tname);
-    assume(t);
-
-    std::string s;
-
-    for(RDAddress addr = address; addr < self->end; addr += t->size) {
-        if(auto v = memory::get_type(self, addr, tname); v) {
-            if(!v->ch_v) // Stop at terminator
-                break;
-
-            s += v->ch_v;
-        }
-        else
-            break;
-    }
-
-    return s;
-}
-
-tl::optional<std::string> get_str_impl(const RDSegment* self,
-                                       RDAddress address, usize n,
-                                       std::string_view tname) {
-    std::string s;
-    s.reserve(n);
-
-    const typing::TypeDef* t = state::get_types().get_typedef(tname);
-    assume(t);
-
-    const usize ENDADDR = std::min(address + n, self->end);
-
-    for(RDAddress addr = address; addr < ENDADDR; addr += t->size) {
-        if(auto v = memory::get_type(self, addr, tname); v)
-            s += v->ch_v;
-        else
-            break;
-    }
-
-    return s;
-}
-
-tl::optional<RDValue> get_type_impl(const RDSegment* self,
-                                    RDAddress& address, RDType t);
-
-tl::optional<RDValue> get_type_impl(const RDSegment* self,
-                                    RDAddress& address,
+tl::optional<RDValue> get_type_impl(const RDSegment* self, RDAddress& address,
                                     const typing::TypeDef* tdef) {
     RDValue v = rdvalue_create();
     v.type = tdef->to_type();
@@ -250,8 +206,8 @@ tl::optional<RDValue> get_type_impl(const RDSegment* self,
     return v;
 }
 
-tl::optional<RDValue> get_type_impl(const RDSegment* self,
-                                    RDAddress& address, RDType t) {
+tl::optional<RDValue> get_type_impl(const RDSegment* self, RDAddress& address,
+                                    RDType t) {
     const typing::TypeDef* td = state::get_types().get_typedef(t);
     assume(td);
 
@@ -290,52 +246,36 @@ tl::optional<RDAddress> get_next(const RDSegment* self, RDAddress address) {
     return tl::nullopt;
 }
 
-usize read(const RDSegment* self, RDAddress address, void* dst, usize n) {
-    if(!dst || (address + n > self->end)) return 0;
-
-    usize i = 0;
-    auto* p = reinterpret_cast<u8*>(dst);
-
-    for(; i < n; i++, p++) {
-        if(auto b = memory::get_byte(self, address + i); b)
-            *p = *b;
-        else
-            break;
-    }
-
-    return i;
-}
-
 bool is_unknown(const RDSegment* self, RDAddress address) {
-    return rdbyte_isunknown(&self->mem.m_data[address - self->start]);
+    return mbyte::is_unknown(self->mem.m_data[address - self->start]);
 }
 
 bool has_common(const RDSegment* self, RDAddress address) {
-    return rdbyte_hascommon(&self->mem.m_data[address - self->start]);
+    return mbyte::has_common(self->mem.m_data[address - self->start]);
 }
 
 bool has_byte(const RDSegment* self, RDAddress address) {
-    return rdbyte_hasbyte(&self->mem.m_data[address - self->start]);
+    return mbyte::has_byte(self->mem.m_data[address - self->start]);
 }
 
 bool has_flag(const RDSegment* self, RDAddress address, u32 f) {
-    return rdbyte_hasflag(&self->mem.m_data[address - self->start], f);
+    return mbyte::has_flag(self->mem.m_data[address - self->start], f);
 }
 
 void set_flag(RDSegment* self, RDAddress address, u32 f, bool b) {
-    rdbyte_setflag(&self->mem.m_data[address - self->start], f, b);
+    mbyte::set_flag(&self->mem.m_data[address - self->start], f, b);
 }
 
 void clear(RDSegment* self, RDAddress address) {
-    rdbyte_clear(&self->mem.m_data[address - self->start]);
+    mbyte::clear(&self->mem.m_data[address - self->start]);
 }
 
 void set_n(RDSegment* self, RDAddress address, usize n, u32 flags) {
     assume(self);
     usize idx = address - self->start;
-    if(idx >= self->mem.len || !n) return;
+    if(idx >= self->mem.length || !n) return;
 
-    usize end = std::min(idx + n, self->mem.len);
+    usize end = std::min(idx + n, self->mem.length);
     memory::set_flag(self, idx, flags | BF_START);
 
     for(usize i = idx + 1; i < end - 1; i++)
@@ -348,7 +288,7 @@ void set_n(RDSegment* self, RDAddress address, usize n, u32 flags) {
 void unset_n(RDSegment* self, RDAddress address, usize n) {
     assume(self);
     usize idx = address - self->start;
-    usize end = std::min(idx + n, self->mem.len);
+    usize end = std::min(idx + n, self->mem.length);
 
     for(usize i = idx; i < end; i++) {
         if(memory::has_flag(self, i, BF_START) ||
@@ -368,154 +308,10 @@ void unset_n(RDSegment* self, RDAddress address, usize n) {
     }
 }
 
-RDByte get_mbyte(const RDSegment* self, RDAddress address) {
+RDMByte get_mbyte(const RDSegment* self, RDAddress address) {
     usize idx = address - self->start;
-    if(idx < self->mem.len) return self->mem.m_data[idx];
+    if(idx < self->mem.length) return self->mem.m_data[idx];
     except("memory::get_byte(): address out of range");
 }
 
-tl::optional<u8> get_byte(const RDSegment* self, RDAddress address) {
-    u8 b;
-    if((address >= self->start && address < self->end) &&
-       self->mem.get_byte(&self->mem, address - self->start, &b))
-        return b;
-
-    return tl::nullopt;
-}
-
-tl::optional<RDValue> get_type(const RDSegment* self, RDAddress address,
-                               typing::FullTypeName tn) {
-    typing::ParsedType pt = state::get_types().parse(tn);
-    return memory::get_type(self, address, pt.to_type());
-}
-
-tl::optional<RDValue> get_type(const RDSegment* self, RDAddress address,
-                               RDType t) {
-    return memory::get_type_impl(self, address, t);
-}
-
-tl::optional<std::string> get_str(const RDSegment* self, RDAddress address) {
-    return memory::get_str_impl(self, address, typing::names::CHAR);
-}
-
-tl::optional<std::string> get_str(const RDSegment* self, RDAddress address,
-                                  usize n) {
-    return memory::get_str_impl(self, address, n, typing::names::CHAR);
-}
-
-tl::optional<std::string> get_wstr(const RDSegment* self,
-                                   RDAddress address) {
-    return memory::get_str_impl(self, address, typing::names::WCHAR);
-}
-
-tl::optional<std::string> get_wstr(const RDSegment* self, RDAddress address,
-                                   usize n) {
-    return memory::get_str_impl(self, address, n, typing::names::WCHAR);
-}
-
-tl::optional<bool> get_bool(const RDSegment* self, RDAddress address) {
-    auto b = memory::get_byte(self, address);
-    if(b) return !!(*b);
-    return tl::nullopt;
-}
-
-tl::optional<char> get_char(const RDSegment* self, RDAddress address) {
-    auto b = memory::get_byte(self, address);
-    if(b) return static_cast<char>(*b);
-    return tl::nullopt;
-}
-
-tl::optional<char> get_wchar(const RDSegment* self, RDAddress address) {
-    auto b = memory::get_u16(self, address, false);
-    if(b) return static_cast<char>(*b & 0xFF);
-    return tl::nullopt;
-}
-
-} // namespace memory
-
-tl::optional<u8> Memory::get_byte(usize idx) const {
-    if(idx >= m_buffer.size()) return tl::nullopt;
-
-    Byte b = m_buffer[idx];
-    if(b.has_byte()) return b.byte();
-    return tl::nullopt;
-}
-
-void Memory::unset_n(MIndex idx, usize len) {
-    MIndex end = std::min(idx + len, m_buffer.size());
-
-    for(MIndex i = idx; i < end; i++) {
-        if(m_buffer[i].is_start() || m_buffer[i].is_cont()) {
-            auto r = this->find_range(i);
-            assume(r);
-
-            // Unset the overlapping range
-            for(MIndex j = r->first; j <= r->second; j++)
-                m_buffer[j].clear();
-
-            // Skip to the end of the cleared range
-            i = r->second;
-        }
-        else
-            m_buffer[i].clear();
-    }
-}
-
-void Memory::set_flags(MIndex idx, u32 flags, bool b) {
-    if(idx < m_buffer.size()) m_buffer.at(idx).set_flag(flags, b);
-}
-
-void Memory::set_n(MIndex idx, usize len, u32 flags) {
-    if(idx >= m_buffer.size() || !len) return;
-
-    MIndex end = std::min(idx + len, m_buffer.size());
-    m_buffer[idx].set(flags | BF_START);
-
-    for(MIndex i = idx + 1; i < end - 1; i++)
-        m_buffer[i].set(flags | BF_CONT);
-
-    if(len > 1) m_buffer[end - 1].set(flags | BF_CONT);
-
-    m_buffer[end - 1].set(flags | BF_END);
-}
-
-usize Memory::get_length(MIndex idx) const {
-    if(auto r = this->find_range(idx); r) return r->second - r->first + 1;
-    return 0;
-}
-
-tl::optional<MIndex> Memory::get_next(MIndex idx) const {
-    if(idx >= this->size()) return tl::nullopt;
-    if(usize len = this->get_length(idx); len > 0) return idx + len;
-    return tl::nullopt;
-}
-
-tl::optional<std::pair<MIndex, MIndex>> Memory::find_range(MIndex idx) const {
-    if(idx >= m_buffer.size()) return tl::nullopt;
-
-    // Single item range
-    if(m_buffer[idx].has(BF_START | BF_END)) return std::make_pair(idx, idx);
-
-    usize rstart = idx, rend = idx;
-
-    // Traverse backward to find the range start
-    while(rstart > 0 && m_buffer[rstart].is_cont())
-        rstart--;
-
-    if(rstart >= m_buffer.size() || !m_buffer[rstart].is_start())
-        return tl::nullopt; // Not part of a valid range
-
-    // Traverse forward to find the range end
-    while(rend < m_buffer.size() &&
-          (m_buffer[rend].is_start() ||
-           (m_buffer[rend].is_cont() && !m_buffer[rend].is_end())))
-        rend++;
-
-    if(rend >= m_buffer.size() || !m_buffer[rend].is_end())
-        return tl::nullopt; // Not part of a valid range
-
-    assume(rstart <= rend);
-    return std::make_pair(rstart, rend);
-}
-
-} // namespace redasm
+} // namespace redasm::memory

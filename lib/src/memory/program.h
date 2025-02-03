@@ -1,9 +1,7 @@
 #pragma once
 
-#include "abstractbuffer.h"
-#include "memory.h"
-#include <memory>
 #include <redasm/segment.h>
+#include <string_view>
 #include <tl/optional.hpp>
 #include <vector>
 
@@ -32,10 +30,6 @@ struct Program {
     std::vector<RDSegment> segments;
     std::vector<FileMapping> mappings;
     RDBuffer file;
-
-    // OLD
-    std::shared_ptr<AbstractBuffer> file_old;
-    std::unique_ptr<Memory> memory_old;
 };
 
 } // namespace redasm

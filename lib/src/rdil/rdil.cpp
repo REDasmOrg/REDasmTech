@@ -2,6 +2,7 @@
 #include "../api/marshal.h"
 #include "../context.h"
 #include "../error.h"
+#include "../memory/memory.h"
 #include "../state.h"
 #include "../surface/renderer.h"
 #include <limits>
@@ -394,8 +395,7 @@ void generate(const Function& f, ILExprList& res, usize maxn) {
             const RDSegment* seg = ctx->program.find_segment(address);
             assume(seg);
 
-            if(auto nextaddr = redasm::memory::get_next(seg, address);
-               nextaddr) {
+            if(auto nextaddr = memory::get_next(seg, address); nextaddr) {
                 assume(*nextaddr > address);
                 address = *nextaddr;
             }

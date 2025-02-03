@@ -1,6 +1,7 @@
 #include "context.h"
 #include "api/marshal.h"
 #include "error.h"
+#include "memory/memory.h"
 #include "plugins/pluginmanager.h"
 #include "state.h"
 #include "typing/base.h"
@@ -84,7 +85,8 @@ tl::optional<uptr> Context::get_userdata(const std::string& k) const {
 bool Context::try_load(const RDLoaderPlugin* plugin) {
     assume(plugin);
 
-    m_database = std::make_unique<Database>(plugin->id, this->program.file.src);
+    m_database =
+        std::make_unique<Database>(plugin->id, this->program.file.source);
     this->loaderplugin = plugin;
     this->loader = pm::create_instance(plugin);
 

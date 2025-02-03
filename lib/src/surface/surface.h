@@ -2,7 +2,6 @@
 
 #include "../disasm/function.h"
 #include "../listing.h"
-#include "../memory/byte.h"
 #include "../utils/object.h"
 #include "renderer.h"
 #include <deque>
@@ -73,7 +72,7 @@ private:
     const ListingItem& get_listing_item(const SurfaceRow& sfrow) const;
     int calculate_index(RDAddress address) const;
     void update_history(History& history) const;
-    void insert_path(RDByte b, int fromrow, int torow) const;
+    void insert_path(RDMByte b, int fromrow, int torow) const;
     void render_finalize();
     void render_range(LIndex start, usize n);
     void render_hexdump(const ListingItem& item);

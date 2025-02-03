@@ -22,7 +22,7 @@ public:
     qint64 lastIndexOf(const QByteArray& ba, qint64 from) override;
 
 private:
-    const RDByte* m_bytes;
+    const RDMByte* m_bytes;
     RDMemoryInfo m_meminfo;
     size_t m_size;
 };

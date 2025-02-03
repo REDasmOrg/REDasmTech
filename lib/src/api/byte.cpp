@@ -1,62 +1,68 @@
-#include "marshal.h"
+#include "../memory/mbyte.h"
 #include <redasm/byte.h>
 
-bool rdbyte_isunknown(const RDByte* self) {
-    spdlog::trace("rdbyte_isunknown({})", fmt::ptr(self));
-    return self && ((*self & BF_MUNKN) == BF_UNKNOWN);
+bool rdmbyte_isunknown(RDMByte self) {
+    spdlog::trace("rdmbyte_isunknown({:#04x})", self);
+    return redasm::mbyte::is_unknown(self);
 }
 
-bool rdbyte_iscode(RDByte self) {
-    spdlog::trace("rdbyte_iscode({:#04x})", self);
-    return redasm::api::from_c(self).is_code();
+bool rdmbyte_iscode(RDMByte self) {
+    spdlog::trace("rdmbyte_iscode({:#04x})", self);
+    return redasm::mbyte::is_code(self);
 }
 
-bool rdbyte_isdata(RDByte self) {
-    spdlog::trace("rdbyte_isdata({:#04x})", self);
-    return redasm::api::from_c(self).is_data();
+bool rdmbyte_isdata(RDMByte self) {
+    spdlog::trace("rdmbyte_isdata({:#04x})", self);
+    return redasm::mbyte::is_data(self);
 }
 
-bool rdbyte_hascommon(const RDByte* self) {
-    return rdbyte_hasflag(self, BF_MCOMM);
+bool rdmbyte_hascommon(RDMByte self) {
+    spdlog::trace("rdmbyte_hascommon({:#04x})", self);
+    return redasm::mbyte::has_common(self);
 }
 
-bool rdbyte_hasflag(const RDByte* self, usize f) {
-    spdlog::trace("rdbyte_hasflag({}, {:#04x})", fmt::ptr(self), f);
-    return self && ((*self & f) == f);
+bool rdmbyte_hasflag(RDMByte self, usize f) {
+    spdlog::trace("rdmbyte_hasflag({}, {:#04x})", self, f);
+    return redasm::mbyte::has_flag(self, f);
 }
 
-bool rdbyte_hasbyte(const RDByte* self) {
-    spdlog::trace("rdbyte_hasbyte({})", fmt::ptr(self));
-    return rdbyte_hasflag(self, BF_BYTE);
+bool rdmbyte_hasbyte(RDMByte self) {
+    spdlog::trace("rdmbyte_hasbyte({:#04x})", self);
+    return redasm::mbyte::has_byte(self);
 }
 
-bool rdbyte_getbyte(const RDByte* self, u8* b) {
-    spdlog::trace("rdbyte_hasbyte({}, {})", fmt::ptr(self), fmt::ptr(b));
+bool rdmbyte_getbyte(RDMByte self, u8* b) {
+    spdlog::trace("rdmbyte_hasbyte({:#04x}, {})", self, fmt::ptr(b));
 
-    if(rdbyte_hasbyte(self)) {
-        if(b) *b = static_cast<u8>(*self & 0xFF);
+    if(redasm::mbyte::has_byte(self)) {
+        *b = redasm::mbyte::get_byte(self);
         return true;
     }
 
     return false;
 }
 
-void rdbyte_setflag(RDByte* self, u32 f, bool s) {
-    if(!self) return;
-
-    if(s)
-        *self |= f;
-    else
-        *self &= ~f;
+void rdmbyte_setflag(RDMByte* self, u32 f, bool s) {
+    spdlog::trace("rdmbyte_hasbyte({}, {:#04x}, {})", fmt::ptr(self), f, s);
+    redasm::mbyte::set_flag(self, f, s);
 }
 
-void rdbyte_setbyte(RDByte* self, u8 b) {
-    if(self) {
-        *self &= ~BF_MBYTE;
-        rdbyte_setflag(self, (b | BF_BYTE), true);
-    }
+void rdmbyte_set(RDMByte* self, u32 f) {
+    spdlog::trace("rdmbyte_set({}, {:#04x})", fmt::ptr(self), f);
+    redasm::mbyte::set(self, f);
 }
 
-void rdbyte_clear(RDByte* self) {
-    if(self) *self &= BF_MMASK;
+void rdmbyte_unset(RDMByte* self, u32 f) {
+    spdlog::trace("rdmbyte_unset({}, {:#04x})", fmt::ptr(self), f);
+    redasm::mbyte::unset(self, f);
+}
+
+void rdmbyte_setbyte(RDMByte* self, u8 b) {
+    spdlog::trace("rdmbyte_setbyte({}, {})", fmt::ptr(self), b);
+    redasm::mbyte::set_byte(self, b);
+}
+
+void rdmbyte_clear(RDMByte* self) {
+    spdlog::trace("rdmbyte_clear({})", fmt::ptr(self));
+    redasm::mbyte::clear(self);
 }

@@ -1,250 +1,193 @@
-#include "../memory/stream.h"
 #include "../context.h"
-#include "../memory/memorystream.h"
+#include "../memory/buffer.h"
 #include "../state.h"
 #include "../typing/base.h"
-#include "marshal.h"
 #include <redasm/stream.h>
 #include <spdlog/spdlog.h>
 
-RDStream* rdstream_createfromfile() {
-    spdlog::trace("rdstream_createfromfile()");
-    return redasm::api::to_c(new redasm::Stream());
-}
-
-RDStream* rdstream_createfrommemory() {
-    spdlog::trace("rdstream_createfrommemory()");
-    return redasm::api::to_c(new redasm::MemoryStream());
+RDStream rdstream_create(RDBuffer* buffer) {
+    spdlog::trace("rdstream_create({})", fmt::ptr(buffer));
+    return {.buffer = buffer, .position = 0};
 }
 
 usize rdstream_seek(RDStream* self, usize off) {
     spdlog::trace("rdstream_seek({}, {})", fmt::ptr(self), off);
-    return redasm::api::from_c(self)->seek(off);
+
+    usize oldpos = self->position;
+    self->position = std::min(off, self->buffer->length);
+    return oldpos;
 }
 
 usize rdstream_move(RDStream* self, isize off) {
     spdlog::trace("rdstream_move({}, {})", fmt::ptr(self), off);
-    return redasm::api::from_c(self)->move(off);
-}
-
-usize rdstream_getpos(const RDStream* self) {
-    spdlog::trace("rdstream_getpos({})", fmt::ptr(self));
-    return redasm::api::from_c(self)->position;
+    return rdstream_seek(self, self->position + off);
 }
 
 void rdstream_rewind(RDStream* self) {
     spdlog::trace("rdstream_rewind({})", fmt::ptr(self));
-    redasm::api::from_c(self)->rewind();
+    self->position = 0;
 }
 
-bool rdstream_peek_type(RDStream* self, const char* tname, RDValue* v) {
+bool rdstream_peek_type(const RDStream* self, const char* tname, RDValue* v) {
     spdlog::trace("rdstream_peek_type({}, '{}', {})", fmt::ptr(self), tname,
                   fmt::ptr(v));
     if(!tname) return false;
 
-    auto res = redasm::api::from_c(self)->peek_type(tname);
-
-    res.map([&](RDValue& x) {
+    auto res = redasm::buffer::get_type(self->buffer, self->position, tname);
+    if(res) {
         if(v)
-            *v = x;
+            *v = *res;
         else
-            rdvalue_destroy(&x);
-    });
-
+            rdvalue_destroy(&res.value());
+    }
     return res.has_value();
 }
 
-bool rdstream_peek_strz(RDStream* self, const char** v) {
+bool rdstream_peek_strz(const RDStream* self, const char** v) {
     spdlog::trace("rdstream_peek_strz({}, {})", fmt::ptr(self), fmt::ptr(v));
     static std::string s;
 
-    auto res = redasm::api::from_c(self)->peek_str();
-    res.map([&](const std::string& x) {
-        s = x;
+    auto res = redasm::buffer::get_str(self->buffer, self->position);
+    if(res) {
+        s = *res;
         if(v) *v = s.c_str();
-    });
-
+    }
     return res.has_value();
 }
 
-bool rdstream_peek_str(RDStream* self, usize n, const char** v) {
+bool rdstream_peek_str(const RDStream* self, usize n, const char** v) {
     spdlog::trace("rdstream_peek_str({}, {}, {})", fmt::ptr(self), n,
                   fmt::ptr(v));
     static std::string s;
 
-    auto res = redasm::api::from_c(self)->peek_str(n);
-    res.map([&](const std::string& x) {
-        s = x;
+    auto res = redasm::buffer::get_str(self->buffer, self->position, n);
+    if(res) {
+        s = *res;
         if(v) *v = s.c_str();
-    });
-
+    }
     return res.has_value();
 }
 
-bool rdstream_peek_wstrz(RDStream* self, const char** v) {
+bool rdstream_peek_wstrz(const RDStream* self, const char** v) {
     spdlog::trace("rdstream_peek_wstrz({}, {})", fmt::ptr(self), fmt::ptr(v));
     static std::string s;
 
-    auto res = redasm::api::from_c(self)->peek_wstr();
-    res.map([&](const std::string& x) {
-        s = x;
+    auto res = redasm::buffer::get_wstr(self->buffer, self->position);
+    if(res) {
+        s = *res;
         if(v) *v = s.c_str();
-    });
-
+    }
     return res.has_value();
 }
 
-bool rdstream_peek_wstr(RDStream* self, usize n, const char** v) {
+bool rdstream_peek_wstr(const RDStream* self, usize n, const char** v) {
     spdlog::trace("rdstream_peek_wstr({}, {}, {})", fmt::ptr(self), n,
                   fmt::ptr(v));
     static std::string s;
 
-    auto res = redasm::api::from_c(self)->peek_wstr(n);
-    res.map([&](const std::string& x) {
-        s = x;
+    auto res = redasm::buffer::get_wstr(self->buffer, self->position, n);
+    if(res) {
+        s = *res;
         if(v) *v = s.c_str();
-    });
-
+    }
     return res.has_value();
 }
 
-bool rdstream_peek_u8(RDStream* self, u8* v) {
+bool rdstream_peek_u8(const RDStream* self, u8* v) {
     spdlog::trace("rdstream_peek_u8({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_u8();
-    res.map([&](u8 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_u8(self->buffer, self->position);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
-bool rdstream_peek_u16(RDStream* self, u16* v) {
+bool rdstream_peek_u16(const RDStream* self, u16* v) {
     spdlog::trace("rdstream_peek_u16({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_u16();
-    res.map([&](u16 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_u16(self->buffer, self->position, false);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
-bool rdstream_peek_u32(RDStream* self, u32* v) {
+bool rdstream_peek_u32(const RDStream* self, u32* v) {
     spdlog::trace("rdstream_peek_u32({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_u32();
-    res.map([&](u32 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_u32(self->buffer, self->position, false);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
-bool rdstream_peek_u64(RDStream* self, u64* v) {
+bool rdstream_peek_u64(const RDStream* self, u64* v) {
     spdlog::trace("rdstream_peek_u64({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_u64();
-    res.map([&](u64 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_u64(self->buffer, self->position, false);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
-bool rdstream_peek_i8(RDStream* self, i8* v) {
+bool rdstream_peek_i8(const RDStream* self, i8* v) {
     spdlog::trace("rdstream_peek_i8({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_i8();
-    res.map([&](i8 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_i8(self->buffer, self->position);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
-bool rdstream_peek_i16(RDStream* self, i16* v) {
+bool rdstream_peek_i16(const RDStream* self, i16* v) {
     spdlog::trace("rdstream_peek_i16({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_i16();
-    res.map([&](i16 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_i16(self->buffer, self->position, false);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
-bool rdstream_peek_i32(RDStream* self, i32* v) {
+bool rdstream_peek_i32(const RDStream* self, i32* v) {
     spdlog::trace("rdstream_peek_i32({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_i32();
-    res.map([&](i32 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_i32(self->buffer, self->position, false);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
-bool rdstream_peek_i64(RDStream* self, i64* v) {
+bool rdstream_peek_i64(const RDStream* self, i64* v) {
     spdlog::trace("rdstream_peek_i64({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_i64();
-    res.map([&](i64 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_i64(self->buffer, self->position, false);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
-bool rdstream_peek_u16be(RDStream* self, u16* v) {
+bool rdstream_peek_u16be(const RDStream* self, u16* v) {
     spdlog::trace("rdstream_peek_u16be({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_u16(true);
-    res.map([&](u16 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_u16(self->buffer, self->position, true);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
-bool rdstream_peek_u32be(RDStream* self, u32* v) {
+bool rdstream_peek_u32be(const RDStream* self, u32* v) {
     spdlog::trace("rdstream_peek_u32be({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_u32(true);
-    res.map([&](u32 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_u32(self->buffer, self->position, true);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
-bool rdstream_peek_u64be(RDStream* self, u64* v) {
+bool rdstream_peek_u64be(const RDStream* self, u64* v) {
     spdlog::trace("rdstream_peek_u64be({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_u64(true);
-    res.map([&](u64 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_u64(self->buffer, self->position, true);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
-bool rdstream_peek_i16be(RDStream* self, i16* v) {
+bool rdstream_peek_i16be(const RDStream* self, i16* v) {
     spdlog::trace("rdstream_peek_i16be({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_i16(true);
-    res.map([&](i16 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_i16(self->buffer, self->position, true);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
-bool rdstream_peek_i32be(RDStream* self, i32* v) {
+bool rdstream_peek_i32be(const RDStream* self, i32* v) {
     spdlog::trace("rdstream_peek_i32be({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_i32(true);
-    res.map([&](i32 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_i32(self->buffer, self->position, true);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
-bool rdstream_peek_i64be(RDStream* self, i64* v) {
+bool rdstream_peek_i64be(const RDStream* self, i64* v) {
     spdlog::trace("rdstream_peek_i64be({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->peek_i64(true);
-    res.map([&](i64 x) {
-        if(v) *v = x;
-    });
-
+    auto res = redasm::buffer::get_i64(self->buffer, self->position, true);
+    if(res && v) *v = *res;
     return res.has_value();
 }
 
@@ -253,27 +196,29 @@ bool rdstream_read_type(RDStream* self, const char* tname, RDValue* v) {
                   fmt::ptr(tname), fmt::ptr(v));
     if(!tname || !v) return false;
 
-    auto res = redasm::api::from_c(self)->read_type(tname);
-    res.map([&](RDValue& x) {
+    usize pos = self->position;
+    auto res = redasm::buffer::get_type(self->buffer, pos, tname, pos);
+    if(res) {
+        self->position = pos;
         if(v)
-            *v = x;
+            *v = *res;
         else
-            rdvalue_destroy(&x);
-    });
-
+            rdvalue_destroy(&res.value());
+    }
     return res.has_value();
 }
 
 bool rdstream_read_strz(RDStream* self, const char** v) {
     spdlog::trace("rdstream_read_strz({}, {})", fmt::ptr(self), fmt::ptr(v));
     static std::string s;
-    auto res = redasm::api::from_c(self)->read_str();
-
-    res.map([&](const std::string& x) {
-        s = x;
-        if(v) *v = s.c_str();
-    });
-
+    auto res = redasm::buffer::get_str(self->buffer, self->position);
+    if(res) {
+        self->position += res->size();
+        if(v) {
+            s = *res;
+            *v = s.c_str();
+        }
+    }
     return res.has_value();
 }
 
@@ -281,26 +226,28 @@ bool rdstream_read_str(RDStream* self, usize n, const char** v) {
     spdlog::trace("rdstream_read_str({}, {}, {})", fmt::ptr(self), n,
                   fmt::ptr(v));
     static std::string s;
-    auto res = redasm::api::from_c(self)->read_str(n);
-
-    res.map([&](const std::string& x) {
-        s = x;
-        if(v) *v = s.c_str();
-    });
-
+    auto res = redasm::buffer::get_str(self->buffer, self->position, n);
+    if(res) {
+        self->position += res->size();
+        if(v) {
+            s = *res;
+            *v = s.c_str();
+        }
+    }
     return res.has_value();
 }
 
 bool rdstream_read_wstrz(RDStream* self, const char** v) {
     spdlog::trace("rdstream_read_wstrz({}, {})", fmt::ptr(self), fmt::ptr(v));
     static std::string s;
-    auto res = redasm::api::from_c(self)->read_wstr();
-
-    res.map([&](const std::string& x) {
-        s = x;
-        if(v) *v = s.c_str();
-    });
-
+    auto res = redasm::buffer::get_wstr(self->buffer, self->position);
+    if(res) {
+        self->position += res->size();
+        if(v) {
+            s = *res;
+            *v = s.c_str();
+        }
+    }
     return res.has_value();
 }
 
@@ -308,155 +255,141 @@ bool rdstream_read_wstr(RDStream* self, usize n, const char** v) {
     spdlog::trace("rdstream_read_wstrz({}, {}, {})", fmt::ptr(self), n,
                   fmt::ptr(v));
     static std::string s;
-    auto res = redasm::api::from_c(self)->read_wstr(n);
-
-    res.map([&](const std::string& x) {
-        s = x;
-        if(v) *v = s.c_str();
-    });
-
+    auto res = redasm::buffer::get_wstr(self->buffer, self->position, n);
+    if(res) {
+        self->position += res->size();
+        if(v) {
+            s = *res;
+            *v = s.c_str();
+        }
+    }
     return res.has_value();
 }
 
 bool rdstream_read_u8(RDStream* self, u8* v) {
     spdlog::trace("rdstream_read_u8({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->read_u8();
-    res.map([&](u8 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_u8(self, v)) {
+        self->position += sizeof(u8);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_read_u16(RDStream* self, u16* v) {
     spdlog::trace("rdstream_read_u16({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->read_u16();
-    res.map([&](u16 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_u16(self, v)) {
+        self->position += sizeof(u16);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_read_u32(RDStream* self, u32* v) {
     spdlog::trace("rdstream_read_u32({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->read_u32();
-    res.map([&](u32 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_u32(self, v)) {
+        self->position += sizeof(u32);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_read_u64(RDStream* self, u64* v) {
     spdlog::trace("rdstream_read_u64({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->read_u64();
-    res.map([&](u64 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_u64(self, v)) {
+        self->position += sizeof(u64);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_read_i8(RDStream* self, i8* v) {
     spdlog::trace("rdstream_read_i8({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->read_i8();
-    res.map([&](i8 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_i8(self, v)) {
+        self->position += sizeof(i8);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_read_i16(RDStream* self, i16* v) {
     spdlog::trace("rdstream_read_i16({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->read_i16();
-    res.map([&](i16 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_i16(self, v)) {
+        self->position += sizeof(i16);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_read_i32(RDStream* self, i32* v) {
     spdlog::trace("rdstream_read_i32({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->read_i32();
-    res.map([&](i32 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_i32(self, v)) {
+        self->position += sizeof(i32);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_read_i64(RDStream* self, i64* v) {
     spdlog::trace("rdstream_read_i64({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->read_i64();
-    res.map([&](i64 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_i64(self, v)) {
+        self->position += sizeof(i64);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_read_u16be(RDStream* self, u16* v) {
     spdlog::trace("rdstream_read_u16be({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->read_u16(true);
-    res.map([&](u16 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_u16be(self, v)) {
+        self->position += sizeof(u16);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_read_u32be(RDStream* self, u32* v) {
     spdlog::trace("rdstream_read_u32be({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->read_u32(true);
-    res.map([&](u32 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_u32be(self, v)) {
+        self->position += sizeof(u32);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_read_u64be(RDStream* self, u64* v) {
     spdlog::trace("rdstream_read_u64be({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->read_u64(true);
-    res.map([&](u64 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_u64be(self, v)) {
+        self->position += sizeof(u64);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_read_i16be(RDStream* self, i16* v) {
     spdlog::trace("rdstream_read_i16be({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->read_i16(true);
-    res.map([&](i16 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_i16be(self, v)) {
+        self->position += sizeof(i16);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_read_i32be(RDStream* self, i32* v) {
     spdlog::trace("rdstream_read_i32be({}, {})", fmt::ptr(self), fmt::ptr(v));
-    auto res = redasm::api::from_c(self)->read_i32(true);
-    res.map([&](i32 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_i32be(self, v)) {
+        self->position += sizeof(i32);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_read_i64be(RDStream* self, i64* v) {
     spdlog::trace("rdstream_read_i64be({}, {})", fmt::ptr(self), fmt::ptr(v));
-
-    auto res = redasm::api::from_c(self)->read_i64(true);
-    res.map([&](i64 x) {
-        if(v) *v = x;
-    });
-
-    return res.has_value();
+    if(rdstream_peek_i64be(self, v)) {
+        self->position += sizeof(i64);
+        return true;
+    }
+    return false;
 }
 
 bool rdstream_collect_type(RDStream* self, const char* tname, RDValue* v) {
@@ -467,18 +400,16 @@ bool rdstream_collect_type(RDStream* self, const char* tname, RDValue* v) {
     redasm::Context* ctx = redasm::state::context;
     if(!ctx) return false;
 
-    redasm::AbstractStream* obj = redasm::api::from_c(self);
-    usize pos = obj->position;
-    auto res = obj->read_type(tname);
+    usize pos = self->position;
+    auto res = redasm::buffer::get_type(self->buffer, self->position, tname);
 
-    res.map([&](RDValue& x) {
-        if(v) {
-            ctx->collectedtypes.emplace_back(pos, x.type);
-            *v = x;
-        }
+    if(res) {
+        ctx->collectedtypes.emplace_back(pos, res->type);
+        if(v)
+            *v = *res;
         else
-            rdvalue_destroy(&x);
-    });
+            rdvalue_destroy(&res.value());
+    }
 
     return res.has_value();
 }
@@ -491,16 +422,18 @@ bool rdstream_collect_strz(RDStream* self, const char** v) {
 
     static std::string s;
 
-    redasm::AbstractStream* obj = redasm::api::from_c(self);
-    usize pos = obj->position;
-    auto res = obj->read_str();
+    usize pos = self->position;
+    auto res = redasm::buffer::get_str(self->buffer, self->position);
 
-    res.map([&](const std::string& x) {
+    if(res) {
         ctx->collectedtypes.emplace_back(
             pos, ctx->types.from_string(redasm::typing::names::STR));
-        s = x;
-        if(v) *v = s.c_str();
-    });
+
+        if(v) {
+            s = *res;
+            *v = s.c_str();
+        }
+    }
 
     return res.has_value();
 }
@@ -514,16 +447,18 @@ bool rdstream_collect_str(RDStream* self, usize n, const char** v) {
 
     static std::string s;
 
-    redasm::AbstractStream* obj = redasm::api::from_c(self);
-    usize pos = obj->position;
-    auto res = obj->read_str(n);
+    usize pos = self->position;
+    auto res = redasm::buffer::get_str(self->buffer, self->position, n);
 
-    res.map([&](const std::string& x) {
-        RDType t = {.id = redasm::typing::ids::CHAR, .n = x.size()};
-        ctx->collectedtypes.emplace_back(pos, t);
-        s = x;
-        if(v) *v = s.c_str();
-    });
+    if(res) {
+        ctx->collectedtypes.emplace_back(
+            pos, ctx->types.from_string(redasm::typing::names::STR));
+
+        if(v) {
+            s = *res;
+            *v = s.c_str();
+        }
+    }
 
     return res.has_value();
 }
@@ -536,17 +471,18 @@ bool rdstream_collect_wstrz(RDStream* self, const char** v) {
 
     static std::string s;
 
-    redasm::AbstractStream* obj = redasm::api::from_c(self);
-    usize pos = obj->position;
-    auto res = obj->read_wstr();
+    usize pos = self->position;
+    auto res = redasm::buffer::get_wstr(self->buffer, self->position);
 
-    res.map([&](const std::string& x) {
+    if(res) {
         ctx->collectedtypes.emplace_back(
             pos, ctx->types.from_string(redasm::typing::names::WSTR));
 
-        s = x;
-        if(v) *v = s.c_str();
-    });
+        if(v) {
+            s = *res;
+            *v = s.c_str();
+        }
+    }
 
     return res.has_value();
 }
@@ -560,16 +496,18 @@ bool rdstream_collect_wstr(RDStream* self, usize n, const char** v) {
 
     static std::string s;
 
-    redasm::AbstractStream* obj = redasm::api::from_c(self);
-    usize pos = obj->position;
-    auto res = obj->read_wstr(n);
+    usize pos = self->position;
+    auto res = redasm::buffer::get_wstr(self->buffer, self->position, n);
 
-    res.map([&](const std::string& x) {
-        RDType t = {.id = redasm::typing::ids::WCHAR, .n = x.size()};
-        ctx->collectedtypes.emplace_back(pos, t);
-        s = x;
-        if(v) *v = s.c_str();
-    });
+    if(res) {
+        ctx->collectedtypes.emplace_back(
+            pos, ctx->types.from_string(redasm::typing::names::WSTR));
+
+        if(v) {
+            s = *res;
+            *v = s.c_str();
+        }
+    }
 
     return res.has_value();
 }

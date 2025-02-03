@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../disasm/function.h"
-#include "../memory/byte.h"
 #include <redasm/redasm.h>
 
 namespace redasm {
@@ -13,8 +12,6 @@ class ILExprList;
 
 } // namespace rdil
 
-class AbstractStream;
-class AbstractBuffer;
 class Renderer;
 class Emulator;
 class Context;
@@ -23,8 +20,6 @@ class StyledGraph;
 struct Function;
 
 namespace api {
-
-inline Byte from_c(RDByte arg) { return Byte{arg}; }
 
 inline const StyledGraph* from_c(const RDGraph* arg) {
     return reinterpret_cast<const StyledGraph*>(arg);
@@ -66,14 +61,6 @@ inline const Emulator* from_c(const RDEmulator* arg) {
     return reinterpret_cast<const Emulator*>(arg);
 }
 
-inline const AbstractStream* from_c(const RDStream* arg) {
-    return reinterpret_cast<const AbstractStream*>(arg);
-}
-
-inline AbstractStream* from_c(RDStream* arg) {
-    return reinterpret_cast<AbstractStream*>(arg);
-}
-
 inline const Surface* from_c(const RDSurface* arg) {
     return reinterpret_cast<const Surface*>(arg);
 }
@@ -84,20 +71,6 @@ inline Surface* from_c(RDSurface* arg) {
 
 inline Context* from_c(RDContext* arg) {
     return reinterpret_cast<Context*>(arg);
-}
-
-inline const AbstractBuffer* from_c(const RDBuffer* arg) {
-    return reinterpret_cast<const AbstractBuffer*>(arg);
-}
-
-inline AbstractBuffer* from_c(RDBuffer* arg) {
-    return reinterpret_cast<AbstractBuffer*>(arg);
-}
-
-inline RDByte to_c(Byte arg) { return arg.value; }
-
-inline const RDByte* to_c(const Byte* arg) {
-    return reinterpret_cast<const RDByte*>(arg);
 }
 
 inline const RDGraph* to_c(const StyledGraph* arg) {
@@ -116,20 +89,12 @@ inline RDEmulator* to_c(Emulator* arg) {
     return reinterpret_cast<RDEmulator*>(arg);
 }
 
-inline RDStream* to_c(AbstractStream* arg) {
-    return reinterpret_cast<RDStream*>(arg);
-}
-
 inline RDSurface* to_c(Surface* arg) {
     return reinterpret_cast<RDSurface*>(arg);
 }
 
 inline RDContext* to_c(Context* arg) {
     return reinterpret_cast<RDContext*>(arg);
-}
-
-inline RDBuffer* to_c(AbstractBuffer* arg) {
-    return reinterpret_cast<RDBuffer*>(arg);
 }
 
 inline RDFunction* to_c(Function* arg) {

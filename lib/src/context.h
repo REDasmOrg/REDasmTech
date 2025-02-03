@@ -13,6 +13,7 @@
 #include <redasm/processor.h>
 #include <redasm/types.h>
 #include <set>
+#include <spdlog/spdlog.h>
 #include <string_view>
 
 namespace redasm {

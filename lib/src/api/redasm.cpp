@@ -1,5 +1,5 @@
 #include "../context.h"
-#include "../memory/file.h"
+#include "../memory/memory.h"
 #include "../plugins/modulemanager.h"
 #include "../plugins/pluginmanager.h"
 #include "../state.h"
@@ -8,7 +8,6 @@
 #include "marshal.h"
 #include <algorithm>
 #include <cctype>
-#include <fstream>
 #include <redasm/redasm.h>
 #include <spdlog/spdlog.h>
 
@@ -138,24 +137,6 @@ usize rd_getproblems(const RDProblem** problems) {
     return res.size();
 }
 
-RDBuffer* rd_loadfile(const char* filepath) {
-    spdlog::trace("rd_loadfile('{}')", filepath);
-    if(!filepath) return nullptr;
-
-    std::ifstream ifs(filepath, std::ios::binary | std::ios::ate);
-
-    if(!ifs.is_open()) {
-        spdlog::error("Cannot open '{}'", filepath);
-        return nullptr;
-    }
-
-    auto* b = new redasm::File(filepath);
-    b->resize(ifs.tellg());
-    ifs.seekg(0);
-    ifs.read(reinterpret_cast<char*>(b->data()), b->size());
-    return redasm::api::to_c(b);
-}
-
 usize rd_test(RDBuffer* buffer, RDTestResult** result) {
     spdlog::trace("rd_test({}, {})", fmt::ptr(buffer), fmt::ptr(result));
 
@@ -167,9 +148,9 @@ usize rd_test(RDBuffer* buffer, RDTestResult** result) {
 
     RDLoaderRequest req = {
         .file = buffer,
-        .path = buffer->src,
-        .name = redasm::utils::get_filename(buffer->src).data(), // NOLINT
-        .ext = redasm::utils::get_ext(buffer->src).data(),       // NOLINT
+        .path = buffer->source,
+        .name = redasm::utils::get_filename(buffer->source).data(), // NOLINT
+        .ext = redasm::utils::get_ext(buffer->source).data(),       // NOLINT
     };
 
     foreach_loaders(lp, {
@@ -555,27 +536,6 @@ bool rd_tick(const RDWorkerStatus** s) {
     spdlog::trace("rd_tick({})", fmt::ptr(s));
     if(redasm::state::context) return redasm::state::context->worker.execute(s);
     return false;
-}
-
-usize rd_getmemory(const RDByte** data) {
-    spdlog::trace("rd_getmemory({})", fmt::ptr(data));
-
-    if(!redasm::state::context) return 0;
-    const auto& m = redasm::state::context->program.memory_old;
-    if(!m) return 0;
-
-    if(data) *data = redasm::api::to_c(m->data());
-    return m->size();
-}
-
-bool rd_getbyte(usize idx, RDByte* b) {
-    spdlog::trace("rd_getbyte({}, {})", idx, fmt::ptr(b));
-    if(!redasm::state::context) return false;
-
-    const auto& mem = redasm::state::context->program.memory_old;
-    if(idx >= mem->size()) return false;
-    if(b) *b = redasm::api::to_c(mem->at(idx));
-    return true;
 }
 
 RDBuffer* rd_getfile() {

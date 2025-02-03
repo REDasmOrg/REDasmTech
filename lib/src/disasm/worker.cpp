@@ -87,8 +87,8 @@ void Worker::execute(usize step) {
 }
 
 void Worker::init_step() {
-    m_status->filepath = state::context->program.file.src;
-    m_status->filesize = state::context->program.file.len;
+    m_status->filepath = state::context->program.file.source;
+    m_status->filesize = state::context->program.file.length;
     m_status->loader = state::context->loaderplugin->name;
     m_status->processor = state::context->processorplugin->name;
     m_status->analysisstart = std::time(nullptr);

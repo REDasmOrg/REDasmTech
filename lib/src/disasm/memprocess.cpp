@@ -1,6 +1,8 @@
 #include "memprocess.h"
 #include "../context.h"
+#include "../error.h"
 #include "../listing.h"
+#include "../memory/mbyte.h"
 #include "../memory/memory.h"
 #include "../memory/stringfinder.h"
 #include "../state.h"
@@ -23,7 +25,7 @@ void process_hexdump(Listing& l, RDAddress& address, Function f) {
     RDAddress start = address;
     usize len = 0;
 
-    for(; address < seg->mem.len && f(seg, address); len++, address++) {
+    for(; address < seg->mem.length && f(seg, address); len++, address++) {
         if(len && !(len % 0x10)) {
             l.hex_dump(start, address);
             start = address;
@@ -206,7 +208,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
         if(!seg) continue;
 
         // Find basic block end
-        for(RDAddress curraddr = startaddr; curraddr < seg->mem.len;) {
+        for(RDAddress curraddr = startaddr; curraddr < seg->mem.length;) {
             if(!memory::has_flag(seg, curraddr, BF_CODE)) break;
 
             if(curraddr != startaddr) {
@@ -235,7 +237,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
                 }
 
                 // Consume delay slot(s), if any
-                while(curraddr < seg->mem.len &&
+                while(curraddr < seg->mem.length &&
                       memory::has_flag(seg, curraddr, BF_DFLOW)) {
                     usize len = memory::get_length(seg, curraddr);
                     if(!len) except("Invalid length @ {:x} (DS)", curraddr);
@@ -245,13 +247,13 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
                 endaddr = curraddr;
 
                 // Conditional Jump
-                if(curraddr < seg->mem.len &&
+                if(curraddr < seg->mem.length &&
                    memory::has_flag(seg, curraddr, BF_FLOW)) {
                     usize len = memory::get_length(seg, curraddr);
                     if(!len) except("Invalid length @ {:x} (CJ)", curraddr);
                     curraddr += len;
 
-                    if(curraddr < seg->mem.len) {
+                    if(curraddr < seg->mem.length) {
                         pending.push_back(curraddr);
                         f.jmp_false(n, f.try_add_block(curraddr));
                     }
@@ -269,7 +271,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
 
         Function::BasicBlock* bb = f.get_basic_block(n);
         assume(bb);
-        bb->end = std::min<usize>(endaddr, seg->mem.len - 1);
+        bb->end = std::min<usize>(endaddr, seg->mem.length - 1);
     }
 }
 
@@ -306,7 +308,7 @@ void process_listing_code(const Context* ctx, Listing& l,
 void process_refsto(Context* ctx, const RDSegment* seg, RDAddress& address) {
     auto is_range_unkn = [&](RDAddress raddr, usize n) {
         return memory::range_is(seg, raddr, n,
-                                [](RDByte b) { return rdbyte_isunknown(&b); });
+                                [](RDMByte b) { return mbyte::is_unknown(b); });
     };
 
     Database::RefList refs = ctx->get_refs_to(address);
@@ -354,28 +356,27 @@ void process_refsto(Context* ctx, const RDSegment* seg, RDAddress& address) {
 
 void merge_code(Emulator* e) {
     const Context* ctx = state::context;
-    // const auto& mem = ctx->program.memory_old;
 
-    // for(const Segment& seg : ctx->program.segments_old) {
-    //     if(!(seg.perm & SP_X) || seg.offset == seg.endoffset) continue;
-    //
-    //     usize idx = seg.index;
-    //
-    //     while(idx < seg.endindex && idx < mem->size()) {
-    //         Byte b = mem->at(idx);
-    //
-    //         if(b.has_byte() && b.is_unknown()) {
-    //             e->enqueue_flow(idx++);
-    //
-    //             // Move after the unknown range
-    //             while(idx < seg.endindex && idx < mem->size() &&
-    //                   mem->at(idx).is_unknown())
-    //                 idx++;
-    //         }
-    //         else
-    //             idx++;
-    //     }
-    // }
+    for(const RDSegment& seg : ctx->program.segments) {
+        //     if(!(seg.perm & SP_X) || seg.offset == seg.endoffset) continue;
+        //
+        //     usize idx = seg.index;
+        //
+        //     while(idx < seg.endindex && idx < mem->size()) {
+        //         Byte b = mem->at(idx);
+        //
+        //         if(b.has_byte() && b.is_unknown()) {
+        //             e->enqueue_flow(idx++);
+        //
+        //             // Move after the unknown range
+        //             while(idx < seg.endindex && idx < mem->size() &&
+        //                   mem->at(idx).is_unknown())
+        //                 idx++;
+        //         }
+        //         else
+        //             idx++;
+        //     }
+    }
 }
 
 void process_memory() {

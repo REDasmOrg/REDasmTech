@@ -1,5 +1,6 @@
 #include "program.h"
 #include "../utils/utils.h"
+#include "mbyte.h"
 #include <algorithm>
 
 namespace redasm {
@@ -87,12 +88,12 @@ bool Program::add_segment(std::string_view name, RDAddress start, RDAddress end,
         if(m.base < end && mapend > start) {
             usize overlapstart = std::max(start, m.base);
             usize overlapend = std::min(end, mapend);
-            usize segmentoff = overlapstart - start;
+            usize segoff = overlapstart - start;
             usize fileoff = m.offset + (overlapstart - m.base);
             usize copylen = overlapend - overlapstart;
 
             for(usize i = fileoff; i < fileoff + copylen; i++)
-                rdbyte_setbyte(&s.mem.m_data[segmentoff++], this->file.data[i]);
+                mbyte::set_byte(&s.mem.m_data[segoff++], this->file.data[i]);
         }
     }
 
@@ -103,7 +104,7 @@ bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
     if(start >= end) return false;
 
     usize n = end - start;
-    if(off + n > this->file.len) return false;
+    if(off + n > this->file.length) return false;
 
     FileMapping m = {
         .base = start,
@@ -120,7 +121,8 @@ bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
             usize copylen = overlapend - overlapstart;
 
             for(usize i = fileoff; i < fileoff + copylen; i++)
-                rdbyte_setbyte(&s.mem.m_data[segmentoff++], this->file.data[i]);
+                mbyte::set_byte(&s.mem.m_data[segmentoff++],
+                                this->file.data[i]);
         }
     }
 
