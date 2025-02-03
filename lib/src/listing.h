@@ -38,7 +38,7 @@ private:
     static constexpr usize INDENT = 2;
 
 public:
-    using AddressList = std::vector<RDAddress>;
+    using LIndexList = std::vector<LIndex>;
 
     auto cbegin() const { return m_items.cbegin(); }
     auto cend() const { return m_items.cend(); }
@@ -63,19 +63,19 @@ public:
         return this->lower_bound(address, m_items.begin());
     }
 
-    const AddressList& symbols() const { return m_symbols; }
-    const AddressList& imports() const { return m_imports; }
-    const AddressList& exports() const { return m_exports; }
+    const LIndexList& symbols() const { return m_symbols; }
+    const LIndexList& imports() const { return m_imports; }
+    const LIndexList& exports() const { return m_exports; }
 
     ConstIterator lower_bound(RDAddress address, ConstIterator begin) const;
     ConstIterator upper_bound(RDAddress address, ConstIterator begin) const;
     void hex_dump(RDAddress startaddr, RDAddress endaddr);
     void fill(RDAddress startaddr, RDAddress endaddr);
-    usize type(RDAddress address, RDType t);
-    usize instruction(RDAddress address);
-    usize label(RDAddress address);
-    usize function(RDAddress address);
-    usize segment(const RDSegment* seg);
+    LIndex type(RDAddress address, RDType t);
+    LIndex instruction(RDAddress address);
+    LIndex label(RDAddress address);
+    LIndex function(RDAddress address);
+    LIndex segment(const RDSegment* seg);
 
 public: // State management functions
     tl::optional<usize> field_index() const;
@@ -90,14 +90,14 @@ public: // State management functions
     void pop_type();
 
 private:
-    usize push_item(RDListingItemType type, RDAddress address);
-    void check_flags(LIndex listingidx, RDAddress address);
+    LIndex push_item(RDListingItemType type, RDAddress address);
+    void check_flags(LIndex lidx, RDAddress address);
 
 private:
     std::deque<usize> m_fieldindex;
     std::deque<RDType> m_currtype;
     const RDSegment* m_currentsegment{nullptr};
-    AddressList m_symbols, m_exports, m_imports;
+    LIndexList m_symbols, m_exports, m_imports;
     usize m_indent{0};
     Type m_items;
 };

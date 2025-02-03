@@ -9,9 +9,7 @@ SymbolsModel::SymbolsModel(bool autoalign, QObject* parent)
 
 RDAddress SymbolsModel::address(const QModelIndex& index) const {
     RDSymbol symbol;
-
     if(rdlisting_getsymbol(index.row(), &symbol)) return symbol.address;
-
     qFatal("Cannot get symbol address");
     return {};
 }

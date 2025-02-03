@@ -129,8 +129,8 @@ const RDSegment* Surface::current_segment() const {
 }
 
 const Function* Surface::current_function() const {
-    if(auto idx = this->current_address(); idx)
-        return state::context->find_function(*idx);
+    if(auto address = this->current_address(); address)
+        return state::context->find_function(*address);
     return nullptr;
 }
 

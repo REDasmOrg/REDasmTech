@@ -207,7 +207,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
         if(!seg) continue;
 
         // Find basic block end
-        for(RDAddress curraddr = startaddr; curraddr < seg->mem.length;) {
+        for(RDAddress curraddr = startaddr; curraddr < seg->end;) {
             if(!memory::has_flag(seg, curraddr, BF_CODE)) break;
 
             if(curraddr != startaddr) {
@@ -236,7 +236,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
                 }
 
                 // Consume delay slot(s), if any
-                while(curraddr < seg->mem.length &&
+                while(curraddr < seg->end &&
                       memory::has_flag(seg, curraddr, BF_DFLOW)) {
                     usize len = memory::get_length(seg, curraddr);
                     if(!len) except("Invalid length @ {:x} (DS)", curraddr);
@@ -246,13 +246,13 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
                 endaddr = curraddr;
 
                 // Conditional Jump
-                if(curraddr < seg->mem.length &&
+                if(curraddr < seg->end &&
                    memory::has_flag(seg, curraddr, BF_FLOW)) {
                     usize len = memory::get_length(seg, curraddr);
                     if(!len) except("Invalid length @ {:x} (CJ)", curraddr);
                     curraddr += len;
 
-                    if(curraddr < seg->mem.length) {
+                    if(curraddr < seg->end) {
                         pending.push_back(curraddr);
                         f.jmp_false(n, f.try_add_block(curraddr));
                     }
@@ -270,7 +270,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
 
         Function::BasicBlock* bb = f.get_basic_block(n);
         assume(bb);
-        bb->end = std::min<usize>(endaddr, seg->mem.length - 1);
+        bb->end = std::min<RDAddress>(endaddr, seg->end);
     }
 }
 
@@ -278,7 +278,6 @@ void process_listing_code(const Context* ctx, Listing& l,
                           FunctionList& functions, RDAddress& address) {
     const RDSegment* seg = l.current_segment();
     assume(seg);
-
     assume(memory::has_flag(seg, address, BF_CODE));
 
     if(memory::has_flag(seg, address, BF_FUNCTION)) {

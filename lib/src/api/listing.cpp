@@ -8,13 +8,12 @@
 
 namespace {
 
-void listingindex_tosymbol(usize listingidx, RDSymbol* symbol,
-                           std::string& value) {
+void listingindex_tosymbol(LIndex lidx, RDSymbol* symbol, std::string& value) {
     assume(symbol);
     const redasm::Context* ctx = redasm::state::context;
     assume(ctx);
     const redasm::Listing& listing = ctx->listing;
-    const redasm::ListingItem& item = listing[listingidx];
+    const redasm::ListingItem& item = listing[lidx];
 
     symbol->address = item.address;
 
@@ -106,18 +105,17 @@ bool rdlisting_getindex(RDAddress address, LIndex* idx) {
 bool rdlisting_getsymbol(usize idx, RDSymbol* symbol) {
     spdlog::trace("rdlisting_getsymbol({}, {})", idx, fmt::ptr(symbol));
 
-    return false;
     static std::string value;
     const redasm::Context* ctx = redasm::state::context;
     if(!ctx) return false;
 
     const redasm::Listing& listing = ctx->listing;
-    const redasm::Listing::AddressList& symbols = listing.symbols();
+    const redasm::Listing::LIndexList& symbols = listing.symbols();
     if(idx >= symbols.size()) return false;
 
-    usize listingidx = symbols[idx];
-    assume(listingidx < listing.size());
-    if(symbol) listingindex_tosymbol(listingidx, symbol, value);
+    LIndex lidx = symbols[idx];
+    assume(lidx < listing.size());
+    if(symbol) listingindex_tosymbol(lidx, symbol, value);
     return true;
 }
 
@@ -136,7 +134,7 @@ bool rdlisting_getimport(usize idx, RDSymbol* symbol) {
     if(!ctx) return false;
 
     const redasm::Listing& listing = ctx->listing;
-    const redasm::Listing::AddressList& imports = listing.imports();
+    const redasm::Listing::LIndexList& imports = listing.imports();
     if(idx >= imports.size()) return false;
 
     usize listingidx = imports[idx];
@@ -160,7 +158,7 @@ bool rdlisting_getexport(usize idx, RDSymbol* symbol) {
     if(!ctx) return false;
 
     const redasm::Listing& listing = ctx->listing;
-    const redasm::Listing::AddressList& exports = listing.exports();
+    const redasm::Listing::LIndexList& exports = listing.exports();
     if(idx >= exports.size()) return false;
 
     usize listingidx = exports[idx];

@@ -71,7 +71,7 @@ void Listing::pop_type() {
     m_currtype.pop_back();
 }
 
-usize Listing::type(RDAddress address, RDType t) {
+LIndex Listing::type(RDAddress address, RDType t) {
     usize lidx = this->push_item(LISTINGITEM_TYPE, address);
     m_items[lidx].dtype = t;
 
@@ -84,40 +84,40 @@ usize Listing::type(RDAddress address, RDType t) {
     return lidx;
 }
 
-usize Listing::instruction(RDAddress address) {
+LIndex Listing::instruction(RDAddress address) {
     return this->push_item(LISTINGITEM_INSTRUCTION, address);
 }
 
-usize Listing::label(RDAddress address) {
+LIndex Listing::label(RDAddress address) {
     return this->push_item(LISTINGITEM_LABEL, address);
 }
 
-usize Listing::function(RDAddress address) {
-    usize lidx = this->push_item(LISTINGITEM_FUNCTION, address);
+LIndex Listing::function(RDAddress address) {
+    LIndex lidx = this->push_item(LISTINGITEM_FUNCTION, address);
     m_symbols.push_back(lidx);
     this->check_flags(lidx, address);
     return lidx;
 }
 
-usize Listing::segment(const RDSegment* seg) {
-    usize idx = this->push_item(LISTINGITEM_SEGMENT, seg->start);
-    m_symbols.push_back(seg->start);
+LIndex Listing::segment(const RDSegment* seg) {
+    LIndex lidx = this->push_item(LISTINGITEM_SEGMENT, seg->start);
+    m_symbols.push_back(lidx);
     m_currentsegment = seg;
-    return idx;
+    return lidx;
 }
 
 void Listing::hex_dump(RDAddress startaddr, RDAddress endaddr) {
-    usize lidx = this->push_item(LISTINGITEM_HEX_DUMP, startaddr);
+    LIndex lidx = this->push_item(LISTINGITEM_HEX_DUMP, startaddr);
     m_items[lidx].end_address = endaddr;
 }
 
 void Listing::fill(RDAddress startaddr, RDAddress endaddr) {
-    usize lidx = this->push_item(LISTINGITEM_FILL, startaddr);
+    LIndex lidx = this->push_item(LISTINGITEM_FILL, startaddr);
     m_items[lidx].end_address = endaddr;
 }
 
-usize Listing::push_item(RDListingItemType type, RDAddress address) {
-    usize idx = m_items.size();
+LIndex Listing::push_item(RDListingItemType type, RDAddress address) {
+    LIndex idx = m_items.size();
 
     ListingItem li{};
     li.type = type;
@@ -130,13 +130,13 @@ usize Listing::push_item(RDListingItemType type, RDAddress address) {
     return idx;
 }
 
-void Listing::check_flags(LIndex listingidx, RDAddress address) {
+void Listing::check_flags(LIndex lidx, RDAddress address) {
     assume(m_currentsegment);
 
     if(memory::has_flag(m_currentsegment, address, BF_IMPORT))
-        m_imports.push_back(listingidx);
+        m_imports.push_back(lidx);
     else if(memory::has_flag(m_currentsegment, address, BF_EXPORT))
-        m_exports.push_back(listingidx);
+        m_exports.push_back(lidx);
 }
 
 } // namespace redasm
