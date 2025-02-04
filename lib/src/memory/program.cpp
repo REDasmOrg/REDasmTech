@@ -27,7 +27,8 @@ tl::optional<RDOffset> Program::to_offset(RDAddress address) const {
         [](RDAddress start, RDAddress addr) { return start < addr; },
         [](const FileMapping& m) { return m.base; });
 
-    if(it != this->mappings.end() && address < it->base + it->length)
+    if(it != this->mappings.end() && address >= it->base &&
+       address < it->base + it->length)
         return it->offset + (address - it->base);
 
     if(it != this->mappings.begin()) {
