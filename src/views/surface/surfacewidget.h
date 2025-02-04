@@ -4,6 +4,7 @@
 #include <QAbstractScrollArea>
 #include <QMenu>
 #include <QTextDocument>
+#include <optional>
 #include <redasm/redasm.h>
 
 class SurfaceWidget: public QAbstractScrollArea {
@@ -43,7 +44,8 @@ protected:
 
 private:
     [[nodiscard]] RDSurfacePosition get_surface_coords(QPointF pt) const;
-    [[nodiscard]] bool get_surface_address(RDAddress* address) const;
+    [[nodiscard]] std::optional<RDAddress> get_current_address() const;
+    [[nodiscard]] std::optional<LIndex> get_listing_index() const;
     [[nodiscard]] usize get_listing_length() const;
     [[nodiscard]] QPair<LIndex, LIndex> get_visible_range() const;
     [[nodiscard]] bool is_index_visible(LIndex index) const;

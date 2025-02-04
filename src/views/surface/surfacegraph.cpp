@@ -141,9 +141,7 @@ SurfaceGraphNode* SurfaceGraph::find_node(RDAddress address) {
 
 bool SurfaceGraph::seek_to_address(RDAddress address) {
     LIndex idx;
-
     if(!rdlisting_getindex(address, &idx)) return false;
-
     rdsurface_seekposition(m_surface, idx);
     return true;
 }

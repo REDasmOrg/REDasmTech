@@ -44,26 +44,30 @@ SurfaceWidget::SurfaceWidget(QWidget* parent): QAbstractScrollArea{parent} {
             [&](int action) {
                 switch(action) {
                     case QScrollBar::SliderSingleStepAdd: {
-                        // RDAddress idx;
-                        // if(!this->get_surface_address(&idx)) return;
-                        //
-                        // if(idx < this->get_listing_length()) {
-                        //     rdsurface_clearselection(m_surface);
-                        //     rdsurface_seekposition(m_surface, idx +
-                        //     SCROLL_SPEED); this->viewport()->update();
-                        // }
+                        auto lidx = this->get_listing_index();
+
+                        if(lidx && *lidx < this->get_listing_length()) {
+                            rdsurface_clearselection(m_surface);
+                            rdsurface_seekposition(m_surface,
+                                                   *lidx + 1); // SCROLL_SPEED);
+                            this->viewport()->update();
+                        }
+                        else
+                            return;
                         break;
                     }
 
                     case QScrollBar::SliderSingleStepSub: {
-                        // MIndex idx;
-                        // if(!this->get_surface_address(&idx)) return;
-                        //
-                        // if(idx > 0) {
-                        //     rdsurface_clearselection(m_surface);
-                        //     rdsurface_seekposition(m_surface, idx -
-                        //     SCROLL_SPEED); this->viewport()->update();
-                        // }
+                        auto lidx = this->get_listing_index();
+
+                        if(lidx && *lidx > 0) {
+                            rdsurface_clearselection(m_surface);
+                            rdsurface_seekposition(m_surface,
+                                                   *lidx - 1); // SCROLL_SPEED);
+                            this->viewport()->update();
+                        }
+                        else
+                            return;
                         break;
                     }
 
@@ -141,6 +145,8 @@ void SurfaceWidget::jump_to(RDAddress address) {
 
             rdsurface_setposition(m_surface, index - relidx, -1);
             this->verticalScrollBar()->setValue(relidx);
+            rdsurface_seek(m_surface, relidx);
+            this->viewport()->update();
         }
 
         Q_EMIT history_updated();
@@ -259,7 +265,7 @@ void SurfaceWidget::paintEvent(QPaintEvent* e) {
         return;
     }
 
-    rdsurface_seek(m_surface, this->verticalScrollBar()->value());
+    // rdsurface_seek(m_surface, this->verticalScrollBar()->value());
     rdsurface_render(m_surface, this->visible_rows());
 
     usize nrows = rdsurface_getrowcount(m_surface);
@@ -333,8 +339,16 @@ RDSurfaceLocation SurfaceWidget::location() const {
     return loc;
 }
 
-bool SurfaceWidget::get_surface_address(RDAddress* address) const {
-    return rdsurface_getaddress(m_surface, address);
+std::optional<RDAddress> SurfaceWidget::get_current_address() const {
+    RDAddress address;
+    if(rdsurface_getcurrentaddress(m_surface, &address)) return address;
+    return std::nullopt;
+}
+
+std::optional<LIndex> SurfaceWidget::get_listing_index() const {
+    LIndex lidx;
+    if(rdsurface_getlistingindex(m_surface, &lidx)) return lidx;
+    return std::nullopt;
 }
 
 usize SurfaceWidget::get_listing_length() const {
