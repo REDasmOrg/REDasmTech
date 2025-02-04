@@ -280,7 +280,7 @@ Database::RefList Database::get_refs_to_type(RDAddress toaddr,
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_REFS_TO_TYPE, R"(
         SELECT fromaddr, type
         FROM Refs
-        WHERE toidx = :toaddr AND type = :type
+        WHERE toaddr = :toaddr AND type = :type
     )");
 
     sql_bindparam(m_db, stmt, ":toaddr", toaddr);
