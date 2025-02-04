@@ -201,10 +201,10 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
         RDGraphNode n = f.try_add_block(startaddr);
         if(startaddr == address) f.graph.set_root(n);
 
-        RDAddress endaddr = startaddr;
-
         const RDSegment* seg = ctx->program.find_segment(startaddr);
-        if(!seg) continue;
+        assume(seg);
+
+        RDAddress endaddr = startaddr;
 
         // Find basic block end
         for(RDAddress curraddr = startaddr; curraddr < seg->end;) {
@@ -226,7 +226,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
                     const RDSegment* jseg =
                         ctx->program.find_segment(r.address);
 
-                    if(seg && seg->perm & SP_X) {
+                    if(jseg && jseg->perm & SP_X) {
                         if(!memory::has_flag(jseg, r.address, BF_CODE))
                             continue;
 
@@ -270,7 +270,7 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
 
         Function::BasicBlock* bb = f.get_basic_block(n);
         assume(bb);
-        bb->end = std::min<RDAddress>(endaddr, seg->end);
+        bb->end = std::min<RDAddress>(endaddr, seg->end - 1);
     }
 }
 
