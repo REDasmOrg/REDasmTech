@@ -29,8 +29,7 @@ void GraphView::set_graph(RDGraph* graph) {
 
 void GraphView::set_selected_node(const GraphViewNode* item) {
     for(GraphViewNode* gvn : m_nodes) {
-        if(gvn != item)
-            continue;
+        if(gvn != item) continue;
         m_selecteditem = gvn;
         this->focus_selected_block();
         break;
@@ -43,8 +42,7 @@ GraphViewNode* GraphView::selected_item() const { return m_selecteditem; }
 RDGraph* GraphView::graph() const { return m_graph; }
 
 void GraphView::focus_selected_block() {
-    if(m_selecteditem)
-        this->focus_block(m_selecteditem);
+    if(m_selecteditem) this->focus_block(m_selecteditem);
 }
 
 void GraphView::focus_block(const GraphViewNode* item, bool force) {
@@ -95,8 +93,7 @@ void GraphView::mouseDoubleClickEvent(QMouseEvent* e) {
         m_selecteditem->mousedoubleclick_event(&iteme);
     }
 
-    if(updated)
-        this->selected_item_changed_event();
+    if(updated) this->selected_item_changed_event();
 
     QAbstractScrollArea::mouseDoubleClickEvent(e);
 }
@@ -121,8 +118,7 @@ void GraphView::mousePressEvent(QMouseEvent* e) {
 
     this->viewport()->update();
 
-    if(updated)
-        this->selected_item_changed_event();
+    if(updated) this->selected_item_changed_event();
 
     QAbstractScrollArea::mousePressEvent(e);
 }
@@ -250,22 +246,19 @@ void GraphView::paintEvent(QPaintEvent*) {
             continue;
 
         usize itemstate = GraphViewNode::NONE;
-        if(m_selecteditem == item)
-            itemstate |= GraphViewNode::SELECTED;
+        if(m_selecteditem == item) itemstate |= GraphViewNode::SELECTED;
 
         item->render(&painter, itemstate);
     }
 }
 
 void GraphView::showEvent(QShowEvent* e) {
-    if(!m_viewportready)
-        m_viewportready = true;
+    if(!m_viewportready) m_viewportready = true;
     e->ignore();
 }
 
 void GraphView::selected_item_changed_event() {
-    if(m_focusonselection)
-        this->focus_selected_block();
+    if(m_focusonselection) this->focus_selected_block();
     Q_EMIT selected_item_changed();
 }
 
@@ -279,12 +272,10 @@ void GraphView::compute_layout() {
 }
 
 void GraphView::focus_root_block() {
-    if(!m_graph)
-        return;
+    if(!m_graph) return;
 
     auto it = m_nodes.find(rdgraph_getroot(m_graph));
-    if(it != m_nodes.end())
-        this->focus_block(it.value());
+    if(it != m_nodes.end()) this->focus_block(it.value());
 }
 
 void GraphView::update_graph() {
@@ -309,8 +300,7 @@ void GraphView::update_graph() {
 
         if(!m_nodes.contains(n)) {
             item = this->create_node(n, m_graph);
-            if(!item)
-                continue;
+            if(!item) continue;
 
             connect(item, &GraphViewNode::invalidated, this->viewport(),
                     [&]() { this->viewport()->update(); });
@@ -389,10 +379,8 @@ GraphViewNode* GraphView::node_from_pos(const QPointF& pt,
     };
 
     for(GraphViewNode* item : m_nodes) {
-        if(!item->contains(pos))
-            continue;
-        if(itempos)
-            *itempos = item->map_to_item(pos);
+        if(!item->contains(pos)) continue;
+        if(itempos) *itempos = item->map_to_item(pos);
         return item;
     }
 
@@ -402,8 +390,7 @@ GraphViewNode* GraphView::node_from_pos(const QPointF& pt,
 void GraphView::zoom_out(const QPointF& cursorpos) {
     m_prevscalefactor = m_scalefactor;
 
-    if(m_scalefactor <= m_scalemin)
-        return;
+    if(m_scalefactor <= m_scalemin) return;
     m_scalefactor *= (1 - m_scalestep * m_scaleboost);
     m_scalefactor = qMax(m_scalefactor, m_scalemin);
 
@@ -415,8 +402,7 @@ void GraphView::zoom_out(const QPointF& cursorpos) {
 void GraphView::zoom_in(const QPointF& cursorpos) {
     m_prevscalefactor = m_scalefactor;
 
-    if(m_scalefactor >= m_scalemax)
-        return;
+    if(m_scalefactor >= m_scalemax) return;
 
     m_scalefactor /= (1 - m_scalestep * m_scaleboost);
     m_scalefactor = qMin(m_scalefactor, m_scalemax);
@@ -430,8 +416,7 @@ void GraphView::adjust_size(int vpw, int vph, const QPointF& cursorpos,
                             bool fit) {
     // bugfix - resize event (during several initial calls) may reset correct
     // adjustment already made
-    if(!m_graph || (vph < 30))
-        return;
+    if(!m_graph || (vph < 30)) return;
 
     m_rendersize = QSize{
         static_cast<int>(rdgraph_getareawidth(m_graph) * m_scalefactor),

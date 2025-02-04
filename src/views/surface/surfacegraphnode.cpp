@@ -64,8 +64,7 @@ void SurfaceGraphNode::mousepress_event(QMouseEvent* e) {
 }
 
 void SurfaceGraphNode::mousemove_event(QMouseEvent* e) {
-    if(e->buttons() != Qt::LeftButton)
-        return;
+    if(e->buttons() != Qt::LeftButton) return;
 
     RDSurfacePosition pos;
     this->get_surface_pos(e->position(), &pos);
@@ -78,13 +77,10 @@ void SurfaceGraphNode::update_document() {
     if(m_surface) {
         int startidx = rdsurface_indexof(m_surface, m_basicblock.start);
         int endidx = rdsurface_lastindexof(m_surface, m_basicblock.end);
-
-        if(startidx == -1 || endidx == -1)
-            return;
+        if(startidx == -1 || endidx == -1) return;
 
         usize nmaxcol = utils::draw_surface(m_surface, &m_document, startidx,
                                             endidx - startidx + 1);
-
         m_maxwidth = nmaxcol * utils::cell_width();
     }
     else

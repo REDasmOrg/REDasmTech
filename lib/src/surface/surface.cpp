@@ -149,7 +149,6 @@ void Surface::render_function(const Function& f) {
 
         auto endit = listing.upper_bound(bb.end, startit);
         assume(startit < endit);
-
         LIndex startidx = std::distance(listing.begin(), startit);
         LIndex n = std::distance(startit, endit);
         this->render_range(startidx, n);
@@ -769,7 +768,6 @@ void Surface::render_comment(const ListingItem& item) {
 
     const RDSegment* seg = state::context->program.find_segment(item.address);
     assume(seg);
-
     if(!memory::has_flag(seg, item.address, BF_COMMENT)) return;
 
     m_renderer->ws(8);

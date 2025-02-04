@@ -45,7 +45,7 @@ public:
     virtual void invalidate(bool notify);
 
 public Q_SLOTS:
-    inline void invalidate() { this->invalidate(true); }
+    void invalidate() { this->invalidate(true); }
 
 Q_SIGNALS:
     void invalidated();
