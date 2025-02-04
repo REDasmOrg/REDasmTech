@@ -23,7 +23,7 @@ void* _vect_insert(_Vect* self, size_t idx) {
     }
 
     self->length++;
-    return (uint8_t*)self->data + (idx + self->esize);
+    return (uint8_t*)self->data + (idx * self->esize);
 }
 
 void* _vect_ptr(_Vect* self) {
