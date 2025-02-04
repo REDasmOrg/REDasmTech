@@ -107,15 +107,6 @@ REDASM_EXPORT bool rd_settypename(RDAddress address, const char* tname,
                                   RDValue* v);
 REDASM_EXPORT bool rd_settypename_ex(RDAddress address, const char* tname,
                                      usize flags, RDValue* v);
-
-REDASM_EXPORT bool rd_maptype(RDOffset offset, RDAddress address,
-                              const RDType* t);
-REDASM_EXPORT bool rd_maptypename(RDOffset offset, RDAddress address,
-                                  const char* tname);
-REDASM_EXPORT bool rd_maptype_ex(RDOffset offset, RDAddress address,
-                                 const RDType* t, usize flags);
-REDASM_EXPORT bool rd_maptypename_ex(RDOffset offset, RDAddress address,
-                                     const char* tname, usize flags);
 REDASM_EXPORT bool rd_setfunction(RDAddress address);
 REDASM_EXPORT bool rd_setfunction_ex(RDAddress address, usize flags);
 REDASM_EXPORT bool rd_setentry(RDAddress address, const char* name);
@@ -129,14 +120,6 @@ REDASM_EXPORT bool rd_setname_ex(RDAddress address, const char* name,
 REDASM_EXPORT bool rd_gettypename(RDAddress address, const char* tname,
                                   RDValue* v);
 REDASM_EXPORT bool rd_gettype(RDAddress address, const RDType* t, RDValue* v);
-
-REDASM_EXPORT bool rd_mapsegment(const char* name, RDAddress address,
-                                 RDAddress endaddress, RDOffset offset,
-                                 RDOffset endoffset, u8 perm);
-
-REDASM_EXPORT bool rd_mapsegment_n(const char* name, RDAddress address,
-                                   usize asize, RDOffset offset, usize osize,
-                                   u8 perm);
 
 REDASM_EXPORT bool rd_getaddress(const char* name, RDAddress* address);
 REDASM_EXPORT const char* rd_getname(RDAddress address);

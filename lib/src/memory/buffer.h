@@ -1,9 +1,9 @@
 #pragma once
 
+#include "../internal/buffer_internal.h"
 #include "../typing/base.h"
 #include "byteorder.h"
 #include <climits>
-#include <redasm/buffer.h>
 #include <string>
 #include <tl/optional.hpp>
 

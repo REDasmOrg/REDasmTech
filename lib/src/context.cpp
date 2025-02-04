@@ -61,7 +61,7 @@ constexpr std::array<char, 16> INTHEX_TABLE = {
 
 } // namespace
 
-Context::Context(RDBuffer* b) { this->program.file = *b; }
+Context::Context(RDBuffer* b) { this->program.file = b; }
 
 void Context::set_userdata(const std::string& k, uptr v) {
     if(k.empty()) {
@@ -73,7 +73,7 @@ void Context::set_userdata(const std::string& k, uptr v) {
 }
 
 Context::~Context() {
-    if(state::context == this) rdbuffer_destroy(&this->program.file);
+    if(state::context == this) rdbuffer_destroy(this->program.file);
     pm::destroy_instance(this->processorplugin, this->processor);
     pm::destroy_instance(this->loaderplugin, this->loader);
 }
@@ -86,12 +86,12 @@ bool Context::try_load(const RDLoaderPlugin* plugin) {
     assume(plugin);
 
     m_database =
-        std::make_unique<Database>(plugin->id, this->program.file.source);
+        std::make_unique<Database>(plugin->id, this->program.file->source);
     this->loaderplugin = plugin;
     this->loader = pm::create_instance(plugin);
 
     if(this->loaderplugin->load &&
-       this->loaderplugin->load(this->loader, &this->program.file)) {
+       this->loaderplugin->load(this->loader, this->program.file)) {
         // Select proposed processor
         if(this->loaderplugin->get_processor) {
             const char* p = this->loaderplugin->get_processor(loader);

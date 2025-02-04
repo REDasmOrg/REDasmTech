@@ -350,37 +350,6 @@ usize rd_getsegments(const RDSegment** segments) {
     return redasm::state::context->program.segments.size();
 }
 
-bool rd_mapsegment(const char* name, RDAddress address, RDAddress endaddress,
-                   RDOffset offset, RDOffset endoffset, u8 perm) {
-    spdlog::trace("rd_mapsegment('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
-                  address, endaddress, offset, endoffset, perm);
-
-    // if(redasm::state::context && name) {
-    //     MIndex startidx = address - redasm::state::context->baseaddress;
-    //     MIndex endidx = endaddress - redasm::state::context->baseaddress;
-    //     redasm::state::context->map_segment(name, startidx, endidx, offset,
-    //                                         endoffset, perm);
-    // }
-
-    return true;
-}
-
-bool rd_mapsegment_n(const char* name, RDAddress address, usize asize,
-                     RDOffset offset, usize osize, u8 perm) {
-    spdlog::trace("rd_mapsegment_n('{}', {:x}, {:x}, {:x}, {:x}, {:x})", name,
-                  address, asize, offset, osize, perm);
-
-    // if(redasm::state::context && name) {
-    //     MIndex startidx = address - redasm::state::context->baseaddress;
-    //     MIndex endidx = (address + asize) -
-    //     redasm::state::context->baseaddress;
-    //     redasm::state::context->map_segment(name, startidx, endidx, offset,
-    //                                         offset + osize, perm);
-    // }
-
-    return false;
-}
-
 bool rd_setcomment(RDAddress address, const char* comment) {
     spdlog::trace("rd_setcomment({:x}, '{}')", address, comment);
 
@@ -449,56 +418,6 @@ bool rd_settypename_ex(RDAddress address, const char* tname, usize flags,
     return false;
 }
 
-bool rd_maptype(RDOffset offset, RDAddress address, const RDType* t) {
-    return rd_maptype_ex(offset, address, t, 0);
-}
-
-bool rd_maptypename(RDOffset offset, RDAddress address, const char* tname) {
-    return rd_maptypename_ex(offset, address, tname, 0);
-}
-
-bool rd_maptype_ex(RDOffset offset, RDAddress address, const RDType* t,
-                   usize flags) {
-    spdlog::trace("rd_maptype_ex({:x}, {:x}, {}, {})", offset, address,
-                  fmt::ptr(t), flags);
-
-    // if(redasm::state::context && t) {
-    //     auto idx = redasm::state::context->address_to_index(address);
-    //     if(!idx) return false;
-    //
-    //     usize sz = redasm::state::context->types.size_of(*t);
-    //     redasm::state::context->memory_copy(*idx, offset, offset + sz);
-    //
-    //     if(!redasm::state::context->set_type(*idx, *t, 0)) return false;
-    //     auto v = redasm::state::context->program.file_old->get_type(*idx,
-    //     *t); v.map([](RDValue& x) { rdvalue_destroy(&x); }); return
-    //     v.has_value();
-    // }
-
-    return false;
-}
-
-bool rd_maptypename_ex(RDOffset offset, RDAddress address, const char* tname,
-                       usize flags) {
-    spdlog::trace("rd_maptypename_ex({:x}, {:x}, '{}', {})", offset, address,
-                  tname, flags);
-    // if(redasm::state::context && tname) {
-    //     auto idx = redasm::state::context->address_to_index(address);
-    //     if(!idx) return false;
-    //
-    //     usize sz = redasm::state::context->types.size_of(tname);
-    //     redasm::state::context->memory_copy(*idx, offset, offset + sz);
-    //
-    //     if(!redasm::state::context->set_type(*idx, tname, 0)) return false;
-    //     auto v =
-    //         redasm::state::context->program.file_old->get_type(*idx, tname);
-    //     v.map([](RDValue& x) { rdvalue_destroy(&x); });
-    //     return v.has_value();
-    // }
-
-    return false;
-}
-
 bool rd_setfunction(RDAddress address) { return rd_setfunction_ex(address, 0); }
 
 bool rd_setfunction_ex(RDAddress address, usize flags) {
@@ -536,7 +455,7 @@ bool rd_tick(const RDWorkerStatus** s) {
 RDBuffer* rd_getfile() {
     spdlog::trace("rd_getfile()");
     if(!redasm::state::context) return nullptr;
-    return &redasm::state::context->program.file;
+    return redasm::state::context->program.file;
 }
 
 const char* rd_rendertext(RDAddress address) {

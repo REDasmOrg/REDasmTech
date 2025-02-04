@@ -1,4 +1,5 @@
 #include "program.h"
+#include "../internal/buffer_internal.h"
 #include "../utils/utils.h"
 #include "mbyte.h"
 #include <algorithm>
@@ -16,7 +17,7 @@ bool range_overlaps(T s1, T e1, T s2, T e2) {
 
 Program::~Program() {
     for(RDSegment& s : this->segments) {
-        rdbuffer_destroy(&s.mem);
+        rdbuffer_destroy(s.mem);
         delete[] s.name;
     }
 }
@@ -94,7 +95,7 @@ bool Program::add_segment(std::string_view name, RDAddress start, RDAddress end,
             usize copylen = overlapend - overlapstart;
 
             for(usize i = fileoff; i < fileoff + copylen; i++)
-                mbyte::set_byte(&s.mem.m_data[segoff++], this->file.data[i]);
+                mbyte::set_byte(&s.mem->m_data[segoff++], this->file->data[i]);
         }
     }
 
@@ -105,7 +106,7 @@ bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
     if(start >= end) return false;
 
     usize n = end - start;
-    if(off + n > this->file.length) return false;
+    if(off + n > this->file->length) return false;
 
     FileMapping m = {
         .base = start,
@@ -122,8 +123,8 @@ bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
             usize copylen = overlapend - overlapstart;
 
             for(usize i = fileoff; i < fileoff + copylen; i++)
-                mbyte::set_byte(&s.mem.m_data[segmentoff++],
-                                this->file.data[i]);
+                mbyte::set_byte(&s.mem->m_data[segmentoff++],
+                                this->file->data[i]);
         }
     }
 

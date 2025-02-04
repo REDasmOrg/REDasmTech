@@ -20,5 +20,5 @@ typedef struct RDSegment {
     RDAddress end;
     u32 perm;
     u32 bits;
-    RDBuffer mem;
+    RDBuffer* mem;
 } RDSegment;

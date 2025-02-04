@@ -311,20 +311,20 @@ void MainWindow::open_file(const QString& filepath) {
 
     m_filepath = filepath;
 
-    RDBuffer buffer = rdbuffer_createfile(qUtf8Printable(m_filepath));
-    if(rdbuffer_isnull(&buffer)) return;
+    RDBuffer* buffer = rdbuffer_createfile(qUtf8Printable(m_filepath));
+    if(!buffer) return;
 
     REDasmSettings settings;
     settings.update_recent_files(m_filepath);
     this->load_recents();
 
-    auto* dlgloader = new LoaderDialog(&buffer, this);
+    auto* dlgloader = new LoaderDialog(buffer, this);
 
     connect(dlgloader, &LoaderDialog::accepted, this,
             [&]() { this->select_analyzers(); });
 
     connect(dlgloader, &LoaderDialog::rejected, this,
-            [buffer]() mutable { rdbuffer_destroy(&buffer); });
+            [buffer]() { rdbuffer_destroy(buffer); });
 
     dlgloader->open();
 }

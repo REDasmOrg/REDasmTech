@@ -1,13 +1,14 @@
 #include "../memory/buffer.h"
+#include "../internal/buffer_internal.h"
 #include "../utils/utils.h"
 #include <fstream>
 #include <redasm/buffer.h>
 #include <redasm/byte.h>
 #include <spdlog/spdlog.h>
 
-RDBuffer rdbuffer_createfile(const char* filepath) {
+RDBuffer* rdbuffer_createfile(const char* filepath) {
     spdlog::trace("rdbuffer_createfile('{}')", filepath);
-    if(!filepath) return {};
+    if(!filepath) return nullptr;
 
     std::ifstream ifs(filepath, std::ios::binary | std::ios::ate);
 
@@ -16,7 +17,7 @@ RDBuffer rdbuffer_createfile(const char* filepath) {
         return {};
     }
 
-    RDBuffer self = {
+    auto* self = new RDBuffer{
         .data = reinterpret_cast<u8*>(std::calloc(ifs.tellg(), sizeof(u8))),
         .length = static_cast<usize>(ifs.tellg()),
         .source = redasm::utils::copy_str(filepath),
@@ -33,15 +34,15 @@ RDBuffer rdbuffer_createfile(const char* filepath) {
     };
 
     ifs.seekg(0);
-    ifs.read(reinterpret_cast<char*>(self.data), self.length);
+    ifs.read(reinterpret_cast<char*>(self->data), self->length);
     return self;
 }
 
-RDBuffer rdbuffer_creatememory(usize n) {
+RDBuffer* rdbuffer_creatememory(usize n) {
     spdlog::trace("rdbuffer_creatememory({:x})", n);
-    if(!n) return {};
+    if(!n) return nullptr;
 
-    return {
+    auto* self = new RDBuffer{
         .m_data = reinterpret_cast<RDMByte*>(std::calloc(n, sizeof(RDMByte))),
         .length = n,
         .source = redasm::utils::copy_str("MEMORY"),
@@ -52,10 +53,28 @@ RDBuffer rdbuffer_creatememory(usize n) {
                        rdmbyte_getbyte(self->m_data[idx], b);
             },
     };
+
+    return self;
 }
 
-bool rdbuffer_isnull(const RDBuffer* self) {
-    return !self || !self->data || !self->get_byte;
+usize rdbuffer_getlength(const RDBuffer* self) {
+    if(self) return self->length;
+    return 0;
+}
+
+const char* rdbuffer_getsource(const RDBuffer* self) {
+    if(self) return self->source;
+    return nullptr;
+}
+
+const u8* rdbuffer_getdata(const RDBuffer* self) {
+    if(self) return self->data;
+    return nullptr;
+}
+
+const RDMByte* rdbuffer_getmdata(const RDBuffer* self) {
+    if(self) return self->m_data;
+    return nullptr;
 }
 
 usize rdbuffer_read(const RDBuffer* self, usize idx, void* dst, usize n) {
@@ -274,4 +293,5 @@ void rdbuffer_destroy(RDBuffer* self) {
     self->source = nullptr;
     self->data = nullptr;
     self->length = 0;
+    delete self;
 }

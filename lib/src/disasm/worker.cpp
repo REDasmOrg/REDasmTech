@@ -1,6 +1,7 @@
 #include "worker.h"
 #include "../context.h"
 #include "../error.h"
+#include "../internal/buffer_internal.h"
 #include "../plugins/pluginmanager.h"
 #include "../state.h"
 #include "memprocess.h"
@@ -87,8 +88,8 @@ void Worker::execute(usize step) {
 }
 
 void Worker::init_step() {
-    m_status->filepath = state::context->program.file.source;
-    m_status->filesize = state::context->program.file.length;
+    m_status->filepath = state::context->program.file->source;
+    m_status->filesize = state::context->program.file->length;
     m_status->loader = state::context->loaderplugin->name;
     m_status->processor = state::context->processorplugin->name;
     m_status->analysisstart = std::time(nullptr);

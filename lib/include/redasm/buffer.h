@@ -5,20 +5,14 @@
 #include <redasm/types.h>
 #include <redasm/typing.h>
 
-typedef struct RDBuffer {
-    union {
-        u8* data;
-        RDMByte* m_data;
-    };
+typedef struct RDBuffer RDBuffer;
 
-    usize length;
-    const char* source;
-    bool (*get_byte)(const struct RDBuffer*, usize, u8*);
-} RDBuffer;
-
-REDASM_EXPORT RDBuffer rdbuffer_createfile(const char* filepath);
-REDASM_EXPORT RDBuffer rdbuffer_creatememory(usize n);
-REDASM_EXPORT bool rdbuffer_isnull(const RDBuffer* self);
+REDASM_EXPORT RDBuffer* rdbuffer_createfile(const char* filepath);
+REDASM_EXPORT RDBuffer* rdbuffer_creatememory(usize n);
+REDASM_EXPORT usize rdbuffer_getlength(const RDBuffer* self);
+REDASM_EXPORT const char* rdbuffer_getsource(const RDBuffer* self);
+REDASM_EXPORT const u8* rdbuffer_getdata(const RDBuffer* self);
+REDASM_EXPORT const RDMByte* rdbuffer_getmdata(const RDBuffer* self);
 REDASM_EXPORT usize rdbuffer_read(const RDBuffer* self, usize idx, void* dst,
                                   usize n);
 REDASM_EXPORT bool rdbuffer_readstruct(const RDBuffer* self, usize idx,

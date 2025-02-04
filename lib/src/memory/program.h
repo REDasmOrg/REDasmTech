@@ -1,6 +1,8 @@
 #pragma once
 
+#include <redasm/buffer.h>
 #include <redasm/segment.h>
+#include <redasm/types.h>
 #include <string_view>
 #include <tl/optional.hpp>
 #include <vector>
@@ -29,7 +31,7 @@ struct Program {
 
     std::vector<RDSegment> segments;
     std::vector<FileMapping> mappings;
-    RDBuffer file;
+    RDBuffer* file;
 };
 
 } // namespace redasm

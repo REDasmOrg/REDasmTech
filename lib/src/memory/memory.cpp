@@ -246,27 +246,27 @@ tl::optional<RDAddress> get_next(const RDSegment* self, RDAddress address) {
 }
 
 bool is_unknown(const RDSegment* self, RDAddress address) {
-    return mbyte::is_unknown(self->mem.m_data[address - self->start]);
+    return mbyte::is_unknown(self->mem->m_data[address - self->start]);
 }
 
 bool has_common(const RDSegment* self, RDAddress address) {
-    return mbyte::has_common(self->mem.m_data[address - self->start]);
+    return mbyte::has_common(self->mem->m_data[address - self->start]);
 }
 
 bool has_byte(const RDSegment* self, RDAddress address) {
-    return mbyte::has_byte(self->mem.m_data[address - self->start]);
+    return mbyte::has_byte(self->mem->m_data[address - self->start]);
 }
 
 bool has_flag(const RDSegment* self, RDAddress address, u32 f) {
-    return mbyte::has_flag(self->mem.m_data[address - self->start], f);
+    return mbyte::has_flag(self->mem->m_data[address - self->start], f);
 }
 
 void set_flag(RDSegment* self, RDAddress address, u32 f, bool b) {
-    mbyte::set_flag(&self->mem.m_data[address - self->start], f, b);
+    mbyte::set_flag(&self->mem->m_data[address - self->start], f, b);
 }
 
 void clear(RDSegment* self, RDAddress address) {
-    mbyte::clear(&self->mem.m_data[address - self->start]);
+    mbyte::clear(&self->mem->m_data[address - self->start]);
 }
 
 void set_n(RDSegment* self, RDAddress address, usize n, u32 flags) {
@@ -307,7 +307,7 @@ void unset_n(RDSegment* self, RDAddress address, usize n) {
 
 RDMByte get_mbyte(const RDSegment* self, RDAddress address) {
     usize idx = address - self->start;
-    if(idx < self->mem.length) return self->mem.m_data[idx];
+    if(idx < self->mem->length) return self->mem->m_data[idx];
     except("memory::get_mbyte(): address out of range");
 }
 

@@ -1,4 +1,5 @@
 #include "loader.h"
+#include "../internal/buffer_internal.h"
 #include "../plugins/pluginmanager.h"
 #include <redasm/loader.h>
 #include <redasm/memory.h>

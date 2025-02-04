@@ -228,8 +228,10 @@ tl::optional<RDValue> get_type_impl(const RDBuffer* self, usize& idx,
             auto item = buffer::get_type_impl(self, idx, td);
             if(item)
                 vect_append(RDValue, &v.list, *item);
-            else
+            else {
+                rdvalue_destroy(&v);
                 return tl::nullopt;
+            }
         }
 
         return v;
@@ -271,7 +273,10 @@ tl::optional<RDValue> read_struct(const RDBuffer* self, usize idx,
 
             for(usize i = 0; i < pt.n; i++) {
                 auto val = buffer::get_type_impl(self, idx, pt.tdef);
-                if(!val) return tl::nullopt;
+                if(!val) {
+                    rdvalue_destroy(&l);
+                    return tl::nullopt;
+                }
                 vect_append(RDValue, &l.list, *val);
             }
 
