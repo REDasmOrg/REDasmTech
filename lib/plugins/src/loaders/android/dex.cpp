@@ -87,26 +87,21 @@ bool filter_classes(const DexLoader* self) {
 }
 
 bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) {
-    const u8* data = nullptr;
-    usize n = rdbuffer_getdata(req->file, &data);
-    DexFile* df = dexFileParse(data, n, 0);
+    const u8* data = rdbuffer_getdata(req->file);
+    DexFile* df = dexFileParse(data, rdbuffer_getlength(req->file), 0);
     bool ok = df != nullptr;
     dexFileFree(df);
     return ok;
 }
 
-bool load(RDLoader* l, RDBuffer*) {
+bool load(RDLoader* l, RDBuffer* file) {
     auto* self = reinterpret_cast<DexLoader*>(l);
-    const u8* data = nullptr;
-    usize n = rd_getfile(&data);
-    self->dexfile = dexFileParse(data, n, 0);
+    usize len = rdbuffer_getlength(file);
+    const u8* data = rdbuffer_getdata(file);
+    self->dexfile = dexFileParse(data, len, 0);
 
-    rd_map(0, n);
-    rd_mapsegment_n("CODE", self->dexfile->pHeader->dataOff,
-                    self->dexfile->pHeader->dataSize,
-                    self->dexfile->pHeader->dataOff,
-                    self->dexfile->pHeader->dataSize, SP_RWX);
-
+    rd_addsegment_n("DEX", 0, len, SP_RWX, 16);
+    rd_mapfile_n(0, 0, len);
     return dex::filter_classes(self);
 }
 

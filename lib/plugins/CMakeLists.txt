@@ -11,7 +11,7 @@ include(cmake/Compiler.cmake)
 # add_subdirectory(src/loaders/dos)
 # add_subdirectory(src/loaders/elf)
 add_subdirectory(src/loaders/psx)
-# add_subdirectory(src/loaders/android)
+add_subdirectory(src/loaders/android)
 
 # Processors
 add_subdirectory(src/processors/capstonebundle)
