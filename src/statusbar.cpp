@@ -54,13 +54,15 @@ void set_location(const RDSurface* surface) {
     }
 
     if(loc.address.valid) {
+        int bits = loc.segment ? loc.segment->bits : -1;
         s += QString::fromWCharArray(L"<b>Address: </b>%1\u00A0\u00A0")
-                 .arg(rd_tohex(loc.address.value));
+                 .arg(rd_tohex_n(loc.address.value, bits));
     }
 
     if(loc.offset.valid) {
+        int bits = loc.segment ? loc.segment->bits : -1;
         s += QString::fromWCharArray(L"<b>Offset: </b>%1\u00A0\u00A0")
-                 .arg(rd_tohex(loc.offset.value));
+                 .arg(rd_tohex_n(loc.offset.value, bits));
     }
 
     if(loc.segment) {

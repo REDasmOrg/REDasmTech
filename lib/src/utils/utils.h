@@ -50,14 +50,15 @@ Ret to_string(T value, int base = 10, bool sign = false, int bits = 0) {
 
     if(isneg) out[--c] = '-';
 
-    // Zero pad
-    int w = bits / 4;
-    if(int ndigits = out.size() - c - 1; w > ndigits) {
-        int nzeros = w - ndigits;
-        for(int i = c - 1; i >= c - nzeros && i >= 0; --i)
-            out[i] = '0';
+    if(bits > 0) { // Zero pad
+        int w = bits / 4;
+        if(int ndigits = out.size() - c - 1; w > ndigits) {
+            int nzeros = w - ndigits;
+            for(int i = c - 1; i >= c - nzeros && i >= 0; --i)
+                out[i] = '0';
 
-        c -= nzeros;
+            c -= nzeros;
+        }
     }
 
     return Ret{&out[c], out.size() - c - 1};
@@ -72,14 +73,11 @@ static Ret to_hex(T value, int bits = 0) {
 template<typename T = usize>
 [[nodiscard]] tl::optional<T> to_integer(std::string_view sv, int base = 0) {
     if(sv.empty()) return tl::nullopt;
-
     impl::detect_base(sv, !base ? &base : nullptr);
 
     T val{};
     auto res = std::from_chars(sv.begin(), sv.end(), val, base);
-
     if(res.ec != std::errc{} || res.ptr < sv.end()) return tl::nullopt;
-
     return val;
 }
 
