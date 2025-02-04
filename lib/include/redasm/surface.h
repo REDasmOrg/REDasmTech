@@ -72,7 +72,8 @@ REDASM_EXPORT void rdsurface_getposition(const RDSurface* self,
                                          RDSurfacePosition* pos);
 REDASM_EXPORT void rdsurface_getlocation(const RDSurface* self,
                                          RDSurfaceLocation* loc);
-REDASM_EXPORT bool rdsurface_getaddress(const RDSurface* self, RDAddress* address);
+REDASM_EXPORT bool rdsurface_getcurrentaddress(const RDSurface* self, RDAddress* address);
+REDASM_EXPORT bool rdsurface_getlistingindex(const RDSurface* self, LIndex* lidx);
 REDASM_EXPORT int rdsurface_indexof(const RDSurface* self, RDAddress address);
 REDASM_EXPORT int rdsurface_lastindexof(const RDSurface* self,
                                         RDAddress address);
@@ -91,7 +92,7 @@ REDASM_EXPORT bool rdsurface_selectword(RDSurface* self, int row, int col);
 REDASM_EXPORT bool rdsurface_select(RDSurface* self, int row, int col);
 REDASM_EXPORT void rdsurface_clearselection(RDSurface* self);
 REDASM_EXPORT void rdsurface_clearhistory(RDSurface* self);
-REDASM_EXPORT void rdsurface_seekposition(RDSurface* self, LIndex index);
+REDASM_EXPORT bool rdsurface_seekposition(RDSurface* self, LIndex index);
 REDASM_EXPORT void rdsurface_seek(RDSurface* self, LIndex index);
 REDASM_EXPORT bool rdsurface_jumptoep(RDSurface* self);
 REDASM_EXPORT bool rdsurface_cangoback(const RDSurface* self);

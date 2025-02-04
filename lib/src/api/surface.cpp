@@ -133,11 +133,20 @@ void rdsurface_getlocation(const RDSurface* self, RDSurfaceLocation* loc) {
     }
 }
 
-bool rdsurface_getaddress(const RDSurface* self, RDAddress* address) {
-    spdlog::trace("rdsurface_getindex({})", fmt::ptr(self));
+bool rdsurface_getcurrentaddress(const RDSurface* self, RDAddress* address) {
+    spdlog::trace("rdsurface_getcurrentaddress({}, {})", fmt::ptr(self),
+                  fmt::ptr(address));
     auto addr = redasm::api::from_c(self)->current_address();
     if(address) *address = *addr;
     return addr.has_value();
+}
+
+bool rdsurface_getlistingindex(const RDSurface* self, LIndex* lidx) {
+    spdlog::trace("rdsurface_getlistingindex({}, {})", fmt::ptr(self),
+                  fmt::ptr(lidx));
+    auto listingidx = redasm::api::from_c(self)->current_listing_index();
+    if(lidx) *lidx = *listingidx;
+    return listingidx.has_value();
 }
 
 int rdsurface_indexof(const RDSurface* self, RDAddress address) {
@@ -201,9 +210,9 @@ void rdsurface_clearhistory(RDSurface* self) {
     redasm::api::from_c(self)->clear_history();
 }
 
-void rdsurface_seekposition(RDSurface* self, LIndex index) {
+bool rdsurface_seekposition(RDSurface* self, LIndex index) {
     spdlog::trace("rdsurface_seekposition({}, {})", fmt::ptr(self), index);
-    redasm::api::from_c(self)->seek_position(index);
+    return redasm::api::from_c(self)->seek_position(index);
 }
 
 void rdsurface_seek(RDSurface* self, LIndex index) {
