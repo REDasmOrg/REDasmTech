@@ -236,7 +236,7 @@ void rdgraph_setwidth(RDGraph* self, RDGraphNode n, int w) {
 
 void rdgraph_setheight(RDGraph* self, RDGraphNode n, int h) {
     spdlog::trace("rdgraph_setheight({}, {}, {})", fmt::ptr(self), n, h);
-    redasm::api::from_c(self)->set_width(n, h);
+    redasm::api::from_c(self)->set_height(n, h);
 }
 
 void rdgraph_clearlayout(RDGraph* self) {
