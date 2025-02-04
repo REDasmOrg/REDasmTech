@@ -62,7 +62,7 @@ public:
     bool select(int row, int col);
     bool go_back();
     bool go_forward();
-    void seek_position(LIndex index);
+    bool seek_position(LIndex index);
     void seek(LIndex index);
     bool jump_to(RDAddress address);
     bool jump_to_ep();

@@ -195,7 +195,7 @@ bool Surface::go_forward() {
     return true;
 }
 
-void Surface::seek_position(LIndex index) {
+bool Surface::seek_position(LIndex index) {
     if(!this->rows.empty()) {
         LIndex s = this->rows.front().listingindex;
         LIndex e = this->rows.back().listingindex;
@@ -204,13 +204,14 @@ void Surface::seek_position(LIndex index) {
             for(usize i = 0; i < this->rows.size(); i++) {
                 if(this->rows[i].listingindex == index) {
                     this->set_position(i, 0);
-                    return;
+                    return false;
                 }
             }
         }
     }
 
     this->seek(index);
+    return true;
 }
 
 void Surface::seek(LIndex index) { // Seek doesn't update back/forward stack
