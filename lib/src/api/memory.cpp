@@ -34,6 +34,19 @@ namespace {
 
 } // namespace
 
+bool rd_getmbyte(RDAddress address, RDMByte* mb) {
+    spdlog::trace("rd_getmbyte({:x}, {})", address, fmt::ptr(mb));
+
+    if(const redasm::Context* ctx = redasm::state::context; ctx) {
+        if(const RDSegment* seg = ctx->program.find_segment(address); seg) {
+            if(mb) *mb = redasm::memory::get_mbyte(seg, address);
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void rd_memoryinfo(RDMemoryInfo* mi) {
     spdlog::trace("rd_memoryinfo({})", fmt::ptr(mi));
 

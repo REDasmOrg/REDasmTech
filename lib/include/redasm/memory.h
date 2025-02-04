@@ -1,5 +1,6 @@
 #pragma once
 
+#include <redasm/byte.h>
 #include <redasm/common.h>
 #include <redasm/types.h>
 #include <redasm/typing.h>
@@ -25,6 +26,7 @@ typedef struct RDStringResult {
     bool terminated;
 } RDStringResult;
 
+REDASM_EXPORT bool rd_getmbyte(RDAddress address, RDMByte* mb);
 REDASM_EXPORT void rd_memoryinfo(RDMemoryInfo* mi);
 REDASM_EXPORT bool rd_isaddress(RDAddress address);
 REDASM_EXPORT bool rd_checkstring(RDAddress address, RDStringResult* r);
