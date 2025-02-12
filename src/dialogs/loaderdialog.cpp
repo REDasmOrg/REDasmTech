@@ -7,9 +7,9 @@ LoaderDialog::LoaderDialog(RDBuffer* buffer, QWidget* parent)
     m_ui.gbaddressing->setEnabled(false);
 
     this->populate_processors();
-    usize c = rd_test(buffer, &m_testresult);
+    m_testresult = rd_test(buffer);
 
-    for(usize i = 0; i < c; i++)
+    for(usize i = 0; i < vect_length(m_testresult); i++)
         m_ui.lwloaders->addItem(m_testresult[i].loaderplugin->name);
 
     this->populate_loglevels();
@@ -27,7 +27,7 @@ LoaderDialog::LoaderDialog(RDBuffer* buffer, QWidget* parent)
             &LoaderDialog::on_processor_changed);
 
     // Trigger "on_loader_changed"
-    if(c > 0) m_ui.lwloaders->setCurrentRow(0);
+    if(vect_length(m_testresult) > 0) m_ui.lwloaders->setCurrentRow(0);
 }
 
 void LoaderDialog::on_loader_changed(int currentrow) {

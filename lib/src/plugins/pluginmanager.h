@@ -8,20 +8,20 @@ namespace redasm::pm {
 
 constexpr const char* NATIVE = "native";
 
-#define _foreach_plugins(type, item, body)                                     \
+#define _foreach_plugins(type, item, ...)                                      \
     do {                                                                       \
         usize n;                                                               \
         const auto** plugins = redasm::pm::get_##type##plugins(&n);            \
         for(usize i = 0; i < n; i++) {                                         \
             const auto* item = plugins[i];                                     \
-            body                                                               \
+            __VA_ARGS__                                                        \
         }                                                                      \
     } while(0);
 
 // clang-format off
-#define foreach_loaders(item, body) _foreach_plugins(loader, item, body)
-#define foreach_processors(item, body) _foreach_plugins(processor, item, body)
-#define foreach_analyzers(item, body) _foreach_plugins(analyzer, item, body)
+#define foreach_loaders(item, ...) _foreach_plugins(loader, item, __VA_ARGS__)
+#define foreach_processors(item, ...) _foreach_plugins(processor, item, __VA_ARGS__)
+#define foreach_analyzers(item, ...) _foreach_plugins(analyzer, item, __VA_ARGS__)
 
 template<typename T> struct InstanceForPlugin {};
 template<> struct InstanceForPlugin<RDLoaderPlugin> { using Type = RDLoader; };

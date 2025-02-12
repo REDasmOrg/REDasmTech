@@ -17,6 +17,8 @@ bool rd_init(const RDInitParams* params) {
     if(redasm::state::initialized) return true;
     redasm::state::initialized = true;
 
+    redasm::state::tests = vect_create(RDTestResult);
+
     // clang-format off
     redasm::state::params = {
         .onlog    = [](const char* arg, void*) { spdlog::info("LOG: {}", arg); },
@@ -43,6 +45,7 @@ void rd_deinit() {
     if(!redasm::state::initialized) return;
     redasm::state::initialized = false;
     rdcontext_destroy();
+    vect_destroy(redasm::state::tests);
     redasm::pm::destroy();
 }
 
@@ -132,14 +135,12 @@ usize rd_getproblems(const RDProblem** problems) {
     return res.size();
 }
 
-usize rd_test(RDBuffer* buffer, RDTestResult** result) {
-    spdlog::trace("rd_test({}, {})", fmt::ptr(buffer), fmt::ptr(result));
-
-    static std::vector<RDTestResult> res;
+Vect(RDTestResult) rd_test(RDBuffer* buffer) {
+    spdlog::trace("rd_test({})", fmt::ptr(buffer));
 
     redasm::state::context = nullptr; // Deselect active context
     redasm::state::contextlist.clear();
-    res.clear();
+    vect_clear(redasm::state::tests);
 
     RDLoaderRequest req = {
         .file = buffer,
@@ -157,11 +158,12 @@ usize rd_test(RDBuffer* buffer, RDTestResult** result) {
         if(ctx->try_load(lp)) {
             redasm::state::contextlist.push_back(ctx);
 
-            res.emplace_back(RDTestResult{
-                ctx->loaderplugin,
-                ctx->processorplugin,
-                redasm::api::to_c(ctx),
-            });
+            vect_add(RDTestResult, redasm::state::tests,
+                     {
+                         ctx->loaderplugin,
+                         ctx->processorplugin,
+                         redasm::api::to_c(ctx),
+                     });
         }
         else {
             redasm::state::context = nullptr;
@@ -170,13 +172,14 @@ usize rd_test(RDBuffer* buffer, RDTestResult** result) {
     });
 
     // Sort results by priority
-    std::ranges::stable_partition(res, std::not_fn([](const RDTestResult& x) {
+    std::ranges::stable_partition(vect_begin(redasm::state::tests),
+                                  vect_end(redasm::state::tests),
+                                  std::not_fn([](const RDTestResult& x) {
                                       return x.loaderplugin->flags & PF_LAST;
                                   }));
 
     redasm::state::context = nullptr; // Deselect "test" context
-    if(result) *result = res.data();
-    return res.size();
+    return redasm::state::tests;
 }
 
 void rd_disassemble() {
