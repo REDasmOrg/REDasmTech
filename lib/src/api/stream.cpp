@@ -26,19 +26,10 @@ void rdstream_rewind(RDStream* self) {
     self->position = 0;
 }
 
-bool rdstream_peek_type(const RDStream* self, const char* tname, RDValue* v) {
-    spdlog::trace("rdstream_peek_type({}, '{}', {})", fmt::ptr(self), tname,
-                  fmt::ptr(v));
-    if(!tname) return false;
-
-    auto res = redasm::buffer::get_type(self->buffer, self->position, tname);
-    if(res) {
-        if(v)
-            *v = *res;
-        else
-            rdvalue_destroy(&res.value());
-    }
-    return res.has_value();
+RDValue* rdstream_peek_type(const RDStream* self, const char* tname) {
+    spdlog::trace("rdstream_peek_type({}, '{}')", fmt::ptr(self), tname);
+    if(!tname) return nullptr;
+    return redasm::buffer::get_type(self->buffer, self->position, tname);
 }
 
 bool rdstream_peek_strz(const RDStream* self, const char** v) {
@@ -189,21 +180,15 @@ bool rdstream_peek_i64be(const RDStream* self, i64* v) {
     return res.has_value();
 }
 
-bool rdstream_read_type(RDStream* self, const char* tname, RDValue* v) {
-    spdlog::trace("rdstream_read_type({}, '{}', {})", fmt::ptr(self),
-                  fmt::ptr(tname), fmt::ptr(v));
-    if(!tname || !v) return false;
+RDValue* rdstream_read_type(RDStream* self, const char* tname) {
+    spdlog::trace("rdstream_read_type({}, '{}')", fmt::ptr(self),
+                  fmt::ptr(tname));
+    if(!tname) return nullptr;
 
     usize pos = self->position;
-    auto res = redasm::buffer::get_type(self->buffer, pos, tname, pos);
-    if(res) {
-        self->position = pos;
-        if(v)
-            *v = *res;
-        else
-            rdvalue_destroy(&res.value());
-    }
-    return res.has_value();
+    RDValue* res = redasm::buffer::get_type(self->buffer, pos, tname, pos);
+    if(res) self->position = pos;
+    return res;
 }
 
 bool rdstream_read_strz(RDStream* self, const char** v) {

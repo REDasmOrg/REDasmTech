@@ -24,58 +24,58 @@ tl::optional<std::string> surface_checkaddr(T v, bool& isaddr) {
     return tl::nullopt;
 }
 
-std::string surface_valuestr(const RDValue& v, bool& isaddr) {
-    assume(!v.type.n);
+std::string surface_valuestr(const RDValue* v, bool& isaddr) {
+    assume(!v->type.n);
 
-    switch(v.type.id) {
+    switch(v->type.id) {
         case typing::ids::I8: {
-            if(v.i8_v < 0) return utils::to_string<std::string>(v.i8_v);
-            return surface_checkaddr(v.i8_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v.i8_v));
+            if(v->i8_v < 0) return utils::to_string<std::string>(v->i8_v);
+            return surface_checkaddr(v->i8_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v->i8_v));
         }
 
         case typing::ids::I16:
         case typing::ids::I16BE: {
-            if(v.i16_v < 0) return utils::to_string<std::string>(v.i16_v);
-            return surface_checkaddr(v.i16_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v.i16_v));
+            if(v->i16_v < 0) return utils::to_string<std::string>(v->i16_v);
+            return surface_checkaddr(v->i16_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v->i16_v));
         }
 
         case typing::ids::I32:
         case typing::ids::I32BE: {
-            if(v.i32_v < 0) return utils::to_string<std::string>(v.i32_v);
-            return surface_checkaddr(v.i32_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v.i32_v));
+            if(v->i32_v < 0) return utils::to_string<std::string>(v->i32_v);
+            return surface_checkaddr(v->i32_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v->i32_v));
         }
 
         case typing::ids::I64:
         case typing::ids::I64BE: {
-            if(v.i64_v < 0) return utils::to_string<std::string>(v.i64_v);
-            return surface_checkaddr(v.i64_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v.i64_v));
+            if(v->i64_v < 0) return utils::to_string<std::string>(v->i64_v);
+            return surface_checkaddr(v->i64_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v->i64_v));
         }
 
         case typing::ids::U8: {
-            return surface_checkaddr(v.u8_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v.u8_v));
+            return surface_checkaddr(v->u8_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v->u8_v));
         }
 
         case typing::ids::U16:
         case typing::ids::U16BE: {
-            return surface_checkaddr(v.u16_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v.u16_v));
+            return surface_checkaddr(v->u16_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v->u16_v));
         }
 
         case typing::ids::U32:
         case typing::ids::U32BE: {
-            return surface_checkaddr(v.u32_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v.u32_v));
+            return surface_checkaddr(v->u32_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v->u32_v));
         }
 
         case typing::ids::U64:
         case typing::ids::U64BE: {
-            return surface_checkaddr(v.u64_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v.u64_v));
+            return surface_checkaddr(v->u64_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v->u64_v));
         }
 
         default: break;
@@ -732,15 +732,16 @@ void Surface::render_type(const ListingItem& item) {
         case typing::ids::U32BE:
         case typing::ids::I64BE:
         case typing::ids::U64BE: {
-            memory::get_type(seg, item.address, td->to_type())
-                .map([&](RDValue&& v) {
-                    bool isaddr = false;
-                    std::string vs = surface_valuestr(v, isaddr);
-                    m_renderer->word("=").chunk(vs, isaddr ? THEME_ADDRESS
-                                                           : THEME_CONSTANT);
-                    rdvalue_destroy(&v);
-                })
-                .or_else([&]() { m_renderer->word("=").unknown(); });
+            if(RDValue* v = memory::get_type(seg, item.address, td->to_type());
+               v) {
+                bool isaddr = false;
+                std::string vs = surface_valuestr(v, isaddr);
+                m_renderer->word("=").chunk(vs, isaddr ? THEME_ADDRESS
+                                                       : THEME_CONSTANT);
+                rdvalue_destroy(v);
+            }
+            else
+                m_renderer->word("=").unknown();
             break;
         }
 
@@ -873,7 +874,7 @@ void Surface::render_array(const ListingItem& item) {
 
         for(usize i = 0; i < type->n && addr < seg->end;
             i++, addr += td->size) {
-            auto b = memory::get_type(seg, addr, td->to_type());
+            RDValue* b = memory::get_type(seg, addr, td->to_type());
 
             if(!b) {
                 chars += "\",?\"";
@@ -884,6 +885,8 @@ void Surface::render_array(const ListingItem& item) {
                 chars += b->ch_v;
             else
                 chars += fmt::format("\\x{}", static_cast<int>(b->ch_v));
+
+            rdvalue_destroy(b);
         }
     }
 

@@ -13,7 +13,8 @@ std::string gen_name(RDAddress address, const std::string& prefix) {
 
 const i32* create_packedswitchpayload(RDAddress address,
                                       const PackedSwitchPayload* payload) {
-    rd_settypename(address, "PACKED_SWITCH_PAYLOAD", nullptr);
+    if(!rd_settypename(address, "PACKED_SWITCH_PAYLOAD", nullptr))
+        return nullptr;
 
     RDType t;
     if(!rdtype_create_n("i32", payload->size, &t)) return nullptr;
@@ -27,7 +28,8 @@ const i32* create_packedswitchpayload(RDAddress address,
 
 const i32* create_sparseswitchpayload(RDAddress address,
                                       const SparseSwitchPayload* payload) {
-    rd_settypename(address, "SPARSE_SWITCH_PAYLOAD", nullptr);
+    if(!rd_settypename(address, "SPARSE_SWITCH_PAYLOAD", nullptr))
+        return nullptr;
 
     RDType t;
     if(!rdtype_create_n("i32", payload->size, &t)) return nullptr;

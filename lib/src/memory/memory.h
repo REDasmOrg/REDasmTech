@@ -12,9 +12,8 @@ inline usize read(const RDSegment* self, RDAddress address, void* dst,
     return buffer::read(self->mem, address - self->start, dst, n);
 }
 
-inline tl::optional<RDValue> read_struct(const RDSegment* self,
-                                         RDAddress address,
-                                         const RDStructField* fields) {
+inline RDValue* read_struct(const RDSegment* self, RDAddress address,
+                            const RDStructField* fields) {
     return buffer::read_struct(self->mem, address - self->start, fields);
 }
 
@@ -92,24 +91,26 @@ inline tl::optional<std::string> get_wstr(const RDSegment* self,
     return buffer::get_wstr(self->mem, address - self->start, n);
 }
 
-inline tl::optional<RDValue> get_type(const RDSegment* self, RDAddress address,
-                                      typing::FullTypeName tn) {
+inline RDValue* get_type(const RDSegment* self, RDAddress address,
+                         typing::FullTypeName tn) {
     return buffer::get_type(self->mem, address - self->start, tn);
 }
 
-inline tl::optional<RDValue> get_type(const RDSegment* self, RDAddress address,
-                                      RDType t) {
+inline RDValue* get_type(const RDSegment* self, RDAddress address, RDType t) {
     return buffer::get_type(self->mem, address - self->start, t);
 }
 
 // Memory interface
+
+RDMByte get_mbyte(const RDSegment* self, RDAddress address);
+
 template<typename Function>
 bool range_is(const RDSegment* self, RDAddress address, usize n, Function f) {
     RDAddress endaddr = std::min(address + n, self->end);
 
     for(RDAddress i = address; i < endaddr; i++) {
-        auto b = memory::get_byte(self, address);
-        if(!b || !f(*b)) return false;
+        auto b = memory::get_mbyte(self, address);
+        if(!b || !f(b)) return false;
     }
 
     return true;
@@ -125,6 +126,5 @@ void set_flag(RDSegment* self, RDAddress address, u32 f, bool b = true);
 void clear(RDSegment* self, RDAddress address);
 void set_n(RDSegment* self, RDAddress address, usize n, u32 flags);
 void unset_n(RDSegment* self, RDAddress address, usize n);
-RDMByte get_mbyte(const RDSegment* self, RDAddress address);
 
 } // namespace redasm::memory

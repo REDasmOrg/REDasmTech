@@ -35,11 +35,14 @@ typedef struct RDType {
     usize n; // > 0 = array
 } RDType;
 
+struct RDValue;
+MapItemStr(RDValueField, const char*, struct RDValue*);
+
 typedef struct RDValue {
     RDType type;
 
-    Vect(RDValue) list;
-    Dict(RDValueField) dict;
+    Vect(RDValue*) list;
+    Map(RDValueField) dict;
     Str str;
 
     // clang-format off
@@ -53,8 +56,6 @@ typedef struct RDValue {
     Str _scratchpad;
 } RDValue;
 
-DictNode(RDValueField, Str, struct RDValue);
-
 REDASM_EXPORT usize rd_nsizeof(const char* tname);
 REDASM_EXPORT usize rd_tsizeof(const RDType* t);
 REDASM_EXPORT bool rdtype_create(const char* tname, RDType* t);
@@ -63,19 +64,17 @@ REDASM_EXPORT bool rd_intfrombytes(usize bytes, bool sign, RDType* t);
 REDASM_EXPORT const char* rd_typename(const RDType* t);
 REDASM_EXPORT const char* rd_createstruct(const char* name,
                                           const RDStructField* fields);
-
-inline bool rd_istypenull(const RDType* t) { return t && !t->id; }
-
-REDASM_EXPORT RDValue rdvalue_create(void);
+REDASM_EXPORT RDValue* rdvalue_create(void);
 REDASM_EXPORT void rdvalue_destroy(RDValue* self);
 REDASM_EXPORT const char* rdvalue_tostring(RDValue* self);
 REDASM_EXPORT bool rdvalue_islist(const RDValue* self);
 REDASM_EXPORT bool rdvalue_isstruct(const RDValue* self);
 REDASM_EXPORT usize rdvalue_getlength(const RDValue* self);
 
-REDASM_EXPORT const RDValue*
-rdvalue_query(const RDValue* self, const char* q, const char** error);
+REDASM_EXPORT const RDValue* rdvalue_query(const RDValue* self, const char* q,
+                                           const char** error);
 
-REDASM_EXPORT const RDValue* rdvalue_query_n(const RDValue* self,
-                                                const char* q, usize n,
-                                                const char** error);
+REDASM_EXPORT const RDValue* rdvalue_query_n(const RDValue* self, const char* q,
+                                             usize n, const char** error);
+
+inline bool rd_istypenull(const RDType* t) { return t && !t->id; }

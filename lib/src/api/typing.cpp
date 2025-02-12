@@ -81,87 +81,67 @@ const char* rd_createstruct(const char* name, const RDStructField* fields) {
     return nullptr;
 }
 
-RDValue rdvalue_create() {
+RDValue* rdvalue_create() {
     spdlog::trace("rdvalue_create()");
-    RDValue self{};
-    self.list = vect_create(RDValue);
-    self.dict = dict_create(RDValueField);
-    self._scratchpad = str_create(nullptr);
-
-    vect_setdestroyitem(&self.list, [](void* item) {
-        rdvalue_destroy(reinterpret_cast<RDValue*>(item));
-    });
-
-    dict_sethash(&self.dict, [](const void* key, size_t) {
-        return str_hash(reinterpret_cast<const Str*>(key));
-    });
-
-    dict_setequals(&self.dict, [](const void* lhs, const void* rhs, size_t) {
-        const auto* s1 = reinterpret_cast<const Str*>(lhs);
-        const auto* s2 = reinterpret_cast<const Str*>(rhs);
-        return str_equals(s1, s2);
-    });
-
-    dict_setdestroykey(&self.dict, [](void* key) {
-        str_destroy(reinterpret_cast<Str*>(key));
-    });
-
-    dict_setdestroyvalue(&self.dict, [](void* value) {
-        rdvalue_destroy(reinterpret_cast<RDValue*>(value));
-    });
-
-    str_destroy(&self.str);
-    str_destroy(&self._scratchpad);
-    return self;
+    return new RDValue{};
 }
 
 void rdvalue_destroy(RDValue* self) {
     spdlog::trace("rdvalue_destroy({})", fmt::ptr(self));
     if(!self) return;
 
-    vect_destroy(&self->list);
-    dict_destroy(&self->dict);
-    str_destroy(&self->str);
-    str_destroy(&self->_scratchpad);
+    vect_foreach(RDValue*, v, self->list) rdvalue_destroy(*v);
+
+    map_foreach(RDValueField, f, self->dict) {
+        delete[] f->key;
+        rdvalue_destroy(f->value);
+    }
+
+    vect_destroy(self->list);
+    map_destroy(self->dict);
+    str_destroy(self->str);
+    str_destroy(self->_scratchpad);
+    delete self;
 }
 
 const char* rdvalue_tostring(RDValue* self) {
     spdlog::trace("rdvalue_tostring({})", fmt::ptr(self));
 
     if(rdvalue_islist(self)) {
-        str_resize(&self->_scratchpad, vect_getlength(&self->list));
+        if(self->_scratchpad)
+            str_resize(self->_scratchpad, vect_length(self->list));
+        else
+            self->_scratchpad = str_create_n(vect_length(self->list));
 
-        for(usize i = 0; i < vect_getlength(&self->list); i++) {
-            *str_ref(&self->_scratchpad, i) =
-                vect_at(RDValue, &self->list, i)->ch_v;
-        }
+        for(usize i = 0; i < vect_length(self->list); i++)
+            self->_scratchpad[i] = self->list[i]->ch_v;
 
-        return str_ptr(&self->_scratchpad);
+        return self->_scratchpad;
     }
 
-    return str_ptr(&self->str);
+    return self->str;
 }
 
 bool rdvalue_islist(const RDValue* self) {
     spdlog::trace("rdvalue_islist({})", fmt::ptr(self));
-    return self && self->type.n && !vect_isempty(&self->list);
+    return self && self->type.n && !vect_empty(self->list); // NOLINT
 }
 
 bool rdvalue_isstruct(const RDValue* self) {
     spdlog::trace("rdvalue_isstruct({})", fmt::ptr(self));
-    return self && !dict_isempty(&self->dict);
+    return self && !map_empty(&self->dict); // NOLINT
 }
 
 usize rdvalue_getlength(const RDValue* self) {
     spdlog::trace("rdvalue_getlength({})", fmt::ptr(self));
     if(!self) return 0;
 
-    if(rdvalue_islist(self)) return vect_getlength(&self->list);
-    if(rdvalue_isstruct(self)) return dict_getlength(&self->dict);
+    if(rdvalue_islist(self)) return vect_length(self->list);
+    if(rdvalue_isstruct(self)) return map_length(self->dict);
 
     if(self->type.id == redasm::typing::ids::STR ||
        self->type.id == redasm::typing::ids::WSTR)
-        return str_getlength(&self->str);
+        return str_length(self->str);
 
     except("Cannot get value-length of type '{}'", rd_typename(&self->type));
 }
@@ -195,19 +175,17 @@ const RDValue* rdvalue_query_n(const RDValue* self, const char* q, usize n,
     auto traverse_key = [&](std::string_view key) -> bool {
         if(!rdvalue_isstruct(curr))
             return set_error("Attempted key lookup on non-struct value");
-        if(const auto* f = dict_getstr(RDValueField, &curr->dict, key.data());
-           f) {
-            curr = &f->value;
+        if(const auto* f = map_get(RDValueField, curr->dict, key.data()); f) {
+            curr = *f;
             return true;
         }
         return set_error("Key not found.");
     };
 
     auto traverse_index = [&](usize index) -> bool {
-        if(!rdvalue_islist(curr) || index >= vect_getlength(&curr->list))
+        if(!rdvalue_islist(curr) || index >= vect_length(curr->list))
             return set_error("Index out of bounds");
-
-        curr = vect_at(RDValue, &curr->list, index);
+        curr = curr->list[index];
         return true;
     };
 

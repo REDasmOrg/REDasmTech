@@ -15,9 +15,8 @@ REDASM_EXPORT RDStream rdstream_create(RDBuffer* buffer);
 REDASM_EXPORT usize rdstream_seek(RDStream* self, usize off);
 REDASM_EXPORT usize rdstream_move(RDStream* self, isize off);
 REDASM_EXPORT void rdstream_rewind(RDStream* self);
-
-REDASM_EXPORT bool rdstream_peek_type(const RDStream* self, const char* tname,
-                                      RDValue* v);
+REDASM_EXPORT RDValue* rdstream_peek_type(const RDStream* self,
+                                          const char* tname);
 REDASM_EXPORT bool rdstream_peek_strz(const RDStream* self, const char** v);
 REDASM_EXPORT bool rdstream_peek_str(const RDStream* self, usize n,
                                      const char** v);
@@ -39,8 +38,7 @@ REDASM_EXPORT bool rdstream_peek_i16be(const RDStream* self, i16* v);
 REDASM_EXPORT bool rdstream_peek_i32be(const RDStream* self, i32* v);
 REDASM_EXPORT bool rdstream_peek_i64be(const RDStream* self, i64* v);
 
-REDASM_EXPORT bool rdstream_read_type(RDStream* self, const char* tname,
-                                      RDValue* v);
+REDASM_EXPORT RDValue* rdstream_read_type(RDStream* self, const char* tname);
 REDASM_EXPORT bool rdstream_read_strz(RDStream* self, const char** v);
 REDASM_EXPORT bool rdstream_read_str(RDStream* self, usize n, const char** v);
 REDASM_EXPORT bool rdstream_read_wstrz(RDStream* self, const char** v);

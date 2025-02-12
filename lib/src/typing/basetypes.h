@@ -43,6 +43,9 @@ struct BaseTypes {
     [[nodiscard]] const TypeDef* get_typedef(TypeName tn) const {
         return this->get_typedef({.id = typing::type_id(tn)}, tn);
     }
+    [[nodiscard]] const TypeDef* get_typedef(TypeId tid) const {
+        return this->get_typedef({.id = tid});
+    }
 
 protected:
     std::unordered_map<TypeId, typing::TypeDef> m_registered;

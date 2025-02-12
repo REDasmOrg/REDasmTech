@@ -301,46 +301,27 @@ const char* rd_getcomment(RDAddress address) {
     return res.empty() ? nullptr : res.c_str();
 }
 
-bool rd_gettype(RDAddress address, const RDType* t, RDValue* v) {
-    spdlog::trace("rd_gettype({:x}, {}, {})", address, fmt::ptr(t),
-                  fmt::ptr(v));
-    if(!redasm::state::context || !t) return false;
+RDValue* rd_gettype(RDAddress address, const RDType* t) {
+    spdlog::trace("rd_gettype({:x}, {})", address, fmt::ptr(t));
+    if(!redasm::state::context || !t) return nullptr;
 
     const RDSegment* seg =
         redasm::state::context->program.find_segment(address);
 
-    if(seg) {
-        return redasm::memory::get_type(seg, address, *t)
-            .map_or(
-                [&](const RDValue& x) {
-                    *v = x;
-                    return true;
-                },
-                false);
-    }
-
-    return false;
+    if(seg) return redasm::memory::get_type(seg, address, *t);
+    return nullptr;
 }
 
-bool rd_gettypename(RDAddress address, const char* tname, RDValue* v) {
-    spdlog::trace("rd_gettypename({:x}, '{}', {})", address, tname,
-                  fmt::ptr(v));
-    if(!redasm::state::context || !tname) return false;
+RDValue* rd_gettypename(RDAddress address, const char* tname) {
+    spdlog::trace("rd_gettypename({:x}, '{}')", address, tname);
+    if(!redasm::state::context || !tname) return nullptr;
 
     const RDSegment* seg =
         redasm::state::context->program.find_segment(address);
 
-    if(seg) {
-        return redasm::memory::get_type(seg, address, tname)
-            .map_or(
-                [&](const RDValue& x) {
-                    *v = x;
-                    return true;
-                },
-                false);
-    }
+    if(seg) return redasm::memory::get_type(seg, address, tname);
 
-    return false;
+    return nullptr;
 }
 
 usize rd_getsegments(const RDSegment** segments) {
@@ -357,12 +338,12 @@ bool rd_setcomment(RDAddress address, const char* comment) {
            redasm::state::context->set_comment(address, comment);
 }
 
-bool rd_settype(RDAddress address, const RDType* type, RDValue* v) {
+bool rd_settype(RDAddress address, const RDType* type, RDValue** v) {
     return rd_settype_ex(address, type, 0, v);
 }
 
 bool rd_settype_ex(RDAddress address, const RDType* type, usize flags,
-                   RDValue* v) {
+                   RDValue** v) {
     spdlog::trace("rd_settype_ex({:x}, {}, {})", address, fmt::ptr(type), flags,
                   fmt::ptr(v));
 
@@ -373,27 +354,23 @@ bool rd_settype_ex(RDAddress address, const RDType* type, usize flags,
     if(!seg) return false;
 
     if(redasm::state::context->set_type(address, *type, flags)) {
-        auto res = redasm::memory::get_type(seg, address, *type);
+        if(v) {
+            *v = redasm::memory::get_type(seg, address, *type);
+            assume(*v);
+        }
 
-        res.map([&](RDValue& x) {
-            if(v)
-                *v = x;
-            else
-                rdvalue_destroy(&x);
-        });
-
-        return res.has_value();
+        return true;
     }
 
     return false;
 }
 
-bool rd_settypename(RDAddress address, const char* tname, RDValue* v) {
+bool rd_settypename(RDAddress address, const char* tname, RDValue** v) {
     return rd_settypename_ex(address, tname, 0, v);
 }
 
 bool rd_settypename_ex(RDAddress address, const char* tname, usize flags,
-                       RDValue* v) {
+                       RDValue** v) {
     spdlog::trace("rd_settypename_ex({:x}, '{}', {}, {})", address, tname,
                   flags, fmt::ptr(v));
     if(!redasm::state::context || !tname) return false;
@@ -403,16 +380,12 @@ bool rd_settypename_ex(RDAddress address, const char* tname, usize flags,
     if(!seg) return false;
 
     if(redasm::state::context->set_type(address, tname, flags)) {
-        auto res = redasm::memory::get_type(seg, address, tname);
+        if(v) {
+            *v = redasm::memory::get_type(seg, address, tname);
+            assume(*v);
+        }
 
-        res.map([&](RDValue& x) {
-            if(v)
-                *v = x;
-            else
-                rdvalue_destroy(&x);
-        });
-
-        return res.has_value();
+        return true;
     }
 
     return false;

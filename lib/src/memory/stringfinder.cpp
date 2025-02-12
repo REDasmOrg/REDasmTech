@@ -88,10 +88,10 @@ categorize_as(const RDSegment* seg, RDAddress address, std::string_view tname,
     usize sz = state::context->types.size_of(tname);
 
     for(; address < seg->end; address += sz) {
-        auto v = memory::get_type(seg, address, tname);
+        RDValue* v = memory::get_type(seg, address, tname);
         if(!v) break;
-        bool ok = cb(std::forward<RDValue>(v.value()), ch);
-        rdvalue_destroy(&v.value());
+        bool ok = cb(std::forward<RDValue*>(v), ch);
+        rdvalue_destroy(v);
         if(!ok) break;
         g_tempstr.push_back(ch);
     }
@@ -132,9 +132,9 @@ tl::optional<RDStringResult> classify(RDAddress address) {
 
     if(stringfinder::is_ascii(b1) && !b2) {
         auto [ok, c] = stringfinder::categorize_as(
-            seg, address, "wchar", [](RDValue&& v, char& outch) {
-                outch = v.ch_v;
-                return stringfinder::is_ascii(v.ch_v);
+            seg, address, "wchar", [](const RDValue* v, char& outch) {
+                outch = v->ch_v;
+                return stringfinder::is_ascii(v->ch_v);
             });
 
         if(ok) {
@@ -153,9 +153,9 @@ tl::optional<RDStringResult> classify(RDAddress address) {
     }
 
     auto [ok, c] = stringfinder::categorize_as(
-        seg, address, "char", [](RDValue&& v, char& outch) {
-            outch = v.ch_v;
-            return stringfinder::is_ascii(v.ch_v);
+        seg, address, "char", [](const RDValue* v, char& outch) {
+            outch = v->ch_v;
+            return stringfinder::is_ascii(v->ch_v);
         });
 
     if(ok) {

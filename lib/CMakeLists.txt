@@ -28,12 +28,6 @@ setup_compiler(${PROJECT_NAME_LIB})
 
 target_sources(${PROJECT_NAME_LIB}
     PRIVATE
-        src/c/str.c
-        src/c/strv.c
-        src/c/vect.c
-        src/c/dict.c
-
-    PRIVATE
         src/utils/process/process_unix.cpp
         src/utils/process/process.cpp
         src/utils/hash.cpp

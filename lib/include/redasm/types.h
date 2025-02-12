@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cstdint>
-#include <redasm/types/dict.h>
+#include <redasm/types/map.h>
 #include <redasm/types/str.h>
 #include <redasm/types/strv.h>
 #include <redasm/types/vect.h>
