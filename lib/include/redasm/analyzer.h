@@ -26,7 +26,7 @@ typedef struct RDAnalyzerPlugin {
 REDASM_EXPORT bool rd_registeranalyzer(const RDAnalyzerPlugin* plugin);
 REDASM_EXPORT bool rd_registeranalyzer_ex(const RDAnalyzerPlugin* plugin,
                                           const char* origin);
-REDASM_EXPORT const RDAnalyzerPlugin** rd_getanalyzerplugins(usize* n);
+REDASM_EXPORT Vect(const RDAnalyzerPlugin*) rd_getanalyzerplugins(void);
 REDASM_EXPORT const RDAnalyzerPlugin** rd_getanalyzers(usize* n);
 REDASM_EXPORT bool rdanalyzerplugin_select(const RDAnalyzerPlugin* self,
                                            bool select);

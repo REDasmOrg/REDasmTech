@@ -149,7 +149,9 @@ Vect(RDTestResult) rd_test(RDBuffer* buffer) {
         .ext = redasm::utils::get_ext(buffer->source).data(),       // NOLINT
     };
 
-    foreach_loaders(lp, {
+    vect_foreach(const RDLoaderPlugin*, p, redasm::pm::loaders) {
+        const RDLoaderPlugin* lp = *p;
+
         if(!lp->accept || !lp->accept(lp, &req)) continue;
 
         auto* ctx = new redasm::Context(buffer);
@@ -169,7 +171,7 @@ Vect(RDTestResult) rd_test(RDBuffer* buffer) {
             redasm::state::context = nullptr;
             delete ctx;
         }
-    });
+    }
 
     // Sort results by priority
     std::ranges::stable_partition(vect_begin(redasm::state::tests),

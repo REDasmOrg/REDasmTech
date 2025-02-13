@@ -92,9 +92,9 @@ bool rd_registerprocessor_ex(const RDProcessorPlugin* plugin,
     return redasm::pm::register_processor(plugin, origin);
 }
 
-const RDProcessorPlugin** rd_getprocessorplugins(usize* n) {
-    spdlog::trace("rd_getprocessorplugins({})", fmt::ptr(n));
-    return redasm::pm::get_processorplugins(n);
+Vect(const RDProcessorPlugin*) rd_getprocessorplugins() {
+    spdlog::trace("rd_getprocessorplugins()");
+    return redasm::pm::processors;
 }
 
 const RDProcessorPlugin* rd_getprocessorplugin() {

@@ -63,7 +63,7 @@ void LoaderDialog::reject() {
 }
 
 void LoaderDialog::select_processor(const RDProcessorPlugin* proc) {
-    for(usize i = 0; i < m_nprocessors; i++) {
+    for(usize i = 0; i < vect_length(m_processors); i++) {
         if(m_processors[i]->id == proc->id) {
             m_ui.cbprocessors->setCurrentIndex(i);
             return;
@@ -74,10 +74,10 @@ void LoaderDialog::select_processor(const RDProcessorPlugin* proc) {
 }
 
 void LoaderDialog::populate_processors() {
-    m_processors = rd_getprocessorplugins(&m_nprocessors);
+    m_processors = rd_getprocessorplugins();
 
-    for(usize i = 0; i < m_nprocessors; i++)
-        m_ui.cbprocessors->addItem(m_processors[i]->name);
+    vect_foreach(const RDProcessorPlugin*, plugin, m_processors)
+        m_ui.cbprocessors->addItem((*plugin)->name);
 }
 
 void LoaderDialog::populate_loglevels() const {

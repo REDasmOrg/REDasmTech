@@ -114,14 +114,16 @@ void Context::setup(const RDProcessorPlugin* plugin) {
     assume(this->processorplugin);
     this->processor = pm::create_instance(this->processorplugin);
 
-    foreach_analyzers(ap, {
+    vect_foreach(const RDAnalyzerPlugin*, plugin, pm::analyzers) {
+        const RDAnalyzerPlugin* ap = *plugin;
+
         // Assume true if 'isenabled' is not implemented
         if(!ap->is_enabled || ap->is_enabled(ap)) {
             this->analyzerplugins.push_back(ap);
             if(ap->flags & AF_SELECTED)
                 this->selectedanalyzerplugins.insert(ap);
         }
-    });
+    }
 
     this->worker.emulator.setup();
 }
