@@ -129,7 +129,7 @@ bool rdvalue_islist(const RDValue* self) {
 
 bool rdvalue_isstruct(const RDValue* self) {
     spdlog::trace("rdvalue_isstruct({})", fmt::ptr(self));
-    return self && !map_empty(&self->dict); // NOLINT
+    return self && !map_empty(self->dict); // NOLINT
 }
 
 usize rdvalue_getlength(const RDValue* self) {
