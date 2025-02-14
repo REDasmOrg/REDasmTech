@@ -46,7 +46,7 @@ public:
 
 private:
     EmulatorState m_state;
-    std::deque<RDAddress> m_qflow;
+    tl::optional<RDAddress> m_flow;
     std::deque<RDAddress> m_qjump;
     std::deque<RDAddress> m_qcall;
 };

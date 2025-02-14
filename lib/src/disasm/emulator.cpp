@@ -103,10 +103,7 @@ u64 Emulator::upd_state(std::string_view s, u64 val, u64 mask) {
     except("State '{}' not found", s);
 }
 
-void Emulator::enqueue_flow(RDAddress address) {
-    if(m_qflow.empty() || m_qflow.front() != address)
-        m_qflow.push_front(address);
-}
+void Emulator::enqueue_flow(RDAddress address) { m_flow = address; }
 
 void Emulator::enqueue_jump(RDAddress address) {
     // TODO(davide): Snapshot State
@@ -123,9 +120,9 @@ void Emulator::enqueue_call(RDAddress address) {
 u32 Emulator::tick() {
     RDAddress address;
 
-    if(!m_qflow.empty()) {
-        address = m_qflow.front();
-        m_qflow.pop_front();
+    if(m_flow) {
+        address = m_flow.value();
+        m_flow.reset();
     }
     else if(!m_qjump.empty()) {
         address = m_qjump.front();
@@ -201,7 +198,7 @@ void Emulator::execute_delayslots(RDSegment* seg, const RDInstruction& instr) {
 
 bool Emulator::has_pending_code() const {
     return state::context->processorplugin->emulate &&
-           (!m_qflow.empty() || !m_qjump.empty() || !m_qcall.empty());
+           (m_flow.has_value() || !m_qjump.empty() || !m_qcall.empty());
 }
 
 } // namespace redasm
