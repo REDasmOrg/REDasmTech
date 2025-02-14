@@ -23,61 +23,54 @@
 namespace {
 
 template<int Bits>
-bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) {
-    ElfIdent ident;
-    usize n = rdbuffer_read(req->file, 0, &ident, sizeof(ElfIdent));
+bool accept(RDLoader* self, const RDLoaderRequest* req) {
+    using ELF = ElfFormat<Bits>;
+    auto* elf = reinterpret_cast<ELF*>(self);
 
-    return n == sizeof(ElfIdent) && ident.ei_magic[0] == ELFMAG0 &&
-           ident.ei_magic[1] == ELFMAG1 && ident.ei_magic[2] == ELFMAG2 &&
-           ident.ei_magic[3] == ELFMAG3 && ident.ei_version == EV_CURRENT;
+    if(rdbuffer_read(req->file, 0, &elf->ehdr, sizeof(typename ELF::EHDR)) !=
+       sizeof(typename ELF::EHDR))
+        return false;
 
-    return elf_format::get_bits(ident) == Bits;
+    if(elf->ehdr.e_ident.ei_magic[0] != ELFMAG0 ||
+       elf->ehdr.e_ident.ei_magic[1] != ELFMAG1 ||
+       elf->ehdr.e_ident.ei_magic[2] != ELFMAG2 ||
+       elf->ehdr.e_ident.ei_magic[3] != ELFMAG3 ||
+       elf->ehdr.e_ident.ei_version != EV_CURRENT)
+        return false;
+
+    if(elf_format::get_bits(elf->ehdr.e_ident) != Bits) return false;
+
+    if(elf->ehdr.e_shstrndx && elf->ehdr.e_shstrndx >= elf->ehdr.e_shnum)
+        return false;
+
+    return true;
 }
 
 template<int Bits>
-bool load(RDLoader* self, RDBuffer* file) {
-    using ELF = ElfFormat<Bits>;
-    auto* elf = reinterpret_cast<ELF*>(self);
-    elf_types::register_all(elf->ehdr.e_ident);
-
-    if(!rdbuffer_read(file, 0, &elf->ehdr, sizeof(typename ELF::EHDR)) ||
-       (elf->ehdr.e_shstrndx && elf->ehdr.e_shstrndx >= elf->ehdr.e_shnum))
-        return false;
-
-    elf->phdr.resize(elf->ehdr.e_phnum);
-    elf->shdr.resize(elf->ehdr.e_shnum);
-
-    if(!rdbuffer_read(file, elf->ehdr.e_phoff, elf->phdr.data(),
-                      sizeof(typename ELF::PHDR) * elf->phdr.size()) ||
-       !rdbuffer_read(file, elf->ehdr.e_shoff, elf->shdr.data(),
-                      sizeof(typename ELF::SHDR) * elf->shdr.size()))
-        return false;
-
-    usize phdridx = elf->map_memory();
-
-    // Map sections
+void load_section_header(const ElfFormat<Bits>* elf) {
     for(usize i = 0; i < elf->shdr.size(); i++) {
         const auto& seg = elf->shdr[i];
+        if(!seg.sh_addr || !seg.sh_size) continue;
+
         RDOffset offset = seg.sh_offset, offsize = seg.sh_size;
-        usize type = 0;
+        usize perm = 0;
 
         std::string name = elf->get_str(seg.sh_name, elf->ehdr.e_shstrndx,
                                         "seg_" + std::to_string(i));
 
         switch(seg.sh_type) {
             case SHT_PROGBITS:
-                type = seg.sh_flags & SHF_EXECINSTR ? SP_RWX : SP_RW;
+                perm = seg.sh_flags & SHF_EXECINSTR ? SP_RWX : SP_RW;
                 break;
 
             case SHT_NOBITS: offset = offsize = 0; [[fallthrough]];
-            default: type = SP_RW; break;
+            default: perm = SP_RW; break;
         }
 
-        rd_mapsegment_n(name.c_str(), seg.sh_addr, seg.sh_size, offset, offsize,
-                        type);
-    }
+        rd_addsegment_n(name.c_str(), seg.sh_addr, seg.sh_size, perm, Bits);
 
-    rd_setentry(elf->ehdr.e_entry, "ELF_EntryPoint");
+        if(offset && offsize) rd_mapfile_n(offset, seg.sh_addr, seg.sh_size);
+    }
 
     // Process sections (separate steps in order to fix out of order links)
     for(usize i = 0; i < elf->shdr.size(); i++) {
@@ -88,23 +81,67 @@ bool load(RDLoader* self, RDBuffer* file) {
         else
             elf->parse_section_offset(i);
     }
+}
 
-    if(phdridx < elf->phdr.size()) { // Map ELF_ProgramHeader
-        RDType t;
-        rdtype_create_n("ELF_PHDR", elf->phdr.size(), &t);
-        rd_maptype(elf->ehdr.e_phoff, elf->phdr[phdridx].p_vaddr, &t);
+template<int Bits>
+void load_program_header(const ElfFormat<Bits>* elf) {
+    for(const typename ElfFormat<Bits>::PHDR& phdr : elf->phdr) {
+        const char* name = nullptr;
+
+        switch(phdr.p_type) {
+            case PT_LOAD: name = "LOAD"; break;
+            case PT_DYNAMIC: name = "DYNAMIC"; break;
+            case PT_INTERP: name = "INTERP"; break;
+            case PT_NOTE: name = "NOTE"; break;
+            case PT_PHDR: name = "PHDR"; break;
+            default: continue;
+        }
+
+        usize perm = 0;
+        if(phdr.p_flags & PF_R) perm |= SP_R;
+        if(phdr.p_flags & PF_W) perm |= SP_W;
+        if(phdr.p_flags & PF_X) perm |= SP_X;
+
+        rd_addsegment_n(name, phdr.p_vaddr, phdr.p_memsz, perm, Bits);
+
+        if(phdr.p_offset && phdr.p_filesz)
+            rd_mapfile_n(phdr.p_offset, phdr.p_vaddr, phdr.p_filesz);
     }
+}
 
+template<int Bits>
+bool load(RDLoader* self, RDBuffer* file) {
+    using ELF = ElfFormat<Bits>;
+    auto* elf = reinterpret_cast<ELF*>(self);
+    elf_types::register_all(elf->ehdr.e_ident);
+
+    elf->phdr.resize(elf->ehdr.e_phnum);
+    elf->shdr.resize(elf->ehdr.e_shnum);
+
+    if(!rdbuffer_read(file, elf->ehdr.e_phoff, elf->phdr.data(),
+                      sizeof(typename ELF::PHDR) * elf->phdr.size()) ||
+       !rdbuffer_read(file, elf->ehdr.e_shoff, elf->shdr.data(),
+                      sizeof(typename ELF::SHDR) * elf->shdr.size()))
+        return false;
+
+    if(!elf->shdr.empty())
+        load_section_header(elf);
+    else if(!elf->phdr.empty())
+        load_program_header(elf);
+    else
+        return false;
+
+    rd_setentry(elf->ehdr.e_entry, "ELF_EntryPoint");
     return true;
 }
 
 template<int Bits>
-const char* get_processor(RDLoader* l) {
+const char* get_processor(RDLoader* self) {
     using ELF = ElfFormat<Bits>;
-    const auto* self = reinterpret_cast<const ELF*>(l);
-    bool isbe = elf_format::is_be(self->ehdr.e_ident);
+    const auto* elf = reinterpret_cast<const ELF*>(self);
+    bool isbe = elf_format::is_be(elf->ehdr.e_ident);
 
-    switch(self->ehdr.e_machine) {
+    switch(elf->ehdr.e_machine) {
         case EM_AVR: return "avr8";
         case EM_386: return "x86_32";
         case EM_X86_64: return "x86_64";
@@ -113,7 +150,7 @@ const char* get_processor(RDLoader* l) {
         case EM_AARCH64: return isbe ? "arm64be" : "arm64le";
 
         case EM_MIPS: {
-            if(self->ehdr.e_flags & EF_MIPS_ABI_EABI64)
+            if(elf->ehdr.e_flags & EF_MIPS_ABI_EABI64)
                 return isbe ? "mips64be" : "mips64le";
             return isbe ? "mips32be" : "mips32le";
         }

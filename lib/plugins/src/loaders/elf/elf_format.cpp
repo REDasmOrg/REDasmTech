@@ -31,39 +31,9 @@ void ElfFormat<Bits>::apply_type(const char* tname, const SHDR& shdr) const {
 }
 
 template<int Bits>
-usize ElfFormat<Bits>::map_memory() const {
-    RDAddress start = -1ULL, end = 0;
-    usize phdridx = this->phdr.size();
-
-    for(usize i = 0; i < this->phdr.size(); i++) {
-        const auto& p = this->phdr[i];
-
-        switch(p.p_type) {
-            case PT_LOAD: {
-                start = std::min<RDAddress>(start, p.p_vaddr);
-
-                u64 asize = p.p_memsz; // Align size
-                if(usize diff = asize % p.p_align; diff)
-                    asize += (p.p_align - diff);
-
-                RDAddress pend = p.p_vaddr + asize;
-                end = std::max<RDAddress>(end, pend);
-                break;
-            }
-
-            case PT_PHDR: phdridx = i; break;
-            default: break;
-        }
-    }
-
-    rd_map(start, end);
-    return phdridx;
-}
-
-template<int Bits>
 std::string ElfFormat<Bits>::get_str(int idx, usize shidx,
                                      const std::string& d) const {
-    RDBuffer* file = rdbuffer_getfile();
+    RDBuffer* file = rd_getfile();
     const char* p = nullptr;
 
     if(rdbuffer_getstrz(file, this->shdr.at(shidx).sh_offset + idx, &p))
@@ -73,7 +43,7 @@ std::string ElfFormat<Bits>::get_str(int idx, usize shidx,
 
 template<int Bits>
 std::string_view ElfFormat<Bits>::get_strv(int idx, usize shidx) const {
-    RDBuffer* file = rdbuffer_getfile();
+    RDBuffer* file = rd_getfile();
     const char* p = nullptr;
 
     if(rdbuffer_getstrz(file, this->shdr.at(shidx).sh_offset + idx, &p))
@@ -125,7 +95,7 @@ void ElfFormat<Bits>::process_init_fini(const SHDR& shdr,
     const usize S = rd_nsizeof(TYPE);
     const usize N = shdr.sh_size / S;
 
-    RDValue v{};
+    RDValue* v = nullptr;
     RDAddress addr = shdr.sh_addr;
 
     for(usize i = 0; i < N; i++, addr += S) {
@@ -134,30 +104,29 @@ void ElfFormat<Bits>::process_init_fini(const SHDR& shdr,
         RDAddress itemaddr;
 
         if constexpr(Bits == 64)
-            itemaddr = v.u64_v;
+            itemaddr = v->u64_v;
         else
-            itemaddr = v.u32_v;
+            itemaddr = v->u32_v;
 
         if(!itemaddr || itemaddr == -1ULL) continue;
 
         std::string fn = prefix + rd_tohex_n(addr, 0);
         rd_setfunction(addr);
         rd_setname(addr, fn.c_str());
+        rdvalue_destroy(v);
     }
-
-    rdvalue_destroy(&v);
 }
 
 template<int Bits>
 void ElfFormat<Bits>::process_strings(const SHDR& shdr) const {
     RDAddress address = shdr.sh_addr;
     RDAddress endaddress = address++ + shdr.sh_size; // First is always 00
-    RDValue v{};
+    RDValue* v = nullptr;
 
     while(address < endaddress) {
         if(!rd_settypename(address, "str", &v)) break;
-        address += rdvalue_getlength(&v) + 1;
-        rdvalue_destroy(&v);
+        address += rdvalue_getlength(v) + 1;
+        rdvalue_destroy(v);
     }
 }
 
@@ -213,7 +182,7 @@ template<int Bits>
 void ElfFormat<Bits>::process_symtab_offset(const SHDR& shdr) const {
     std::vector<SYM> symtab(shdr.sh_size / sizeof(SYM));
 
-    RDBuffer* file = rdbuffer_getfile();
+    RDBuffer* file = rd_getfile();
     if(!rdbuffer_read(file, shdr.sh_offset, symtab.data(), shdr.sh_size))
         return;
 
