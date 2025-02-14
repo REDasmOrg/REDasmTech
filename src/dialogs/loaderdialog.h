@@ -21,6 +21,9 @@ public Q_SLOTS:
     void accept() override;
     void reject() override;
 
+public:
+    bool selected{false};
+
 private:
     ui::LoaderDialog m_ui;
     Vect(RDTestResult) m_testresult;

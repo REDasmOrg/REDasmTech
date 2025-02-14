@@ -320,8 +320,13 @@ void MainWindow::open_file(const QString& filepath) {
 
     auto* dlgloader = new LoaderDialog(buffer, this);
 
-    connect(dlgloader, &LoaderDialog::accepted, this,
-            [&]() { this->select_analyzers(); });
+    connect(dlgloader, &LoaderDialog::accepted, this, [&, dlgloader]() {
+        if(dlgloader->selected)
+            this->select_analyzers();
+        else
+            QMessageBox::information(this, "Loader",
+                                     "Loading failed or aborted");
+    });
 
     connect(dlgloader, &LoaderDialog::rejected, this,
             [buffer]() { rdbuffer_destroy(buffer); });

@@ -1,6 +1,5 @@
 #include "loaderdialog.h"
 #include "../utils.h"
-#include <QMessageBox>
 
 LoaderDialog::LoaderDialog(RDBuffer* buffer, QWidget* parent)
     : QDialog{parent}, m_ui{this} {
@@ -46,8 +45,9 @@ void LoaderDialog::on_processor_changed(int currentrow) {
 
 void LoaderDialog::accept() {
     const RDTestResult& tr = m_testresult[m_ui.lwloaders->currentRow()];
+    this->selected = rd_select(&tr);
 
-    if(rd_select(&tr)) {
+    if(this->selected) {
         utils::log(QString{"Selected loader '%1' with '%2' processor"}
                        .arg(tr.loaderplugin->name)
                        .arg(tr.processorplugin->name));
@@ -55,11 +55,6 @@ void LoaderDialog::accept() {
         auto l =
             static_cast<RDLogLevel>(m_ui.cbloglevel->currentData().toUInt());
         rd_setloglevel(l);
-    }
-    else {
-        QMessageBox::information(
-            this, "Loader",
-            QString{"Loading of '{}' failed"}.arg(tr.loaderplugin->name));
     }
 
     QDialog::accept();
