@@ -115,14 +115,13 @@ bool load(RDLoader* self, RDBuffer* file) {
     auto* elf = reinterpret_cast<ELF*>(self);
     elf_types::register_all(elf->ehdr.e_ident);
 
-    elf->phdr.resize(elf->ehdr.e_phnum);
     elf->shdr.resize(elf->ehdr.e_shnum);
+    elf->phdr.resize(elf->ehdr.e_phnum);
 
-    if(!rdbuffer_read(file, elf->ehdr.e_phoff, elf->phdr.data(),
-                      sizeof(typename ELF::PHDR) * elf->phdr.size()) ||
-       !rdbuffer_read(file, elf->ehdr.e_shoff, elf->shdr.data(),
-                      sizeof(typename ELF::SHDR) * elf->shdr.size()))
-        return false;
+    rdbuffer_read(file, elf->ehdr.e_shoff, elf->shdr.data(),
+                  sizeof(typename ELF::SHDR) * elf->shdr.size());
+    rdbuffer_read(file, elf->ehdr.e_phoff, elf->phdr.data(),
+                  sizeof(typename ELF::PHDR) * elf->phdr.size());
 
     if(!elf->shdr.empty())
         load_section_header(elf);
