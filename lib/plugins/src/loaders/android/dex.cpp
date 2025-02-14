@@ -86,19 +86,18 @@ bool filter_classes(const DexLoader* self) {
     return true;
 }
 
-bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) {
+bool accept(RDLoader* self, const RDLoaderRequest* req) {
+    auto* dex = reinterpret_cast<DexLoader*>(self);
+    usize len = rdbuffer_getlength(req->file);
     const u8* data = rdbuffer_getdata(req->file);
-    DexFile* df = dexFileParse(data, rdbuffer_getlength(req->file), 0);
-    bool ok = df != nullptr;
-    dexFileFree(df);
-    return ok;
+
+    dex->dexfile = dexFileParse(data, len, 0);
+    return dex->dexfile != nullptr;
 }
 
 bool load(RDLoader* l, RDBuffer* file) {
     auto* self = reinterpret_cast<DexLoader*>(l);
     usize len = rdbuffer_getlength(file);
-    const u8* data = rdbuffer_getdata(file);
-    self->dexfile = dexFileParse(data, len, 0);
 
     rd_addsegment_n("DEX", 0, len, SP_RWX, 16);
     rd_mapfile_n(0, 0, len);
@@ -111,7 +110,6 @@ RDLoaderPlugin loader = {
     .level = REDASM_API_LEVEL,
     .id = "dex",
     .name = "Dalvik Executable",
-
     .create =
         [](const RDLoaderPlugin*) {
             return reinterpret_cast<RDLoader*>(new DexLoader{});
@@ -120,10 +118,9 @@ RDLoaderPlugin loader = {
     .destroy =
         [](RDLoader* l) {
             auto* self = reinterpret_cast<DexLoader*>(l);
-            if(self->dexfile) dexFileFree(self->dexfile);
+            dexFileFree(self->dexfile);
             delete self;
         },
-
     .flags = LF_NOMERGECODE | LF_NOAUTORENAME,
     .accept = dex::accept,
     .load = dex::load,

@@ -11,13 +11,10 @@ class Context;
 
 namespace state {
 
-using ContextList = std::vector<Context*>;
-
 inline Vect(RDTestResult) tests = nullptr;
 inline bool initialized = false;
 inline RDInitParams params;
 inline Theme theme;
-inline ContextList contextlist;
 inline Context* context{};
 inline const typing::BaseTypes BASETYPES;
 

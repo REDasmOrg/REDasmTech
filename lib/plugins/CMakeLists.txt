@@ -9,7 +9,7 @@ include(cmake/Compiler.cmake)
 
 # Loaders
 add_subdirectory(src/loaders/dos)
-# add_subdirectory(src/loaders/elf)
+add_subdirectory(src/loaders/elf)
 add_subdirectory(src/loaders/psx)
 add_subdirectory(src/loaders/android)
 

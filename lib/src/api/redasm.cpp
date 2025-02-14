@@ -135,42 +135,41 @@ usize rd_getproblems(const RDProblem** problems) {
     return res.size();
 }
 
-Vect(RDTestResult) rd_test(RDBuffer* buffer) {
-    spdlog::trace("rd_test({})", fmt::ptr(buffer));
+Vect(RDTestResult) rd_test(RDBuffer* file) {
+    spdlog::trace("rd_test({})", fmt::ptr(file));
 
     redasm::state::context = nullptr; // Deselect active context
-    redasm::state::contextlist.clear();
     vect_clear(redasm::state::tests);
 
     RDLoaderRequest req = {
-        .file = buffer,
-        .path = buffer->source,
-        .name = redasm::utils::get_filename(buffer->source).data(), // NOLINT
-        .ext = redasm::utils::get_ext(buffer->source).data(),       // NOLINT
+        .file = file,
+        .path = file->source,
+        .name = redasm::utils::get_filename(file->source).data(), // NOLINT
+        .ext = redasm::utils::get_ext(file->source).data(),       // NOLINT
     };
 
     vect_foreach(const RDLoaderPlugin*, p, redasm::pm::loaders) {
         const RDLoaderPlugin* lp = *p;
+        if(!lp->accept) continue;
 
-        if(!lp->accept || !lp->accept(lp, &req)) continue;
+        RDLoader* loader = redasm::pm::create_instance(lp);
 
-        auto* ctx = new redasm::Context(buffer);
-        redasm::state::context = ctx; // Set context as active
+        if(lp->accept(loader, &req)) {
+            const RDProcessorPlugin* pp = nullptr;
 
-        if(ctx->try_load(lp)) {
-            redasm::state::contextlist.push_back(ctx);
+            if(lp->get_processor) {
+                const char* p = lp->get_processor(loader);
+                if(p) pp = redasm::pm::find_processor(p);
+            }
+
+            if(!pp) pp = redasm::pm::find_processor("null");
+            assume(pp);
 
             vect_add(RDTestResult, redasm::state::tests,
-                     {
-                         ctx->loaderplugin,
-                         ctx->processorplugin,
-                         redasm::api::to_c(ctx),
-                     });
+                     {lp, pp, loader, file});
         }
-        else {
-            redasm::state::context = nullptr;
-            delete ctx;
-        }
+        else
+            redasm::pm::destroy_instance(lp, loader);
     }
 
     // Sort results by priority
@@ -180,7 +179,6 @@ Vect(RDTestResult) rd_test(RDBuffer* buffer) {
                                       return x.loaderplugin->flags & PF_LAST;
                                   }));
 
-    redasm::state::context = nullptr; // Deselect "test" context
     return redasm::state::tests;
 }
 
@@ -192,22 +190,28 @@ void rd_disassemble() {
         ;
 }
 
-void rd_select(const RDTestResult* tr) {
-    spdlog::trace("rd_select({})", fmt::ptr(tr));
+bool rd_select(const RDTestResult* seltr) {
+    spdlog::trace("rd_select({})", fmt::ptr(seltr));
+    rdcontext_destroy(); // Destroy any previous contexts
+    bool ok = false;
 
-    if(tr) {
-        redasm::state::context = redasm::api::from_c(tr->context);
-        redasm::state::context->setup(tr->processorplugin);
+    if(seltr) {
+        assume(seltr->loaderplugin);
+        assume(seltr->processorplugin);
+        assume(seltr->file);
+        auto* ctx = new redasm::Context{seltr};
+        ok = ctx->try_load();
+        if(!ok) delete ctx;
     }
-    else
-        redasm::state::context = nullptr;
 
-    // Discard other contexts
-    while(!redasm::state::contextlist.empty()) {
-        redasm::Context* c = redasm::state::contextlist.back();
-        redasm::state::contextlist.pop_back();
-        if(c != redasm::state::context) delete c;
+    // Discard other instances
+    vect_foreach(RDTestResult, tr, redasm::state::tests) {
+        if(!seltr || seltr->loader != tr->loader)
+            redasm::pm::destroy_instance(tr->loaderplugin, tr->loader);
     }
+
+    vect_clear(redasm::state::tests);
+    return ok;
 }
 
 bool rdcontext_destroy() {
@@ -221,9 +225,9 @@ bool rdcontext_destroy() {
 
 void rd_discard() {
     spdlog::trace("rd_discard()");
-    for(redasm::Context* c : redasm::state::contextlist)
-        delete c;
-    redasm::state::contextlist.clear();
+    vect_foreach(RDTestResult, tr, redasm::state::tests)
+        redasm::pm::destroy_instance(tr->loaderplugin, tr->loader);
+    vect_clear(redasm::state::tests);
 }
 
 void rd_addsearchpath(const char* sp) {
@@ -426,7 +430,8 @@ bool rd_setname_ex(RDAddress address, const char* name, usize flags) {
 
 bool rd_tick(const RDWorkerStatus** s) {
     spdlog::trace("rd_tick({})", fmt::ptr(s));
-    if(redasm::state::context) return redasm::state::context->worker.execute(s);
+    if(redasm::state::context)
+        return redasm::state::context->worker->execute(s);
     return false;
 }
 

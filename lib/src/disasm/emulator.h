@@ -19,7 +19,7 @@ struct EmulatorState {
 
 class Emulator {
 public:
-    void setup();
+    Emulator();
     bool has_pending_code() const;
     u64 get_reg(int regid) const;
     void set_reg(int regid, u64 val);

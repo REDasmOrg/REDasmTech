@@ -21,9 +21,6 @@ public Q_SLOTS:
     void accept() override;
     void reject() override;
 
-public:
-    RDContext* context{nullptr};
-
 private:
     ui::LoaderDialog m_ui;
     Vect(RDTestResult) m_testresult;

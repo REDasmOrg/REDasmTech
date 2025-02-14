@@ -14,7 +14,6 @@ class ILExprList;
 
 class Renderer;
 class Emulator;
-class Context;
 class Surface;
 class StyledGraph;
 struct Function;
@@ -69,10 +68,6 @@ inline Surface* from_c(RDSurface* arg) {
     return reinterpret_cast<Surface*>(arg);
 }
 
-inline Context* from_c(RDContext* arg) {
-    return reinterpret_cast<Context*>(arg);
-}
-
 inline const RDGraph* to_c(const StyledGraph* arg) {
     return reinterpret_cast<const RDGraph*>(arg);
 }
@@ -91,10 +86,6 @@ inline RDEmulator* to_c(Emulator* arg) {
 
 inline RDSurface* to_c(Surface* arg) {
     return reinterpret_cast<RDSurface*>(arg);
-}
-
-inline RDContext* to_c(Context* arg) {
-    return reinterpret_cast<RDContext*>(arg);
 }
 
 inline RDFunction* to_c(Function* arg) {

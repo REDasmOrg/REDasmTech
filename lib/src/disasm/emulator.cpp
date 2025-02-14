@@ -7,7 +7,7 @@
 
 namespace redasm {
 
-void Emulator::setup() {
+Emulator::Emulator() {
     assume(state::context);
     assume(m_state.registers.empty());
     assume(m_state.states.empty());

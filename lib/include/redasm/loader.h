@@ -21,7 +21,7 @@ typedef struct RDLoaderRequest {
 } RDLoaderRequest;
 
 // clang-format off
-typedef bool (*RDLoaderPluginAccept)(const struct RDLoaderPlugin*, const RDLoaderRequest*);
+typedef bool (*RDLoaderPluginAccept)(struct RDLoader*, const RDLoaderRequest*);
 typedef bool (*RDLoaderPluginLoad)(struct RDLoader*, RDBuffer*);
 typedef const char* (*RDLoaderPluginGetProcessor)(struct RDLoader*);
 // clang-format on

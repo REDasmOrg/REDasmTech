@@ -383,6 +383,8 @@ void MainWindow::select_analyzers() {
         auto* dlganalyzers = new AnalyzerDialog(this);
         connect(dlganalyzers, &AnalyzerDialog::accepted, this,
                 [&]() { this->show_context_view(); });
+        connect(dlganalyzers, &AnalyzerDialog::rejected, this,
+                [&]() { rdcontext_destroy(); });
         dlganalyzers->show();
     }
     else

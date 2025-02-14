@@ -6,7 +6,6 @@
 #include "listing.h"
 #include "memory/program.h"
 #include "typing/typing.h"
-#include <memory>
 #include <redasm/analyzer.h>
 #include <redasm/loader.h>
 #include <redasm/processor.h>
@@ -28,10 +27,9 @@ class Context {
 public:
     static constexpr usize DEFAULT_MIN_STRING = 4;
 
-    explicit Context(RDBuffer* b);
+    explicit Context(const RDTestResult* tr);
     ~Context();
-    bool try_load(const RDLoaderPlugin* plugin);
-    void setup(const RDProcessorPlugin* plugin);
+    bool try_load();
     void set_userdata(const std::string& k, uptr v);
     tl::optional<uptr> get_userdata(const std::string& k) const;
     bool set_function(RDAddress address, usize flags);
@@ -73,14 +71,14 @@ public:
     Program program;
     std::vector<std::pair<RDAddress, std::string>> problems;
     std::vector<RDAddress> entrypoints;
-    Worker worker;
+    Worker* worker{nullptr};
     FunctionList functions;
     Listing listing;
     typing::Types types;
     int minstring{DEFAULT_MIN_STRING};
 
 private:
-    std::unique_ptr<Database> m_database;
+    Database m_database;
 };
 
 } // namespace redasm

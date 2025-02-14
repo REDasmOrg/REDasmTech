@@ -1,4 +1,4 @@
-#include "loader.h"
+#include "loader.h" python.cpp
 #include "buffer.h"
 #include "plugin.h"
 #include <redasm/loader.h>
@@ -139,10 +139,10 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
         Py_DECREF(reinterpret_cast<PyObject*>(arg));
     };
 
-    plugin->base.accept = [](const RDLoaderPlugin* arg,
+    plugin->base.accept = [](const RDLoader* self,
                              const RDLoaderRequest* req) -> bool {
-        const auto* plugin = reinterpret_cast<const RDPYLoaderPlugin*>(arg);
-        PyObject* res = PyObject_CallMethod(plugin->pyclass, "accept", "O",
+        auto* self = reinterpret_cast<PyObject*>(arg);
+        PyObject* res = PyObject_CallMethod(self, "accept", "O",
                                             python::loadrequest_toobject(req));
 
         if(res) {

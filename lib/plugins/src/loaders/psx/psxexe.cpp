@@ -24,7 +24,7 @@ struct PsxExeHeader {
 };
 #pragma pack(pop)
 
-bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) {
+bool accept(RDLoader*, const RDLoaderRequest* req) {
     PsxExeHeader psxheader;
     usize n = rdbuffer_read(req->file, 0, &psxheader, sizeof(PsxExeHeader));
     return n == sizeof(PsxExeHeader) &&

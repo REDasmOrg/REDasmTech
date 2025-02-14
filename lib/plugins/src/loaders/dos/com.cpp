@@ -10,7 +10,7 @@ namespace {
 constexpr u16 COM_ENTRY = 0x0100;
 constexpr u16 MSEG_SIZE = 0xffff;
 
-bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) {
+bool accept(RDLoader*, const RDLoaderRequest* req) {
     return req->ext == "COM"sv && rdbuffer_getlength(req->file) <= 0xff00;
 }
 

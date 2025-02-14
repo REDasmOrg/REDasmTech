@@ -52,12 +52,11 @@ typedef struct RDProblem {
     const char* problem;
 } RDProblem;
 
-RD_HANDLE(RDContext);
-
 typedef struct RDTestResult {
     const RDLoaderPlugin* loaderplugin;
     const RDProcessorPlugin* processorplugin;
-    RDContext* context;
+    RDLoader* loader;
+    RDBuffer* file;
 } RDTestResult;
 
 typedef void (*RDLogCallback)(const char*, void*);
@@ -81,7 +80,7 @@ REDASM_EXPORT void rd_setuserdata(const char* k, uptr v);
 REDASM_EXPORT bool rd_getuserdata(const char* k, uptr* v);
 REDASM_EXPORT void rd_log(const char* s);
 REDASM_EXPORT void rd_status(const char* s);
-REDASM_EXPORT void rd_select(const RDTestResult* tr);
+REDASM_EXPORT bool rd_select(const RDTestResult* tr);
 REDASM_EXPORT void rd_discard(void);
 REDASM_EXPORT usize rd_getsegments(const RDSegment** segments);
 REDASM_EXPORT RDBuffer* rd_getfile(void);
@@ -94,7 +93,7 @@ REDASM_EXPORT usize rd_getentries(RDAddress** entries);
 REDASM_EXPORT bool rd_tick(const RDWorkerStatus** s);
 
 REDASM_EXPORT void rd_addsearchpath(const char* path);
-REDASM_EXPORT Vect(RDTestResult) rd_test(RDBuffer* buffer);
+REDASM_EXPORT Vect(RDTestResult) rd_test(RDBuffer* file);
 REDASM_EXPORT void rd_disassemble(void);
 REDASM_EXPORT usize rd_getproblems(const RDProblem** problems);
 

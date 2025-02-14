@@ -4,7 +4,7 @@ namespace dos {
 
 namespace {
 
-bool accept(const RDLoaderPlugin*, const RDLoaderRequest* req) { return false; }
+bool accept(RDLoader*, const RDLoaderRequest* req) { return false; }
 
 bool load(RDLoader*, RDBuffer* file) { return false; }
 
