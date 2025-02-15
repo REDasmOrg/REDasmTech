@@ -8,7 +8,7 @@ from loaders.pe.classifier import is_visualbasic
 class VBAnalyzer:
     id = "pe_vb6"
     name = "Decompile VB5/6"
-    flags = redasm.ANA_SELECTED | redasm.ANA_RUNONCE
+    flags = redasm.AF_SELECTED | redasm.AF_RUNONCE
 
     def has_optional_info(self, addr, objinfo):
         return (objinfo.lpConstants != (addr + redasm.size_of("VB_OBJECT_INFO")))

@@ -18,12 +18,15 @@ class PELoader:
         self.ntheaders = None
         self.optionalheader = None
 
+    def from_rva(self, rva):
+        return self.imagebase + rva
+
     def check_dotnet(self):
         entry = self.optionalheader.DataDirectory[PEH.IMAGE_DIRECTORY_ENTRY_DOTNET]
         if entry.VirtualAddress == 0:
             return None
 
-        va = redasm.from_reladdress(entry.VirtualAddress)
+        va = self.from_fva(entry.VirtualAddress)
         if not va:
             return None
 
@@ -40,7 +43,7 @@ class PELoader:
         if entry.VirtualAddress == 0:
             return
 
-        va = redasm.from_reladdress(entry.VirtualAddress)
+        va = self.from_fva(entry.VirtualAddress)
         if not va:
             return
 
@@ -48,15 +51,15 @@ class PELoader:
         if not exporttable:
             return
 
-        functionsva = redasm.from_reladdress(exporttable.AddressOfFunctions)
-        namesva = redasm.from_reladdress(exporttable.AddressOfNames)
-        ordinalsva = redasm.from_reladdress(exporttable.AddressOfNameOrdinals)
+        functionsva = self.from_fva(exporttable.AddressOfFunctions)
+        namesva = self.from_fva(exporttable.AddressOfNames)
+        ordinalsva = self.from_fva(exporttable.AddressOfNameOrdinals)
 
         if not functionsva or not namesva or not ordinalsva:
             print("Corrupted Export Table")
             return
 
-        nameva = redasm.from_reladdress(exporttable.Name)
+        nameva = self.from_fva(exporttable.Name)
 
         if nameva:
             redasm.set_type(nameva, "str")
@@ -75,7 +78,7 @@ class PELoader:
 
             for j, ord in enumerate(ordinals):
                 if ord == i:
-                    nameaddr = redasm.from_reladdress(names[j])
+                    nameaddr = self.from_fva(names[j])
                     ordinal = exporttable.Base + ord
                     break
 
@@ -84,14 +87,14 @@ class PELoader:
             else:
                 name = f"Ordinal__{redasm.to_hex(ordinal, 4)}"
 
-            redasm.set_entry(redasm.from_reladdress(f), name)
+            redasm.set_entry(self.from_fva(f), name)
 
     def read_imports(self):
         entry = self.optionalheader.DataDirectory[PEH.IMAGE_DIRECTORY_ENTRY_IMPORT]
         if entry.VirtualAddress == 0:
             return
 
-        va = redasm.from_reladdress(entry.VirtualAddress)
+        va = self.from_fva(entry.VirtualAddress)
         if not va:
             return
 
@@ -99,14 +102,14 @@ class PELoader:
         entry = redasm.set_type(va, "IMAGE_IMPORT_DESCRIPTOR")
 
         while entry and (entry.FirstThunk != 0 or entry.OriginalFirstThunk != 0):
-            moduleva = redasm.from_reladdress(entry.Name)
+            moduleva = self.from_fva(entry.Name)
 
             if moduleva:
                 modulename = redasm.set_type(moduleva, "str").lower()
                 self.classifier.classify_import(modulename)
 
-                thunkstart = redasm.from_reladdress(entry.OriginalFirstThunk or entry.FirstThunk)
-                iatstart = redasm.from_reladdress(entry.FirstThunk)
+                thunkstart = self.from_fva(entry.OriginalFirstThunk or entry.FirstThunk)
+                iatstart = self.from_fva(entry.FirstThunk)
 
                 if thunkstart:
                     nthunks, currva = 0, thunkstart
@@ -122,7 +125,7 @@ class PELoader:
                             ordinal = thunk ^ ORDINAL_FLAG
                             importname = PE.get_import_name(modulename, f"ordinal_{ordinal}")
                         else:
-                            importbynameva = redasm.from_reladdress(thunk)
+                            importbynameva = self.from_fva(thunk)
 
                             if importbynameva:
                                 name = redasm.set_type(importbynameva + redasm.size_of("u16"), "str")
@@ -145,7 +148,7 @@ class PELoader:
         if entry.VirtualAddress == 0:
             return
 
-        va = redasm.from_reladdress(entry.VirtualAddress)
+        va = self.from_fva(entry.VirtualAddress)
         if not va:
             return
 
@@ -156,13 +159,13 @@ class PELoader:
             if e.UnwindInfoAddress & 1:
                 continue
 
-            unwindva = redasm.from_reladdress(e.UnwindInfoAddress)
+            unwindva = self.from_fva(e.UnwindInfoAddress)
             if not unwindva:
                 continue
 
             unwindinfo = redasm.set_type(unwindva, "UNWIND_INFO")
             flags = unwindinfo.VersionAndFlags >> 3
-            va = redasm.from_reladdress(e.BeginAddress)
+            va = self.from_fva(e.BeginAddress)
 
             if unwindinfo and not (flags & PEH.UNW_FLAG_CHAININFO):
                 redasm.set_function(va)
@@ -173,7 +176,7 @@ class PELoader:
         if entry.VirtualAddress == 0:
             return
 
-        va = redasm.from_reladdress(entry.VirtualAddress)
+        va = self.from_fva(entry.VirtualAddress)
         if not va:
             return
 
@@ -191,7 +194,7 @@ class PELoader:
             dbgva = 0
 
             if dbgdir.AddressOfRawData:
-                dbgva = PE.redasm.from_reladdress(dbgdir.AddressOfRawData)
+                dbgva = PE.self.from_fva(dbgdir.AddressOfRawData)
 
             if not dbgva and dbgdir.PointerToRawData:
                 dbgva = redasm.to_address(dbgdir.PointerToRawData)
@@ -254,7 +257,7 @@ class PELoader:
         if entry.VirtualAddress == 0:
             return
 
-        va = redasm.from_reladdress(entry.VirtualAddress)
+        va = self.from_fva(entry.VirtualAddress)
         if va:
             self.resources = PEResources(self, va)
             self.classifier.classify_borland(self)
@@ -266,12 +269,12 @@ class PELoader:
         self.read_debuginfo()
         self.read_resources()
 
-        redasm.set_entry(redasm.from_reladdress(self.optionalheader.AddressOfEntryPoint),
+        redasm.set_entry(self.from_fva(self.optionalheader.AddressOfEntryPoint),
                          "PE_EntryPoint")
 
-    @staticmethod
-    def accept(req):
+    def accept(self, req):
         dosheader = req.file.read_struct(0, PEH.IMAGE_DOS_HEADER)
+        print(dosheader)
         if not dosheader or dosheader.e_magic != PEH.IMAGE_DOS_SIGNATURE:
             return False
 
@@ -284,10 +287,10 @@ class PELoader:
 
     def load(self, file):
         PE.register_types()
-        stream = redasm.FileStream()
-        self.dosheader = stream.collect_type("IMAGE_DOS_HEADER")
+        stream = redasm.Stream(file)
+        self.dosheader = stream.read_type("IMAGE_DOS_HEADER")
         stream.seek(self.dosheader.e_lfanew)
-        self.ntheaders = stream.collect_type("IMAGE_NT_HEADERS")
+        self.ntheaders = stream.read_type("IMAGE_NT_HEADERS")
 
         magic = stream.peek_u16()
         if magic == PEH.IMAGE_NT_OPTIONAL_HDR32_MAGIC:
@@ -298,16 +301,13 @@ class PELoader:
             redasm.create_struct("IMAGE_OPTIONAL_HEADER", PEH.IMAGE_OPTIONAL_HEADER64)
 
         self.integertype = "u64" if self.bits == 64 else "u32"
-        self.optionalheader = stream.collect_type("IMAGE_OPTIONAL_HEADER")
+        self.optionalheader = stream.read_type("IMAGE_OPTIONAL_HEADER")
         self.imagebase = self.optionalheader.ImageBase
 
         imagebase = self.optionalheader.ImageBase
         sectionalign = self.optionalheader.SectionAlignment
         filealign = self.optionalheader.FileAlignment
         ep = self.optionalheader.AddressOfEntryPoint
-
-        redasm.memory.map_n(imagebase, PE.aligned(
-            self.optionalheader.SizeOfImage, sectionalign))
 
         self.read_sections()
 
@@ -318,18 +318,20 @@ class PELoader:
             osize = PE.aligned(
                 sect.SizeOfRawData, filealign) if startoff > 0 else 0
 
-            segtype = redasm.SEG_UNKNOWN
+            perm = 0
 
-            if (sect.Characteristics & PEH.IMAGE_SCN_CNT_CODE) or (sect.Characteristics & PEH.IMAGE_SCN_MEM_EXECUTE):
-                segtype |= redasm.SEG_HASCODE
-            elif ep and (ep >= sect.VirtualAddress and ep < sect.VirtualAddress + asize):
-                segtype |= redasm.SE_HASCODE
+            if (sect.Characteristics & PEH.IMAGE_SCN_MEM_EXECUTE or
+                    (ep and (ep >= sect.VirtualAddress and ep < sect.VirtualAddress + asize))):
+                perm |= redasm.SP_X
+            if sect.Characteristics & PEH.IMAGE_SCN_MEM_READ:
+                perm |= redasm.SP_R
+            if sect.Characteristics & PEH.IMAGE_SCN_MEM_WRITE:
+                perm |= redasm.SP_W
 
-            if (sect.Characteristics & PEH.IMAGE_SCN_CNT_INITIALIZED_DATA) or (sect.Characteristics & PEH.IMAGE_SCN_CNT_UNINITIALIZED_DATA):
-                segtype |= redasm.SEG_HASDATA
+            redasm.add_segment_n(sect.Name, startva, asize, perm, self.bits)
 
-            redasm.map_segment_n(sect.Name, startva, asize,
-                                 startoff, osize, segtype)
+            if osize:
+                redasm.map_file_n(startoff, startva, osize)
 
         corheader = self.check_dotnet()
 
