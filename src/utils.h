@@ -1,7 +1,6 @@
 #pragma once
 
 #include <QString>
-#include <cstddef>
 #include <redasm/redasm.h>
 
 class MainWindow;
@@ -13,7 +12,6 @@ class QMenu;
 namespace utils {
 
 inline MainWindow* mainwindow{nullptr};
-inline size_t bits{};
 
 inline void log(const QString& s) { rd_log(qUtf8Printable(s)); }
 

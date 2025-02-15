@@ -15,7 +15,6 @@ struct ErrorDialog {
     explicit ErrorDialog(QDialog* self) {
         self->resize(640, 430);
         self->setWindowFlag(Qt::WindowStaysOnTopHint);
-        self->setAttribute(Qt::WA_DeleteOnClose);
 
         this->pteerror = new QPlainTextEdit(self);
         this->pteerror->setWordWrapMode(QTextOption::NoWrap);
