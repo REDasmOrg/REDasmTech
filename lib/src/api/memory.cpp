@@ -39,24 +39,13 @@ bool rd_getmbyte(RDAddress address, RDMByte* mb) {
 
     if(const redasm::Context* ctx = redasm::state::context; ctx) {
         if(const RDSegment* seg = ctx->program.find_segment(address); seg) {
-            if(mb) *mb = redasm::memory::get_mbyte(seg, address);
-            return true;
+            auto res = redasm::memory::get_mbyte(seg, address);
+            if(res && mb) *mb = *res;
+            return res.has_value();
         }
     }
 
     return false;
-}
-
-void rd_memoryinfo(RDMemoryInfo* mi) {
-    spdlog::trace("rd_memoryinfo({})", fmt::ptr(mi));
-
-    if(!mi) return;
-
-    // *mi = {
-    //     .baseaddress = redasm::state::context->baseaddress,
-    //     .end_baseaddress = redasm::state::context->end_baseaddress(),
-    //     .size = redasm::state::context->program.memory_old->size(),
-    // };
 }
 
 usize rd_read(RDAddress address, void* data, usize n) {

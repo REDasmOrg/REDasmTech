@@ -265,8 +265,10 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
                 seg = ctx->program.find_segment(toaddr);
 
                 if(seg && (seg->perm & SP_X)) {
-                    this->insert_path(memory::get_mbyte(seg, toaddr),
-                                      this->calculate_index(toaddr), i);
+                    if(auto mb = memory::get_mbyte(seg, toaddr); mb) {
+                        this->insert_path(*mb, this->calculate_index(toaddr),
+                                          i);
+                    }
                 }
             }
         }
@@ -277,8 +279,10 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
 
                 if(seg && (seg->perm & SP_X) &&
                    memory::has_flag(seg, fromaddr, BF_CODE)) {
-                    this->insert_path(memory::get_mbyte(seg, fromaddr), i,
-                                      this->calculate_index(fromaddr));
+                    if(auto mb = memory::get_mbyte(seg, fromaddr); mb) {
+                        this->insert_path(*mb, i,
+                                          this->calculate_index(fromaddr));
+                    }
                 }
             }
         }
@@ -562,10 +566,10 @@ void Surface::render_hexdump(const ListingItem& item) {
 
     for(RDAddress addr = item.start_address; addr < item.end_address;
         addr++, c += 3) {
-        RDMByte mb = memory::get_mbyte(seg, addr);
+        auto mb = memory::get_mbyte(seg, addr);
 
-        if(mbyte::has_byte(mb))
-            m_renderer->chunk(utils::to_hex(mbyte::get_byte(mb)));
+        if(mb && mbyte::has_byte(*mb))
+            m_renderer->chunk(utils::to_hex(mbyte::get_byte(*mb)));
         else
             m_renderer->nop("??");
 
@@ -579,10 +583,10 @@ void Surface::render_hexdump(const ListingItem& item) {
 
     for(RDAddress addr = item.start_address; addr < item.end_address;
         addr++, c++) {
-        RDMByte mb = memory::get_mbyte(seg, addr);
+        auto mb = memory::get_mbyte(seg, addr);
 
-        if(mbyte::has_byte(mb)) {
-            u8 b = mbyte::get_byte(mb);
+        if(mb && mbyte::has_byte(*mb)) {
+            u8 b = mbyte::get_byte(*mb);
             std::string s{std::isprint(b) ? static_cast<char>(b) : '.'};
             m_renderer->chunk(s);
         }
@@ -599,10 +603,10 @@ void Surface::render_fill(const ListingItem& item) {
     assume(seg);
 
     m_renderer->new_row(item).chunk(".fill", THEME_FUNCTION).ws();
-    RDMByte mb = memory::get_mbyte(seg, item.address);
+    auto mb = memory::get_mbyte(seg, item.address);
 
-    if(mbyte::has_byte(mb))
-        m_renderer->chunk(utils::to_hex(mbyte::get_byte(mb)), THEME_CONSTANT);
+    if(mb && mbyte::has_byte(*mb))
+        m_renderer->chunk(utils::to_hex(mbyte::get_byte(*mb)), THEME_CONSTANT);
     else
         m_renderer->chunk("??", THEME_NOP);
 

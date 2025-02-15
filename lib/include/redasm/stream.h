@@ -5,13 +5,12 @@
 #include <redasm/types.h>
 #include <redasm/typing.h>
 
-typedef struct RDStream {
-    RDBuffer* buffer;
-    usize position;
-} RDStream;
+typedef struct RDStream RDStream;
 
-REDASM_EXPORT RDStream rdstream_create(RDBuffer* buffer);
+REDASM_EXPORT RDStream* rdstream_create(RDBuffer* buffer);
+REDASM_EXPORT void rdstream_destroy(RDStream* s);
 
+REDASM_EXPORT usize rdstream_getpos(const RDStream* self);
 REDASM_EXPORT usize rdstream_seek(RDStream* self, usize off);
 REDASM_EXPORT usize rdstream_move(RDStream* self, isize off);
 REDASM_EXPORT void rdstream_rewind(RDStream* self);

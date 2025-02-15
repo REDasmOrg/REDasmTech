@@ -10,6 +10,7 @@
 namespace redasm::buffer {
 
 tl::optional<u8> get_byte(const RDBuffer* self, usize idx);
+tl::optional<RDMByte> get_mbyte(const RDBuffer* self, usize idx);
 
 namespace impl {
 

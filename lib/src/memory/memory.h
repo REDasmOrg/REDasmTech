@@ -17,6 +17,11 @@ inline RDValue* read_struct(const RDSegment* self, RDAddress address,
     return buffer::read_struct(self->mem, address - self->start, fields);
 }
 
+inline tl::optional<RDMByte> get_mbyte(const RDSegment* self,
+                                       RDAddress address) {
+    return buffer::get_mbyte(self->mem, address - self->start);
+}
+
 inline tl::optional<u8> get_byte(const RDSegment* self, RDAddress address) {
     return buffer::get_byte(self->mem, address - self->start);
 }
@@ -101,16 +106,13 @@ inline RDValue* get_type(const RDSegment* self, RDAddress address, RDType t) {
 }
 
 // Memory interface
-
-RDMByte get_mbyte(const RDSegment* self, RDAddress address);
-
 template<typename Function>
 bool range_is(const RDSegment* self, RDAddress address, usize n, Function f) {
     RDAddress endaddr = std::min(address + n, self->end);
 
     for(RDAddress i = address; i < endaddr; i++) {
         auto b = memory::get_mbyte(self, address);
-        if(!b || !f(b)) return false;
+        if(!b || !f(*b)) return false;
     }
 
     return true;

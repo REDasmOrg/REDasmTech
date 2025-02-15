@@ -90,6 +90,13 @@ RDValue* rdbuffer_readstruct(const RDBuffer* self, usize idx,
     return redasm::buffer::read_struct(self, idx, fields);
 }
 
+bool rdbuffer_getmbyte(const RDBuffer* self, usize idx, RDMByte* v) {
+    spdlog::trace("rdbuffer_getmbyte({}, {:x})", fmt::ptr(self), idx);
+    auto res = redasm::buffer::get_mbyte(self, idx);
+    if(res && v) *v = *res;
+    return res.has_value();
+}
+
 bool rdbuffer_getbool(const RDBuffer* self, usize idx, bool* v) {
     spdlog::trace("rdbuffer_getbool({}, {:x})", fmt::ptr(self), idx);
     auto res = redasm::buffer::get_bool(self, idx);

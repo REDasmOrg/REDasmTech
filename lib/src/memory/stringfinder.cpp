@@ -122,13 +122,14 @@ tl::optional<RDStringResult> classify(RDAddress address) {
 
     if(usize r = seg->end - address; r < sizeof(u16)) return tl::nullopt;
 
-    RDMByte mb1 = memory::get_mbyte(seg, address);
-    RDMByte mb2 = memory::get_mbyte(seg, address + 1);
+    auto mb1 = memory::get_mbyte(seg, address);
+    auto mb2 = memory::get_mbyte(seg, address + 1);
 
-    if(!mbyte::has_byte(mb1) || !mbyte::has_byte(mb2)) return tl::nullopt;
+    if(!mb1 || !mb2 || !mbyte::has_byte(*mb1) || !mbyte::has_byte(*mb2))
+        return tl::nullopt;
 
-    u8 b1 = mbyte::get_byte(mb1);
-    u8 b2 = mbyte::get_byte(mb2);
+    u8 b1 = mbyte::get_byte(*mb1);
+    u8 b2 = mbyte::get_byte(*mb2);
 
     if(stringfinder::is_ascii(b1) && !b2) {
         auto [ok, c] = stringfinder::categorize_as(

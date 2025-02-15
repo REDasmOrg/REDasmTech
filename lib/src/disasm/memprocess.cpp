@@ -153,8 +153,10 @@ void process_listing_data(const Context* ctx, Listing& l, RDAddress& address) {
         address += len;
     }
     else {
+        auto mb = memory::get_mbyte(seg, address);
+        assume(mb);
         except("Unhandled data byte @ {:x}, value {}", address,
-               utils::to_hex(memory::get_mbyte(seg, address), 32));
+               utils::to_hex(*mb, 32));
     }
 }
 

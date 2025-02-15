@@ -354,6 +354,11 @@ tl::optional<u8> get_byte(const RDBuffer* self, usize idx) {
     return tl::nullopt;
 }
 
+tl::optional<RDMByte> get_mbyte(const RDBuffer* self, usize idx) {
+    if(idx < self->length) return self->m_data[idx];
+    return tl::nullopt;
+}
+
 tl::optional<bool> get_bool(const RDBuffer* self, usize idx) {
     auto b = buffer::get_byte(self, idx);
     if(b) return !!(*b);

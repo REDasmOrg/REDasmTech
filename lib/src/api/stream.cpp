@@ -1,12 +1,21 @@
+#include "../internal/stream_internal.h"
 #include "../memory/buffer.h"
 #include "../typing/base.h"
 #include <redasm/stream.h>
 #include <spdlog/spdlog.h>
 
-RDStream rdstream_create(RDBuffer* buffer) {
+RDStream* rdstream_create(RDBuffer* buffer) {
     spdlog::trace("rdstream_create({})", fmt::ptr(buffer));
-    return {.buffer = buffer, .position = 0};
+    if(!buffer) return nullptr;
+
+    return new RDStream{
+        .buffer = buffer,
+        .position = 0,
+    };
 }
+
+void rdstream_destroy(RDStream* s) { delete s; }
+usize rdstream_getpos(const RDStream* self) { return self->position; }
 
 usize rdstream_seek(RDStream* self, usize off) {
     spdlog::trace("rdstream_seek({}, {})", fmt::ptr(self), off);

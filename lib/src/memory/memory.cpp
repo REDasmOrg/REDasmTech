@@ -114,10 +114,4 @@ void unset_n(RDSegment* self, RDAddress address, usize n) {
     }
 }
 
-RDMByte get_mbyte(const RDSegment* self, RDAddress address) {
-    usize idx = address - self->start;
-    if(idx < self->mem->length) return self->mem->m_data[idx];
-    except("memory::get_mbyte(): address out of range");
-}
-
 } // namespace redasm::memory
