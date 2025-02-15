@@ -15,7 +15,7 @@ inline Vect(RDTestResult) tests = nullptr;
 inline bool initialized = false;
 inline RDInitParams params;
 inline Theme theme;
-inline Context* context{};
+inline Context* context{nullptr};
 inline const typing::BaseTypes BASETYPES;
 
 inline void log(std::string_view s) {
