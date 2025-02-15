@@ -10,14 +10,6 @@ struct PyBuffer {
     PyObject_HEAD
     RDBuffer* buffer;
 };
-
-struct PyFile {
-    PyBuffer super;
-};
-
-struct PyMemory {
-    PyBuffer super;
-};
 // clang-format on
 
 /* *** *** *** BUFFER *** *** *** */
@@ -38,13 +30,14 @@ PyObject* buffer_readstruct(PyBuffer* self, PyObject* args) {
     std::vector<RDStructField> s;
     if(!python::tuple_to_struct(obj, s)) return nullptr;
 
-    RDValue v;
+    RDValue* v = rdbuffer_readstruct(self->buffer, idx, s.data());
     PyObject* res = Py_None;
 
-    if(rdbuffer_readstruct(self->buffer, idx, s.data(), &v))
-        obj = python::to_object(&v);
+    if(v) {
+        res = python::to_object(v);
+        rdvalue_destroy(v);
+    }
 
-    rdvalue_destroy(&v);
     return res;
 }
 
@@ -251,14 +244,15 @@ PyObject* buffer_gettype(PyBuffer* self, PyObject* args) {
     const char* tname = nullptr;
     if(!PyArg_ParseTuple(args, "Ks*", &idx, &tname)) return nullptr;
 
-    RDValue v;
-    PyObject* obj = Py_None;
+    RDValue* v = rdbuffer_gettypename(self->buffer, idx, tname);
+    PyObject* res = Py_None;
 
-    if(rdbuffer_gettypename(self->buffer, idx, tname, &v))
-        obj = python::to_object(&v);
+    if(v) {
+        res = python::to_object(v);
+        rdvalue_destroy(v);
+    }
 
-    rdvalue_destroy(&v);
-    return obj;
+    return res;
 }
 
 // clang-format off
@@ -295,18 +289,18 @@ PyMethodDef buffer_methods[] = {
 PySequenceMethods file_sequence_methods = []() {
     PySequenceMethods seq{};
 
-    seq.sq_length = [](PyObject*) -> Py_ssize_t {
-        const RDBuffer* file = rdbuffer_getfile();
-        return file ? rdbuffer_getlength(file) : 0;
+    seq.sq_length = [](PyObject* self) -> Py_ssize_t {
+        const auto* file = reinterpret_cast<const PyBuffer*>(self);
+        return file ? rdbuffer_getlength(file->buffer) : 0;
     };
 
-    seq.sq_item = [](PyObject*, Py_ssize_t idx) {
-        const RDBuffer* file = rdbuffer_getfile();
+    seq.sq_item = [](PyObject* self, Py_ssize_t idx) {
+        const auto* file = reinterpret_cast<const PyBuffer*>(self);
         auto uidx = static_cast<usize>(idx);
-        if(!file || uidx >= rdbuffer_getlength(file)) return Py_None;
+        if(!file || uidx >= rdbuffer_getlength(file->buffer)) return Py_None;
 
         u8 b;
-        if(rdbuffer_getu8(file, uidx, &b)) return PyLong_FromSize_t(b);
+        if(rdbuffer_getu8(file->buffer, uidx, &b)) return PyLong_FromSize_t(b);
         return Py_None;
     };
 
@@ -316,29 +310,37 @@ PySequenceMethods file_sequence_methods = []() {
 PySequenceMethods memory_sequence_methods = []() {
     PySequenceMethods seq{};
 
-    seq.sq_length = [](PyObject*) -> Py_ssize_t {
-        const RDBuffer* mem = rdbuffer_getmemory();
-        return mem ? rdbuffer_getlength(mem) : 0;
+    seq.sq_length = [](PyObject* self) -> Py_ssize_t {
+        const auto* mem = reinterpret_cast<const PyBuffer*>(self);
+        return mem ? rdbuffer_getlength(mem->buffer) : 0;
     };
 
-    seq.sq_item = [](PyObject*, Py_ssize_t idx) {
-        RDByte b;
-        if(!rd_getbyte(static_cast<usize>(idx), &b)) return Py_None;
+    seq.sq_item = [](PyObject* self, Py_ssize_t idx) {
+        const auto* mem = reinterpret_cast<const PyBuffer*>(self);
+
+        RDMByte b;
+        if(!rdbuffer_getmbyte(mem->buffer, static_cast<usize>(idx), &b))
+            return Py_None;
 
         PyObject* pb = python::new_simplenamespace();
         // clang-format off
-        PyObject_SetAttrString(pb, "name", PyBool_FromLong(rdbyte_hasflag(&b, BF_NAME)));
-        PyObject_SetAttrString(pb, "segment", PyBool_FromLong(rdbyte_hasflag(&b, BF_SEGMENT)));
-        PyObject_SetAttrString(pb, "import", PyBool_FromLong(rdbyte_hasflag(&b, BF_IMPORT)));
-        PyObject_SetAttrString(pb, "export", PyBool_FromLong(rdbyte_hasflag(&b, BF_EXPORT)));
-        PyObject_SetAttrString(pb, "unknown", PyBool_FromLong(rdbyte_isunknown(b)));
-        PyObject_SetAttrString(pb, "data", PyBool_FromLong(rdbyte_isdata(b)));
-        PyObject_SetAttrString(pb, "code", PyBool_FromLong(rdbyte_iscode(b)));
+        PyObject_SetAttrString(pb, "name", PyBool_FromLong(rdmbyte_hasflag(b,
+        BF_NAME))); PyObject_SetAttrString(pb, "segment",
+        PyBool_FromLong(rdmbyte_hasflag(b, BF_SEGMENT)));
+        PyObject_SetAttrString(pb, "import",
+        PyBool_FromLong(rdmbyte_hasflag(b, BF_IMPORT)));
+        PyObject_SetAttrString(pb, "export",
+        PyBool_FromLong(rdmbyte_hasflag(b, BF_EXPORT)));
+        PyObject_SetAttrString(pb, "unknown",
+        PyBool_FromLong(rdmbyte_isunknown(b))); PyObject_SetAttrString(pb,
+        "data", PyBool_FromLong(rdmbyte_isdata(b)));
+        PyObject_SetAttrString(pb, "code",
+        PyBool_FromLong(rdmbyte_iscode(b)));
         // clang-format on
 
         u8 v;
 
-        if(rdbyte_getbyte(b, &v))
+        if(rdmbyte_getbyte(b, &v))
             PyObject_SetAttrString(pb, "byte", PyLong_FromSize_t(v));
         else
             PyObject_SetAttrString(pb, "byte", Py_None);
@@ -349,26 +351,40 @@ PySequenceMethods memory_sequence_methods = []() {
     return seq;
 }();
 
+} // namespace
+
 PyTypeObject buffer_type = []() {
     PyTypeObject t{PyVarObject_HEAD_INIT(nullptr, 0)};
     t.tp_name = "redasm.Buffer";
     t.tp_basicsize = sizeof(PyBuffer);
     t.tp_flags = Py_TPFLAGS_DISALLOW_INSTANTIATION;
     t.tp_methods = python::buffer_methods;
-    t.tp_as_sequence = &python::file_sequence_methods;
 
     return t;
 }();
-
-} // namespace
 
 PyTypeObject file_type = []() {
     PyTypeObject t{PyVarObject_HEAD_INIT(nullptr, 0)};
     t.tp_base = &python::buffer_type;
     t.tp_name = "redasm.File";
-    t.tp_basicsize = sizeof(PyFile);
-    t.tp_flags = Py_TPFLAGS_DISALLOW_INSTANTIATION;
+    t.tp_basicsize = sizeof(PyBuffer);
+    t.tp_flags = Py_TPFLAGS_DEFAULT;
     t.tp_as_sequence = &python::file_sequence_methods;
+    t.tp_new = PyType_GenericNew,
+
+    t.tp_init = reinterpret_cast<initproc>(
+        +[](PyBuffer* self, PyObject* args, PyObject* /*kwds*/) {
+            const char* filepath = nullptr;
+            if(!PyArg_ParseTuple(args, "z", &filepath)) return -1;
+            self->buffer = rdbuffer_createfile(filepath);
+            return 0;
+        });
+
+    t.tp_dealloc = reinterpret_cast<destructor>(+[](PyBuffer* self) {
+        rdbuffer_destroy(self->buffer);
+        Py_TYPE(self)->tp_free(reinterpret_cast<PyObject*>(self));
+    });
+
     return t;
 }();
 
@@ -376,59 +392,40 @@ PyTypeObject memory_type = []() {
     PyTypeObject t{PyVarObject_HEAD_INIT(nullptr, 0)};
     t.tp_base = &python::buffer_type;
     t.tp_name = "redasm.Memory";
-    t.tp_basicsize = sizeof(PyMemory);
-    t.tp_flags = Py_TPFLAGS_DISALLOW_INSTANTIATION;
+    t.tp_basicsize = sizeof(PyBuffer);
+    t.tp_flags = Py_TPFLAGS_DEFAULT;
     t.tp_as_sequence = &python::memory_sequence_methods;
+
+    t.tp_init = reinterpret_cast<initproc>(
+        +[](PyBuffer* self, PyObject* args, PyObject* /*kwds*/) {
+            usize n = 0;
+            if(!PyArg_ParseTuple(args, "n", &n)) return -1;
+            self->buffer = rdbuffer_creatememory(n);
+            return 0;
+        });
+
+    t.tp_dealloc = reinterpret_cast<destructor>(+[](PyBuffer* self) {
+        rdbuffer_destroy(self->buffer);
+        Py_TYPE(self)->tp_free(reinterpret_cast<PyObject*>(self));
+    });
+
     return t;
 }();
 
 PyObject* pyfile_new() {
-    PyFile* pyfile = PyObject_New(PyFile, &file_type);
+    PyBuffer* pyfile = PyObject_New(PyBuffer, &python::file_type);
 
     if(!pyfile) {
         PyErr_NoMemory();
         return nullptr;
     }
 
-    pyfile->super.buffer = rdbuffer_getfile();
+    pyfile->buffer = rd_getfile();
     return reinterpret_cast<PyObject*>(pyfile);
-}
-
-PyObject* pyfile_frombuffer(RDBuffer* buffer) {
-    if(!buffer) return nullptr;
-
-    PyFile* pyfile = PyObject_New(PyFile, &file_type);
-
-    if(!pyfile) {
-        PyErr_NoMemory();
-        return nullptr;
-    }
-
-    pyfile->super.buffer = buffer;
-    return reinterpret_cast<PyObject*>(pyfile);
-}
-
-RDBuffer* pyfile_asbuffer(PyObject* file) {
-    if(file) return reinterpret_cast<PyFile*>(file)->super.buffer;
-    return nullptr;
 }
 
 PyObject* pymemory_new() {
-    PyMemory* pymemory = PyObject_New(PyMemory, &memory_type);
-
-    if(!pymemory) {
-        PyErr_NoMemory();
-        return nullptr;
-    }
-
-    pymemory->super.buffer = rdbuffer_getmemory();
-    return reinterpret_cast<PyObject*>(pymemory);
-}
-
-PyObject* pymemory_frombuffer(RDBuffer* buffer) {
-    if(!buffer) return nullptr;
-
-    PyMemory* pymemory = PyObject_New(PyMemory, &file_type);
+    PyBuffer* pymemory = PyObject_New(PyBuffer, &python::memory_type);
 
     if(!pymemory) {
         PyErr_NoMemory();
@@ -438,9 +435,27 @@ PyObject* pymemory_frombuffer(RDBuffer* buffer) {
     return reinterpret_cast<PyObject*>(pymemory);
 }
 
-RDBuffer* pymemory_asbuffer(PyObject* memory) {
-    if(memory) return reinterpret_cast<PyMemory*>(memory)->super.buffer;
+PyObject* pybuffer_frombuffer(RDBuffer* b) {
+    if(!b) return nullptr;
+
+    PyBuffer* self = PyObject_New(PyBuffer, &python::buffer_type);
+
+    if(!self) {
+        PyErr_NoMemory();
+        return nullptr;
+    }
+
+    self->buffer = b;
+    return reinterpret_cast<PyObject*>(self);
+}
+
+RDBuffer* pybuffer_asbuffer(PyObject* obj) {
+    if(obj) return reinterpret_cast<PyBuffer*>(obj)->buffer;
     return nullptr;
+}
+
+bool pybuffer_check(PyObject* obj) {
+    return PyObject_TypeCheck(obj, &python::buffer_type);
 }
 
 } // namespace python

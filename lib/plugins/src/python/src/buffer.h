@@ -5,14 +5,14 @@
 
 namespace python {
 
+extern PyTypeObject buffer_type;
 extern PyTypeObject file_type;
 extern PyTypeObject memory_type;
 
 PyObject* pyfile_new();
-PyObject* pyfile_frombuffer(RDBuffer* buffer);
-RDBuffer* pyfile_asbuffer(PyObject* file);
 PyObject* pymemory_new();
-PyObject* pymemory_frombuffer(RDBuffer* buffer);
-RDBuffer* pymemory_asbuffer(PyObject* memory);
+PyObject* pybuffer_frombuffer(RDBuffer* b);
+RDBuffer* pybuffer_asbuffer(PyObject* obj);
+bool pybuffer_check(PyObject* obj);
 
 } // namespace python

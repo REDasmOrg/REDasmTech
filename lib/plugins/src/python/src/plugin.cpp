@@ -4,6 +4,7 @@
 #include "stream.h"
 #include <Python.h>
 #include <filesystem>
+#include <fstream>
 #include <string_view>
 #include <vector>
 
@@ -41,6 +42,7 @@ void init_constants(PyObject* m) {
     py_addintconstant(m, SP_RX);
     py_addintconstant(m, SP_RWX);
     py_addintconstant(m, SP_WX);
+
     py_addintconstant(m, AF_RUNONCE);
     py_addintconstant(m, AF_SELECTED);
     py_addintconstant(m, AF_EXPERIMENTAL);
@@ -59,16 +61,18 @@ void init_constants(PyObject* m) {
 }
 
 PyMODINIT_FUNC PyInit_redasm() { // NOLINT
-    PyType_Ready(&python::memory_type);
+    PyType_Ready(&python::buffer_type);
     PyType_Ready(&python::file_type);
+    PyType_Ready(&python::memory_type);
+    PyType_Ready(&python::stream_type);
     PyType_Ready(&python::rdil_type);
 
     PyObject* m = PyModule_Create(&moduledef);
-    PyModule_AddObject(m, "memory", python::pymemory_new());
-    PyModule_AddObject(m, "file", python::pyfile_new());
+    PyModule_AddType(m, &python::buffer_type);
+    PyModule_AddType(m, &python::file_type);
+    PyModule_AddType(m, &python::memory_type);
+    PyModule_AddType(m, &python::stream_type);
     PyModule_AddObject(m, "rdil", python::pyrdil_new());
-    PyModule_AddType(m, &python::filestream_type);
-    PyModule_AddType(m, &python::memorystream_type);
 
     init_constants(m);
     return m;
@@ -110,16 +114,21 @@ void rdplugin_create() {
     if(!python::init_and_configure()) return;
 
     for(const std::string& init : python::g_initpaths) {
-        FILE* fp = std::fopen(init.c_str(), "r");
+        FILE* fp = std::fopen(init.c_str(), "rb");
+        if(!fp) return;
 
-        if(!fp) {
-            // spdlog::error("Cannot open '{}'", init);
-            continue;
-        }
+        PyObject* globs = PyDict_New();
+        PyObject* locs = PyDict_New();
+        PyObject* res =
+            PyRun_File(fp, init.c_str(), Py_file_input, globs, locs);
 
-        // spdlog::info("Executing '{}'", init);
-        if(PyRun_SimpleFile(fp, init.c_str()) == -1) python::check_error();
+        if(res)
+            Py_DECREF(res);
+        else
+            python::check_error();
 
+        Py_DECREF(globs);
+        Py_DECREF(locs);
         std::fclose(fp);
     }
 }

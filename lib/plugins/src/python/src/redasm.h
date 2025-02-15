@@ -31,15 +31,13 @@ PyObject* symbolize(PyObject* self, PyObject* args);
 PyObject* is_address(PyObject* self, PyObject* args);
 PyObject* to_offset(PyObject* self, PyObject* args);
 PyObject* to_address(PyObject* self, PyObject* args);
-PyObject* from_reladdress(PyObject* self, PyObject* args);
-PyObject* address_to_index(PyObject* self, PyObject* args);
-PyObject* index_to_address(PyObject* self, PyObject* args);
 PyObject* check_string(PyObject* self, PyObject* args);
 
 PyObject* get_entries(PyObject* self, PyObject* args);
-PyObject* memory_info(PyObject* self, PyObject* args);
-PyObject* map_segment(PyObject* self, PyObject* args);
-PyObject* map_segment_n(PyObject* self, PyObject* args);
+PyObject* map_file(PyObject* self, PyObject* args);
+PyObject* map_file_n(PyObject* self, PyObject* args);
+PyObject* add_segment(PyObject* self, PyObject* args);
+PyObject* add_segment_n(PyObject* self, PyObject* args);
 
 PyObject* get_refsfrom(PyObject* self, PyObject* args);
 PyObject* get_refsfromtype(PyObject* self, PyObject* args);

@@ -4,11 +4,8 @@
 
 namespace python {
 
-extern PyTypeObject abstractstream_type;
-extern PyTypeObject filestream_type;
-extern PyTypeObject memorystream_type;
+extern PyTypeObject stream_type;
 
-PyObject* pyfilestream_new();
-PyObject* pymemorystream_new();
+PyObject* pystream_new();
 
 } // namespace python

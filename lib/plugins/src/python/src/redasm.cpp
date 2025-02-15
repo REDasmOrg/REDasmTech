@@ -295,12 +295,12 @@ PyObject* set_type(PyObject* /*self*/, PyObject* args) {
     const char* name = nullptr;
     if(!PyArg_ParseTuple(args, "Kz", &address, &name)) return nullptr;
 
-    RDValue v;
+    RDValue* v = nullptr;
     PyObject* obj = Py_None;
 
     if(rd_settypename(address, name, &v)) {
-        obj = python::to_object(&v);
-        rdvalue_destroy(&v);
+        obj = python::to_object(v);
+        rdvalue_destroy(v);
     }
 
     return obj;
@@ -313,12 +313,12 @@ PyObject* set_type_ex(PyObject* /*self*/, PyObject* args) {
 
     if(!PyArg_ParseTuple(args, "KzK", &address, &name, &flags)) return nullptr;
 
-    RDValue v;
+    RDValue* v = nullptr;
     PyObject* obj = Py_None;
 
     if(rd_settypename_ex(address, name, flags, &v)) {
-        obj = python::to_object(&v);
-        rdvalue_destroy(&v);
+        obj = python::to_object(v);
+        rdvalue_destroy(v);
     }
 
     return obj;
@@ -562,12 +562,12 @@ PyObject* get_type(PyObject* /*self*/, PyObject* args) {
 
     if(!PyArg_ParseTuple(args, "Ks*", &address, &tname)) return nullptr;
 
-    RDValue v;
+    RDValue* v = rd_gettypename(address, tname);
     PyObject* obj = Py_None;
 
-    if(rd_gettypename(address, tname, &v)) {
-        obj = python::to_object(&v);
-        rdvalue_destroy(&v);
+    if(v) {
+        obj = python::to_object(v);
+        rdvalue_destroy(v);
     }
 
     return obj;
@@ -583,56 +583,49 @@ PyObject* get_entries(PyObject* /*self*/, PyObject* /*args*/) {
     return tuple;
 }
 
-PyObject* memory_info(PyObject* /*self*/, PyObject* /*args*/) {
-    RDMemoryInfo mi;
-    rd_memoryinfo(&mi);
+PyObject* map_file(PyObject* /*self*/, PyObject* args) {
+    RDOffset offset{};
+    RDAddress start{}, end{};
 
-    PyObject* res = python::new_simplenamespace();
-    PyObject* ba = PyLong_FromUnsignedLongLong(mi.baseaddress);
-    PyObject* endba = PyLong_FromUnsignedLongLong(mi.end_baseaddress);
-    PyObject* size = PyLong_FromUnsignedLongLong(mi.size);
-
-    PyObject_SetAttrString(res, "baseaddress", ba);
-    PyObject_SetAttrString(res, "end_baseaddress", endba);
-    PyObject_SetAttrString(res, "size", size);
-
-    Py_DECREF(size);
-    Py_DECREF(endba);
-    Py_DECREF(ba);
-
-    return res;
+    if(!PyArg_ParseTuple(args, "KKK", &offset, &start, &end)) return nullptr;
+    return PyBool_FromLong(rd_mapfile_n(offset, start, end));
 }
 
-PyObject* map_segment(PyObject* /*self*/, PyObject* args) {
+PyObject* map_file_n(PyObject* /*self*/, PyObject* args) {
+    RDOffset offset{};
+    RDAddress base{};
+    usize n{};
+
+    if(!PyArg_ParseTuple(args, "KKn", &offset, &base, &n)) return nullptr;
+    return PyBool_FromLong(rd_mapfile_n(offset, base, n));
+}
+
+PyObject* add_segment(PyObject* /*self*/, PyObject* args) {
     const char* name = nullptr;
     RDAddress address{}, endaddress{};
-    RDOffset offset{}, endoffset{};
-    usize type{};
+    u32 perm{}, bits{};
 
     // Allow embedded null characters
-    if(!PyArg_ParseTuple(args, "s*KKKKK", &name, &address, &endaddress, &offset,
-                         &endoffset, &type)) {
+    if(!PyArg_ParseTuple(args, "s*KKII", &name, &address, &endaddress, &perm,
+                         &bits)) {
         return nullptr;
     }
 
     return PyBool_FromLong(
-        rd_mapsegment(name, address, endaddress, offset, endoffset, type));
+        rd_addsegment(name, address, endaddress, perm, bits));
 }
 
-PyObject* map_segment_n(PyObject* /*self*/, PyObject* args) {
+PyObject* add_segment_n(PyObject* /*self*/, PyObject* args) {
     const char* name = nullptr;
     RDAddress address{};
-    RDOffset offset{};
-    usize asize{}, osize{}, type{};
+    usize n;
+    usize perm{}, bits{};
 
     // Allow embedded null characters
-    if(!PyArg_ParseTuple(args, "s*KKKKK", &name, &address, &asize, &offset,
-                         &osize, &type)) {
+    if(!PyArg_ParseTuple(args, "s*KnII", &name, &address, &n, &perm, &bits))
         return nullptr;
-    }
 
-    return PyBool_FromLong(
-        rd_mapsegment_n(name, address, asize, offset, osize, type));
+    return PyBool_FromLong(rd_addsegment_n(name, address, n, perm, bits));
 }
 
 PyObject* is_address(PyObject* /*self*/, PyObject* args) {
@@ -646,9 +639,10 @@ PyObject* to_offset(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
 
     RDAddress address = PyLong_AsUnsignedLongLong(args);
+    RDOffset offset{};
 
-    // if(auto v = internal::to_offset(address); v)
-    //     return PyLong_FromUnsignedLongLong(*v);
+    if(rd_tooffset(address, &offset))
+        return PyLong_FromUnsignedLongLong(offset);
 
     return Py_None;
 }
@@ -657,42 +651,10 @@ PyObject* to_address(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
 
     RDAddress offset = PyLong_AsUnsignedLongLong(args);
+    RDAddress address{};
 
-    // if(auto v = internal::to_address(offset); v)
-    //     return PyLong_FromUnsignedLongLong(*v);
-
-    return Py_None;
-}
-
-PyObject* from_reladdress(PyObject* /*self*/, PyObject* args) {
-    if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress offset = PyLong_AsUnsignedLongLong(args);
-
-    // if(auto v = internal::from_reladdress(offset); v)
-    //     return PyLong_FromUnsignedLongLong(*v);
-
-    return Py_None;
-}
-
-PyObject* address_to_index(PyObject* /*self*/, PyObject* args) {
-    if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
-
-    // if(auto v = internal::address_to_index(address); v)
-    //     return PyLong_FromUnsignedLongLong(*v);
-
-    return Py_None;
-}
-
-PyObject* index_to_address(PyObject* /*self*/, PyObject* args) {
-    if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    usize index = PyLong_AsUnsignedLongLong(args);
-
-    // if(auto v = internal::index_to_address(index); v)
-    //     return PyLong_FromUnsignedLongLong(*v);
+    if(rd_toaddress(offset, &address))
+        return PyLong_FromUnsignedLongLong(address);
 
     return Py_None;
 }

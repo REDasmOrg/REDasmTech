@@ -71,7 +71,7 @@ PyObject* to_object(const RDValue* v) {
             res = PyUnicode_New(v->type.n, 127);
 
             for(usize i = 0; i < len; i++) {
-                const RDValue* item = vect_at(RDValue, &v->list, i);
+                const RDValue* item = v->list[i];
 
                 if(item->ch_v) // Check for '\0'
                     PyUnicode_WriteChar(res, i, item->ch_v);
@@ -85,7 +85,7 @@ PyObject* to_object(const RDValue* v) {
             res = PyList_New(len);
 
             for(usize i = 0; i < len; i++) {
-                const RDValue* item = vect_at(RDValue, &v->list, i);
+                const RDValue* item = v->list[i];
                 PyList_SetItem(res, i, python::to_object(item));
             }
         }
@@ -93,9 +93,9 @@ PyObject* to_object(const RDValue* v) {
     else if(rdvalue_isstruct(v)) {
         res = python::new_simplenamespace();
 
-        dict_foreach(RDValueField, item, &v->dict) {
-            PyObject* f = python::to_object(&item->value);
-            PyObject_SetAttrString(res, str_ptr(&item->key), f);
+        map_foreach(RDValueField, item, v->dict) {
+            PyObject* f = python::to_object(item->value);
+            PyObject_SetAttrString(res, item->key, f);
             Py_DECREF(f);
         }
     }
@@ -121,7 +121,7 @@ PyObject* to_object(const RDValue* v) {
         else if(v->type.id == TID_I64)
             res = PyLong_FromUnsignedLong(v->i64_v);
         else if(v->type.id == TID_STR || v->type.id == TID_WSTR)
-            res = PyUnicode_FromString(str_ptr(&v->str));
+            res = PyUnicode_FromString(v->str);
     }
 
     return res;
@@ -179,7 +179,7 @@ void check_error() {
         Py_DECREF(strace);
     }
 
-    // state::error(s);
+    rd_error(s.c_str());
     Py_DECREF(exc);
 }
 
@@ -188,7 +188,7 @@ PyObject* loadrequest_toobject(const RDLoaderRequest* req) {
     PyObject_SetAttrString(pyreq, "path", PyUnicode_FromString(req->path));
     PyObject_SetAttrString(pyreq, "name", PyUnicode_FromString(req->name));
     PyObject_SetAttrString(pyreq, "ext", PyUnicode_FromString(req->ext));
-    PyObject_SetAttrString(pyreq, "file", pyfile_frombuffer(req->file));
+    PyObject_SetAttrString(pyreq, "file", pybuffer_frombuffer(req->file));
     return pyreq;
 }
 
@@ -197,7 +197,7 @@ RDLoaderRequest loadrequest_fromobject(PyObject* obj) {
     req.path = PyUnicode_AsUTF8(PyObject_GetAttrString(obj, "path"));
     req.name = PyUnicode_AsUTF8(PyObject_GetAttrString(obj, "name"));
     req.ext = PyUnicode_AsUTF8(PyObject_GetAttrString(obj, "ext"));
-    req.file = pyfile_asbuffer(PyObject_GetAttrString(obj, "file"));
+    req.file = pybuffer_asbuffer(PyObject_GetAttrString(obj, "file"));
     return req;
 }
 

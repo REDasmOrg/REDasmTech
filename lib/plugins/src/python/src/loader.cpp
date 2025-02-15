@@ -1,4 +1,4 @@
-#include "loader.h" python.cpp
+#include "loader.h"
 #include "buffer.h"
 #include "plugin.h"
 #include <redasm/loader.h>
@@ -14,6 +14,11 @@ struct RDPYLoaderPlugin {
 namespace {
 
 PyObject* loader_accept(PyObject* self, PyObject* args) {
+    using Instance = typename plugin::InstanceForPlugin<RDLoaderPlugin>::Type;
+
+    PyObject *pyinstance = nullptr, *file = nullptr;
+    if(!PyArg_ParseTuple(args, "OO", &self, &file)) return nullptr;
+
     const auto* plugin = plugin::get_bind<RDLoaderPlugin>(self);
     if(!plugin) return nullptr;
 
@@ -22,10 +27,11 @@ PyObject* loader_accept(PyObject* self, PyObject* args) {
     if(plugin->load) {
         if(rdplugin_getorigin(plugin) == python::ID) {
             RDLoaderRequest req = python::loadrequest_fromobject(args);
-            b = plugin->accept(plugin, &req);
+            b = plugin->accept(reinterpret_cast<Instance*>(pyinstance), &req);
         }
         else {
-            b = plugin->accept(plugin,
+            b = plugin->accept(reinterpret_cast<Instance*>(
+                                   PyCapsule_GetPointer(pyinstance, nullptr)),
                                reinterpret_cast<RDLoaderRequest*>(
                                    PyCapsule_GetPointer(args, nullptr)));
         }
@@ -48,7 +54,7 @@ PyObject* loader_load(PyObject* self, PyObject* args) {
     if(plugin->load) {
         if(rdplugin_getorigin(plugin) == python::ID)
             b = plugin->load(reinterpret_cast<Instance*>(pyinstance),
-                             python::pyfile_asbuffer(file));
+                             python::pybuffer_asbuffer(file));
     }
     else {
         b = plugin->load(
@@ -139,10 +145,10 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
         Py_DECREF(reinterpret_cast<PyObject*>(arg));
     };
 
-    plugin->base.accept = [](const RDLoader* self,
+    plugin->base.accept = [](RDLoader* self,
                              const RDLoaderRequest* req) -> bool {
-        auto* self = reinterpret_cast<PyObject*>(arg);
-        PyObject* res = PyObject_CallMethod(self, "accept", "O",
+        auto* obj = reinterpret_cast<PyObject*>(self);
+        PyObject* res = PyObject_CallMethod(obj, "accept", "O",
                                             python::loadrequest_toobject(req));
 
         if(res) {
@@ -158,7 +164,7 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
     plugin->base.load = [](RDLoader* arg, RDBuffer* file) -> bool {
         auto* self = reinterpret_cast<PyObject*>(arg);
         PyObject* res = PyObject_CallMethod(self, "load", "O",
-                                            python::pyfile_frombuffer(file));
+                                            python::pybuffer_frombuffer(file));
 
         if(res) {
             bool ok = Py_IsTrue(res);
