@@ -506,6 +506,11 @@ void rd_status(const char* s) {
     if(s) redasm::state::status(s);
 }
 
+void rd_error(const char* s) {
+    spdlog::trace("rd_error('{}')", s);
+    if(s) redasm::state::error(s);
+}
+
 const char* rd_symbolize(const char* s) {
     spdlog::trace("rd_symbolize('{}')", s);
     if(!s) return nullptr;

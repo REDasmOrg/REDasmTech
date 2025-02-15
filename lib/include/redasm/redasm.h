@@ -80,6 +80,7 @@ REDASM_EXPORT void rd_setuserdata(const char* k, uptr v);
 REDASM_EXPORT bool rd_getuserdata(const char* k, uptr* v);
 REDASM_EXPORT void rd_log(const char* s);
 REDASM_EXPORT void rd_status(const char* s);
+REDASM_EXPORT void rd_error(const char* s);
 REDASM_EXPORT bool rd_select(const RDTestResult* tr);
 REDASM_EXPORT void rd_discard(void);
 REDASM_EXPORT usize rd_getsegments(const RDSegment** segments);
