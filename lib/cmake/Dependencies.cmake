@@ -15,7 +15,6 @@ function(setup_dependencies)
         CPMAddPackage("gh:catchorg/Catch2@3.5.0")
     endif()
 
-    CPMAddPackage("gh:TartanLlama/expected@1.1.0")
     CPMAddPackage("gh:TartanLlama/optional@1.1.0")
     CPMAddPackage("gh:fmtlib/fmt#10.2.1")
     CPMAddPackage("gh:richgel999/miniz#3.0.2")

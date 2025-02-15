@@ -94,7 +94,6 @@ target_include_directories(${PROJECT_NAME_LIB} PUBLIC "${PROJECT_SOURCE_DIR}/inc
 
 target_link_libraries(${PROJECT_NAME_LIB}
     PRIVATE
-        expected
         optional
         fmt
         miniz
