@@ -6,29 +6,6 @@
 namespace redasm::typing {
 
 namespace {
-// clang-format off
-const std::unordered_map<TypeId, typing::TypeDef> BASE = {
-    { ids::BOOL,  {.name = names::BOOL,  .size = sizeof(bool),     .flags = TD_NONE }},
-    { ids::CHAR,  {.name = names::CHAR,  .size = sizeof(char),     .flags = TD_NONE }},
-    { ids::WCHAR, {.name = names::WCHAR, .size = sizeof(char16_t), .flags = TD_NONE }},
-    { ids::U8,    {.name = names::U8,    .size = sizeof(u8),       .flags = TD_INT }},       
-    { ids::U16,   {.name = names::U16,   .size = sizeof(u16),      .flags = TD_INT }},
-    { ids::U32,   {.name = names::U32,   .size = sizeof(u32),      .flags = TD_INT }},
-    { ids::U64,   {.name = names::U64,   .size = sizeof(u64),      .flags = TD_INT }},
-    { ids::I8,    {.name = names::I8,    .size = sizeof(i8),       .flags = TD_INT | TD_SIGNED }},       
-    { ids::I16,   {.name = names::I16,   .size = sizeof(i16),      .flags = TD_INT | TD_SIGNED }},
-    { ids::I32,   {.name = names::I32,   .size = sizeof(i32),      .flags = TD_INT | TD_SIGNED }},
-    { ids::I64,   {.name = names::I64,   .size = sizeof(i64),      .flags = TD_INT | TD_SIGNED }},
-    { ids::U16BE, {.name = names::U16,   .size = sizeof(u16),      .flags = TD_INT | TD_BIG }},
-    { ids::U32BE, {.name = names::U32,   .size = sizeof(u32),      .flags = TD_INT | TD_BIG }},
-    { ids::U64BE, {.name = names::U64,   .size = sizeof(u64),      .flags = TD_INT | TD_BIG }},
-    { ids::I16BE, {.name = names::I16,   .size = sizeof(i16),      .flags = TD_INT | TD_SIGNED | TD_BIG }},
-    { ids::I32BE, {.name = names::I32,   .size = sizeof(i32),      .flags = TD_INT | TD_SIGNED | TD_BIG }},
-    { ids::I64BE, {.name = names::I64,   .size = sizeof(i64),      .flags = TD_INT | TD_SIGNED | TD_BIG }},
-    { ids::STR,   {.name = names::STR,   .size = sizeof(char),     .flags = TD_VAR }},
-    { ids::WSTR,  {.name = names::WSTR,  .size = sizeof(char16_t), .flags = TD_VAR }},
-};
-// clang-format on
 
 void parse_string(FullTypeName tn, std::string_view& name, usize& n) {
     if(tn.empty()) except("typing::parse('{}'): type is empty", tn);
@@ -77,7 +54,31 @@ void parse_string(FullTypeName tn, std::string_view& name, usize& n) {
 
 } // namespace
 
-BaseTypes::BaseTypes() { this->m_registered = typing::BASE; }
+BaseTypes::BaseTypes() {
+    // clang-format off
+    this->m_registered = {
+        { ids::BOOL,  {.name = names::BOOL,  .size = sizeof(bool),     .flags = TD_NONE }},
+        { ids::CHAR,  {.name = names::CHAR,  .size = sizeof(char),     .flags = TD_NONE }},
+        { ids::WCHAR, {.name = names::WCHAR, .size = sizeof(char16_t), .flags = TD_NONE }},
+        { ids::U8,    {.name = names::U8,    .size = sizeof(u8),       .flags = TD_INT }},       
+        { ids::U16,   {.name = names::U16,   .size = sizeof(u16),      .flags = TD_INT }},
+        { ids::U32,   {.name = names::U32,   .size = sizeof(u32),      .flags = TD_INT }},
+        { ids::U64,   {.name = names::U64,   .size = sizeof(u64),      .flags = TD_INT }},
+        { ids::I8,    {.name = names::I8,    .size = sizeof(i8),       .flags = TD_INT | TD_SIGNED }},       
+        { ids::I16,   {.name = names::I16,   .size = sizeof(i16),      .flags = TD_INT | TD_SIGNED }},
+        { ids::I32,   {.name = names::I32,   .size = sizeof(i32),      .flags = TD_INT | TD_SIGNED }},
+        { ids::I64,   {.name = names::I64,   .size = sizeof(i64),      .flags = TD_INT | TD_SIGNED }},
+        { ids::U16BE, {.name = names::U16,   .size = sizeof(u16),      .flags = TD_INT | TD_BIG }},
+        { ids::U32BE, {.name = names::U32,   .size = sizeof(u32),      .flags = TD_INT | TD_BIG }},
+        { ids::U64BE, {.name = names::U64,   .size = sizeof(u64),      .flags = TD_INT | TD_BIG }},
+        { ids::I16BE, {.name = names::I16,   .size = sizeof(i16),      .flags = TD_INT | TD_SIGNED | TD_BIG }},
+        { ids::I32BE, {.name = names::I32,   .size = sizeof(i32),      .flags = TD_INT | TD_SIGNED | TD_BIG }},
+        { ids::I64BE, {.name = names::I64,   .size = sizeof(i64),      .flags = TD_INT | TD_SIGNED | TD_BIG }},
+        { ids::STR,   {.name = names::STR,   .size = sizeof(char),     .flags = TD_VAR }},
+        { ids::WSTR,  {.name = names::WSTR,  .size = sizeof(char16_t), .flags = TD_VAR }},
+    };
+    // clang-format on
+}
 
 tl::optional<RDType> BaseTypes::int_from_bytes(usize n, bool sign) const {
     for(const auto& [id, td] : this->m_registered) {
@@ -92,9 +93,7 @@ tl::optional<RDType> BaseTypes::int_from_bytes(usize n, bool sign) const {
 
 usize BaseTypes::size_of(FullTypeName tname, ParsedType* res) const {
     ParsedType pt = this->parse(tname);
-
     if(res) *res = pt;
-
     return pt.tdef->size * std::max<usize>(pt.n, 1);
 }
 
