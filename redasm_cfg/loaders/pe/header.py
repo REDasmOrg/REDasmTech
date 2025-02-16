@@ -133,6 +133,7 @@ IMAGE_FILE_HEADER = (
 IMAGE_NT_HEADERS = (
     ("u32", "Signature"),
     ("IMAGE_FILE_HEADER", "FileHeader"),
+    # ("IMAGE_OPTIONAL_HEADER", "OptionalHeader"),
 )
 
 IMAGE_DATA_DIRECTORY = (

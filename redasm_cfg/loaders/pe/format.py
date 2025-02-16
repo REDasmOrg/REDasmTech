@@ -62,7 +62,7 @@ def register_dotnet_types():
 def register_types():
     redasm.create_struct("GUID", PEH.GUID)
     redasm.create_struct("UNWIND_INFO", PEH.UNWIND_INFO)
-    redasm.create_struct("IMAGE_DOS_HEADER", PEH.IMAGE_DOS_HEADER)
+    # redasm.create_struct("IMAGE_DOS_HEADER", PEH.IMAGE_DOS_HEADER)
     redasm.create_struct("IMAGE_FILE_HEADER", PEH.IMAGE_FILE_HEADER)
     redasm.create_struct("IMAGE_NT_HEADERS", PEH.IMAGE_NT_HEADERS)
     redasm.create_struct("IMAGE_DATA_DIRECTORY", PEH.IMAGE_DATA_DIRECTORY)
