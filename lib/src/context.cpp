@@ -61,36 +61,54 @@ constexpr std::array<char, 16> INTHEX_TABLE = {
 
 } // namespace
 
-Context::Context(const RDTestResult* tr)
-    : m_database{tr->loaderplugin->id, tr->file->source} {
-    state::context = this;
-
-    this->loaderplugin = tr->loaderplugin;
-    this->processorplugin = tr->processorplugin;
-    this->loader = tr->loader;
-    this->program.file = tr->file;
-
-    this->processor = pm::create_instance(this->processorplugin);
-    this->worker = new Worker{};
-}
+Context::Context(RDBuffer* file) { this->program.file = file; }
 
 Context::~Context() {
+    delete m_database;
     delete this->worker;
 
-    if(state::context == this) {
-        rdbuffer_destroy(this->program.file);
-        state::context = nullptr;
-    }
+    if(state::context == this) rdbuffer_destroy(this->program.file);
 
     pm::destroy_instance(this->processorplugin, this->processor);
     pm::destroy_instance(this->loaderplugin, this->loader);
 }
 
-bool Context::try_load() {
+bool Context::parse(const RDLoaderPlugin* plugin, const RDLoaderRequest* req) {
+    assume(plugin->parse);
+    this->loaderplugin = plugin;
+    this->loader = pm::create_instance(plugin);
+
+    if(this->loaderplugin->parse(this->loader, req)) {
+        const RDProcessorPlugin* pp = nullptr;
+
+        if(plugin->get_processor) {
+            const char* p = plugin->get_processor(this->loader);
+            if(p) pp = pm::find_processor(p);
+        }
+
+        if(!pp) pp = pm::find_processor("null");
+        assume(pp);
+        this->processorplugin = pp;
+        return true;
+    }
+
+    return false;
+}
+
+bool Context::load(const RDProcessorPlugin* plugin) {
+    if(!plugin) plugin = pm::find_processor("null");
+    this->processorplugin = plugin;
+    assume(this->loaderplugin);
+    assume(this->processorplugin);
+
+    m_database = new Database{plugin->id, this->program.file->source};
+    this->processor = pm::create_instance(plugin);
+    this->worker = new Worker{};
+
     if(this->loaderplugin->load &&
        this->loaderplugin->load(this->loader, this->program.file)) {
-        vect_foreach(const RDAnalyzerPlugin*, plugin, pm::analyzers) {
-            const RDAnalyzerPlugin* ap = *plugin;
+        vect_foreach(const RDAnalyzerPlugin*, p, pm::analyzers) {
+            const RDAnalyzerPlugin* ap = *p;
 
             // Assume true if 'isenabled' is not implemented
             if(!ap->is_enabled || ap->is_enabled(ap)) {
@@ -112,11 +130,11 @@ void Context::set_userdata(const std::string& k, uptr v) {
         return;
     }
 
-    m_database.set_userdata(k, v);
+    m_database->set_userdata(k, v);
 }
 
 tl::optional<uptr> Context::get_userdata(const std::string& k) const {
-    return m_database.get_userdata(k);
+    return m_database->get_userdata(k);
 }
 
 bool Context::set_function(RDAddress address, usize flags) {
@@ -168,14 +186,14 @@ void Context::add_ref(RDAddress fromaddr, RDAddress toaddr, usize type) {
         case DR_READ:
         case DR_WRITE:
         case DR_ADDRESS: {
-            this->m_database.add_ref(fromaddr, toaddr, type);
+            this->m_database->add_ref(fromaddr, toaddr, type);
             memory::set_flag(fromseg, fromaddr, BF_REFSFROM);
             memory::set_flag(toseg, toaddr, BF_REFSTO);
             break;
         }
 
         case CR_JUMP: {
-            this->m_database.add_ref(fromaddr, toaddr, type);
+            this->m_database->add_ref(fromaddr, toaddr, type);
             memory::set_flag(fromseg, fromaddr, BF_REFSFROM);
             memory::set_flag(toseg, toaddr, BF_JUMPDST | BF_REFSTO);
 
@@ -190,7 +208,7 @@ void Context::add_ref(RDAddress fromaddr, RDAddress toaddr, usize type) {
         }
 
         case CR_CALL: {
-            this->m_database.add_ref(fromaddr, toaddr, type);
+            this->m_database->add_ref(fromaddr, toaddr, type);
             memory::set_flag(fromseg, fromaddr, BF_REFSFROM);
             memory::set_flag(toseg, toaddr, BF_FUNCTION | BF_REFSTO);
 
@@ -212,7 +230,7 @@ bool Context::set_comment(RDAddress address, std::string_view comment) {
     RDSegment* seg = this->program.find_segment(address);
     if(!seg) return false;
 
-    this->m_database.set_comment(address, comment);
+    this->m_database->set_comment(address, comment);
     memory::set_flag(seg, address, BF_CODE, !comment.empty());
     return true;
 }
@@ -260,7 +278,7 @@ bool Context::set_type(RDAddress address, RDType t, usize flags) {
         default: len = std::max<usize>(t.n, 1) * td->size; break;
     }
 
-    m_database.set_type(address, t);
+    m_database->set_type(address, t);
     memory::unset_n(seg, address, len);
     memory::set_n(seg, address, len, BF_DATA);
     memory::set_flag(seg, address, BF_TYPE);
@@ -279,7 +297,7 @@ const Function* Context::find_function(RDAddress address) const {
 }
 
 tl::optional<RDAddress> Context::get_address(std::string_view name) const {
-    return m_database.get_address(name);
+    return m_database->get_address(name);
 }
 
 tl::optional<RDType> Context::get_type(RDAddress address) const {
@@ -291,7 +309,7 @@ tl::optional<RDType> Context::get_type(RDAddress address) const {
     }
 
     if(memory::has_flag(seg, address, BF_TYPE))
-        return m_database.get_type(address);
+        return m_database->get_type(address);
 
     return tl::nullopt;
 }
@@ -307,7 +325,7 @@ std::string Context::get_name(RDAddress address) const {
     std::string name;
 
     if(memory::has_flag(seg, address, BF_NAME))
-        name = m_database.get_name(address);
+        name = m_database->get_name(address);
 
     if(name.empty()) {
         std::string prefix = "loc";
@@ -354,14 +372,14 @@ bool Context::set_name(RDAddress address, const std::string& name,
             return false;
         }
 
-        auto nameidx = m_database.get_address(dbname, true);
+        auto nameidx = m_database->get_address(dbname, true);
 
         if(nameidx && (flags & SN_FORCE)) {
             usize n = 0;
 
             while(nameidx) {
                 dbname = fmt::format("{}_{}", name, ++n);
-                nameidx = m_database.get_address(dbname, true);
+                nameidx = m_database->get_address(dbname, true);
             }
         }
         else if(nameidx) {
@@ -375,40 +393,40 @@ bool Context::set_name(RDAddress address, const std::string& name,
 
     memory::set_flag(seg, address, BF_NAME, !dbname.empty());
     memory::set_flag(seg, address, BF_IMPORT, flags & SN_IMPORT);
-    m_database.set_name(address, dbname);
+    m_database->set_name(address, dbname);
     return true;
 }
 
 std::string Context::get_comment(RDAddress address) const {
     const RDSegment* seg = this->program.find_segment(address);
     if(!seg || !memory::has_flag(seg, address, BF_COMMENT)) return {};
-    return m_database.get_comment(address);
+    return m_database->get_comment(address);
 }
 
 Database::RefList Context::get_refs_from_type(RDAddress fromaddr,
                                               usize type) const {
     const RDSegment* seg = this->program.find_segment(fromaddr);
     if(!seg || !memory::has_flag(seg, fromaddr, BF_REFSFROM)) return {};
-    return m_database.get_refs_from_type(fromaddr, type);
+    return m_database->get_refs_from_type(fromaddr, type);
 }
 
 Database::RefList Context::get_refs_from(RDAddress fromaddr) const {
     const RDSegment* seg = this->program.find_segment(fromaddr);
     if(!seg || !memory::has_flag(seg, fromaddr, BF_REFSFROM)) return {};
-    return m_database.get_refs_from(fromaddr);
+    return m_database->get_refs_from(fromaddr);
 }
 
 Database::RefList Context::get_refs_to_type(RDAddress toaddr,
                                             usize type) const {
     const RDSegment* seg = this->program.find_segment(toaddr);
     if(!seg || !memory::has_flag(seg, toaddr, BF_REFSTO)) return {};
-    return m_database.get_refs_to_type(toaddr, type);
+    return m_database->get_refs_to_type(toaddr, type);
 }
 
 Database::RefList Context::get_refs_to(RDAddress toaddr) const {
     const RDSegment* seg = this->program.find_segment(toaddr);
     if(!seg || !memory::has_flag(seg, toaddr, BF_REFSTO)) return {};
-    return m_database.get_refs_to(toaddr);
+    return m_database->get_refs_to(toaddr);
 }
 
 std::string Context::to_hex(usize v, int n) const {

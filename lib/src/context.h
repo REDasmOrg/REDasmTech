@@ -27,9 +27,10 @@ class Context {
 public:
     static constexpr usize DEFAULT_MIN_STRING = 4;
 
-    explicit Context(const RDTestResult* tr);
+    explicit Context(RDBuffer* file);
     ~Context();
-    bool try_load();
+    bool parse(const RDLoaderPlugin* plugin, const RDLoaderRequest* req);
+    bool load(const RDProcessorPlugin* plugin);
     void set_userdata(const std::string& k, uptr v);
     tl::optional<uptr> get_userdata(const std::string& k) const;
     bool set_function(RDAddress address, usize flags);
@@ -78,7 +79,7 @@ public:
     int minstring{DEFAULT_MIN_STRING};
 
 private:
-    Database m_database;
+    Database* m_database{nullptr};
 };
 
 } // namespace redasm

@@ -27,6 +27,8 @@
 #include <redasm/version.h>
 #include <redasm/worker.h>
 
+typedef struct RDContext RDContext;
+
 typedef enum RDLogLevel {
     LOGLEVEL_TRACE,
     LOGLEVEL_DEBUG,
@@ -55,8 +57,7 @@ typedef struct RDProblem {
 typedef struct RDTestResult {
     const RDLoaderPlugin* loaderplugin;
     const RDProcessorPlugin* processorplugin;
-    RDLoader* loader;
-    RDBuffer* file;
+    RDContext* context;
 } RDTestResult;
 
 typedef void (*RDLogCallback)(const char*, void*);

@@ -86,7 +86,7 @@ bool filter_classes(const DexLoader* self) {
     return true;
 }
 
-bool accept(RDLoader* self, const RDLoaderRequest* req) {
+bool parse(RDLoader* self, const RDLoaderRequest* req) {
     auto* dex = reinterpret_cast<DexLoader*>(self);
     usize len = rdbuffer_getlength(req->file);
     const u8* data = rdbuffer_getdata(req->file);
@@ -122,7 +122,7 @@ RDLoaderPlugin loader = {
             delete self;
         },
     .flags = LF_NOMERGECODE | LF_NOAUTORENAME,
-    .accept = dex::accept,
+    .parse = dex::parse,
     .load = dex::load,
     .get_processor = [](RDLoader*) { return "dalvik"; },
 };

@@ -10,7 +10,7 @@ namespace {
 constexpr u16 COM_ENTRY = 0x0100;
 constexpr u16 MSEG_SIZE = 0xffff;
 
-bool accept(RDLoader*, const RDLoaderRequest* req) {
+bool parse(RDLoader*, const RDLoaderRequest* req) {
     return req->ext == "COM"sv && rdbuffer_getlength(req->file) <= 0xff00;
 }
 
@@ -28,7 +28,7 @@ RDLoaderPlugin loader = {
     .level = REDASM_API_LEVEL,
     .id = "com",
     .name = "COM Executable",
-    .accept = com::accept,
+    .parse = com::parse,
     .load = com::load,
     .get_processor = [](RDLoader*) { return "x86_16_real"; },
 };

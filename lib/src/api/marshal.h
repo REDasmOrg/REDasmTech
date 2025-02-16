@@ -15,10 +15,15 @@ class ILExprList;
 class Renderer;
 class Emulator;
 class Surface;
+class Context;
 class StyledGraph;
 struct Function;
 
 namespace api {
+
+inline Context* from_c(RDContext* arg) {
+    return reinterpret_cast<Context*>(arg);
+}
 
 inline const StyledGraph* from_c(const RDGraph* arg) {
     return reinterpret_cast<const StyledGraph*>(arg);
@@ -66,6 +71,10 @@ inline const Surface* from_c(const RDSurface* arg) {
 
 inline Surface* from_c(RDSurface* arg) {
     return reinterpret_cast<Surface*>(arg);
+}
+
+inline RDContext* to_c(Context* arg) {
+    return reinterpret_cast<RDContext*>(arg);
 }
 
 inline const RDGraph* to_c(const StyledGraph* arg) {

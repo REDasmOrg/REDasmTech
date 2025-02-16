@@ -150,27 +150,27 @@ Vect(RDTestResult) rd_test(RDBuffer* file) {
 
     vect_foreach(const RDLoaderPlugin*, p, redasm::pm::loaders) {
         const RDLoaderPlugin* lp = *p;
-        if(!lp->accept) continue;
+        if(!lp->parse) continue;
 
-        RDLoader* loader = redasm::pm::create_instance(lp);
+        auto* ctx = new redasm::Context{file};
+        redasm::state::context = ctx;
 
-        if(lp->accept(loader, &req)) {
-            const RDProcessorPlugin* pp = nullptr;
-
-            if(lp->get_processor) {
-                const char* p = lp->get_processor(loader);
-                if(p) pp = redasm::pm::find_processor(p);
-            }
-
-            if(!pp) pp = redasm::pm::find_processor("null");
-            assume(pp);
-
+        if(ctx->parse(lp, &req)) {
             vect_add(RDTestResult, redasm::state::tests,
-                     {lp, pp, loader, file});
+                     {
+                         lp,
+                         ctx->processorplugin,
+                         redasm::api::to_c(ctx),
+                     });
         }
-        else
-            redasm::pm::destroy_instance(lp, loader);
+        else {
+            redasm::state::context = nullptr;
+            delete ctx;
+        }
     }
+
+    // Remove active context
+    redasm::state::context = nullptr;
 
     // Sort results by priority
     std::ranges::stable_partition(vect_begin(redasm::state::tests),
@@ -182,14 +182,6 @@ Vect(RDTestResult) rd_test(RDBuffer* file) {
     return redasm::state::tests;
 }
 
-void rd_disassemble() {
-    spdlog::trace("rd_disassemble()");
-    if(!redasm::state::context) return;
-
-    while(rd_tick(nullptr))
-        ;
-}
-
 bool rd_select(const RDTestResult* seltr) {
     spdlog::trace("rd_select({})", fmt::ptr(seltr));
     rdcontext_destroy(); // Destroy any previous contexts
@@ -198,16 +190,16 @@ bool rd_select(const RDTestResult* seltr) {
     if(seltr) {
         assume(seltr->loaderplugin);
         assume(seltr->processorplugin);
-        assume(seltr->file);
-        auto* ctx = new redasm::Context{seltr};
-        ok = ctx->try_load();
-        if(!ok) delete ctx;
+        assume(seltr->context);
+        redasm::state::context = redasm::api::from_c(seltr->context);
+        ok = redasm::state::context->load(seltr->processorplugin);
+        if(!ok) rdcontext_destroy();
     }
 
     // Discard other instances
     vect_foreach(RDTestResult, tr, redasm::state::tests) {
-        if(!seltr || seltr->loader != tr->loader)
-            redasm::pm::destroy_instance(tr->loaderplugin, tr->loader);
+        if(!seltr || tr->context != seltr->context)
+            delete redasm::api::from_c(tr->context);
     }
 
     vect_clear(redasm::state::tests);
@@ -223,10 +215,21 @@ bool rdcontext_destroy() {
     return true;
 }
 
+void rd_disassemble() {
+    spdlog::trace("rd_disassemble()");
+    if(!redasm::state::context) return;
+
+    while(rd_tick(nullptr))
+        ;
+}
+
 void rd_discard() {
     spdlog::trace("rd_discard()");
-    vect_foreach(RDTestResult, tr, redasm::state::tests)
-        redasm::pm::destroy_instance(tr->loaderplugin, tr->loader);
+
+    vect_foreach(RDTestResult, tr, redasm::state::tests) {
+        delete redasm::api::from_c(tr->context);
+    }
+
     vect_clear(redasm::state::tests);
 }
 
@@ -424,8 +427,9 @@ bool rd_setname(RDAddress address, const char* name) {
 
 bool rd_setname_ex(RDAddress address, const char* name, usize flags) {
     spdlog::trace("rd_setname_ex({:x}, '{}', {:x})", address, name, flags);
-    return name && redasm::state::context &&
-           redasm::state::context->set_name(address, name, flags);
+    return redasm::state::context &&
+           redasm::state::context->set_name(address,
+                                            name ? name : std::string{}, flags);
 }
 
 bool rd_tick(const RDWorkerStatus** s) {

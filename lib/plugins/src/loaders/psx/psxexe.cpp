@@ -24,7 +24,7 @@ struct PsxExeHeader {
 };
 #pragma pack(pop)
 
-bool accept(RDLoader*, const RDLoaderRequest* req) {
+bool parse(RDLoader*, const RDLoaderRequest* req) {
     PsxExeHeader psxheader;
     usize n = rdbuffer_read(req->file, 0, &psxheader, sizeof(PsxExeHeader));
     return n == sizeof(PsxExeHeader) &&
@@ -48,7 +48,7 @@ RDLoaderPlugin loader = {
     .level = REDASM_API_LEVEL,
     .id = "psxexe",
     .name = "PS-X Executable",
-    .accept = psxexe::accept,
+    .parse = psxexe::parse,
     .load = psxexe::load,
     .get_processor = [](RDLoader*) { return "mips32le"; },
 };

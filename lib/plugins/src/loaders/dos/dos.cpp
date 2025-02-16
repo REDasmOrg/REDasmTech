@@ -4,7 +4,7 @@ namespace dos {
 
 namespace {
 
-bool accept(RDLoader*, const RDLoaderRequest* req) { return false; }
+bool parse(RDLoader*, const RDLoaderRequest* req) { return false; }
 
 bool load(RDLoader*, RDBuffer* file) { return false; }
 
@@ -14,7 +14,7 @@ RDLoaderPlugin loader = {
     .level = REDASM_API_LEVEL,
     .id = "dos",
     .name = "DOS Executable",
-    .accept = dos::accept,
+    .parse = dos::parse,
     .load = dos::load,
 };
 

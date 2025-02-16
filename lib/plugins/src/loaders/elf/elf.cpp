@@ -23,7 +23,7 @@
 namespace {
 
 template<int Bits>
-bool accept(RDLoader* self, const RDLoaderRequest* req) {
+bool parse(RDLoader* self, const RDLoaderRequest* req) {
     using ELF = ElfFormat<Bits>;
     auto* elf = reinterpret_cast<ELF*>(self);
 
@@ -173,7 +173,7 @@ RDLoaderPlugin define_loader(const char* id, const char* name) {
             [](RDLoader* self) {
                 delete reinterpret_cast<ElfFormat<Bits>*>(self);
             },
-        .accept = accept<Bits>,
+        .parse = parse<Bits>,
         .load = load<Bits>,
         .get_processor = get_processor<Bits>,
     };
