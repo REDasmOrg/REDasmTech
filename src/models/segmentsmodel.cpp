@@ -36,10 +36,6 @@ QVariant SegmentsModel::data(const QModelIndex& index, int role) const {
             default: break;
         }
     }
-    else if(role == Qt::ForegroundRole) {
-        if(index.column() == 0) return themeprovider::color(THEME_LABEL);
-        if(index.column() < 3) return themeprovider::color(THEME_ADDRESS);
-    }
     else if(role == Qt::TextAlignmentRole) {
         if(index.column() == 0)
             return QVariant{Qt::AlignRight | Qt::AlignVCenter};
