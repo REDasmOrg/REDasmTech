@@ -37,8 +37,14 @@ tl::optional<T> get_number(const RDBuffer* self, usize idx, bool big) {
 } // namespace impl
 
 usize read(const RDBuffer* self, usize idx, void* dst, usize n);
+RDValue* read_struct_n(const RDBuffer* self, usize idx, usize n,
+                       const RDStructField* fields);
+RDValue* read_struct_n(const RDBuffer* self, usize idx, usize n,
+                       const RDStructField* fields, usize& curridx);
 RDValue* read_struct(const RDBuffer* self, usize idx,
                      const RDStructField* fields);
+RDValue* read_struct(const RDBuffer* self, usize idx,
+                     const RDStructField* fields, usize& curridx);
 tl::optional<std::string> get_str(const RDBuffer* self, usize idx);
 tl::optional<std::string> get_str(const RDBuffer* self, usize idx, usize n);
 tl::optional<std::string> get_wstr(const RDBuffer* self, usize idx);

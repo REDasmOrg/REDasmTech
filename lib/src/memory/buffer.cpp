@@ -255,26 +255,8 @@ fail:
     return nullptr;
 }
 
-} // namespace
-
-usize read(const RDBuffer* self, usize idx, void* dst, usize n) {
-    if(!dst || (idx + n > self->length)) return 0;
-
-    usize i = 0;
-    auto* p = reinterpret_cast<u8*>(dst);
-
-    for(; i < n; i++, p++) {
-        if(auto b = buffer::get_byte(self, idx + i); b)
-            *p = *b;
-        else
-            break;
-    }
-
-    return i;
-}
-
-RDValue* read_struct(const RDBuffer* self, usize idx,
-                     const RDStructField* fields) {
+RDValue* read_struct_impl(const RDBuffer* self, usize& idx,
+                          const RDStructField* fields) {
     if(!fields) return nullptr;
     RDValue* res = rdvalue_create();
     res->dict = map_create(RDValueField);
@@ -310,6 +292,63 @@ RDValue* read_struct(const RDBuffer* self, usize idx,
 fail:
     rdvalue_destroy(res);
     return nullptr;
+}
+
+} // namespace
+
+usize read(const RDBuffer* self, usize idx, void* dst, usize n) {
+    if(!dst || (idx + n > self->length)) return 0;
+
+    usize i = 0;
+    auto* p = reinterpret_cast<u8*>(dst);
+
+    for(; i < n; i++, p++) {
+        if(auto b = buffer::get_byte(self, idx + i); b)
+            *p = *b;
+        else
+            break;
+    }
+
+    return i;
+}
+
+RDValue* read_struct_n(const RDBuffer* self, usize idx, usize n,
+                       const RDStructField* fields, usize& curridx) {
+    if(!n) return buffer::read_struct_impl(self, idx, fields);
+
+    RDValue* res = rdvalue_create();
+    res->list = vect_create_n(RDValue*, n);
+
+    for(usize i = 0; i < n; i++) {
+        RDValue* item = buffer::read_struct_impl(self, idx, fields);
+        if(!item) goto fail;
+    }
+
+    curridx = idx;
+    return res;
+
+fail:
+    rdvalue_destroy(res);
+    return nullptr;
+}
+
+RDValue* read_struct_n(const RDBuffer* self, usize idx, usize n,
+                       const RDStructField* fields) {
+    usize cidx;
+    return buffer::read_struct_n(self, idx, n, fields, cidx);
+}
+
+RDValue* read_struct(const RDBuffer* self, usize idx,
+                     const RDStructField* fields, usize& curridx) {
+    RDValue* v = buffer::read_struct_impl(self, idx, fields);
+    if(v) curridx = idx;
+    return v;
+}
+
+RDValue* read_struct(const RDBuffer* self, usize idx,
+                     const RDStructField* fields) {
+    usize cidx;
+    return buffer::read_struct(self, idx, fields, cidx);
 }
 
 tl::optional<std::string> get_str(const RDBuffer* self, usize idx) {

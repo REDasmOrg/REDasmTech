@@ -35,6 +35,20 @@ void rdstream_rewind(RDStream* self) {
     self->position = 0;
 }
 
+RDValue* rdstream_peek_struct_n(RDStream* self, usize n,
+                                const RDStructField* fields) {
+    spdlog::trace("rdstream_peek_struct_n({}, {}, {})", fmt::ptr(self), n,
+                  fmt::ptr(fields));
+    return redasm::buffer::read_struct_n(self->buffer, self->position, n,
+                                         fields);
+}
+
+RDValue* rdstream_peek_struct(RDStream* self, const RDStructField* fields) {
+    spdlog::trace("rdstream_peek_struct({}, {})", fmt::ptr(self),
+                  fmt::ptr(fields));
+    return redasm::buffer::read_struct(self->buffer, self->position, fields);
+}
+
 RDValue* rdstream_peek_type(const RDStream* self, const char* tname) {
     spdlog::trace("rdstream_peek_type({}, '{}')", fmt::ptr(self), tname);
     if(!tname) return nullptr;
@@ -187,6 +201,26 @@ bool rdstream_peek_i64be(const RDStream* self, i64* v) {
     auto res = redasm::buffer::get_i64(self->buffer, self->position, true);
     if(res && v) *v = *res;
     return res.has_value();
+}
+
+RDValue* rdstream_read_struct_n(RDStream* self, usize n,
+                                const RDStructField* fields) {
+    spdlog::trace("rdstream_read_struct_n({}, {}, {})", fmt::ptr(self), n,
+                  fmt::ptr(fields));
+    usize pos = self->position;
+    RDValue* res =
+        redasm::buffer::read_struct_n(self->buffer, pos, n, fields, pos);
+    if(res) self->position = pos;
+    return res;
+}
+
+RDValue* rdstream_read_struct(RDStream* self, const RDStructField* fields) {
+    spdlog::trace("rdstream_read_struct({}, {})", fmt::ptr(self),
+                  fmt::ptr(fields));
+    usize pos = self->position;
+    RDValue* res = redasm::buffer::read_struct(self->buffer, pos, fields, pos);
+    if(res) self->position = pos;
+    return res;
 }
 
 RDValue* rdstream_read_type(RDStream* self, const char* tname) {

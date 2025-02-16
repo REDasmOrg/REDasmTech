@@ -15,6 +15,9 @@ REDASM_EXPORT const u8* rdbuffer_getdata(const RDBuffer* self);
 REDASM_EXPORT const RDMByte* rdbuffer_getmdata(const RDBuffer* self);
 REDASM_EXPORT usize rdbuffer_read(const RDBuffer* self, usize idx, void* dst,
                                   usize n);
+REDASM_EXPORT RDValue* rdbuffer_readstruct_n(const RDBuffer* self, usize idx,
+                                             usize n,
+                                             const RDStructField* fields);
 REDASM_EXPORT RDValue* rdbuffer_readstruct(const RDBuffer* self, usize idx,
                                            const RDStructField* fields);
 REDASM_EXPORT bool rdbuffer_getmbyte(const RDBuffer* self, usize idx,
