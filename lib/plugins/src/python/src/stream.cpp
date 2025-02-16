@@ -15,22 +15,56 @@ struct PyStream {
 // clang-format on
 
 PyObject* stream_seek(PyStream* self, PyObject* args) {
-    usize o = PyLong_AsUnsignedLongLong(args);
+    size_t o = PyLong_AsSize_t(args);
     return PyLong_FromUnsignedLongLong(rdstream_seek(self->stream, o));
 }
 
 PyObject* stream_move(PyStream* self, PyObject* args) {
-    usize o = PyLong_AsUnsignedLongLong(args);
+    Py_ssize_t o = PyLong_AsSsize_t(args);
     return PyLong_FromUnsignedLongLong(rdstream_move(self->stream, o));
 }
 
 PyObject* stream_getpos(PyStream* self, PyObject* /*args*/) {
-    return PyLong_FromUnsignedLongLong(rdstream_getpos(self->stream));
+    return PyLong_FromSize_t(rdstream_getpos(self->stream));
 }
 
 PyObject* stream_rewind(PyStream* self, PyObject* /*args*/) {
     rdstream_rewind(self->stream);
     return Py_None;
+}
+
+PyObject* stream_peek_struct_n(PyStream* self, PyObject* args) {
+    size_t idx = 0, n = 0;
+    PyObject* fields = nullptr;
+    if(!PyArg_ParseTuple(args, "nnO", &idx, &n, &fields)) return nullptr;
+
+    std::vector<RDStructField> s;
+    if(!python::tuple_to_struct(fields, s)) return nullptr;
+
+    RDValue* v = rdstream_peek_struct_n(self->stream, n, s.data());
+    PyObject* obj = Py_None;
+
+    if(v) {
+        obj = python::to_object(v);
+        rdvalue_destroy(v);
+    }
+
+    return obj;
+}
+
+PyObject* stream_peek_struct(PyStream* self, PyObject* args) {
+    std::vector<RDStructField> s;
+    if(!python::tuple_to_struct(args, s)) return nullptr;
+
+    RDValue* v = rdstream_peek_struct(self->stream, s.data());
+    PyObject* obj = Py_None;
+
+    if(v) {
+        obj = python::to_object(v);
+        rdvalue_destroy(v);
+    }
+
+    return obj;
 }
 
 PyObject* stream_peek_type(PyStream* self, PyObject* args) {
@@ -159,6 +193,40 @@ PyObject* stream_peek_i64be(PyStream* self, PyObject* /*args*/) {
     i64 v;
     if(rdstream_peek_i64be(self->stream, &v)) return PyLong_FromLongLong(v);
     return Py_None;
+}
+
+PyObject* stream_read_struct_n(PyStream* self, PyObject* args) {
+    size_t idx = 0, n = 0;
+    PyObject* fields = nullptr;
+    if(!PyArg_ParseTuple(args, "nnO", &idx, &n, &fields)) return nullptr;
+
+    std::vector<RDStructField> s;
+    if(!python::tuple_to_struct(fields, s)) return nullptr;
+
+    RDValue* v = rdstream_read_struct_n(self->stream, n, s.data());
+    PyObject* obj = Py_None;
+
+    if(v) {
+        obj = python::to_object(v);
+        rdvalue_destroy(v);
+    }
+
+    return obj;
+}
+
+PyObject* stream_read_struct(PyStream* self, PyObject* args) {
+    std::vector<RDStructField> s;
+    if(!python::tuple_to_struct(args, s)) return nullptr;
+
+    RDValue* v = rdstream_read_struct(self->stream, s.data());
+    PyObject* obj = Py_None;
+
+    if(v) {
+        obj = python::to_object(v);
+        rdvalue_destroy(v);
+    }
+
+    return obj;
 }
 
 PyObject* stream_read_type(PyStream* self, PyObject* args) {
@@ -295,6 +363,8 @@ PyMethodDef stream_methods[] = {
     {"move", reinterpret_cast<PyCFunction>(python::stream_move), METH_O, nullptr},
     {"get_pos", reinterpret_cast<PyCFunction>(python::stream_getpos), METH_NOARGS, nullptr},
     {"rewind", reinterpret_cast<PyCFunction>(python::stream_rewind), METH_NOARGS, nullptr},
+    {"peek_struct_n", reinterpret_cast<PyCFunction>(python::stream_peek_struct_n), METH_VARARGS, nullptr},
+    {"peek_struct", reinterpret_cast<PyCFunction>(python::stream_peek_struct), METH_O, nullptr},
     {"peek_type", reinterpret_cast<PyCFunction>(python::stream_peek_type), METH_O, nullptr},
     {"peek_strz", reinterpret_cast<PyCFunction>(python::stream_peek_strz), METH_NOARGS, nullptr},
     {"peek_str", reinterpret_cast<PyCFunction>(python::stream_peek_str), METH_O, nullptr},
@@ -314,6 +384,8 @@ PyMethodDef stream_methods[] = {
     {"peek_i16be", reinterpret_cast<PyCFunction>(python::stream_peek_i16be), METH_NOARGS, nullptr},
     {"peek_i32be", reinterpret_cast<PyCFunction>(python::stream_peek_i32be), METH_NOARGS, nullptr},
     {"peek_i64be", reinterpret_cast<PyCFunction>(python::stream_peek_i64be), METH_NOARGS, nullptr},
+    {"read_struct_n", reinterpret_cast<PyCFunction>(python::stream_read_struct_n), METH_VARARGS, nullptr},
+    {"read_struct", reinterpret_cast<PyCFunction>(python::stream_read_struct), METH_O, nullptr},
     {"read_type", reinterpret_cast<PyCFunction>(python::stream_read_type), METH_O, nullptr},
     {"read_strz", reinterpret_cast<PyCFunction>(python::stream_read_strz), METH_NOARGS, nullptr},
     {"read_str", reinterpret_cast<PyCFunction>(python::stream_read_str), METH_O, nullptr},
@@ -342,8 +414,9 @@ PyTypeObject stream_type = []() {
     PyTypeObject t{PyVarObject_HEAD_INIT(nullptr, 0)};
     t.tp_name = "redasm.Stream";
     t.tp_basicsize = sizeof(PyStream);
-    t.tp_flags = Py_TPFLAGS_DISALLOW_INSTANTIATION;
+    t.tp_flags = Py_TPFLAGS_DEFAULT;
     t.tp_methods = python::stream_methods;
+    t.tp_new = PyType_GenericNew;
 
     t.tp_dealloc = reinterpret_cast<destructor>(+[](PyStream* self) {
         rdstream_destroy(self->stream);

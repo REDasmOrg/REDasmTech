@@ -14,18 +14,37 @@ struct PyBuffer {
 
 /* *** *** *** BUFFER *** *** *** */
 PyObject* buffer_read(PyBuffer* self, PyObject* args) {
-    u64 idx = 0, maxn = 0;
-    if(!PyArg_ParseTuple(args, "KK", &idx, &maxn)) return nullptr;
+    size_t idx = 0, maxn = 0;
+    if(!PyArg_ParseTuple(args, "nn", &idx, &maxn)) return nullptr;
 
     std::vector<char> d(maxn);
     u64 n = rdbuffer_read(self->buffer, idx, d.data(), d.size());
     return PyBytes_FromStringAndSize(d.data(), n);
 }
 
-PyObject* buffer_readstruct(PyBuffer* self, PyObject* args) {
-    u64 idx = 0;
+PyObject* buffer_readstruct_n(PyBuffer* self, PyObject* args) {
+    size_t idx = 0, n = 0;
     PyObject* obj = nullptr;
-    if(!PyArg_ParseTuple(args, "KO", &idx, &obj)) return nullptr;
+    if(!PyArg_ParseTuple(args, "nnO", &idx, &n, &obj)) return nullptr;
+
+    std::vector<RDStructField> s;
+    if(!python::tuple_to_struct(obj, s)) return nullptr;
+
+    RDValue* v = rdbuffer_readstruct_n(self->buffer, idx, n, s.data());
+    PyObject* res = Py_None;
+
+    if(v) {
+        res = python::to_object(v);
+        rdvalue_destroy(v);
+    }
+
+    return res;
+}
+
+PyObject* buffer_readstruct(PyBuffer* self, PyObject* args) {
+    size_t idx = 0;
+    PyObject* obj = nullptr;
+    if(!PyArg_ParseTuple(args, "nO", &idx, &obj)) return nullptr;
 
     std::vector<RDStructField> s;
     if(!python::tuple_to_struct(obj, s)) return nullptr;
@@ -43,7 +62,7 @@ PyObject* buffer_readstruct(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_getbool(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     bool v;
     if(rdbuffer_getbool(self->buffer, idx, &v)) return PyBool_FromLong(v);
@@ -52,7 +71,7 @@ PyObject* buffer_getbool(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_getchar(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     char v;
     if(rdbuffer_getchar(self->buffer, idx, &v))
@@ -63,7 +82,7 @@ PyObject* buffer_getchar(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_getu8(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     u8 v;
     if(rdbuffer_getu8(self->buffer, idx, &v)) return PyLong_FromUnsignedLong(v);
@@ -72,7 +91,7 @@ PyObject* buffer_getu8(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_getu16(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     u16 v;
     if(rdbuffer_getu16(self->buffer, idx, &v))
@@ -83,7 +102,7 @@ PyObject* buffer_getu16(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_getu32(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     u32 v;
     if(rdbuffer_getu32(self->buffer, idx, &v))
@@ -94,7 +113,7 @@ PyObject* buffer_getu32(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_getu64(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     u64 v;
     if(rdbuffer_getu64(self->buffer, idx, &v))
@@ -105,7 +124,7 @@ PyObject* buffer_getu64(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_geti8(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     i8 v;
     if(rdbuffer_geti8(self->buffer, idx, &v)) return PyLong_FromLong(v);
@@ -114,7 +133,7 @@ PyObject* buffer_geti8(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_geti16(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     i16 v;
     if(rdbuffer_geti16(self->buffer, idx, &v)) return PyLong_FromLong(v);
@@ -123,7 +142,7 @@ PyObject* buffer_geti16(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_geti32(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     i32 v;
     if(rdbuffer_geti32(self->buffer, idx, &v)) return PyLong_FromLong(v);
@@ -132,7 +151,7 @@ PyObject* buffer_geti32(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_geti64(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     i64 v;
     if(rdbuffer_geti64(self->buffer, idx, &v)) return PyLong_FromLongLong(v);
@@ -141,7 +160,7 @@ PyObject* buffer_geti64(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_getu16be(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     u16 v;
     if(rdbuffer_getu16be(self->buffer, idx, &v))
@@ -152,7 +171,7 @@ PyObject* buffer_getu16be(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_getu32be(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     u32 v;
     if(rdbuffer_getu32be(self->buffer, idx, &v))
@@ -163,7 +182,7 @@ PyObject* buffer_getu32be(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_getu64be(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     u64 v;
     if(rdbuffer_getu64be(self->buffer, idx, &v))
@@ -174,7 +193,7 @@ PyObject* buffer_getu64be(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_geti16be(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     i16 v;
     if(rdbuffer_geti16be(self->buffer, idx, &v)) return PyLong_FromLong(v);
@@ -183,7 +202,7 @@ PyObject* buffer_geti16be(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_geti32be(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     i32 v;
     if(rdbuffer_geti32be(self->buffer, idx, &v)) return PyLong_FromLong(v);
@@ -192,7 +211,7 @@ PyObject* buffer_geti32be(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_geti64be(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     i64 v;
     if(rdbuffer_geti64be(self->buffer, idx, &v)) return PyLong_FromLongLong(v);
@@ -201,7 +220,7 @@ PyObject* buffer_geti64be(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_getstrz(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     const char* v;
     if(rdbuffer_getstrz(self->buffer, idx, &v)) return PyUnicode_FromString(v);
@@ -209,8 +228,8 @@ PyObject* buffer_getstrz(PyBuffer* self, PyObject* args) {
 }
 
 PyObject* buffer_getstr(PyBuffer* self, PyObject* args) {
-    usize idx{}, n{};
-    if(!PyArg_ParseTuple(args, "KK", &idx, &n)) return nullptr;
+    size_t idx{}, n{};
+    if(!PyArg_ParseTuple(args, "nn", &idx, &n)) return nullptr;
 
     const char* v;
     if(rdbuffer_getstr(self->buffer, idx, n, &v))
@@ -221,7 +240,7 @@ PyObject* buffer_getstr(PyBuffer* self, PyObject* args) {
 
 PyObject* buffer_getwstrz(PyBuffer* self, PyObject* args) {
     if(!PyLong_Check(args)) python::type_error(args, "int");
-    usize idx = PyLong_AsUnsignedLongLong(args);
+    size_t idx = PyLong_AsSize_t(args);
 
     const char* v;
     if(rdbuffer_getstrz(self->buffer, idx, &v)) return PyUnicode_FromString(v);
@@ -229,8 +248,8 @@ PyObject* buffer_getwstrz(PyBuffer* self, PyObject* args) {
 }
 
 PyObject* buffer_getwstr(PyBuffer* self, PyObject* args) {
-    usize idx{}, n{};
-    if(!PyArg_ParseTuple(args, "KK", &idx, &n)) return nullptr;
+    size_t idx{}, n{};
+    if(!PyArg_ParseTuple(args, "nn", &idx, &n)) return nullptr;
 
     const char* v;
     if(rdbuffer_getstr(self->buffer, idx, n, &v))
@@ -240,9 +259,9 @@ PyObject* buffer_getwstr(PyBuffer* self, PyObject* args) {
 }
 
 PyObject* buffer_gettype(PyBuffer* self, PyObject* args) {
-    usize idx{};
+    size_t idx{};
     const char* tname = nullptr;
-    if(!PyArg_ParseTuple(args, "Ks*", &idx, &tname)) return nullptr;
+    if(!PyArg_ParseTuple(args, "ns", &idx, &tname)) return nullptr;
 
     RDValue* v = rdbuffer_gettypename(self->buffer, idx, tname);
     PyObject* res = Py_None;
@@ -258,6 +277,7 @@ PyObject* buffer_gettype(PyBuffer* self, PyObject* args) {
 // clang-format off
 PyMethodDef buffer_methods[] = {
     {"read", reinterpret_cast<PyCFunction>(python::buffer_read), METH_VARARGS, nullptr},
+    {"read_struct_n", reinterpret_cast<PyCFunction>(python::buffer_readstruct_n), METH_VARARGS, nullptr},
     {"read_struct", reinterpret_cast<PyCFunction>(python::buffer_readstruct), METH_VARARGS, nullptr},
     {"get_bool", reinterpret_cast<PyCFunction>(python::buffer_getbool), METH_O, nullptr},
     {"get_char", reinterpret_cast<PyCFunction>(python::buffer_getchar), METH_O, nullptr},
@@ -375,7 +395,7 @@ PyTypeObject file_type = []() {
     t.tp_init = reinterpret_cast<initproc>(
         +[](PyBuffer* self, PyObject* args, PyObject* /*kwds*/) {
             const char* filepath = nullptr;
-            if(!PyArg_ParseTuple(args, "z", &filepath)) return -1;
+            if(!PyArg_ParseTuple(args, "s", &filepath)) return -1;
             self->buffer = rdbuffer_createfile(filepath);
             return 0;
         });
@@ -398,7 +418,7 @@ PyTypeObject memory_type = []() {
 
     t.tp_init = reinterpret_cast<initproc>(
         +[](PyBuffer* self, PyObject* args, PyObject* /*kwds*/) {
-            usize n = 0;
+            size_t n = 0;
             if(!PyArg_ParseTuple(args, "n", &n)) return -1;
             self->buffer = rdbuffer_creatememory(n);
             return 0;

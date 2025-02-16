@@ -156,8 +156,8 @@ PyObject* get_problems(PyObject* /*self*/, PyObject* /*args*/) {
 
 PyObject* set_userdata(PyObject* /*self*/, PyObject* args) {
     const char* k = nullptr;
-    uptr v = 0;
-    if(!PyArg_ParseTuple(args, "zK", &k, &v)) return nullptr;
+    unsigned long long v = 0;
+    if(!PyArg_ParseTuple(args, "sK", &k, &v)) return nullptr;
     rd_setuserdata(k, v);
     return Py_None;
 }
@@ -208,9 +208,9 @@ PyObject* get_refsfrom(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_refsfromtype(PyObject* /*self*/, PyObject* args) {
-    RDAddress fromaddr = 0;
-    usize type = 0;
-    if(!PyArg_ParseTuple(args, "KK", &fromaddr, &type)) return nullptr;
+    unsigned long long fromaddr{};
+    size_t type{};
+    if(!PyArg_ParseTuple(args, "Kn", &fromaddr, &type)) return nullptr;
 
     const RDRef* refs = nullptr;
     usize n = rd_getrefsfromtype(fromaddr, type, &refs);
@@ -252,9 +252,9 @@ PyObject* get_refsto(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_refstotype(PyObject* /*self*/, PyObject* args) {
-    RDAddress toaddr = 0;
-    usize type = 0;
-    if(!PyArg_ParseTuple(args, "KK", &toaddr, &type)) return nullptr;
+    unsigned long long toaddr{};
+    size_t type{};
+    if(!PyArg_ParseTuple(args, "Kn", &toaddr, &type)) return nullptr;
 
     const RDRef* refs = nullptr;
     usize n = rd_getrefstotype(toaddr, type, &refs);
@@ -291,9 +291,9 @@ PyObject* get_name(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* set_type(PyObject* /*self*/, PyObject* args) {
-    RDAddress address{};
+    unsigned long long address{};
     const char* name = nullptr;
-    if(!PyArg_ParseTuple(args, "Kz", &address, &name)) return nullptr;
+    if(!PyArg_ParseTuple(args, "Ks", &address, &name)) return nullptr;
 
     RDValue* v = nullptr;
     PyObject* obj = Py_None;
@@ -307,11 +307,10 @@ PyObject* set_type(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* set_type_ex(PyObject* /*self*/, PyObject* args) {
-    RDAddress address{};
+    unsigned long long address{};
     const char* name = nullptr;
-    usize flags = 0;
-
-    if(!PyArg_ParseTuple(args, "KzK", &address, &name, &flags)) return nullptr;
+    size_t flags{};
+    if(!PyArg_ParseTuple(args, "Ksn", &address, &name, &flags)) return nullptr;
 
     RDValue* v = nullptr;
     PyObject* obj = Py_None;
@@ -325,25 +324,24 @@ PyObject* set_type_ex(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* set_name(PyObject* /*self*/, PyObject* args) {
-    RDAddress address{};
+    unsigned long long address{};
     const char* name = nullptr;
-
     if(!PyArg_ParseTuple(args, "Kz", &address, &name)) return nullptr;
     return PyBool_FromLong(rd_setname(address, name));
 }
 
 PyObject* set_name_ex(PyObject* /*self*/, PyObject* args) {
-    RDAddress address{};
+    unsigned long long address{};
     const char* name = nullptr;
-    usize flags = 0;
+    size_t flags{};
 
-    if(!PyArg_ParseTuple(args, "KzK", &address, &name, &flags)) return nullptr;
+    if(!PyArg_ParseTuple(args, "Kzn", &address, &name, &flags)) return nullptr;
     return PyBool_FromLong(rd_setname_ex(address, name, flags));
 }
 
 PyObject* set_function(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
     return PyBool_FromLong(rd_setfunction(address));
 }
 
@@ -352,17 +350,17 @@ PyObject* set_function_ex(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* set_entry(PyObject* /*self*/, PyObject* args) {
-    RDAddress address{};
+    unsigned long long address{};
     const char* name = nullptr;
     if(!PyArg_ParseTuple(args, "Kz", &address, &name)) return nullptr;
     return PyBool_FromLong(rd_setentry(address, name));
 }
 
 PyObject* add_ref(PyObject* /*self*/, PyObject* args) {
-    RDAddress fromaddr{}, toaddr{};
-    usize type = {};
+    unsigned long long fromaddr{}, toaddr{};
+    size_t type = {};
 
-    if(!PyArg_ParseTuple(args, "KKK", &fromaddr, &toaddr, &type))
+    if(!PyArg_ParseTuple(args, "KKn", &fromaddr, &toaddr, &type))
         return nullptr;
 
     rd_addref(fromaddr, toaddr, type);
@@ -370,7 +368,7 @@ PyObject* add_ref(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* add_problem(PyObject* /*self*/, PyObject* args) {
-    RDAddress address{};
+    unsigned long long address{};
     const char* problem = nullptr;
     if(!PyArg_ParseTuple(args, "Ks", &address, &problem)) return nullptr;
     rd_addproblem(address, problem);
@@ -379,7 +377,7 @@ PyObject* add_problem(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_bool(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     bool v;
     if(rd_getbool(address, &v)) return PyBool_FromLong(v);
@@ -388,7 +386,7 @@ PyObject* get_bool(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_char(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     char v;
     if(rd_getchar(address, &v)) return PyUnicode_FromStringAndSize(&v, 1);
@@ -398,8 +396,7 @@ PyObject* get_char(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_u8(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     u8 v;
     if(rd_getu8(address, &v)) return PyLong_FromUnsignedLong(v);
@@ -408,8 +405,7 @@ PyObject* get_u8(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_u16(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     u16 v;
     if(rd_getu16(address, &v)) return PyLong_FromUnsignedLong(v);
@@ -418,8 +414,7 @@ PyObject* get_u16(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_u32(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     u32 v;
     if(rd_getu32(address, &v)) return PyLong_FromUnsignedLong(v);
@@ -428,8 +423,7 @@ PyObject* get_u32(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_u64(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     u64 v;
     if(rd_getu64(address, &v)) return PyLong_FromUnsignedLongLong(v);
@@ -438,8 +432,7 @@ PyObject* get_u64(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_i8(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     i8 v;
     if(rd_geti8(address, &v)) return PyLong_FromLong(v);
@@ -448,8 +441,7 @@ PyObject* get_i8(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_i16(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     i16 v;
     if(rd_geti16(address, &v)) return PyLong_FromLong(v);
@@ -458,8 +450,7 @@ PyObject* get_i16(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_i32(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     i32 v;
     if(rd_geti32(address, &v)) return PyLong_FromLong(v);
@@ -468,8 +459,7 @@ PyObject* get_i32(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_i64(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     i32 v;
     if(rd_geti32(address, &v)) return PyLong_FromLongLong(v);
@@ -478,8 +468,7 @@ PyObject* get_i64(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_u16be(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     u16 v;
     if(rd_getu16be(address, &v)) return PyLong_FromUnsignedLong(v);
@@ -488,8 +477,7 @@ PyObject* get_u16be(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_u32be(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     u32 v;
     if(rd_getu32be(address, &v)) return PyLong_FromUnsignedLong(v);
@@ -498,8 +486,7 @@ PyObject* get_u32be(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_u64be(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     u64 v;
     if(rd_getu64be(address, &v)) return PyLong_FromUnsignedLongLong(v);
@@ -508,8 +495,7 @@ PyObject* get_u64be(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_i16be(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     i16 v;
     if(rd_geti16be(address, &v)) return PyLong_FromLong(v);
@@ -518,8 +504,7 @@ PyObject* get_i16be(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_i32be(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     i32 v;
     if(rd_geti32be(address, &v)) return PyLong_FromLong(v);
@@ -527,8 +512,7 @@ PyObject* get_i32be(PyObject* /*self*/, PyObject* args) {
 }
 PyObject* get_i64be(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     i64 v;
     if(rd_geti64be(address, &v)) return PyLong_FromLongLong(v);
@@ -537,8 +521,7 @@ PyObject* get_i64be(PyObject* /*self*/, PyObject* args) {
 
 PyObject* get_strz(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
-
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     const char* v = rd_getstrz(address);
     if(v) return PyUnicode_FromString(v);
@@ -546,10 +529,9 @@ PyObject* get_strz(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_str(PyObject* /*self*/, PyObject* args) {
-    RDAddress address{};
-    usize n{};
-
-    if(!PyArg_ParseTuple(args, "KK", &address, &n)) return nullptr;
+    unsigned long long address{};
+    size_t n{};
+    if(!PyArg_ParseTuple(args, "Kn", &address, &n)) return nullptr;
 
     const char* v = rd_getstr(address, n);
     if(v) return PyUnicode_FromString(v);
@@ -557,10 +539,9 @@ PyObject* get_str(PyObject* /*self*/, PyObject* args) {
 }
 
 PyObject* get_type(PyObject* /*self*/, PyObject* args) {
-    RDAddress address{};
+    unsigned long long address{};
     const char* tname = nullptr;
-
-    if(!PyArg_ParseTuple(args, "Ks*", &address, &tname)) return nullptr;
+    if(!PyArg_ParseTuple(args, "Ks", &address, &tname)) return nullptr;
 
     RDValue* v = rd_gettypename(address, tname);
     PyObject* obj = Py_None;
@@ -584,26 +565,23 @@ PyObject* get_entries(PyObject* /*self*/, PyObject* /*args*/) {
 }
 
 PyObject* map_file(PyObject* /*self*/, PyObject* args) {
-    RDOffset offset{};
-    RDAddress start{}, end{};
-
+    unsigned long long offset{}, start{}, end{};
     if(!PyArg_ParseTuple(args, "KKK", &offset, &start, &end)) return nullptr;
     return PyBool_FromLong(rd_mapfile_n(offset, start, end));
 }
 
 PyObject* map_file_n(PyObject* /*self*/, PyObject* args) {
-    RDOffset offset{};
-    RDAddress base{};
-    usize n{};
+    unsigned long long offset{}, base{};
+    size_t n{};
 
     if(!PyArg_ParseTuple(args, "KKn", &offset, &base, &n)) return nullptr;
     return PyBool_FromLong(rd_mapfile_n(offset, base, n));
 }
 
 PyObject* add_segment(PyObject* /*self*/, PyObject* args) {
-    const char* name = nullptr;
-    RDAddress address{}, endaddress{};
-    u32 perm{}, bits{};
+    Py_buffer name;
+    unsigned long long address{}, endaddress{};
+    unsigned int perm{}, bits{};
 
     // Allow embedded null characters
     if(!PyArg_ParseTuple(args, "s*KKII", &name, &address, &endaddress, &perm,
@@ -611,34 +589,39 @@ PyObject* add_segment(PyObject* /*self*/, PyObject* args) {
         return nullptr;
     }
 
-    return PyBool_FromLong(
-        rd_addsegment(name, address, endaddress, perm, bits));
+    PyObject* res = PyBool_FromLong(rd_addsegment(
+        reinterpret_cast<char*>(name.buf), address, endaddress, perm, bits));
+    PyBuffer_Release(&name);
+    return res;
 }
 
 PyObject* add_segment_n(PyObject* /*self*/, PyObject* args) {
-    const char* name = nullptr;
-    RDAddress address{};
-    usize n;
-    usize perm{}, bits{};
+    Py_buffer name;
+    unsigned long long address{};
+    size_t n;
+    unsigned int perm{}, bits{};
 
     // Allow embedded null characters
     if(!PyArg_ParseTuple(args, "s*KnII", &name, &address, &n, &perm, &bits))
         return nullptr;
 
-    return PyBool_FromLong(rd_addsegment_n(name, address, n, perm, bits));
+    PyObject* res = PyBool_FromLong(rd_addsegment_n(
+        reinterpret_cast<char*>(name.buf), address, n, perm, bits));
+    PyBuffer_Release(&name);
+    return res;
 }
 
 PyObject* is_address(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
 
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
     return PyBool_FromLong(rd_isaddress(address));
 }
 
 PyObject* to_offset(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
 
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
     RDOffset offset{};
 
     if(rd_tooffset(address, &offset))
@@ -650,7 +633,7 @@ PyObject* to_offset(PyObject* /*self*/, PyObject* args) {
 PyObject* to_address(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
 
-    RDAddress offset = PyLong_AsUnsignedLongLong(args);
+    unsigned long long offset = PyLong_AsUnsignedLongLong(args);
     RDAddress address{};
 
     if(rd_toaddress(offset, &address))
@@ -662,9 +645,7 @@ PyObject* to_address(PyObject* /*self*/, PyObject* args) {
 PyObject* check_string(PyObject* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
 
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
-
-    return Py_None;
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
 
     RDStringResult r{};
     if(!rd_checkstring(address, &r)) return Py_None;

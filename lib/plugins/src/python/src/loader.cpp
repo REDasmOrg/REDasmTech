@@ -13,7 +13,7 @@ struct RDPYLoaderPlugin {
 
 namespace {
 
-PyObject* loader_accept(PyObject* self, PyObject* args) {
+PyObject* loader_parse(PyObject* self, PyObject* args) {
     using Instance = typename plugin::InstanceForPlugin<RDLoaderPlugin>::Type;
 
     PyObject *pyinstance = nullptr, *file = nullptr;
@@ -27,13 +27,13 @@ PyObject* loader_accept(PyObject* self, PyObject* args) {
     if(plugin->load) {
         if(rdplugin_getorigin(plugin) == python::ID) {
             RDLoaderRequest req = python::loadrequest_fromobject(args);
-            b = plugin->accept(reinterpret_cast<Instance*>(pyinstance), &req);
+            b = plugin->parse(reinterpret_cast<Instance*>(pyinstance), &req);
         }
         else {
-            b = plugin->accept(reinterpret_cast<Instance*>(
-                                   PyCapsule_GetPointer(pyinstance, nullptr)),
-                               reinterpret_cast<RDLoaderRequest*>(
-                                   PyCapsule_GetPointer(args, nullptr)));
+            b = plugin->parse(reinterpret_cast<Instance*>(
+                                  PyCapsule_GetPointer(pyinstance, nullptr)),
+                              reinterpret_cast<RDLoaderRequest*>(
+                                  PyCapsule_GetPointer(args, nullptr)));
         }
     }
 
@@ -93,7 +93,7 @@ PyMethodDef loader_methods[] = {
     {"on_shutdown", reinterpret_cast<PyCFunction>(python::plugin::on_shutdown<RDLoaderPlugin>), METH_NOARGS, nullptr},
     {"create", reinterpret_cast<PyCFunction>(python::plugin::create<RDLoaderPlugin>), METH_NOARGS, nullptr},
     {"destroy", reinterpret_cast<PyCFunction>(python::plugin::destroy<RDLoaderPlugin>), METH_O, nullptr},
-    {"accept", reinterpret_cast<PyCFunction>(python::loader_accept), METH_O, nullptr},
+    {"parse", reinterpret_cast<PyCFunction>(python::loader_parse), METH_O, nullptr},
     {"load", reinterpret_cast<PyCFunction>(python::loader_load), METH_VARARGS, nullptr},
     {"get_processor", reinterpret_cast<PyCFunction>(python::loader_getprocessor), METH_O, nullptr},
     {},
@@ -106,7 +106,7 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
     PyObject* pyclass = nullptr;
 
     if(!PyArg_ParseTuple(args, "O", &pyclass) ||
-       !python::validate_class(pyclass, {"id", "name", "accept", "load"}))
+       !python::validate_class(pyclass, {"id", "name", "parse", "load"}))
         return nullptr;
 
     PyObject* idattr = PyObject_GetAttrString(pyclass, "id");
@@ -145,10 +145,10 @@ PyObject* register_loader(PyObject* /*self*/, PyObject* args) {
         Py_DECREF(reinterpret_cast<PyObject*>(arg));
     };
 
-    plugin->base.accept = [](RDLoader* self,
-                             const RDLoaderRequest* req) -> bool {
+    plugin->base.parse = [](RDLoader* self,
+                            const RDLoaderRequest* req) -> bool {
         auto* obj = reinterpret_cast<PyObject*>(self);
-        PyObject* res = PyObject_CallMethod(obj, "accept", "O",
+        PyObject* res = PyObject_CallMethod(obj, "parse", "O",
                                             python::loadrequest_toobject(req));
 
         if(res) {

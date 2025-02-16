@@ -99,30 +99,28 @@ PyObject* to_object(const RDValue* v) {
             Py_DECREF(f);
         }
     }
-    else {
-        if(v->type.id == TID_BOOL)
-            res = PyBool_FromLong(v->b_v);
-        else if(v->type.id == TID_CHAR || v->type.id == TID_WCHAR)
-            res = PyUnicode_FromStringAndSize(&v->ch_v, 1);
-        else if(v->type.id == TID_U8)
-            res = PyLong_FromUnsignedLong(v->u8_v);
-        else if(v->type.id == TID_U16)
-            res = PyLong_FromUnsignedLong(v->u16_v);
-        else if(v->type.id == TID_U32)
-            res = PyLong_FromUnsignedLong(v->u32_v);
-        else if(v->type.id == TID_U64)
-            res = PyLong_FromUnsignedLong(v->u64_v);
-        else if(v->type.id == TID_I8)
-            res = PyLong_FromUnsignedLong(v->i8_v);
-        else if(v->type.id == TID_I16)
-            res = PyLong_FromUnsignedLong(v->i16_v);
-        else if(v->type.id == TID_I32)
-            res = PyLong_FromUnsignedLong(v->i32_v);
-        else if(v->type.id == TID_I64)
-            res = PyLong_FromUnsignedLong(v->i64_v);
-        else if(v->type.id == TID_STR || v->type.id == TID_WSTR)
-            res = PyUnicode_FromString(v->str);
-    }
+    else if(v->type.id == TID_BOOL)
+        res = PyBool_FromLong(v->b_v);
+    else if(v->type.id == TID_CHAR || v->type.id == TID_WCHAR)
+        res = PyUnicode_FromStringAndSize(&v->ch_v, 1);
+    else if(v->type.id == TID_U8)
+        res = PyLong_FromUnsignedLong(v->u8_v);
+    else if(v->type.id == TID_U16)
+        res = PyLong_FromUnsignedLong(v->u16_v);
+    else if(v->type.id == TID_U32)
+        res = PyLong_FromUnsignedLong(v->u32_v);
+    else if(v->type.id == TID_U64)
+        res = PyLong_FromUnsignedLong(v->u64_v);
+    else if(v->type.id == TID_I8)
+        res = PyLong_FromUnsignedLong(v->i8_v);
+    else if(v->type.id == TID_I16)
+        res = PyLong_FromUnsignedLong(v->i16_v);
+    else if(v->type.id == TID_I32)
+        res = PyLong_FromUnsignedLong(v->i32_v);
+    else if(v->type.id == TID_I64)
+        res = PyLong_FromUnsignedLong(v->i64_v);
+    else if(v->type.id == TID_STR || v->type.id == TID_WSTR)
+        res = PyUnicode_FromString(v->str);
 
     return res;
 }
