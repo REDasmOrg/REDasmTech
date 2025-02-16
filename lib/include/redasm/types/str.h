@@ -185,7 +185,7 @@ inline Str _str_alloc_n(void* ctx, StrAlloc alloc, const char* s, uintptr_t n) {
         (StrHeader*)alloc(ctx, NULL, 0, sizeof(StrHeader) + cap + 1);
     hdr->ctx = ctx;
     hdr->alloc = alloc;
-    hdr->length = n;
+    hdr->length = 0;
     hdr->capacity = cap;
     if(s) return str_ins_n(hdr->str, str_npos, s, n);
     return hdr->str;
