@@ -136,11 +136,10 @@ PyObject* get_searchpaths(PyObject* /*self*/, PyObject* /*args*/) {
 }
 
 PyObject* get_problems(PyObject* /*self*/, PyObject* /*args*/) {
-    const RDProblem* problems = nullptr;
-    usize n = rd_getproblems(&problems);
-    PyObject* res = PyTuple_New(n);
+    Vect(RDProblem) problems = rd_getproblems();
+    PyObject* res = PyTuple_New(vect_length(problems));
 
-    for(usize i = 0; i < n; i++) {
+    for(usize i = 0; i < vect_length(problems); i++) {
         PyObject* item = python::new_simplenamespace();
         PyObject* itemaddr = PyLong_FromUnsignedLongLong(problems[i].address);
         PyObject* itemprob = PyUnicode_FromString(problems[i].problem);

@@ -20,6 +20,5 @@ public:
                                       int role) const override;
 
 private:
-    const RDProblem* m_problems{nullptr};
-    usize m_nproblems{};
+    Vect(RDProblem) m_problems {};
 };

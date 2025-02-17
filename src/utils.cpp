@@ -37,6 +37,14 @@ float cell_height() {
     return utils::cellh;
 }
 
+QString to_hex_addr(RDAddress address, const RDSegment* seg) {
+    if(!seg) seg = rd_findsegment(address);
+
+    QString s = QString::number(address, 16);
+    if(seg) return s.rightJustified(seg->bits / 4, '0');
+    return s;
+}
+
 void show_detail(const QString& html, QWidget* parent) {
     auto* dlg = new DetailDialog(parent);
     dlg->set_html(html);
@@ -65,10 +73,8 @@ usize draw_surface(RDSurface* s, QTextDocument* doc, usize start, usize n) {
             QColor fg = themeprovider::color(row[j].fg);
             QColor bg = themeprovider::color(row[j].bg);
 
-            if(fg.isValid())
-                cf.setForeground(fg);
-            if(bg.isValid())
-                cf.setBackground(bg);
+            if(fg.isValid()) cf.setForeground(fg);
+            if(bg.isValid()) cf.setBackground(bg);
 
             cursor.insertText(QChar{row[j].ch}, cf);
         }
@@ -122,15 +128,13 @@ bool handle_key_press(RDSurface* s, QKeyEvent* e) {
         rdsurface_setposition(s, row, col + 1);
     }
     else if(e->matches(QKeySequence::MoveToPreviousChar)) {
-        if(col > 0)
-            rdsurface_setposition(s, row, col - 1);
+        if(col > 0) rdsurface_setposition(s, row, col - 1);
     }
     else if(e->matches(QKeySequence::MoveToNextLine)) {
         rdsurface_setposition(s, row + 1, col);
     }
     else if(e->matches(QKeySequence::MoveToPreviousLine)) {
-        if(row > 0)
-            rdsurface_setposition(s, row - 1, col);
+        if(row > 0) rdsurface_setposition(s, row - 1, col);
     }
     else if(e->matches(QKeySequence::MoveToStartOfLine)) {
         rdsurface_setposition(s, row, 0);
@@ -139,15 +143,13 @@ bool handle_key_press(RDSurface* s, QKeyEvent* e) {
         rdsurface_select(s, row, col + 1);
     }
     else if(e->matches(QKeySequence::SelectPreviousChar)) {
-        if(col > 0)
-            rdsurface_select(s, row, col - 1);
+        if(col > 0) rdsurface_select(s, row, col - 1);
     }
     else if(e->matches(QKeySequence::SelectNextLine)) {
         rdsurface_select(s, row + 1, col);
     }
     else if(e->matches(QKeySequence::SelectPreviousLine)) {
-        if(row > 0)
-            rdsurface_select(s, row - 1, col);
+        if(row > 0) rdsurface_select(s, row - 1, col);
     }
     else if(e->matches(QKeySequence::SelectStartOfLine)) {
         rdsurface_select(s, row, 0);

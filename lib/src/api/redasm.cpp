@@ -120,19 +120,11 @@ usize rd_getrefstotype(RDAddress toaddr, usize type, const RDRef** refs) {
     return r.size();
 }
 
-usize rd_getproblems(const RDProblem** problems) {
-    spdlog::trace("rd_getproblems({})", fmt::ptr(problems));
-    static std::vector<RDProblem> res;
-
+Vect(RDProblem) rd_getproblems() {
+    spdlog::trace("rd_getproblems()");
     const redasm::Context* ctx = redasm::state::context;
-    if(!ctx) return 0;
-
-    res.reserve(ctx->problems.size());
-    for(const auto& [address, problem] : ctx->problems)
-        res.emplace_back(address, problem.c_str());
-
-    if(problems) *problems = res.data();
-    return res.size();
+    if(ctx) return ctx->problems;
+    return nullptr;
 }
 
 Vect(RDTestResult) rd_test(RDBuffer* file) {

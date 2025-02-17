@@ -1,5 +1,6 @@
 #include "symbolsmodel.h"
 #include "../themeprovider.h"
+#include "../utils.h"
 
 SymbolsModel::SymbolsModel(bool autoalign, QObject* parent)
     : QAbstractListModel{parent}, m_autoalign{autoalign} {
@@ -22,12 +23,11 @@ void SymbolsModel::resync() {
 
 QVariant SymbolsModel::data(const QModelIndex& index, int role) const {
     RDSymbol symbol;
-
     if(!rdlisting_getsymbol(index.row(), &symbol)) return {};
 
     if(role == Qt::DisplayRole) {
         switch(index.column()) {
-            case 0: return rd_tohex_n(symbol.address, 0);
+            case 0: return utils::to_hex_addr(symbol.address);
             case 1: return this->get_symbol_type(symbol.type);
 
             case 2: {

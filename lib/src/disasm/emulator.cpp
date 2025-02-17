@@ -140,11 +140,12 @@ u32 Emulator::tick() {
     const RDProcessorPlugin* plugin = ctx->processorplugin;
     assume(plugin);
 
-    RDSegment* seg = ctx->program.find_segment(address);
-    assume(seg);
+    this->segment = ctx->program.find_segment(address);
+    assume(this->segment);
+    ;
 
-    if(memory::has_flag(seg, address, BF_CODE))
-        return memory::get_length(seg, address);
+    if(memory::has_flag(this->segment, address, BF_CODE))
+        return memory::get_length(this->segment, address);
 
     this->pc = address;
 
@@ -163,24 +164,27 @@ u32 Emulator::tick() {
     }
 
     if(instr.length) {
-        memory::unset_n(seg, address, instr.length);
+        memory::unset_n(this->segment, address, instr.length);
         assume(plugin->emulate);
         plugin->emulate(ctx->processor, api::to_c(this), &instr);
-        memory::set_n(seg, address, instr.length, BF_CODE);
+        memory::set_n(this->segment, address, instr.length, BF_CODE);
 
-        if(instr.features & IF_JUMP) memory::set_flag(seg, address, BF_JUMP);
-        if(instr.features & IF_CALL) memory::set_flag(seg, address, BF_CALL);
-        if(instr.delayslots) this->execute_delayslots(seg, instr);
+        if(instr.features & IF_JUMP)
+            memory::set_flag(this->segment, address, BF_JUMP);
+        if(instr.features & IF_CALL)
+            memory::set_flag(this->segment, address, BF_CALL);
+
+        if(instr.delayslots) this->execute_delayslots(instr);
     }
 
     return instr.length;
 }
 
-void Emulator::execute_delayslots(RDSegment* seg, const RDInstruction& instr) {
+void Emulator::execute_delayslots(const RDInstruction& instr) {
     *this->dslotinstr = instr;
 
     // Continue through delay slot(s)
-    memory::set_flag(seg, this->pc, BF_DFLOW);
+    memory::set_flag(this->segment, this->pc, BF_DFLOW);
 
     for(this->ndslot = 1; this->ndslot <= instr.delayslots; this->ndslot++) {
         u32 len = this->tick();

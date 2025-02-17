@@ -1,11 +1,12 @@
 #include "problemsmodel.h"
+#include "../utils.h"
 
 ProblemsModel::ProblemsModel(QObject* parent): QAbstractListModel{parent} {
-    m_nproblems = rd_getproblems(&m_problems);
+    m_problems = rd_getproblems();
 }
 
 RDAddress ProblemsModel::address(const QModelIndex& index) const {
-    if(static_cast<usize>(index.row()) < m_nproblems)
+    if(static_cast<usize>(index.row()) < vect_length(m_problems))
         return m_problems[index.row()].address;
 
     qFatal("Cannot get problem");
@@ -13,9 +14,11 @@ RDAddress ProblemsModel::address(const QModelIndex& index) const {
 }
 
 QVariant ProblemsModel::data(const QModelIndex& index, int role) const {
+    if(!m_problems) return {};
+
     if(role == Qt::DisplayRole) {
         switch(index.column()) {
-            case 0: return rd_tohex_n(m_problems[index.row()].address, 0);
+            case 0: return utils::to_hex_addr(m_problems[index.row()].address);
             case 1: return QString::fromUtf8(m_problems[index.row()].problem);
             default: break;
         }
@@ -31,8 +34,7 @@ QVariant ProblemsModel::data(const QModelIndex& index, int role) const {
 
 QVariant ProblemsModel::headerData(int section, Qt::Orientation orientation,
                                    int role) const {
-    if(orientation == Qt::Vertical || role != Qt::DisplayRole)
-        return {};
+    if(orientation == Qt::Vertical || role != Qt::DisplayRole) return {};
 
     switch(section) {
         case 0: return tr("Address");
@@ -44,4 +46,7 @@ QVariant ProblemsModel::headerData(int section, Qt::Orientation orientation,
 }
 
 int ProblemsModel::columnCount(const QModelIndex&) const { return 2; }
-int ProblemsModel::rowCount(const QModelIndex&) const { return m_nproblems; }
+
+int ProblemsModel::rowCount(const QModelIndex&) const {
+    return vect_length(m_problems);
+}

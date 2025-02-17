@@ -5,6 +5,7 @@
 #include "../memory/memory.h"
 #include "../state.h"
 #include "../surface/renderer.h"
+#include "../utils/utils.h"
 #include <limits>
 #include <unordered_map>
 
@@ -299,8 +300,13 @@ void get_text_impl(const RDILExpr* e, std::string& res) {
         Context* ctx = state::context;
 
         switch(expr->op) {
-            case RDIL_CNST: res += ctx->to_hex(expr->u_value, -1); break;
-            case RDIL_VAR: res += ctx->to_hex(expr->address); break;
+            case RDIL_CNST: res += utils::to_hex(expr->u_value, -1); break;
+
+            case RDIL_VAR: {
+                const RDSegment* seg = ctx->program.find_segment(expr->address);
+                res += utils::to_hex(expr->address, seg ? seg->bits : -1);
+                break;
+            }
 
             case RDIL_REG: {
                 res += ctx->processorplugin->get_registername(ctx->processor,

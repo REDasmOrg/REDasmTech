@@ -37,10 +37,11 @@ public:
     u32 tick();
 
 private:
-    void execute_delayslots(RDSegment* seg, const RDInstruction& instr);
+    void execute_delayslots(const RDInstruction& instr);
 
 public:
     RDAddress pc{};
+    RDSegment* segment{nullptr};
     std::unique_ptr<RDInstruction> dslotinstr;
     u32 ndslot{0}; // =0 no delay slot
 

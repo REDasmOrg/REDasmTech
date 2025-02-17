@@ -244,14 +244,12 @@ Renderer& Renderer::new_row(const ListingItem& item) {
     if(this->columns) m_rows.back().cells.reserve(this->columns);
 
     if(!this->has_flag(SURFACE_NOADDRESS)) {
-        if(const RDSegment* s = this->current_segment(); s)
-            this->chunk(s->name).chunk(":");
+        const RDSegment* s = this->current_segment();
+        if(s) this->chunk(s->name).chunk(":");
 
         const RDProcessorPlugin* p = state::context->processorplugin;
         assume(p);
-
-        this->chunk(state::context->to_hex(m_curraddress, p->address_size * 2))
-            .ws(2);
+        this->chunk(utils::to_hex(m_curraddress, s ? s->bits : -1)).ws(2);
 
         if(item.indent) this->ws(item.indent);
     }

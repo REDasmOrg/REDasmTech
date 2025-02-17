@@ -376,9 +376,11 @@ void MainWindow::report_status() {
     s += QString::fromWCharArray(L"<b>State: </b>%1\u00A0\u00A0")
              .arg(m_status->currentstep);
 
-    if(m_status->address.valid)
+    if(m_status->address.valid) {
         s += QString::fromWCharArray(L"<b>Address: </b>%1\u00A0\u00A0")
-                 .arg(rd_tohex(m_status->address.value));
+                 .arg(m_status->address.value, m_status->segment->bits / 4,
+                      QLatin1Char('0'));
+    }
 
     statusbar::set_status_text(s);
 }

@@ -1,5 +1,5 @@
 #include "segmentsmodel.h"
-#include "../themeprovider.h"
+#include "../utils.h"
 
 namespace {
 
@@ -23,16 +23,15 @@ size_t SegmentsModel::address(const QModelIndex& index) const {
 
 QVariant SegmentsModel::data(const QModelIndex& index, int role) const {
     if(role == Qt::DisplayRole) {
-        auto address = m_segments[index.row()].start;
-        auto endaddress = m_segments[index.row()].end;
+        const RDSegment& seg = m_segments[index.row()];
 
         switch(index.column()) {
             case 0: return m_segments[index.row()].name;
-            case 1: return rd_tohex(address);
-            case 2: return rd_tohex(endaddress);
-            case 3: return rd_tohex(endaddress - address);
-            case 4: return QString::number(m_segments[index.row()].bits);
-            case 5: return get_segment_type(m_segments[index.row()]);
+            case 1: return utils::to_hex_addr(seg.start, &seg);
+            case 2: return utils::to_hex_addr(seg.end, &seg);
+            case 3: return utils::to_hex_addr(seg.end - seg.start, &seg);
+            case 4: return QString::number(seg.bits);
+            case 5: return get_segment_type(seg);
             default: break;
         }
     }

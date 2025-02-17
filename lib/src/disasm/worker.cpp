@@ -49,6 +49,7 @@ Worker::Worker(): m_currentstep{WS_INIT} {
 bool Worker::execute(const RDWorkerStatus** s) {
     m_status->busy = m_currentstep < WS_DONE;
     m_status->currentstep = WS_NAMES.at(m_currentstep);
+    m_status->segment = nullptr;
     m_status->address.valid = false;
     m_status->listingchanged = false;
 
@@ -92,7 +93,6 @@ void Worker::init_step() {
     m_status->filesize = state::context->program.file->length;
     m_status->loader = state::context->loaderplugin->name;
     m_status->processor = state::context->processorplugin->name;
-    m_status->analysisstart = std::time(nullptr);
 
     memprocess::process_listing(); // Show pre-analysis listing
     m_status->listingchanged = true;
@@ -102,6 +102,8 @@ void Worker::init_step() {
 void Worker::emulate_step() {
     if(emulator.has_pending_code()) {
         emulator.tick();
+        assume(emulator.segment);
+        m_status->segment = emulator.segment;
         m_status->address.value = emulator.pc;
         m_status->address.valid = true;
     }

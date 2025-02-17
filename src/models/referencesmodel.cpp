@@ -1,4 +1,5 @@
 #include "referencesmodel.h"
+#include "../utils.h"
 
 namespace {
 
@@ -16,11 +17,8 @@ QString reftype_tostring(const RDRef& r) {
 }
 
 QString ref_getdirection(RDAddress address, const RDRef& r) {
-    if(r.address > address)
-        return "Down";
-    if(r.address < address)
-        return "Up";
-
+    if(r.address > address) return "Down";
+    if(r.address < address) return "Up";
     return "---";
 }
 
@@ -42,7 +40,7 @@ RDAddress ReferencesModel::address(const QModelIndex& index) const {
 QVariant ReferencesModel::data(const QModelIndex& index, int role) const {
     if(role == Qt::DisplayRole) {
         switch(index.column()) {
-            case 0: return rd_tohex(m_refs[index.row()].address);
+            case 0: return utils::to_hex_addr(m_refs[index.row()].address);
             case 1: return reftype_tostring(m_refs[index.row()]);
             case 2: return ref_getdirection(m_address, m_refs[index.row()]);
             case 3: return rd_rendertext(m_refs[index.row()].address);
@@ -50,10 +48,8 @@ QVariant ReferencesModel::data(const QModelIndex& index, int role) const {
         }
     }
     else if(role == Qt::TextAlignmentRole) {
-        if(index.column() == 0)
-            return Qt::AlignRight;
-        if(index.column() == 3)
-            return Qt::AlignLeft;
+        if(index.column() == 0) return Qt::AlignRight;
+        if(index.column() == 3) return Qt::AlignLeft;
     }
 
     return {};
@@ -61,8 +57,7 @@ QVariant ReferencesModel::data(const QModelIndex& index, int role) const {
 
 QVariant ReferencesModel::headerData(int section, Qt::Orientation orientation,
                                      int role) const {
-    if(orientation == Qt::Vertical || role != Qt::DisplayRole)
-        return {};
+    if(orientation == Qt::Vertical || role != Qt::DisplayRole) return {};
 
     switch(section) {
         case 0: return "Address";

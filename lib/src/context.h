@@ -36,6 +36,7 @@ public:
     bool set_function(RDAddress address, usize flags);
     bool set_entry(RDAddress address, const std::string& name = {});
     const Function* find_function(RDAddress address) const;
+    void add_problem(RDAddress address, std::string_view s);
 
 public: // Database Interface
     void add_ref(RDAddress fromaddr, RDAddress toaddr, usize type);
@@ -52,14 +53,6 @@ public: // Database Interface
     Database::RefList get_refs_to_type(RDAddress fromaddr, usize type) const;
     Database::RefList get_refs_to(RDAddress toaddr) const;
 
-public:
-    void add_problem(RDAddress address, const std::string& s) {
-        spdlog::warn("add_problem(): {:x} = {}", address, s);
-        this->problems.emplace_back(address, s);
-    }
-
-    [[nodiscard]] std::string to_hex(usize v, int n = -1) const;
-
 public: // Plugins
     const RDLoaderPlugin* loaderplugin{nullptr};
     const RDProcessorPlugin* processorplugin{nullptr};
@@ -70,7 +63,7 @@ public: // Plugins
 
 public:
     Program program;
-    std::vector<std::pair<RDAddress, std::string>> problems;
+    Vect(RDProblem) problems {};
     std::vector<RDAddress> entrypoints;
     Worker* worker{nullptr};
     FunctionList functions;

@@ -95,9 +95,9 @@ REDASM_EXPORT usize rd_getentries(RDAddress** entries);
 REDASM_EXPORT bool rd_tick(const RDWorkerStatus** s);
 
 REDASM_EXPORT void rd_addsearchpath(const char* path);
+REDASM_EXPORT Vect(RDProblem) rd_getproblems(void);
 REDASM_EXPORT Vect(RDTestResult) rd_test(RDBuffer* file);
 REDASM_EXPORT void rd_disassemble(void);
-REDASM_EXPORT usize rd_getproblems(const RDProblem** problems);
 
 REDASM_EXPORT bool rd_setcomment(RDAddress address, const char* comment);
 REDASM_EXPORT bool rd_settype(RDAddress address, const RDType* type,

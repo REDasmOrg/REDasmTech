@@ -1,7 +1,7 @@
 #pragma once
 
+#include <redasm/segment.h>
 #include <redasm/types.h>
-#include <time.h>
 
 typedef struct RDWorkerStatus {
     // General
@@ -14,21 +14,12 @@ typedef struct RDWorkerStatus {
     bool listingchanged;
     bool busy;
 
+    RDSegment* segment;
+
     struct {
         RDAddress value;
         bool valid;
     } address;
 
-    // Time
-    time_t analysisstart;
-    time_t analysisend;
-
-    // Steps
     const char* currentstep;
-
-    // Analyzers
-    const char* analyzerslist;
-    usize* analyzersdone;
-    usize analyzerscount;
-    usize analyzerscurrent;
 } RDWorkerStatus;

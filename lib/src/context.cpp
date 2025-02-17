@@ -54,14 +54,17 @@ void add_noncodeproblem(const RDSegment* seg, RDAddress address, usize type) {
     }
 }
 
-constexpr std::array<char, 16> INTHEX_TABLE = {
-    '0', '1', '2', '3', '4', '5', '6', '7',
-    '8', '9', 'A', 'B', 'C', 'D', 'E', 'F',
-};
-
 } // namespace
 
-Context::Context(RDBuffer* file) { this->program.file = file; }
+Context::Context(RDBuffer* file) {
+    this->problems = vect_create(RDProblem);
+
+    vect_setitemdel(this->problems, [](void* x) {
+        delete[] reinterpret_cast<RDProblem*>(x)->problem;
+    });
+
+    this->program.file = file;
+}
 
 Context::~Context() {
     delete m_database;
@@ -71,6 +74,7 @@ Context::~Context() {
 
     pm::destroy_instance(this->processorplugin, this->processor);
     pm::destroy_instance(this->loaderplugin, this->loader);
+    vect_destroy(this->problems);
 }
 
 bool Context::parse(const RDLoaderPlugin* plugin, const RDLoaderRequest* req) {
@@ -341,7 +345,7 @@ std::string Context::get_name(RDAddress address) const {
         else if(memory::has_flag(seg, address, BF_FUNCTION))
             prefix = "sub";
 
-        name = prefix + "_" + this->to_hex(address, -1); // TODO: SEGM-BITS!!!
+        name = prefix + "_" + utils::to_hex<std::string>(address, seg->bits);
     }
 
     return name;
@@ -429,22 +433,9 @@ Database::RefList Context::get_refs_to(RDAddress toaddr) const {
     return m_database->get_refs_to(toaddr);
 }
 
-std::string Context::to_hex(usize v, int n) const {
-    if(n == -1) n = 0;
-
-    std::string hexstr;
-    hexstr.reserve(n);
-
-    while(v != 0) {
-        usize hd = v & 0xF;
-        hexstr.insert(0, 1, INTHEX_TABLE[hd]);
-        v >>= 4;
-    }
-
-    if(hexstr.empty()) hexstr = "0";
-    while(hexstr.size() < static_cast<usize>(n))
-        hexstr.insert(0, 1, '0');
-    return hexstr;
+void Context::add_problem(RDAddress address, std::string_view s) {
+    spdlog::warn("add_problem(): {:x} = {}", address, s);
+    vect_add(RDProblem, this->problems, {address, utils::copy_str(s)});
 }
 
 } // namespace redasm
