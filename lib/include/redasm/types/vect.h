@@ -140,12 +140,11 @@ inline void _vect_clear(Vect(void) self) {
 }
 
 inline void _vect_destroy(Vect(void) self) {
-    if(self) {
-        VectHeader* hdr = vect_header(self);
-        _vect_clear(self);
-        hdr->alloc(hdr->ctx, hdr,
-                   sizeof(VectHeader) + (hdr->itemsize * hdr->capacity), 0);
-    }
+    if(!self) return;
+    VectHeader* hdr = vect_header(self);
+    _vect_clear(self);
+    hdr->alloc(hdr->ctx, hdr,
+               sizeof(VectHeader) + (hdr->itemsize * hdr->capacity), 0);
 }
 
 inline Vect(void) _vect_reserve(Vect(void) self, uintptr_t newcap) {
