@@ -378,7 +378,7 @@ void MainWindow::report_status() {
 
     if(m_status->address.valid) {
         s += QString::fromWCharArray(L"<b>Address: </b>%1\u00A0\u00A0")
-                 .arg(m_status->address.value, m_status->segment->bits / 4,
+                 .arg(m_status->address.value, m_status->segment->bits / 4, 16,
                       QLatin1Char('0'));
     }
 
