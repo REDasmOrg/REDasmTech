@@ -99,7 +99,7 @@ bool load(RDLoader* l, RDBuffer* file) {
     auto* self = reinterpret_cast<DexLoader*>(l);
     usize len = rdbuffer_getlength(file);
 
-    rd_addsegment_n("DEX", 0, len, SP_RWX, 16);
+    rd_addsegment_n("DEX", 0, len, SP_RWX, 32);
     rd_mapfile_n(0, 0, len);
     return dex::filter_classes(self);
 }
