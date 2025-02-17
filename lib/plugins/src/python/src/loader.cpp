@@ -25,7 +25,7 @@ PyObject* loader_parse(PyObject* self, PyObject* args) {
     bool b = false;
 
     if(plugin->load) {
-        if(rdplugin_getorigin(plugin) == python::ID) {
+        if(rdplugin_isorigin(plugin, python::ID)) {
             RDLoaderRequest req = python::loadrequest_fromobject(args);
             b = plugin->parse(reinterpret_cast<Instance*>(pyinstance), &req);
         }
@@ -52,7 +52,7 @@ PyObject* loader_load(PyObject* self, PyObject* args) {
     bool b = false;
 
     if(plugin->load) {
-        if(rdplugin_getorigin(plugin) == python::ID)
+        if(rdplugin_isorigin(plugin, python::ID))
             b = plugin->load(reinterpret_cast<Instance*>(pyinstance),
                              python::pybuffer_asbuffer(file));
     }
@@ -74,7 +74,7 @@ PyObject* loader_getprocessor(PyObject* self, PyObject* args) {
     if(plugin->get_processor) {
         const char* p = nullptr;
 
-        if(rdplugin_getorigin(plugin) == python::ID)
+        if(rdplugin_isorigin(plugin, python::ID))
             p = plugin->get_processor(reinterpret_cast<Instance*>(args));
         else {
             p = plugin->get_processor(reinterpret_cast<Instance*>(
@@ -213,7 +213,7 @@ PyObject* get_loader(PyObject* /*self*/, PyObject* /*args*/) {
         const RDLoaderPlugin* plugin = rd_getloaderplugin();
         if(!plugin) return nullptr;
 
-        if(rdplugin_getorigin(plugin) == python::ID)
+        if(rdplugin_isorigin(plugin, python::ID))
             return reinterpret_cast<PyObject*>(l);
         return PyCapsule_New(l, nullptr, nullptr);
     }

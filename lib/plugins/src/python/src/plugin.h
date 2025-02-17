@@ -64,7 +64,7 @@ PyObject* create(PyObject* self, PyObject* /*args*/) {
     if(plugin->create) {
         Instance* instance = plugin->create(plugin);
 
-        if(rdplugin_getorigin(plugin) == python::ID)
+        if(rdplugin_isorigin(plugin, python::ID))
             return reinterpret_cast<PyObject*>(instance);
         return PyCapsule_New(instance, nullptr, nullptr);
     }
@@ -78,7 +78,7 @@ PyObject* destroy(PyObject* self, PyObject* args) {
     const T* plugin = plugin::get_bind<T>(self);
 
     if(plugin->destroy) {
-        if(rdplugin_getorigin(plugin) == python::ID)
+        if(rdplugin_isorigin(plugin, python::ID))
             plugin->destroy(reinterpret_cast<Instance*>(args));
         else {
             plugin->destroy(reinterpret_cast<Instance*>(
