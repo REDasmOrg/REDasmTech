@@ -21,6 +21,7 @@ template<> struct InstanceForPlugin<RDAnalyzerPlugin> { using Type = RDAnalyzer;
 void create();
 void destroy();
 const char* get_origin(const void* plugin);
+bool is_origin(const void* plugin, const char* origin);
 
 bool register_loader(const RDLoaderPlugin* plugin, const char* origin);
 bool register_processor(const RDProcessorPlugin* plugin, const char* origin);

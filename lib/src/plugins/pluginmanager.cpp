@@ -105,6 +105,11 @@ const char* get_origin(const void* plugin) {
     return nullptr;
 }
 
+bool is_origin(const void* plugin, const char* origin) {
+    const char* o = pm::get_origin(plugin);
+    return o && origin && o == std::string_view{origin};
+}
+
 bool register_loader(const RDLoaderPlugin* plugin, const char* origin) {
     return pm::register_plugin(pm::loaders, plugin, origin);
 }

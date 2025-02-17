@@ -14,8 +14,9 @@
 
 #define PF_LAST (1u << 31)
 
+REDASM_EXPORT const char* rdplugin_getorigin(const void* plugin);
+REDASM_EXPORT bool rdplugin_isorigin(const void* plugin, const char* origin);
+
 // Plugin entry points
 REDASM_EXPORT void rdplugin_create(void);
 REDASM_EXPORT void rdplugin_destroy(void);
-
-const char* rdplugin_getorigin(const void* plugin);
