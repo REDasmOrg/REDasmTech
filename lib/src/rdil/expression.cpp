@@ -2,17 +2,8 @@
 
 namespace redasm::rdil {
 
-const RDILExpr* ILExprPool::expr_unknown() {
-    static RDILExpr expr{};
-    expr.op = RDIL_UNKNOWN;
-    return &expr;
-}
-
-const RDILExpr* ILExprPool::expr_nop() {
-    static RDILExpr expr{};
-    expr.op = RDIL_NOP;
-    return &expr;
-}
+const RDILExpr* ILExprPool::expr_unknown() { return this->expr(RDIL_UNKNOWN); }
+const RDILExpr* ILExprPool::expr_nop() { return this->expr(RDIL_NOP); }
 
 const RDILExpr* ILExprPool::expr_pop(const RDILExpr* e) {
     return this->expr_u(RDIL_POP, e);
@@ -36,13 +27,13 @@ const RDILExpr* ILExprPool::expr_sym(const char* sym) {
 
 const RDILExpr* ILExprPool::expr_cnst(u64 value) {
     RDILExpr* expr = this->expr(RDIL_CNST);
-    expr->u_value = value;
+    expr->u_cnst = value;
     return expr;
 }
 
 const RDILExpr* ILExprPool::expr_var(RDAddress address) {
     RDILExpr* expr = this->expr(RDIL_VAR);
-    expr->address = address;
+    expr->addr = address;
     return expr;
 }
 
@@ -190,7 +181,8 @@ RDILExpr* ILExprPool::expr_u(RDILOp op, const RDILExpr* u) {
 }
 
 RDILExpr* ILExprPool::expr(RDILOp op) {
-    auto& expr = m_pool.emplace_front();
+    auto& expr = m_pool.emplace_front(RDILExpr{});
+    expr.address = this->currentaddress;
     expr.op = op;
     return &expr;
 }

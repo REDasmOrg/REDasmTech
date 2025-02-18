@@ -300,11 +300,11 @@ void get_text_impl(const RDILExpr* e, std::string& res) {
         Context* ctx = state::context;
 
         switch(expr->op) {
-            case RDIL_CNST: res += utils::to_hex(expr->u_value, -1); break;
+            case RDIL_CNST: res += utils::to_hex(expr->u_cnst, -1); break;
 
             case RDIL_VAR: {
-                const RDSegment* seg = ctx->program.find_segment(expr->address);
-                res += utils::to_hex(expr->address, seg ? seg->bits : -1);
+                const RDSegment* seg = ctx->program.find_segment(expr->addr);
+                res += utils::to_hex(expr->addr, seg ? seg->bits : -1);
                 break;
             }
 
@@ -412,40 +412,50 @@ void generate(const Function& f, ILExprList& res, usize maxn) {
 }
 
 void render(const RDILExpr* e, Renderer& renderer) {
-    rdil::to_string(
-        e, [&](const RDILExpr* expr, std::string_view s, WalkType wt) {
-            if(wt == WalkType::MNEMONIC) {
-                switch(expr->op) {
-                    case RDIL_GOTO: renderer.chunk(s, THEME_JUMP); break;
-                    case RDIL_RET: renderer.chunk(s, THEME_RET); break;
-                    case RDIL_NOP: renderer.chunk(s, THEME_NOP); break;
+    rdil::to_string(e,
+                    [&](const RDILExpr* expr, std::string_view s, WalkType wt) {
+                        if(wt == WalkType::MNEMONIC) {
+                            switch(expr->op) {
+                                case RDIL_GOTO:
+                                    renderer.chunk(s, THEME_JUMP);
+                                    break;
+                                case RDIL_RET:
+                                    renderer.chunk(s, THEME_RET);
+                                    break;
+                                case RDIL_NOP:
+                                    renderer.chunk(s, THEME_NOP);
+                                    break;
 
-                    case RDIL_UNKNOWN: {
-                        renderer.chunk(s, THEME_NOP)
-                            .ws()
-                            .chunk("{")
-                            .instr()
-                            .chunk("}");
-                        break;
-                    }
+                                case RDIL_UNKNOWN: {
+                                    renderer.chunk(s, THEME_NOP)
+                                        .ws()
+                                        .chunk("{")
+                                        .instr()
+                                        .chunk("}");
+                                    break;
+                                }
 
-                    default: renderer.chunk(s, THEME_DEFAULT); break;
-                }
+                                default:
+                                    renderer.chunk(s, THEME_DEFAULT);
+                                    break;
+                            }
 
-                return;
-            }
+                            return;
+                        }
 
-            switch(expr->op) {
-                case RDIL_CNST:
-                    renderer.constant(expr->u_value, THEME_CONSTANT);
-                    break;
+                        switch(expr->op) {
+                            case RDIL_CNST:
+                                renderer.constant(expr->u_cnst, THEME_CONSTANT);
+                                break;
 
-                case RDIL_VAR: renderer.addr(expr->address); break;
-                case RDIL_REG: renderer.reg(expr->reg); break;
-                case RDIL_SYM: renderer.chunk(expr->sym, THEME_ADDRESS); break;
-                default: renderer.chunk(s); break;
-            }
-        });
+                            case RDIL_VAR: renderer.addr(expr->addr); break;
+                            case RDIL_REG: renderer.reg(expr->reg); break;
+                            case RDIL_SYM:
+                                renderer.chunk(expr->sym, THEME_ADDRESS);
+                                break;
+                            default: renderer.chunk(s); break;
+                        }
+                    });
 }
 
 } // namespace redasm::rdil

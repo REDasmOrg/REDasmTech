@@ -57,6 +57,9 @@ private:
     RDILExpr* expr_u(RDILOp op, const RDILExpr* u);
     RDILExpr* expr(RDILOp op);
 
+public:
+    RDAddress currentaddress{};
+
 private:
     Pool m_pool;
 };

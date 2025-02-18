@@ -19,7 +19,9 @@ PyObject* ilexpr_to_pyobject(const RDILExpr* e) {
     if(!e) return Py_None;
 
     PyObject* obj = python::new_simplenamespace();
+    PyObject* address = PyLong_FromUnsignedLongLong(e->address);
     PyObject* op = PyLong_FromUnsignedLongLong(e->op);
+    PyObject_SetAttrString(obj, "address", address);
     PyObject_SetAttrString(obj, "op", op);
     Py_DECREF(op);
 
@@ -90,14 +92,14 @@ PyObject* ilexpr_to_pyobject(const RDILExpr* e) {
         }
 
         case RDIL_CNST: {
-            PyObject* val = PyLong_FromUnsignedLongLong(e->u_value);
-            PyObject_SetAttrString(obj, "val", val);
+            PyObject* val = PyLong_FromUnsignedLongLong(e->u_cnst);
+            PyObject_SetAttrString(obj, "cnst", val);
             Py_DECREF(val);
             break;
         }
 
         case RDIL_VAR: {
-            PyObject* addr = PyLong_FromUnsignedLongLong(e->address);
+            PyObject* addr = PyLong_FromUnsignedLongLong(e->addr);
             PyObject_SetAttrString(obj, "addr", addr);
             Py_DECREF(addr);
             break;
@@ -136,12 +138,7 @@ PyObject* rdil_createfunction(PyRDIL* /*self*/, PyObject* args) {
 
     for(usize i = 0; i < rdillist_getsize(exprlist); i++) {
         const RDILExpr* expr = rdillist_at(exprlist, i);
-        PyObject* addr = PyLong_FromUnsignedLongLong(address);
-        PyObject* item = python::new_simplenamespace();
-        PyObject_SetAttrString(item, "address", addr);
-        PyObject_SetAttrString(item, "expr", python::ilexpr_to_pyobject(expr));
-        PyTuple_SET_ITEM(res, i, item);
-        Py_DECREF(addr);
+        PyTuple_SET_ITEM(res, i, python::ilexpr_to_pyobject(expr));
     }
 
     return res;

@@ -69,38 +69,27 @@ typedef enum RDILOp {
 } RDILOp;
 // clang-format on
 
-#define RD_PRIVATE_RDIL_VALUE_FIELDS                                           \
-    uptr value;                                                                \
-    RDAddress address;                                                         \
-    RDOffset offset;                                                           \
-    u64 u_value;                                                               \
-    i64 s_value;                                                               \
-    union {                                                                    \
-        int reg;                                                               \
-        const char* sym;                                                       \
-    };
-
-typedef struct RDILValue {
-    RDILOp type;
-    RD_PRIVATE_RDIL_VALUE_FIELDS
-} RDILValue;
-
 typedef struct RDILExpr {
-    RDILOp op{RDIL_INVALID};
+    RDAddress address;
+    RDILOp op;
 
     union {
-        const RDILExpr *n1{nullptr}, *u, *cond;
+        const RDILExpr *n1, *u, *cond;
+        RDAddress addr;
+        RDOffset off;
+        u64 u_cnst;
+        i64 i_cnst;
+        int reg;
+        const char* sym;
     };
 
     union {
-        const RDILExpr *n2{nullptr}, *dst, *l, *t;
+        const RDILExpr *n2, *dst, *l, *t;
     };
 
     union {
-        const RDILExpr *n3{nullptr}, *src, *r, *f;
+        const RDILExpr *n3, *src, *r, *f;
     };
-
-    RD_PRIVATE_RDIL_VALUE_FIELDS
 } RDILExpr;
 
 REDASM_EXPORT const RDILExpr* rdil_unknown(RDILPool* self);
