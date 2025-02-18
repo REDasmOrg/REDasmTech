@@ -3,7 +3,7 @@
 #include <redasm/common.h>
 #include <redasm/types.h>
 
-REDASM_EXPORT const char* rd_tohex_n(usize val, usize n);
+REDASM_EXPORT const char* rd_tohex_n(usize val, usize bits);
 REDASM_EXPORT const char* rd_tohex(usize val);
 REDASM_EXPORT usize rd_countbits(i64 val);
 REDASM_EXPORT u16 rd_rol16(u16 val, u16 amt);

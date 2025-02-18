@@ -19,14 +19,14 @@ T ror_impl(T val, T amt) {
 
 } // namespace
 
-const char* rd_tohex_n(usize val, usize n) {
-    spdlog::trace("rd_tohex_n({}, {})", val, n);
-    return redasm::utils::to_hex(val, n).data();
+const char* rd_tohex_n(usize val, usize bits) {
+    spdlog::trace("rd_tohex_n({}, {})", val, bits);
+    return redasm::utils::to_hex(val, bits).data();
 }
 
 const char* rd_tohex(usize val) {
     spdlog::trace("rd_tohex({})", val);
-    return redasm::utils::to_hex(val).data();
+    return redasm::utils::to_hex(val, -1).data();
 }
 
 usize rd_countbits(i64 val) {
