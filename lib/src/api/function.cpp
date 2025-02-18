@@ -2,19 +2,27 @@
 #include "../memory/memory.h"
 #include "../state.h"
 #include "marshal.h"
-#include <algorithm>
 #include <redasm/function.h>
 #include <spdlog/spdlog.h>
 
-RDFunction* rd_getfunction(RDAddress address) {
-    spdlog::trace("rd_getfunction({:x})", address);
+RDFunction* rd_findfunction(RDAddress address) {
+    spdlog::trace("rd_findfunction({:x})", address);
     redasm::Context* ctx = redasm::state::context;
 
-    auto it = std::lower_bound(
-        ctx->functions.begin(), ctx->functions.end(), address,
-        [](const redasm::Function& f, usize ep) { return f.address < ep; });
+    auto it = std::ranges::lower_bound(
+        ctx->functions, address,
+        [](RDAddress addr1, RDAddress addr2) { return addr1 < addr2; },
+        [](const redasm::Function& f) { return f.address; });
 
-    if(it != ctx->functions.end() && it->address == address)
+    if(it != ctx->functions.end() && it->contains(address))
+        return redasm::api::to_c(std::addressof(*it));
+
+    if(it != ctx->functions.begin()) {
+        --it;
+        if(it->contains(address)) return redasm::api::to_c(std::addressof(*it));
+    }
+
+    if(it != ctx->functions.end() && it->contains(address))
         return redasm::api::to_c(std::addressof(*it));
 
     return nullptr;

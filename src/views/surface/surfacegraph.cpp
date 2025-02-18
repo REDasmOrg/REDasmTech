@@ -148,7 +148,7 @@ bool SurfaceGraph::seek_to_address(RDAddress address) {
 
 void SurfaceGraph::set_location(const RDSurfaceLocation& loc, bool seek) {
     if(loc.function.valid)
-        m_function = rd_getfunction(loc.function.value);
+        m_function = rd_findfunction(loc.function.value);
     else
         m_function = nullptr;
 

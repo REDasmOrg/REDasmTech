@@ -126,8 +126,8 @@ PyObject* ilexpr_to_pyobject(const RDILExpr* e) {
 PyObject* rdil_createfunction(PyRDIL* /*self*/, PyObject* args) {
     if(!PyLong_Check(args)) return python::type_error(args, "int");
 
-    RDAddress address = PyLong_AsUnsignedLongLong(args);
-    const RDFunction* f = rd_getfunction(address);
+    unsigned long long address = PyLong_AsUnsignedLongLong(args);
+    const RDFunction* f = rd_findfunction(address);
     if(!f) return Py_None;
 
     RDILList* exprlist = rdilist_create();

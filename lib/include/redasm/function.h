@@ -12,7 +12,7 @@ typedef struct RDFunctionBasicBlock {
     RDAddress end;
 } RDFunctionBasicBlock;
 
-REDASM_EXPORT RDFunction* rd_getfunction(RDAddress address);
+REDASM_EXPORT RDFunction* rd_findfunction(RDAddress address);
 REDASM_EXPORT RDAddress rdfunction_getentry(const RDFunction* self);
 REDASM_EXPORT RDGraph* rdfunction_getgraph(RDFunction* self);
 REDASM_EXPORT RDThemeKind rdfunction_gettheme(const RDFunction* self,
