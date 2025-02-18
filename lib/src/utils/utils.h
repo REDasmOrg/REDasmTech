@@ -12,7 +12,7 @@ namespace redasm::utils {
 
 namespace impl {
 
-void detect_base(std::string_view& sv, int* res);
+void detect_base(std::string_view& sv, int& res);
 
 } // namespace impl
 
@@ -73,7 +73,7 @@ static Ret to_hex(T value, int bits = 0) {
 template<typename T = usize>
 [[nodiscard]] tl::optional<T> to_integer(std::string_view sv, int base = 0) {
     if(sv.empty()) return tl::nullopt;
-    impl::detect_base(sv, !base ? &base : nullptr);
+    if(!base) impl::detect_base(sv, base);
 
     T val{};
     auto res = std::from_chars(sv.begin(), sv.end(), val, base);

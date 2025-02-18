@@ -18,7 +18,7 @@ constexpr char PATH_SEPARATOR = '/';
 
 namespace impl {
 
-void detect_base(std::string_view& sv, int* res) {
+void detect_base(std::string_view& sv, int& res) {
     int base = 10;
 
     if(sv.size() > 2 && sv[0] == '0') {
@@ -32,7 +32,7 @@ void detect_base(std::string_view& sv, int* res) {
         sv = sv.substr(2);
     }
 
-    if(res) *res = base;
+    res = base;
 }
 
 } // namespace impl
