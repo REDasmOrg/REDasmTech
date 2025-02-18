@@ -21,7 +21,7 @@ WNDPROC_API = [
 class WndProcAnalyzer:
     id = "wndproc"
     name = "Analyze Window Procedures"
-    flags = redasm.ANA_SELECTED
+    flags = redasm.AF_SELECTED
 
     @staticmethod
     def is_enabled():
@@ -55,9 +55,9 @@ class WndProcAnalyzer:
         vstack = []
 
         for x in func:
-            if x.expr.op == redasm.rdil.PUSH:
-                vstack.insert(0, (x.address, x.expr.u))
-            elif x.expr.op == redasm.rdil.CALL:
+            if x.op == redasm.rdil.PUSH:
+                vstack.insert(0, (x.address, x.u))
+            elif x.op == redasm.rdil.CALL:
                 if x.address == address and argidx < len(vstack):
                     f, wndproc = vstack[argidx]
 
