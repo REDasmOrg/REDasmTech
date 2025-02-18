@@ -90,7 +90,6 @@ bool parse(RDLoader* self, const RDLoaderRequest* req) {
     auto* dex = reinterpret_cast<DexLoader*>(self);
     usize len = rdbuffer_getlength(req->file);
     const u8* data = rdbuffer_getdata(req->file);
-
     dex->dexfile = dexFileParse(data, len, 0);
     return dex->dexfile != nullptr;
 }
