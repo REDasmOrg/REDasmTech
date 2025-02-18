@@ -1,6 +1,5 @@
 #include "database.h"
 #include "../error.h"
-#include "../utils/utils.h"
 #include <cctype>
 #include <filesystem>
 
@@ -372,8 +371,7 @@ tl::optional<uptr> Database::get_userdata(std::string_view k) const {
     return tl::nullopt;
 }
 
-tl::optional<RDAddress> Database::get_address(std::string_view name,
-                                              bool onlydb) const {
+tl::optional<RDAddress> Database::get_address(std::string_view name) const {
     if(name.empty()) return tl::nullopt;
 
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_INDEX, R"(
@@ -386,21 +384,6 @@ tl::optional<RDAddress> Database::get_address(std::string_view name,
 
     if(sql_step(m_db, stmt) == SQLITE_ROW)
         return static_cast<RDAddress>(sqlite3_column_int64(stmt, 0));
-
-    if(onlydb) return tl::nullopt;
-
-    usize idx = name.size();
-
-    while(idx-- > 0) {
-        if(!std::isxdigit(name[idx])) break;
-    }
-
-    if(idx >= name.size() || name.at(idx) != '_') return tl::nullopt;
-
-    if(++idx < name.size()) {
-        std::string_view saddr{name.data() + idx};
-        return utils::to_integer<RDAddress>(saddr, 16);
-    }
 
     return tl::nullopt;
 }

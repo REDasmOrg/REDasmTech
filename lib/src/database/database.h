@@ -35,8 +35,7 @@ public:
     void add_segment(std::string_view name, RDAddress startaddr,
                      RDAddress endaddr, u32 perm, u32 bits);
 
-    tl::optional<RDAddress> get_address(std::string_view name,
-                                        bool onlydb = false) const;
+    tl::optional<RDAddress> get_address(std::string_view name) const;
 
 private:
     sqlite3_stmt* prepare_query(int q, std::string_view s) const;

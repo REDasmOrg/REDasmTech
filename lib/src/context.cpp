@@ -300,8 +300,27 @@ const Function* Context::find_function(RDAddress address) const {
     return nullptr;
 }
 
-tl::optional<RDAddress> Context::get_address(std::string_view name) const {
-    return m_database->get_address(name);
+tl::optional<RDAddress> Context::get_address(std::string_view name,
+                                             bool onlydb) const {
+    auto addr = m_database->get_address(name);
+    if(addr) return addr;
+
+    if(!onlydb) { // Try to extract address from name
+        usize idx = name.size();
+
+        while(idx-- > 0) {
+            if(!std::isxdigit(name[idx])) break;
+        }
+
+        if(idx >= name.size() || name.at(idx) != '_') return tl::nullopt;
+
+        if(++idx < name.size()) {
+            return utils::to_integer<RDAddress>(
+                std::string_view{name.data() + idx}, 16);
+        }
+    }
+
+    return tl::nullopt;
 }
 
 tl::optional<RDType> Context::get_type(RDAddress address) const {
@@ -376,14 +395,14 @@ bool Context::set_name(RDAddress address, const std::string& name,
             return false;
         }
 
-        auto nameidx = m_database->get_address(dbname, true);
+        auto nameidx = this->get_address(dbname, true);
 
         if(nameidx && (flags & SN_FORCE)) {
             usize n = 0;
 
             while(nameidx) {
                 dbname = fmt::format("{}_{}", name, ++n);
-                nameidx = m_database->get_address(dbname, true);
+                nameidx = this->get_address(dbname, true);
             }
         }
         else if(nameidx) {

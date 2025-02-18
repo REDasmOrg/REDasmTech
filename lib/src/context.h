@@ -44,7 +44,8 @@ public: // Database Interface
     bool set_type(RDAddress address, typing::FullTypeName tname, usize flags);
     bool set_type(RDAddress address, RDType t, usize flags);
     bool set_name(RDAddress address, const std::string& name, usize flags);
-    tl::optional<RDAddress> get_address(std::string_view name) const;
+    tl::optional<RDAddress> get_address(std::string_view name,
+                                        bool onlydb = false) const;
     tl::optional<RDType> get_type(RDAddress address) const;
     std::string get_name(RDAddress address) const;
     std::string get_comment(RDAddress address) const;
