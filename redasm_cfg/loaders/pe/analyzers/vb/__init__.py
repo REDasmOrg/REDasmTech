@@ -154,11 +154,11 @@ class VBAnalyzer:
             return
 
         func = redasm.rdil.create_function(ep[0])
-        if (len(func) < 2 or (func[0].expr.op != redasm.rdil.PUSH and
-                              func[1].expr.op != redasm.rdil.CALL)):
+        if (len(func) < 2 or (func[0].op != redasm.rdil.PUSH and
+                              func[1].op != redasm.rdil.CALL)):
             return
 
-        vbaddr = func[0].expr.u.addr
+        vbaddr = func[0].u.addr
         signature = redasm.get_type(vbaddr, "char[4]")
 
         if signature != "VB5!":
