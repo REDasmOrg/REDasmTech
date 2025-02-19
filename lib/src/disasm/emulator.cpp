@@ -106,30 +106,28 @@ u64 Emulator::upd_state(std::string_view s, u64 val, u64 mask) {
 void Emulator::enqueue_flow(RDAddress address) { m_flow = address; }
 
 void Emulator::enqueue_jump(RDAddress address) {
-    // TODO(davide): Snapshot State
-    if(m_qjump.empty() || m_qjump.front() != address)
-        m_qjump.push_back(address);
+    m_qjump.emplace_back(address, m_state);
 }
 
 void Emulator::enqueue_call(RDAddress address) {
-    // TODO(davide): Snapshot State
-    if(m_qcall.empty() || m_qcall.front() != address)
-        m_qcall.push_back(address);
+    m_qcall.emplace_back(address, m_state);
 }
 
 u32 Emulator::tick() {
-    RDAddress address;
-
     if(m_flow) {
-        address = m_flow.value();
+        this->pc = m_flow.value();
         m_flow.reset();
     }
     else if(!m_qjump.empty()) {
-        address = m_qjump.front();
+        const Snapshot& s = m_qjump.front();
+        this->pc = s.first;
+        m_state = s.second;
         m_qjump.pop_front();
     }
     else if(!m_qcall.empty()) {
-        address = m_qcall.front();
+        const Snapshot& s = m_qcall.front();
+        this->pc = s.first;
+        m_state = s.second;
         m_qcall.pop_front();
     }
     else
@@ -140,17 +138,14 @@ u32 Emulator::tick() {
     const RDProcessorPlugin* plugin = ctx->processorplugin;
     assume(plugin);
 
-    this->segment = ctx->program.find_segment(address);
+    this->segment = ctx->program.find_segment(this->pc);
     assume(this->segment);
-    ;
 
-    if(memory::has_flag(this->segment, address, BF_CODE))
-        return memory::get_length(this->segment, address);
-
-    this->pc = address;
+    if(memory::has_flag(this->segment, this->pc, BF_CODE))
+        return memory::get_length(this->segment, this->pc);
 
     RDInstruction instr = {
-        .address = address,
+        .address = this->pc,
         .features = this->ndslot ? IF_DSLOT : IF_NONE,
     };
 
@@ -158,21 +153,21 @@ u32 Emulator::tick() {
         plugin->decode(ctx->processor, &instr);
     else {
         ctx->add_problem(
-            address, fmt::format("decode() not implemented for processor '{}'",
-                                 plugin->name));
+            this->pc, fmt::format("decode() not implemented for processor '{}'",
+                                  plugin->name));
         return 0;
     }
 
     if(instr.length) {
-        memory::unset_n(this->segment, address, instr.length);
+        memory::unset_n(this->segment, this->pc, instr.length);
         assume(plugin->emulate);
         plugin->emulate(ctx->processor, api::to_c(this), &instr);
-        memory::set_n(this->segment, address, instr.length, BF_CODE);
+        memory::set_n(this->segment, this->pc, instr.length, BF_CODE);
 
         if(instr.features & IF_JUMP)
-            memory::set_flag(this->segment, address, BF_JUMP);
+            memory::set_flag(this->segment, this->pc, BF_JUMP);
         if(instr.features & IF_CALL)
-            memory::set_flag(this->segment, address, BF_CALL);
+            memory::set_flag(this->segment, this->pc, BF_CALL);
 
         if(instr.delayslots) this->execute_delayslots(instr);
     }

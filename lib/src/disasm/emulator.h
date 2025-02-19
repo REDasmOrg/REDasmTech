@@ -12,12 +12,14 @@
 
 namespace redasm {
 
-struct EmulatorState {
-    std::unordered_map<int, u64> registers;
-    std::map<std::string, u64, std::less<>> states;
-};
-
 class Emulator {
+    struct State {
+        std::unordered_map<int, u64> registers;
+        std::map<std::string, u64, std::less<>> states;
+    };
+
+    using Snapshot = std::pair<RDAddress, State>;
+
 public:
     Emulator();
     bool has_pending_code() const;
@@ -46,10 +48,10 @@ public:
     u32 ndslot{0}; // =0 no delay slot
 
 private:
-    EmulatorState m_state;
+    State m_state;
     tl::optional<RDAddress> m_flow;
-    std::deque<RDAddress> m_qjump;
-    std::deque<RDAddress> m_qcall;
+    std::deque<Snapshot> m_qjump;
+    std::deque<Snapshot> m_qcall;
 };
 
 } // namespace redasm
