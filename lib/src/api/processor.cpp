@@ -5,6 +5,11 @@
 #include "marshal.h"
 #include <spdlog/spdlog.h>
 
+const RDSegment* rdemulator_getsegment(const RDEmulator* self) {
+    spdlog::trace("rdemulator_getsegment({})", fmt::ptr(self));
+    return redasm::api::from_c(self)->segment;
+}
+
 u32 rdemulator_getdslotinfo(const RDEmulator* self,
                             const RDInstruction** dslot) {
     spdlog::trace("rdemulator_getdslotinfo({}, {})", fmt::ptr(self),
@@ -120,7 +125,7 @@ bool rd_decode(RDAddress address, RDInstruction* instr) {
     spdlog::trace("rd_decode({:x}, {})", address, fmt::ptr(instr));
 
     const redasm::Context* ctx = redasm::state::context;
-    if(!instr || !rd_isaddress(address)) return false;
+    if(!ctx || !instr || !rd_isaddress(address)) return false;
 
     *instr = {
         .address = address,
@@ -128,4 +133,20 @@ bool rd_decode(RDAddress address, RDInstruction* instr) {
 
     ctx->processorplugin->decode(ctx->processor, instr);
     return instr->length > 0;
+}
+
+const char* rd_getregistername(int regid) {
+    spdlog::trace("rd_getregistername({})", regid);
+    static std::string res;
+
+    const redasm::Context* ctx = redasm::state::context;
+    const char* reg = nullptr;
+
+    if(ctx && ctx->processorplugin && ctx->processorplugin->get_registername)
+        reg = ctx->processorplugin->get_registername(ctx->processor, regid);
+
+    if(reg) return reg;
+
+    res = "$" + std::to_string(regid);
+    return res.c_str();
 }

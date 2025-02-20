@@ -52,6 +52,7 @@ typedef struct RDProcessorPlugin {
     RDProcessorPluginRenderInstruction render_instruction;
 } RDProcessorPlugin;
 
+REDASM_EXPORT const RDSegment* rdemulator_getsegment(const RDEmulator* self);
 REDASM_EXPORT u32 rdemulator_getdslotinfo(const RDEmulator* self,
                                           const RDInstruction** dslot);
 REDASM_EXPORT void rdemulator_addregchange(RDEmulator* self, RDAddress addr,
@@ -79,3 +80,4 @@ REDASM_EXPORT Vect(const RDProcessorPlugin*) rd_getprocessorplugins(void);
 REDASM_EXPORT const RDProcessorPlugin* rd_getprocessorplugin(void);
 REDASM_EXPORT const RDProcessor* rd_getprocessor(void);
 REDASM_EXPORT bool rd_decode(RDAddress address, RDInstruction* instr);
+REDASM_EXPORT const char* rd_getregistername(int regid);
