@@ -14,7 +14,6 @@ void RegionsDialog::populate_registers() {
         return;
     }
 
-    for(int regid : m_registers) {
-        m_ui.cbregisters->addItem(QString("reg%1").arg(regid), regid);
-    }
+    for(int regid : m_registers)
+        m_ui.cbregisters->addItem(rd_getregistername(regid), regid);
 }
