@@ -36,6 +36,44 @@ void process_hexdump(Listing& l, RDAddress& address, Function f) {
     if(address > start) l.hex_dump(start, address);
 }
 
+void process_regions() {
+    Context* ctx = state::context;
+    assume(ctx);
+    map_clear(ctx->program.regions);
+
+    Database::RegList regs = ctx->get_changed_regs();
+
+    for(int r : regs) {
+        Database::RegChanges changes = ctx->get_regchanges_from_reg(r);
+
+        std::ranges::sort(changes, [](const Database::RegChange& a,
+                                      const Database::RegChange& b) {
+            return a.address < b.address;
+        });
+
+        Vect(RDRegion) regions = vect_create(RDRegion);
+
+        for(usize i = 0; i < changes.size(); i++) {
+            const Database::RegChange& rc = changes[i];
+            RDAddress start = rc.address, end;
+
+            if(i + 1 < changes.size())
+                end = changes[i + 1].address;
+            else
+                end = static_cast<RDAddress>(-1);
+
+            vect_add(RDRegion, regions,
+                     {
+                         .start = start,
+                         .end = end,
+                         .value = rc.value,
+                     });
+        }
+
+        map_set(RDProgramRegion, ctx->program.regions, r, regions);
+    }
+}
+
 void process_listing_unknown(Listing& l, RDAddress& address) {
     memprocess::process_hexdump(l, address,
                                 [](const RDSegment* seg, RDAddress addr) {
@@ -380,6 +418,8 @@ void merge_code(Emulator* e) {
 }
 
 void process_memory() {
+    memprocess::process_regions();
+
     Context* ctx = state::context;
     FunctionList f;
 
@@ -403,6 +443,8 @@ void process_memory() {
 }
 
 void process_listing() {
+    memprocess::process_regions();
+
     const Context* ctx = state::context;
     assume(ctx);
 

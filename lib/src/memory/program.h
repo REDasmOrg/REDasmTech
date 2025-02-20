@@ -1,6 +1,7 @@
 #pragma once
 
 #include <redasm/buffer.h>
+#include <redasm/program.h>
 #include <redasm/segment.h>
 #include <redasm/types.h>
 #include <string_view>
@@ -16,6 +17,7 @@ struct FileMapping {
 };
 
 struct Program {
+    Program();
     ~Program();
     bool add_segment(std::string_view name, RDAddress start, RDAddress end,
                      u32 perm, u32 bits);
@@ -31,6 +33,7 @@ struct Program {
 
     std::vector<RDSegment> segments;
     std::vector<FileMapping> mappings;
+    Map(RDProgramRegion) regions;
     RDBuffer* file;
 };
 

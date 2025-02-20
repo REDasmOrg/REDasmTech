@@ -323,11 +323,29 @@ tl::optional<RDAddress> Context::get_address(std::string_view name,
     return tl::nullopt;
 }
 
+Database::RegChanges
+Context::get_regchanges_from_addr(RDAddress address) const {
+    return m_database->get_regchanges_from_addr(address);
+}
+
+Database::RegChanges Context::get_regchanges_from_reg(int reg) const {
+    return m_database->get_regchanges_from_reg(reg);
+}
+
+Database::RegList Context::get_changed_regs() const {
+    return m_database->get_changed_regs();
+}
+
+void Context::add_regchange(RDAddress address, int reg, u64 val,
+                            const tl::optional<RDAddress>& fromaddr) {
+    m_database->add_regchange(address, reg, val, fromaddr);
+}
+
 tl::optional<RDType> Context::get_type(RDAddress address) const {
     const RDSegment* seg = this->program.find_segment(address);
 
     if(!seg) {
-        spdlog::warn("get_name: Invalid address");
+        spdlog::warn("get_type: Invalid address");
         return {};
     }
 

@@ -11,7 +11,16 @@ namespace redasm {
 
 struct Database {
 public:
+    struct RegChange {
+        RDAddress address;
+        int reg;
+        u64 value;
+        tl::optional<RDAddress> fromaddr;
+    };
+
     using RefList = std::vector<RDRef>;
+    using RegChanges = std::vector<RegChange>;
+    using RegList = std::vector<int>;
 
 public:
     explicit Database(std::string_view ldrid, std::string_view source);
@@ -31,6 +40,12 @@ public:
     void set_type(RDAddress address, RDType t);
     void set_userdata(std::string_view k, uptr v);
     tl::optional<uptr> get_userdata(std::string_view k) const;
+    RegChanges get_regchanges_from_addr(RDAddress addr) const;
+    RegChanges get_regchanges_from_reg(int reg) const;
+    RegList get_changed_regs() const;
+
+    void add_regchange(RDAddress fromaddr, int reg, u64 val,
+                       const tl::optional<RDAddress>& addr = tl::nullopt);
 
     void add_segment(std::string_view name, RDAddress startaddr,
                      RDAddress endaddr, u32 perm, u32 bits);

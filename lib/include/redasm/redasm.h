@@ -84,7 +84,6 @@ REDASM_EXPORT void rd_status(const char* s);
 REDASM_EXPORT void rd_error(const char* s);
 REDASM_EXPORT bool rd_select(const RDTestResult* tr);
 REDASM_EXPORT void rd_discard(void);
-REDASM_EXPORT usize rd_getsegments(const RDSegment** segments);
 REDASM_EXPORT RDBuffer* rd_getfile(void);
 REDASM_EXPORT const char* rd_rendertext(RDAddress address);
 REDASM_EXPORT bool rd_tooffset(RDAddress address, RDOffset* offset);

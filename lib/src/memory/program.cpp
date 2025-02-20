@@ -15,11 +15,22 @@ bool range_overlaps(T s1, T e1, T s2, T e2) {
 
 } // namespace
 
+Program::Program() {
+    this->regions = map_create(RDProgramRegion);
+
+    map_setitemdel(this->regions, [](MapBucket* b) {
+        auto* pr = reinterpret_cast<RDProgramRegion*>(b);
+        vect_destroy(pr->value);
+    });
+}
+
 Program::~Program() {
     for(RDSegment& s : this->segments) {
         rdbuffer_destroy(s.mem);
         delete[] s.name;
     }
+
+    map_destroy(this->regions);
 }
 
 tl::optional<RDOffset> Program::to_offset(RDAddress address) const {

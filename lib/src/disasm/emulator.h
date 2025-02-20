@@ -31,15 +31,17 @@ public:
     void del_state(std::string_view s);
     u64 take_state(std::string_view s);
     u64 upd_state(std::string_view s, u64 val, u64 mask);
-    void flow(RDAddress address);
     void add_ref(RDAddress toaddr, usize type);
-    void enqueue_flow(RDAddress address);
-    void enqueue_jump(RDAddress address);
-    void enqueue_call(RDAddress address);
+    void add_regchange(RDAddress addr, int reg, u64 val);
+    void flow(RDAddress address);
+    void enqueue_flow(RDAddress address) { m_flow = address; }
+    void enqueue_jump(RDAddress address) { this->enqueue(address, m_qjump); };
+    void enqueue_call(RDAddress address) { this->enqueue(address, m_qcall); };
     u32 tick();
 
 private:
     void execute_delayslots(const RDInstruction& instr);
+    void enqueue(RDAddress address, std::deque<Snapshot>& q) const;
 
 public:
     RDAddress pc{};

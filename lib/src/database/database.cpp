@@ -22,6 +22,10 @@ struct SQLQueries {
         SET_TYPE,
         GET_TYPE,
         ADD_SEGMENT,
+        ADD_REGCHANGE,
+        GET_REGCHANGES_FROM_ADDR,
+        GET_REGCHANGES_FROM_REG,
+        GET_CHANGED_REGS,
         SET_USERDATA,
         GET_USERDATA,
     };
@@ -34,9 +38,11 @@ constexpr std::string_view DATABASE_FILE = "database.sqlite";
 // clang-format off
 template<typename T>
 concept SQLBindable =
+    std::same_as<T, std::nullptr_t> || 
     std::same_as<T, std::string> || 
     std::same_as<T, std::string_view> ||
     std::same_as<T, RDAddress> || 
+    std::same_as<T, int> ||
     std::same_as<T, u64> ||
     std::same_as<T, u32> ||
     std::same_as<T, u8>;
@@ -56,8 +62,11 @@ void sql_bindparam(sqlite3* db, sqlite3_stmt* stmt, std::string_view n,
         res = sqlite3_bind_text(stmt, idx, v.data(), v.size(), SQLITE_STATIC);
     else if constexpr(std::is_same_v<U, RDAddress> || std::is_same_v<U, u64>)
         res = sqlite3_bind_int64(stmt, idx, static_cast<sqlite3_int64>(v));
-    else if constexpr(std::is_same_v<U, u32> || std::is_same_v<U, u8>)
+    else if constexpr(std::is_same_v<U, u32> || std::is_same_v<U, u8> ||
+                      std::is_same_v<U, int>)
         res = sqlite3_bind_int(stmt, idx, static_cast<int>(v));
+    else if constexpr(std::is_same_v<U, std::nullptr_t>)
+        res = sqlite3_bind_null(stmt, idx);
 
     if(res != SQLITE_OK) except("SQL: {}", sqlite3_errmsg(db));
 }
@@ -112,6 +121,14 @@ constexpr std::string_view DB_SCHEMA = R"(
         address INTEGER PRIMARY KEY,
         name TEXT NOT NULL
     );
+
+    CREATE TABLE RegChanges(
+        address INTEGER NOT NULL,
+        reg INTEGER NOT NULL,
+        value INTEGER NOT NULL,
+        fromaddr INTEGER,
+        UNIQUE(address, reg, fromaddr)
+    )
 )";
 
 } // namespace
@@ -165,7 +182,7 @@ sqlite3_stmt* Database::prepare_query(int q, std::string_view s) const {
         if(int rc =
                sqlite3_prepare_v2(m_db, s.data(), s.size(), &stmt, nullptr);
            rc != SQLITE_OK)
-            except("SQL: {}", sqlite3_errmsg(m_db));
+            except("SQL: {}\nQUERY: {}", sqlite3_errmsg(m_db), s);
 
         m_queries[q] = stmt;
     }
@@ -218,6 +235,91 @@ void Database::add_ref(RDAddress fromaddr, RDAddress toaddr, usize type) {
     sql_bindparam(m_db, stmt, ":fromaddr", fromaddr);
     sql_bindparam(m_db, stmt, ":toaddr", toaddr);
     sql_bindparam(m_db, stmt, ":type", type);
+    sql_step(m_db, stmt);
+}
+
+Database::RegChanges Database::get_regchanges_from_addr(RDAddress addr) const {
+    sqlite3_stmt* stmt =
+        this->prepare_query(SQLQueries::GET_REGCHANGES_FROM_ADDR, R"(
+        SELECT reg, value, fromaddr
+        FROM RegChanges
+        WHERE address = :address
+    )");
+
+    sql_bindparam(m_db, stmt, ":address", addr);
+
+    RegChanges rc;
+
+    while(sql_step(m_db, stmt) == SQLITE_ROW) {
+        tl::optional<RDAddress> fromaddr = tl::nullopt;
+        if(sqlite3_column_type(stmt, 2) != SQLITE_NULL)
+            fromaddr = static_cast<RDAddress>(sqlite3_column_int64(stmt, 2));
+
+        rc.emplace_back(addr, sqlite3_column_int(stmt, 0),
+                        static_cast<u64>(sqlite3_column_int64(stmt, 1)),
+                        fromaddr);
+    }
+
+    return rc;
+}
+
+Database::RegChanges Database::get_regchanges_from_reg(int reg) const {
+    sqlite3_stmt* stmt =
+        this->prepare_query(SQLQueries::GET_REGCHANGES_FROM_REG, R"(
+        SELECT address, value, fromaddr
+        FROM RegChanges
+        WHERE reg = :reg
+    )");
+
+    sql_bindparam(m_db, stmt, ":reg", reg);
+
+    RegChanges rc;
+
+    while(sql_step(m_db, stmt) == SQLITE_ROW) {
+        tl::optional<RDAddress> fromaddr = tl::nullopt;
+        if(sqlite3_column_type(stmt, 2) != SQLITE_NULL)
+            fromaddr = static_cast<RDAddress>(sqlite3_column_int64(stmt, 2));
+
+        rc.emplace_back(static_cast<u64>(sqlite3_column_int64(stmt, 0)), reg,
+                        static_cast<u64>(sqlite3_column_int64(stmt, 1)),
+                        fromaddr);
+    }
+
+    return rc;
+}
+
+Database::RegList Database::get_changed_regs() const {
+    sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_CHANGED_REGS, R"(
+        SELECT DISTINCT reg
+        FROM RegChanges
+    )");
+
+    Database::RegList changedregs;
+
+    while(sql_step(m_db, stmt) == SQLITE_ROW)
+        changedregs.emplace_back(sqlite3_column_int(stmt, 0));
+
+    return changedregs;
+}
+
+void Database::add_regchange(RDAddress addr, int reg, u64 val,
+                             const tl::optional<RDAddress>& fromaddr) {
+    sqlite3_stmt* stmt = this->prepare_query(SQLQueries::ADD_REGCHANGE, R"(
+        INSERT INTO RegChanges (address, reg, val, fromaddr) 
+            VALUES (:address, :reg, :val, :fromaddr)
+        ON CONFLICT DO 
+            UPDATE SET reg = EXCLUDED.reg
+    )");
+
+    sql_bindparam(m_db, stmt, ":address", addr);
+    sql_bindparam(m_db, stmt, ":reg", reg);
+    sql_bindparam(m_db, stmt, ":val", val);
+
+    if(fromaddr.has_value())
+        sql_bindparam(m_db, stmt, ":fromaddr", *fromaddr);
+    else
+        sql_bindparam(m_db, stmt, ":fromaddr", nullptr);
+
     sql_step(m_db, stmt);
 }
 

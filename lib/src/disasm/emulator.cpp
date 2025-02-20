@@ -44,6 +44,10 @@ void Emulator::add_ref(RDAddress toaddr, usize type) { // NOLINT
     state::context->add_ref(this->pc, toaddr, type);
 }
 
+void Emulator::add_regchange(RDAddress addr, int reg, u64 val) {
+    state::context->add_regchange(addr, reg, val, this->pc);
+}
+
 u64 Emulator::get_reg(int regid) const {
     auto it = m_state.registers.find(regid);
     if(it != m_state.registers.end()) return it->second;
@@ -101,16 +105,6 @@ u64 Emulator::upd_state(std::string_view s, u64 val, u64 mask) {
     }
 
     except("State '{}' not found", s);
-}
-
-void Emulator::enqueue_flow(RDAddress address) { m_flow = address; }
-
-void Emulator::enqueue_jump(RDAddress address) {
-    m_qjump.emplace_back(address, m_state);
-}
-
-void Emulator::enqueue_call(RDAddress address) {
-    m_qcall.emplace_back(address, m_state);
 }
 
 u32 Emulator::tick() {
@@ -193,6 +187,22 @@ void Emulator::execute_delayslots(const RDInstruction& instr) {
     }
 
     this->ndslot = 0;
+}
+
+void Emulator::enqueue(RDAddress address, std::deque<Snapshot>& q) const {
+    Database::RegChanges rc = state::context->get_regchanges_from_addr(address);
+
+    if(rc.empty()) {
+        q.emplace_back(address, m_state);
+        return;
+    }
+
+    State newstate = m_state;
+
+    for(const Database::RegChange& rc : rc)
+        newstate.registers[rc.reg] = rc.value;
+
+    q.emplace_back(address, newstate);
 }
 
 bool Emulator::has_pending_code() const {

@@ -44,8 +44,6 @@ public: // Database Interface
     bool set_type(RDAddress address, typing::FullTypeName tname, usize flags);
     bool set_type(RDAddress address, RDType t, usize flags);
     bool set_name(RDAddress address, const std::string& name, usize flags);
-    tl::optional<RDAddress> get_address(std::string_view name,
-                                        bool onlydb = false) const;
     tl::optional<RDType> get_type(RDAddress address) const;
     std::string get_name(RDAddress address) const;
     std::string get_comment(RDAddress address) const;
@@ -53,6 +51,15 @@ public: // Database Interface
     Database::RefList get_refs_from(RDAddress fromaddr) const;
     Database::RefList get_refs_to_type(RDAddress fromaddr, usize type) const;
     Database::RefList get_refs_to(RDAddress toaddr) const;
+    Database::RegChanges get_regchanges_from_addr(RDAddress address) const;
+    Database::RegChanges get_regchanges_from_reg(int reg) const;
+    Database::RegList get_changed_regs() const;
+
+    tl::optional<RDAddress> get_address(std::string_view name,
+                                        bool onlydb = false) const;
+
+    void add_regchange(RDAddress address, int reg, u64 val,
+                       const tl::optional<RDAddress>& fromaddr = tl::nullopt);
 
 public: // Plugins
     const RDLoaderPlugin* loaderplugin{nullptr};

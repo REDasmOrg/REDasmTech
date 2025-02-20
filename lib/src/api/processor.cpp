@@ -14,6 +14,13 @@ u32 rdemulator_getdslotinfo(const RDEmulator* self,
     return e->ndslot;
 }
 
+void rdemulator_addregchange(RDEmulator* self, RDAddress addr, int reg,
+                             u64 val) {
+    spdlog::trace("rdemulator_addregchange({}, {}, {}, {})", fmt::ptr(self),
+                  addr, reg, val);
+    redasm::api::from_c(self)->add_regchange(addr, reg, val);
+}
+
 void rdemulator_flow(RDEmulator* self, RDAddress flowaddr) {
     spdlog::trace("rdemulator_flow({}, {:x})", fmt::ptr(self), flowaddr);
     if(redasm::state::context) redasm::api::from_c(self)->flow(flowaddr);

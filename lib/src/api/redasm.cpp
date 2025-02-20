@@ -328,13 +328,6 @@ RDValue* rd_gettypename(RDAddress address, const char* tname) {
     return nullptr;
 }
 
-usize rd_getsegments(const RDSegment** segments) {
-    spdlog::trace("rd_getsegments({})", fmt::ptr(segments));
-    if(!redasm::state::context) return 0;
-    if(segments) *segments = redasm::state::context->program.segments.data();
-    return redasm::state::context->program.segments.size();
-}
-
 bool rd_setcomment(RDAddress address, const char* comment) {
     spdlog::trace("rd_setcomment({:x}, '{}')", address, comment);
 
