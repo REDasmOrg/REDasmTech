@@ -20,7 +20,6 @@ struct AboutDialog {
 
         this->lbllogo = new QLabel();
         this->lbltitle = new QLabel();
-
         this->txbabout = new QTextBrowser();
 
         this->buttonbox = new QDialogButtonBox(QDialogButtonBox::Close);

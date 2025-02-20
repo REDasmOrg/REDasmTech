@@ -31,11 +31,11 @@ struct TableDialog {
         QObject::connect(this->buttonbox, &QDialogButtonBox::rejected, self,
                          &QDialog::reject);
 
-        auto* vboxlayout = new QVBoxLayout(self);
-        vboxlayout->addWidget(this->lesearch);
-        vboxlayout->addWidget(this->lbldescription);
-        vboxlayout->addWidget(this->tvtable);
-        vboxlayout->addWidget(this->buttonbox);
+        auto* vbox = new QVBoxLayout(self);
+        vbox->addWidget(this->lesearch);
+        vbox->addWidget(this->lbldescription);
+        vbox->addWidget(this->tvtable);
+        vbox->addWidget(this->buttonbox);
     }
 };
 
