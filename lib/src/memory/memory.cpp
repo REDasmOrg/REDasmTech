@@ -54,6 +54,12 @@ tl::optional<RDAddress> get_next(const RDSegment* self, RDAddress address) {
     return tl::nullopt;
 }
 
+tl::optional<RDAddress> get_prev(const RDSegment* self, RDAddress address) {
+    if(address <= self->start || address > self->end) return tl::nullopt;
+    if(auto r = memory::find_range(self, address - 1); r) return r->first;
+    return tl::nullopt;
+}
+
 bool is_unknown(const RDSegment* self, RDAddress address) {
     return mbyte::is_unknown(self->mem->m_data[address - self->start]);
 }

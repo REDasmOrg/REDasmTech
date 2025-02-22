@@ -120,6 +120,7 @@ bool range_is(const RDSegment* self, RDAddress address, usize n, Function f) {
 
 usize get_length(const RDSegment* self, RDAddress address);
 tl::optional<RDAddress> get_next(const RDSegment* self, RDAddress address);
+tl::optional<RDAddress> get_prev(const RDSegment* self, RDAddress address);
 bool is_unknown(const RDSegment* self, RDAddress address);
 bool has_common(const RDSegment* self, RDAddress address);
 bool has_byte(const RDSegment* self, RDAddress address);
