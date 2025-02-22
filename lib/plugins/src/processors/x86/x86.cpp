@@ -2,6 +2,7 @@
 #include "x86_lifter.h"
 #include <Zydis/Zydis.h>
 #include <array>
+#include <iostream>
 #include <redasm/redasm.h>
 
 namespace {
@@ -52,19 +53,57 @@ void apply_optype(const ZydisDecodedOperand& zop, RDOperand& op) {
     if(op.dtype.id && zop.element_count > 1) op.dtype.n = zop.element_count;
 }
 
-bool is_branch_instruction(const RDInstruction* instr) {
-    return (instr->features & (IF_JUMP | IF_CALL));
-}
+bool is_segment_reg(const RDOperand& op) {
+    if(op.type != OP_REG) return false;
 
-bool is_addr_instruction(const RDInstruction* instr) {
-    switch(instr->id) {
-        case ZYDIS_MNEMONIC_PUSH:
-        case ZYDIS_MNEMONIC_MOV: return true;
+    switch(op.reg) {
+        case ZYDIS_REGISTER_ES:
+        case ZYDIS_REGISTER_CS:
+        case ZYDIS_REGISTER_SS:
+        case ZYDIS_REGISTER_DS:
+        case ZYDIS_REGISTER_FS:
+        case ZYDIS_REGISTER_GS: return true;
 
         default: break;
     }
 
     return false;
+}
+
+bool is_branch_instruction(const RDInstruction* instr) {
+    return (instr->features & (IF_JUMP | IF_CALL));
+}
+
+bool maybe_addr(const RDInstruction* instr) {
+    switch(instr->id) {
+        case ZYDIS_MNEMONIC_PUSH: break;
+        default: return false;
+    }
+
+    return true;
+}
+
+void track_segment_reg(RDEmulator* e, const RDInstruction* instr) {
+    RDInstruction previnstr;
+    if(!rd_decode_prev(instr->address, &previnstr)) return;
+
+    if(previnstr.id != ZYDIS_MNEMONIC_PUSH ||
+       !is_segment_reg(previnstr.operands[0]))
+        return;
+
+    int chgreg = instr->operands[0].reg;
+
+    if(previnstr.operands[0].reg == ZYDIS_REGISTER_CS) {
+        const RDSegment* seg = rdemulator_getsegment(e);
+        if(seg) {
+            rdemulator_addregchange(e, instr->address + instr->length, chgreg,
+                                    seg->start);
+        }
+    }
+    else {
+        u64 val = rdemulator_getreg(e, previnstr.operands[0].reg);
+        rdemulator_addregchange(e, instr->address + instr->length, chgreg, val);
+    }
 }
 
 void decode(RDProcessor* proc, RDInstruction* instr) {
@@ -124,8 +163,7 @@ void decode(RDProcessor* proc, RDInstruction* instr) {
                     op.type = OP_ADDR;
                     op.addr = addr;
                 }
-                else if(is_addr_instruction(instr) &&
-                        rd_isaddress(zop.imm.value.u)) {
+                else if(maybe_addr(instr) && rd_isaddress(zop.imm.value.u)) {
                     op.type = OP_ADDR;
                     op.addr = zop.imm.value.u;
                 }
@@ -253,33 +291,50 @@ void render_instruction(const RDProcessor* /*self*/, RDRenderer* r,
 }
 
 void emulate(RDProcessor* /*self*/, RDEmulator* e, const RDInstruction* instr) {
-    foreach_operand(i, op, instr) {
-        switch(op->type) {
-            case OP_ADDR: {
-                if(instr->features & IF_JUMP)
-                    rdemulator_addref(e, op->addr, CR_JUMP);
-                else if(instr->features & IF_CALL)
-                    rdemulator_addref(e, op->addr, CR_CALL);
-                else
-                    rdemulator_addref(e, op->addr, DR_ADDRESS);
-                break;
-            }
-
-            case OP_MEM: {
-                if(instr->features & IF_JUMP) {
-                    auto addr = x86_common::read_address(op->mem);
-                    if(addr) rdemulator_addref(e, *addr, CR_JUMP);
-                }
-                else if(instr->features & IF_CALL) {
-                    auto addr = x86_common::read_address(op->mem);
-                    if(addr) rdemulator_addref(e, *addr, CR_CALL);
+    if(instr->id == ZYDIS_MNEMONIC_POP && is_segment_reg(instr->operands[0])) {
+        track_segment_reg(e, instr);
+    }
+    else {
+        foreach_operand(i, op, instr) {
+            switch(op->type) {
+                case OP_ADDR: {
+                    if(instr->features & IF_JUMP)
+                        rdemulator_addref(e, op->addr, CR_JUMP);
+                    else if(instr->features & IF_CALL)
+                        rdemulator_addref(e, op->addr, CR_CALL);
+                    else
+                        rdemulator_addref(e, op->addr, DR_ADDRESS);
+                    break;
                 }
 
-                rdemulator_addref(e, op->mem, DR_READ);
-                break;
-            }
+                case OP_MEM: {
+                    if(instr->features & IF_JUMP) {
+                        auto addr = x86_common::read_address(op->mem);
+                        if(addr) rdemulator_addref(e, *addr, CR_JUMP);
+                    }
+                    else if(instr->features & IF_CALL) {
+                        auto addr = x86_common::read_address(op->mem);
+                        if(addr) rdemulator_addref(e, *addr, CR_CALL);
+                    }
 
-            default: break;
+                    rdemulator_addref(e, op->mem, DR_READ);
+                    break;
+                }
+
+                case OP_REG: {
+                    if(!i && op->reg == ZYDIS_REGISTER_DS) {
+                        std::cout << "DS CHANGE IN " << std::hex
+                                  << instr->address << '\n';
+                    }
+                    else if(!i && op->reg == ZYDIS_REGISTER_CS) {
+                        std::cout << "CS CHANGE IN " << std::hex
+                                  << instr->address << '\n';
+                    }
+                    break;
+                }
+
+                default: break;
+            }
         }
     }
 
