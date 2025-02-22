@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../models/regionsmodel.h"
 #include "../ui/regionsdialog.h"
 #include <QDialog>
 #include <QSet>
@@ -14,8 +15,12 @@ public:
 private:
     void populate_registers();
 
+private Q_SLOTS:
+    void populate_regions();
+
 private:
+    ui::RegionsDialog m_ui;
     QSet<int> m_registers;
     const Map(RDProgramRegion) m_regions;
-    ui::RegionsDialog m_ui;
+    RegionsModel* m_regionsmodel;
 };
