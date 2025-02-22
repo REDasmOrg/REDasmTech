@@ -2,6 +2,7 @@
 #include "../api/marshal.h"
 #include "../context.h"
 #include "../error.h"
+#include "../memory/mbyte.h"
 #include "../memory/memory.h"
 #include "../state.h"
 
@@ -129,9 +130,6 @@ u32 Emulator::tick() {
 
     Context* ctx = state::context;
 
-    const RDProcessorPlugin* plugin = ctx->processorplugin;
-    assume(plugin);
-
     this->segment = ctx->program.find_segment(this->pc);
     assume(this->segment);
 
@@ -139,20 +137,15 @@ u32 Emulator::tick() {
         return memory::get_length(this->segment, this->pc);
 
     RDInstruction instr = {
-        .address = this->pc,
         .features = this->ndslot ? IF_DSLOT : IF_NONE,
     };
 
-    if(plugin->decode)
-        plugin->decode(ctx->processor, &instr);
-    else {
-        ctx->add_problem(
-            this->pc, fmt::format("decode() not implemented for processor '{}'",
-                                  plugin->name));
-        return 0;
-    }
+    if(!this->decode(this->pc, instr)) return 0;
 
     if(instr.length) {
+        const RDProcessorPlugin* plugin = ctx->processorplugin;
+        assume(plugin);
+
         memory::unset_n(this->segment, this->pc, instr.length);
         assume(plugin->emulate);
         plugin->emulate(ctx->processor, api::to_c(this), &instr);
@@ -203,6 +196,37 @@ void Emulator::enqueue(RDAddress address, std::deque<Snapshot>& q) const {
         newstate.registers[rc.reg] = rc.value;
 
     q.emplace_back(address, newstate);
+}
+
+bool Emulator::decode_prev(RDAddress address, RDInstruction& instr) const {
+    RDSegment* seg = state::context->program.find_segment(address);
+    if(!seg || seg->start == address) return false;
+
+    auto mb = memory::get_mbyte(seg, address - 1);
+    if(!mb || !mbyte::has_byte(*mb) || !mbyte::is_code(*mb)) return false;
+
+    if(auto prevaddr = memory::get_prev(seg, address); prevaddr)
+        return this->decode(*prevaddr, instr);
+
+    return false;
+}
+
+bool Emulator::decode(RDAddress address, RDInstruction& instr) const {
+    const RDProcessorPlugin* plugin = state::context->processorplugin;
+    assume(plugin);
+
+    instr.address = address;
+
+    if(plugin->decode)
+        plugin->decode(state::context->processor, &instr);
+    else {
+        state::context->add_problem(
+            address, fmt::format("decode() not implemented for processor '{}'",
+                                 plugin->name));
+        return false;
+    }
+
+    return instr.length > 0;
 }
 
 bool Emulator::has_pending_code() const {

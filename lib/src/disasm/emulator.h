@@ -22,6 +22,8 @@ class Emulator {
 
 public:
     Emulator();
+    bool decode_prev(RDAddress address, RDInstruction& instr) const;
+    bool decode(RDAddress address, RDInstruction& instr) const;
     bool has_pending_code() const;
     u64 get_reg(int regid) const;
     void set_reg(int regid, u64 val);

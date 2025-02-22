@@ -121,18 +121,21 @@ const RDProcessor* rd_getprocessor() {
     return nullptr;
 }
 
+bool rd_decode_prev(RDAddress address, RDInstruction* instr) {
+    spdlog::trace("rd_decode_prev({:x}, {})", address, fmt::ptr(instr));
+
+    const redasm::Context* ctx = redasm::state::context;
+    if(ctx && instr) return ctx->worker->emulator.decode_prev(address, *instr);
+    return false;
+}
+
 bool rd_decode(RDAddress address, RDInstruction* instr) {
     spdlog::trace("rd_decode({:x}, {})", address, fmt::ptr(instr));
 
     const redasm::Context* ctx = redasm::state::context;
-    if(!ctx || !instr || !rd_isaddress(address)) return false;
-
-    *instr = {
-        .address = address,
-    };
-
-    ctx->processorplugin->decode(ctx->processor, instr);
-    return instr->length > 0;
+    if(ctx && instr && rd_isaddress(address))
+        return ctx->worker->emulator.decode(address, *instr);
+    return false;
 }
 
 const char* rd_getregistername(int regid) {

@@ -20,6 +20,11 @@ typedef enum RDRefType {
     CR_JUMP,
 } RDRefType;
 
+typedef enum RDProcessorFlags {
+    PF_LITTLE = 0,
+    PF_BIG = (1u << 1),
+} RDProcessorFlags;
+
 typedef struct RDRef {
     RDAddress address;
     usize type;
@@ -79,5 +84,6 @@ REDASM_EXPORT bool rd_registerprocessor_ex(const RDProcessorPlugin* plugin,
 REDASM_EXPORT Vect(const RDProcessorPlugin*) rd_getprocessorplugins(void);
 REDASM_EXPORT const RDProcessorPlugin* rd_getprocessorplugin(void);
 REDASM_EXPORT const RDProcessor* rd_getprocessor(void);
+REDASM_EXPORT bool rd_decode_prev(RDAddress address, RDInstruction* instr);
 REDASM_EXPORT bool rd_decode(RDAddress address, RDInstruction* instr);
 REDASM_EXPORT const char* rd_getregistername(int regid);
