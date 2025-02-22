@@ -113,8 +113,6 @@ inline RDILList* to_c(rdil::ILExprList* arg) {
     return reinterpret_cast<RDILList*>(arg);
 }
 
-RDFunctionBasicBlock to_c(const Function::BasicBlock* bb);
-
 } // namespace api
 
 } // namespace redasm

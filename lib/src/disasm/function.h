@@ -1,18 +1,20 @@
 #pragma once
 
 #include "../graph/styledgraph.h"
+#include <redasm/function.h>
 #include <redasm/theme.h>
 #include <vector>
 
 namespace redasm {
 
 struct Function {
-    struct BasicBlock {
-        BasicBlock(RDGraphNode n, RDAddress s): node{n}, start{s}, end{s} {}
+    struct BasicBlock: public RDBasicBlock {
+        BasicBlock(RDGraphNode n, RDAddress s): node{n} {
+            this->start = s;
+            this->end = s;
+        }
 
         RDGraphNode node;
-        RDAddress start;
-        RDAddress end;
         std::unordered_map<RDGraphNode, RDThemeKind> theme;
     };
 
@@ -42,8 +44,9 @@ struct Function {
     RDAddress address;
     StyledGraph graph;
     Blocks blocks;
-};
 
-using FunctionList = std::vector<Function>;
+    // Stack Information
+    u64 framesize;
+};
 
 } // namespace redasm

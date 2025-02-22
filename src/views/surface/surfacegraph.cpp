@@ -92,11 +92,11 @@ void SurfaceGraph::update_node(GraphViewNode* item) {
 }
 
 GraphViewNode* SurfaceGraph::create_node(RDGraphNode n, const RDGraph*) {
-    RDFunctionBasicBlock bb;
+    const RDBasicBlock* bb = rdfunction_getbasicblock(m_function, n);
 
-    if(rdfunction_getbasicblock(m_function, n, &bb)) {
+    if(bb) {
         auto* g = new SurfaceGraphNode(m_surface, bb, n, m_function, this);
-        g->setObjectName(QString::number(bb.start, 16));
+        g->setObjectName(QString::number(bb->start, 16));
 
         connect(g, &SurfaceGraphNode::follow_requested, this, [&]() {
             RDAddress address;

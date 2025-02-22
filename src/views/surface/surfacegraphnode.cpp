@@ -11,11 +11,10 @@ constexpr int DROP_SHADOW_SIZE = 10;
 
 }
 
-SurfaceGraphNode::SurfaceGraphNode(RDSurface* surface,
-                                   const RDFunctionBasicBlock& fbb,
+SurfaceGraphNode::SurfaceGraphNode(RDSurface* surface, const RDBasicBlock* bb,
                                    RDGraphNode n, RDFunction* f,
                                    QWidget* parent)
-    : GraphViewNode{n, rdfunction_getgraph(f), parent}, m_basicblock{fbb},
+    : GraphViewNode{n, rdfunction_getgraph(f), parent}, m_basicblock{bb},
       m_surface{surface} {
     m_document.setDefaultFont(REDasmSettings::font());
     m_document.setUndoRedoEnabled(false);
@@ -24,7 +23,7 @@ SurfaceGraphNode::SurfaceGraphNode(RDSurface* surface,
 }
 
 bool SurfaceGraphNode::contains_address(RDAddress address) const {
-    return address >= m_basicblock.start && address <= m_basicblock.end;
+    return address >= m_basicblock->start && address <= m_basicblock->end;
 }
 
 int SurfaceGraphNode::current_row() const {
@@ -75,8 +74,8 @@ void SurfaceGraphNode::mousemove_event(QMouseEvent* e) {
 
 void SurfaceGraphNode::update_document() {
     if(m_surface) {
-        int startidx = rdsurface_indexof(m_surface, m_basicblock.start);
-        int endidx = rdsurface_lastindexof(m_surface, m_basicblock.end);
+        int startidx = rdsurface_indexof(m_surface, m_basicblock->start);
+        int endidx = rdsurface_lastindexof(m_surface, m_basicblock->end);
         if(startidx == -1 || endidx == -1) return;
 
         usize nmaxcol = utils::draw_surface(m_surface, &m_document, startidx,
@@ -94,7 +93,7 @@ void SurfaceGraphNode::get_surface_pos(const QPointF& pt,
 }
 
 int SurfaceGraphNode::start_row() const {
-    return rdsurface_indexof(m_surface, m_basicblock.start);
+    return rdsurface_indexof(m_surface, m_basicblock->start);
 }
 
 void SurfaceGraphNode::render(QPainter* painter, usize state) {

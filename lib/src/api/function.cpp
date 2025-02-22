@@ -8,24 +8,7 @@
 RDFunction* rd_findfunction(RDAddress address) {
     spdlog::trace("rd_findfunction({:x})", address);
     redasm::Context* ctx = redasm::state::context;
-
-    auto it = std::ranges::lower_bound(
-        ctx->functions, address,
-        [](RDAddress addr1, RDAddress addr2) { return addr1 < addr2; },
-        [](const redasm::Function& f) { return f.address; });
-
-    if(it != ctx->functions.end() && it->contains(address))
-        return redasm::api::to_c(std::addressof(*it));
-
-    if(it != ctx->functions.begin()) {
-        --it;
-        if(it->contains(address)) return redasm::api::to_c(std::addressof(*it));
-    }
-
-    if(it != ctx->functions.end() && it->contains(address))
-        return redasm::api::to_c(std::addressof(*it));
-
-    return nullptr;
+    return redasm::api::to_c(ctx->program.find_function(address));
 }
 
 RDAddress rdfunction_getentry(const RDFunction* self) {
@@ -65,16 +48,8 @@ bool rdfunction_contains(const RDFunction* self, RDAddress address) {
            redasm::api::from_c(self)->contains(address);
 }
 
-bool rdfunction_getbasicblock(const RDFunction* self, RDGraphNode n,
-                              RDFunctionBasicBlock* bb) {
-    spdlog::trace("rdfunction_getbasicblock({}, {}, {})", fmt::ptr(self), n,
-                  fmt::ptr(bb));
-    const redasm::Function* f = redasm::api::from_c(self);
-
-    if(const auto* res = f->get_basic_block(n); res) {
-        if(bb) *bb = redasm::api::to_c(res);
-        return true;
-    }
-
-    return false;
+const RDBasicBlock* rdfunction_getbasicblock(const RDFunction* self,
+                                             RDGraphNode n) {
+    spdlog::trace("rdfunction_getbasicblock({}, {})", fmt::ptr(self), n);
+    return redasm::api::from_c(self)->get_basic_block(n);
 }

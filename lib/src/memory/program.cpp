@@ -167,4 +167,21 @@ RDSegment* Program::find_segment(RDAddress address) {
     return nullptr;
 }
 
+Function* Program::find_function(RDAddress address) {
+    auto it = std::ranges::lower_bound(
+        this->functions, address,
+        [](RDAddress addr1, RDAddress addr2) { return addr1 < addr2; },
+        [](const redasm::Function& f) { return f.address; });
+
+    if(it != this->functions.end() && it->contains(address))
+        return std::addressof(*it);
+
+    if(it != this->functions.begin()) {
+        --it;
+        if(it->contains(address)) return std::addressof(*it);
+    }
+
+    return nullptr;
+}
+
 } // namespace redasm

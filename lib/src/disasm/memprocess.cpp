@@ -221,7 +221,8 @@ void process_unknown_data(Context* ctx, RDSegment* seg, RDAddress& address) {
     }
 }
 
-void process_function_graph(const Context* ctx, FunctionList& functions,
+void process_function_graph(const Context* ctx,
+                            std::vector<Function>& functions,
                             RDAddress address) {
     spdlog::info("Creating function graph @ {:x}", address);
 
@@ -315,7 +316,8 @@ void process_function_graph(const Context* ctx, FunctionList& functions,
 }
 
 void process_listing_code(const Context* ctx, Listing& l,
-                          FunctionList& functions, RDAddress& address) {
+                          std::vector<Function>& functions,
+                          RDAddress& address) {
     const RDSegment* seg = l.current_segment();
     assume(seg);
     assume(memory::has_flag(seg, address, BF_CODE));
@@ -421,7 +423,7 @@ void process_memory() {
     memprocess::process_regions();
 
     Context* ctx = state::context;
-    FunctionList f;
+    std::vector<Function> f;
 
     for(RDSegment& seg : ctx->program.segments) {
         for(RDAddress address = seg.start; address < seg.end;) {
@@ -439,7 +441,7 @@ void process_memory() {
         }
     }
 
-    state::context->functions = std::move(f);
+    state::context->program.functions = std::move(f);
 }
 
 void process_listing() {
@@ -449,7 +451,7 @@ void process_listing() {
     assume(ctx);
 
     Listing l;
-    FunctionList f;
+    std::vector<Function> f;
 
     for(const RDSegment& seg : ctx->program.segments) {
         l.segment(&seg);
@@ -477,7 +479,7 @@ void process_listing() {
     }
 
     spdlog::info("Listing completed ({} items)", l.size());
-    state::context->functions = std::move(f);
+    state::context->program.functions = std::move(f);
     state::context->listing = std::move(l);
 }
 

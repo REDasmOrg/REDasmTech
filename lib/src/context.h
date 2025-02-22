@@ -1,7 +1,6 @@
 #pragma once
 
 #include "database/database.h"
-#include "disasm/function.h"
 #include "disasm/worker.h"
 #include "listing.h"
 #include "memory/program.h"
@@ -35,7 +34,6 @@ public:
     tl::optional<uptr> get_userdata(const std::string& k) const;
     bool set_function(RDAddress address, usize flags);
     bool set_entry(RDAddress address, const std::string& name = {});
-    const Function* find_function(RDAddress address) const;
     void add_problem(RDAddress address, std::string_view s);
 
 public: // Database Interface
@@ -74,7 +72,6 @@ public:
     Vect(RDProblem) problems {};
     std::vector<RDAddress> entrypoints;
     Worker* worker{nullptr};
-    FunctionList functions;
     Listing listing;
     typing::Types types;
     int minstring{DEFAULT_MIN_STRING};

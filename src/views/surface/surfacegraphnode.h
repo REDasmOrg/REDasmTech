@@ -8,9 +8,9 @@ class SurfaceGraphNode: public GraphViewNode {
     Q_OBJECT
 
 public:
-    explicit SurfaceGraphNode(RDSurface* surface,
-                              const RDFunctionBasicBlock& fbb, RDGraphNode n,
-                              RDFunction* f, QWidget* parent = nullptr);
+    explicit SurfaceGraphNode(RDSurface* surface, const RDBasicBlock* bb,
+                              RDGraphNode n, RDFunction* f,
+                              QWidget* parent = nullptr);
     [[nodiscard]] bool contains_address(RDAddress address) const;
     [[nodiscard]] int current_row() const override;
     [[nodiscard]] QSize size() const override;
@@ -30,7 +30,7 @@ Q_SIGNALS:
     void follow_requested();
 
 private:
-    RDFunctionBasicBlock m_basicblock;
+    const RDBasicBlock* m_basicblock;
     QTextDocument m_document;
     RDSurface* m_surface;
     int m_maxwidth{};

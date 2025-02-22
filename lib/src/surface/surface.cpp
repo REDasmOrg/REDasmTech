@@ -130,7 +130,7 @@ const RDSegment* Surface::current_segment() const {
 
 const Function* Surface::current_function() const {
     if(auto address = this->current_address(); address)
-        return state::context->find_function(*address);
+        return state::context->program.find_function(*address);
     return nullptr;
 }
 
@@ -649,7 +649,7 @@ void Surface::render_function(const ListingItem& item) {
     const RDProcessorPlugin* p = ctx->processorplugin;
     assume(p);
 
-    const Function* f = state::context->find_function(item.address);
+    const Function* f = state::context->program.find_function(item.address);
     assume(f);
 
     if(p->render_function)

@@ -290,16 +290,6 @@ bool Context::set_type(RDAddress address, RDType t, usize flags) {
     return true;
 }
 
-const Function* Context::find_function(RDAddress address) const {
-    if(!this->program.find_segment(address)) return nullptr;
-
-    for(const Function& f : this->functions) {
-        if(f.contains(address)) return &f;
-    }
-
-    return nullptr;
-}
-
 tl::optional<RDAddress> Context::get_address(std::string_view name,
                                              bool onlydb) const {
     auto addr = m_database->get_address(name);
