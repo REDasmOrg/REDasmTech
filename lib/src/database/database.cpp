@@ -305,7 +305,7 @@ Database::RegList Database::get_changed_regs() const {
 void Database::add_regchange(RDAddress addr, int reg, u64 val,
                              const tl::optional<RDAddress>& fromaddr) {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::ADD_REGCHANGE, R"(
-        INSERT INTO RegChanges (address, reg, val, fromaddr) 
+        INSERT INTO RegChanges (address, reg, value, fromaddr) 
             VALUES (:address, :reg, :val, :fromaddr)
         ON CONFLICT DO 
             UPDATE SET reg = EXCLUDED.reg
