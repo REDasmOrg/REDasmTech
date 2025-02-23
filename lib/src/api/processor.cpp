@@ -2,6 +2,7 @@
 #include "../error.h"
 #include "../plugins/pluginmanager.h"
 #include "../state.h"
+#include "../utils/utils.h"
 #include "marshal.h"
 #include <spdlog/spdlog.h>
 
@@ -152,4 +153,20 @@ const char* rd_getregistername(int regid) {
 
     res = "$" + std::to_string(regid);
     return res.c_str();
+}
+
+const char* rd_getmnemonic(const RDInstruction* instr) {
+    spdlog::trace("rd_getmnemonic({})", fmt::ptr(instr));
+    const redasm::Context* ctx = redasm::state::context;
+
+    if(instr && ctx && ctx->processorplugin &&
+       ctx->processorplugin->get_mnemonic)
+        return ctx->processorplugin->get_mnemonic(ctx->processor, instr->id);
+
+    return nullptr;
+}
+
+bool rd_matchmnemonic(const RDInstruction* instr, const char* mnem) {
+    const char* m = rd_getmnemonic(instr);
+    return m && mnem && redasm::utils::icase_equals(m, mnem);
 }

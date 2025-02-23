@@ -87,3 +87,6 @@ REDASM_EXPORT const RDProcessor* rd_getprocessor(void);
 REDASM_EXPORT bool rd_decode_prev(RDAddress address, RDInstruction* instr);
 REDASM_EXPORT bool rd_decode(RDAddress address, RDInstruction* instr);
 REDASM_EXPORT const char* rd_getregistername(int regid);
+REDASM_EXPORT const char* rd_getmnemonic(const RDInstruction* instr);
+REDASM_EXPORT bool rd_matchmnemonic(const RDInstruction* instr,
+                                    const char* mnem);
