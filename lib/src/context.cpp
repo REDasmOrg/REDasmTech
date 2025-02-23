@@ -328,6 +328,11 @@ Database::RegList Context::get_changed_regs() const {
 
 void Context::add_regchange(RDAddress address, int reg, u64 val,
                             const tl::optional<RDAddress>& fromaddr) {
+
+    RDSegment* seg = this->program.find_segment(address);
+    if(!seg) return;
+
+    memory::set_flag(seg, address, BF_REGCHANGE);
     m_database->add_regchange(address, reg, val, fromaddr);
 }
 

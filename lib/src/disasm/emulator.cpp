@@ -136,6 +136,8 @@ u32 Emulator::tick() {
     if(memory::has_flag(this->segment, this->pc, BF_CODE))
         return memory::get_length(this->segment, this->pc);
 
+    this->check_regchanges();
+
     RDInstruction instr = {
         .features = this->ndslot ? IF_DSLOT : IF_NONE,
     };
@@ -182,22 +184,6 @@ void Emulator::execute_delayslots(const RDInstruction& instr) {
     this->ndslot = 0;
 }
 
-void Emulator::enqueue(RDAddress address, std::deque<Snapshot>& q) const {
-    Database::RegChanges rc = state::context->get_regchanges_from_addr(address);
-
-    if(rc.empty()) {
-        q.emplace_back(address, m_state);
-        return;
-    }
-
-    State newstate = m_state;
-
-    for(const Database::RegChange& rc : rc)
-        newstate.registers[rc.reg] = rc.value;
-
-    q.emplace_back(address, newstate);
-}
-
 bool Emulator::decode_prev(RDAddress address, RDInstruction& instr) const {
     RDSegment* seg = state::context->program.find_segment(address);
     if(!seg || seg->start == address) return false;
@@ -227,6 +213,16 @@ bool Emulator::decode(RDAddress address, RDInstruction& instr) const {
     }
 
     return instr.length > 0;
+}
+
+void Emulator::check_regchanges() {
+    if(!memory::has_flag(this->segment, this->pc, BF_REGCHANGE)) return;
+
+    Database::RegChanges rc =
+        state::context->get_regchanges_from_addr(this->pc);
+
+    for(const Database::RegChange& rc : rc)
+        m_state.registers[rc.reg] = rc.value;
 }
 
 bool Emulator::has_pending_code() const {

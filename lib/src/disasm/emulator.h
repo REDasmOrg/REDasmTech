@@ -36,14 +36,21 @@ public:
     void add_ref(RDAddress toaddr, usize type);
     void add_regchange(RDAddress addr, int reg, u64 val);
     void flow(RDAddress address);
-    void enqueue_flow(RDAddress address) { m_flow = address; }
-    void enqueue_jump(RDAddress address) { this->enqueue(address, m_qjump); };
-    void enqueue_call(RDAddress address) { this->enqueue(address, m_qcall); };
     u32 tick();
 
+    void enqueue_flow(RDAddress address) { m_flow = address; }
+
+    void enqueue_jump(RDAddress address) {
+        m_qjump.emplace_back(address, m_state);
+    }
+
+    void enqueue_call(RDAddress address) {
+        m_qcall.emplace_back(address, m_state);
+    };
+
 private:
+    void check_regchanges();
     void execute_delayslots(const RDInstruction& instr);
-    void enqueue(RDAddress address, std::deque<Snapshot>& q) const;
 
 public:
     RDAddress pc{};

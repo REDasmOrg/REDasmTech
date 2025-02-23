@@ -344,18 +344,13 @@ PySequenceMethods memory_sequence_methods = []() {
 
         PyObject* pb = python::new_simplenamespace();
         // clang-format off
-        PyObject_SetAttrString(pb, "name", PyBool_FromLong(rdmbyte_hasflag(b,
-        BF_NAME))); PyObject_SetAttrString(pb, "segment",
-        PyBool_FromLong(rdmbyte_hasflag(b, BF_SEGMENT)));
-        PyObject_SetAttrString(pb, "import",
-        PyBool_FromLong(rdmbyte_hasflag(b, BF_IMPORT)));
-        PyObject_SetAttrString(pb, "export",
-        PyBool_FromLong(rdmbyte_hasflag(b, BF_EXPORT)));
-        PyObject_SetAttrString(pb, "unknown",
-        PyBool_FromLong(rdmbyte_isunknown(b))); PyObject_SetAttrString(pb,
-        "data", PyBool_FromLong(rdmbyte_isdata(b)));
-        PyObject_SetAttrString(pb, "code",
-        PyBool_FromLong(rdmbyte_iscode(b)));
+        PyObject_SetAttrString(pb, "name", PyBool_FromLong(rdmbyte_hasflag(b, BF_NAME))); 
+        PyObject_SetAttrString(pb, "region", PyBool_FromLong(rdmbyte_hasflag(b, BF_REGCHANGE)));
+        PyObject_SetAttrString(pb, "import", PyBool_FromLong(rdmbyte_hasflag(b, BF_IMPORT)));
+        PyObject_SetAttrString(pb, "export", PyBool_FromLong(rdmbyte_hasflag(b, BF_EXPORT)));
+        PyObject_SetAttrString(pb, "unknown", PyBool_FromLong(rdmbyte_isunknown(b))); 
+        PyObject_SetAttrString(pb, "data", PyBool_FromLong(rdmbyte_isdata(b)));
+        PyObject_SetAttrString(pb, "code", PyBool_FromLong(rdmbyte_iscode(b)));
         // clang-format on
 
         u8 v;
