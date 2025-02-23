@@ -42,7 +42,7 @@ QString to_hex_addr(RDAddress address, const RDSegment* seg) {
 
     QString s = QString::number(address, 16);
     if(seg) return s.rightJustified(seg->bits / 4, '0');
-    return s;
+    return s.toUpper();
 }
 
 void show_detail(const QString& html, QWidget* parent) {
