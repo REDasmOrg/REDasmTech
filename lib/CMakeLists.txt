@@ -74,6 +74,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/plugin.cpp
         src/api/byteorder.cpp
         src/api/buffer.cpp
+        src/api/environment.cpp
         src/api/memory.cpp
         src/api/stream.cpp
         src/api/byte.cpp

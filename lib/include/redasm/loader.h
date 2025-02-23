@@ -1,6 +1,7 @@
 #pragma once
 
 #include <redasm/common.h>
+#include <redasm/environment.h>
 #include <redasm/plugin.h>
 #include <redasm/types.h>
 
@@ -24,6 +25,7 @@ typedef struct RDLoaderRequest {
 typedef bool (*RDLoaderPluginParse)(struct RDLoader*, const RDLoaderRequest*);
 typedef bool (*RDLoaderPluginLoad)(struct RDLoader*, RDBuffer*);
 typedef const char* (*RDLoaderPluginGetProcessor)(struct RDLoader*);
+typedef const RDEnvironment* (*RDLoaderPluginGetEnvironment)(struct RDLoader*);
 // clang-format on
 
 typedef struct RDLoaderPlugin {
@@ -31,6 +33,7 @@ typedef struct RDLoaderPlugin {
     RDLoaderPluginParse parse;
     RDLoaderPluginLoad load;
     RDLoaderPluginGetProcessor get_processor;
+    RDLoaderPluginGetEnvironment get_environment;
 } RDLoaderPlugin;
 
 REDASM_EXPORT bool rd_registerloader(const RDLoaderPlugin* plugin);

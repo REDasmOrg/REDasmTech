@@ -5,6 +5,7 @@
 #include <redasm/byte.h>
 #include <redasm/byteorder.h>
 #include <redasm/common.h>
+#include <redasm/environment.h>
 #include <redasm/function.h>
 #include <redasm/graph.h>
 #include <redasm/instruction.h>
