@@ -9,6 +9,7 @@ target_sources(${PROJECT_NAME}
         plugin.cpp
         com.cpp
         dos.cpp
+        env.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

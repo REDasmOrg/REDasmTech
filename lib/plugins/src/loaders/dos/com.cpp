@@ -1,4 +1,5 @@
 #include "com.h"
+#include "env.h"
 #include <string_view>
 
 namespace com {
@@ -31,6 +32,7 @@ RDLoaderPlugin loader = {
     .parse = com::parse,
     .load = com::load,
     .get_processor = [](RDLoader*) { return "x86_16_real"; },
+    .get_environment = env::get_environment,
 };
 
 } // namespace com
