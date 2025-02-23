@@ -48,9 +48,11 @@ void LoaderDialog::accept() {
     this->selected = rd_select(&tr);
 
     if(this->selected) {
-        utils::log(QString{"Selected loader '%1' with '%2' processor"}
-                       .arg(tr.loaderplugin->name)
-                       .arg(tr.processorplugin->name));
+        utils::log(QString{"Loader: %1"}.arg(tr.loaderplugin->name));
+        utils::log(QString{"Processor: %1"}.arg(tr.processorplugin->name));
+
+        const RDEnvironment* e = rd_getenvironment();
+        if(e->name) utils::log(QString{"Environment: %1"}.arg(e->name));
 
         auto l =
             static_cast<RDLogLevel>(m_ui.cbloglevel->currentData().toUInt());
