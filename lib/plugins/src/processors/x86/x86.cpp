@@ -74,22 +74,23 @@ bool is_branch_instruction(const RDInstruction* instr) {
     return (instr->features & (IF_JUMP | IF_CALL));
 }
 
-bool maybe_addr(const RDInstruction* instr) {
+bool maybe_addr(const RDInstruction* instr, usize opidx) {
     switch(instr->id) {
-        case ZYDIS_MNEMONIC_PUSH: break;
-        default: return false;
+        case ZYDIS_MNEMONIC_PUSH: return true;
+        case ZYDIS_MNEMONIC_MOV: return opidx == 1;
+        default: break;
     }
 
-    return true;
+    return false;
 }
 
-void track_segment_reg(RDEmulator* e, const RDInstruction* instr) {
+bool track_pop_reg(RDEmulator* e, const RDInstruction* instr) {
     RDInstruction previnstr;
-    if(!rd_decode_prev(instr->address, &previnstr)) return;
+    if(!rd_decode_prev(instr->address, &previnstr)) return false;
 
     if(previnstr.id != ZYDIS_MNEMONIC_PUSH ||
        !is_segment_reg(previnstr.operands[0]))
-        return;
+        return false;
 
     int chgreg = instr->operands[0].reg;
 
@@ -104,6 +105,46 @@ void track_segment_reg(RDEmulator* e, const RDInstruction* instr) {
         u64 val = rdemulator_getreg(e, previnstr.operands[0].reg);
         rdemulator_addregchange(e, instr->address + instr->length, chgreg, val);
     }
+
+    return true;
+}
+
+bool track_mov_reg(RDEmulator* e, const RDInstruction* instr) {
+    RDInstruction previnstr;
+    if(!rd_decode_prev(instr->address, &previnstr)) return false;
+
+    if(previnstr.id != ZYDIS_MNEMONIC_MOV ||
+       !is_segment_reg(previnstr.operands[1]))
+        return false;
+
+    if(previnstr.operands[0].type != OP_REG ||
+       instr->operands[1].reg != previnstr.operands[0].reg)
+        return false;
+
+    int chgreg = instr->operands[0].reg;
+
+    if(previnstr.operands[0].reg == ZYDIS_REGISTER_CS) {
+        const RDSegment* seg = rdemulator_getsegment(e);
+        if(seg) {
+            rdemulator_addregchange(e, instr->address + instr->length, chgreg,
+                                    seg->start);
+        }
+    }
+    else {
+        u64 val = rdemulator_getreg(e, previnstr.operands[1].reg);
+        rdemulator_addregchange(e, instr->address + instr->length, chgreg, val);
+    }
+
+    return true;
+}
+
+bool track_segment_reg(RDEmulator* e, const RDInstruction* instr) {
+    if(instr->id == ZYDIS_MNEMONIC_POP && is_segment_reg(instr->operands[0]))
+        return track_pop_reg(e, instr);
+    if(instr->id == ZYDIS_MNEMONIC_MOV && is_segment_reg(instr->operands[0]))
+        return track_mov_reg(e, instr);
+
+    return false;
 }
 
 void decode(RDProcessor* proc, RDInstruction* instr) {
@@ -134,13 +175,6 @@ void decode(RDProcessor* proc, RDInstruction* instr) {
         default: break;
     };
 
-    switch(zinstr.mnemonic) {
-        case ZYDIS_MNEMONIC_HLT:
-        case ZYDIS_MNEMONIC_INT3:
-        case ZYDIS_MNEMONIC_RET: instr->features |= IF_STOP; break;
-        default: break;
-    }
-
     for(auto i = 0, j = 0; i < zinstr.operand_count; i++) {
         const ZydisDecodedOperand& zop = zops[i];
         if(zop.visibility == ZYDIS_OPERAND_VISIBILITY_HIDDEN) continue;
@@ -163,7 +197,7 @@ void decode(RDProcessor* proc, RDInstruction* instr) {
                     op.type = OP_ADDR;
                     op.addr = addr;
                 }
-                else if(maybe_addr(instr) && rd_isaddress(zop.imm.value.u)) {
+                else if(maybe_addr(instr, i) && rd_isaddress(zop.imm.value.u)) {
                     op.type = OP_ADDR;
                     op.addr = zop.imm.value.u;
                 }
@@ -211,6 +245,18 @@ void decode(RDProcessor* proc, RDInstruction* instr) {
 
             default: break;
         }
+    }
+
+    switch(zinstr.mnemonic) {
+        case ZYDIS_MNEMONIC_HLT:
+        case ZYDIS_MNEMONIC_INT3:
+        case ZYDIS_MNEMONIC_RET: instr->features |= IF_STOP; break;
+
+        case ZYDIS_MNEMONIC_INT:
+            rd_getenvironment()->update_instruction(instr);
+            break;
+
+        default: break;
     }
 }
 
@@ -291,10 +337,7 @@ void render_instruction(const RDProcessor* /*self*/, RDRenderer* r,
 }
 
 void emulate(RDProcessor* /*self*/, RDEmulator* e, const RDInstruction* instr) {
-    if(instr->id == ZYDIS_MNEMONIC_POP && is_segment_reg(instr->operands[0])) {
-        track_segment_reg(e, instr);
-    }
-    else {
+    if(!track_segment_reg(e, instr)) {
         foreach_operand(i, op, instr) {
             switch(op->type) {
                 case OP_ADDR: {
