@@ -14,6 +14,11 @@ constexpr char PATH_SEPARATOR = '\\';
 constexpr char PATH_SEPARATOR = '/';
 #endif
 
+bool ichar_equals(char a, char b) {
+    return std::tolower(static_cast<unsigned char>(a)) ==
+           std::tolower(static_cast<unsigned char>(b));
+}
+
 } // namespace
 
 namespace impl {
@@ -87,6 +92,10 @@ std::string_view get_ext(std::string_view p) {
     usize lastdot = p.find_last_of('.');
     if(lastdot != std::string_view::npos) return p.substr(lastdot + 1);
     return p.substr(p.size());
+}
+
+bool icase_equals(std::string_view lhs, std::string_view rhs) {
+    return std::ranges::equal(lhs, rhs, ichar_equals);
 }
 
 } // namespace redasm::utils

@@ -98,6 +98,7 @@ tl::optional<Data> read_file(const std::string& filepath);
 std::string to_lower(std::string s);
 std::string_view get_filename(std::string_view p);
 std::string_view get_ext(std::string_view p);
+bool icase_equals(std::string_view lhs, std::string_view rhs);
 
 constexpr u32 fnv1a_32(std::string_view s) {
     u32 h = 2166136261U;
