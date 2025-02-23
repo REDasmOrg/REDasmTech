@@ -8,6 +8,7 @@ class RegionsModel: public QAbstractListModel {
 
 public:
     explicit RegionsModel(QObject* parent = nullptr);
+    [[nodiscard]] RDAddress address(const QModelIndex& index) const;
     void set_register(int reg);
 
 public:

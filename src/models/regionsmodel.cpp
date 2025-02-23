@@ -18,6 +18,14 @@ void RegionsModel::set_register(int reg) {
     this->endResetModel();
 }
 
+RDAddress RegionsModel::address(const QModelIndex& index) const {
+    if(static_cast<usize>(index.row()) < vect_length(m_regions))
+        return m_regions[index.row()].start;
+
+    qFatal("Cannot get region");
+    return {};
+}
+
 int RegionsModel::rowCount(const QModelIndex&) const {
     if(!m_regions) return 0;
     return vect_length(m_regions);

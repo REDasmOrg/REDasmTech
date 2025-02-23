@@ -420,8 +420,18 @@ void MainWindow::show_segments() {
 }
 
 void MainWindow::show_regions() {
-    auto* dlgregions = new RegionsDialog(this);
-    dlgregions->show();
+    auto* dlg = new RegionsDialog(this);
+
+    connect(dlg, &RegionsDialog::double_clicked, this,
+            [&, dlg](const QModelIndex& index) {
+                ContextView* ctxview = this->context_view();
+                if(!ctxview) return;
+
+                ctxview->jump_to(dlg->model()->address(index));
+                dlg->accept();
+            });
+
+    dlg->show();
 }
 
 void MainWindow::show_strings() {

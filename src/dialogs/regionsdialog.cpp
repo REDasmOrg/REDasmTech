@@ -1,4 +1,5 @@
 #include "regionsdialog.h"
+#include <qheaderview.h>
 
 RegionsDialog::RegionsDialog(QWidget* parent): QDialog{parent}, m_ui{this} {
     m_regions = rd_getregions();
@@ -7,6 +8,12 @@ RegionsDialog::RegionsDialog(QWidget* parent): QDialog{parent}, m_ui{this} {
 
     m_regionsmodel = new RegionsModel(this);
     m_ui.tvregions->setModel(m_regionsmodel);
+    m_ui.tvregions->header()->setStretchLastSection(true);
+    m_ui.tvregions->header()->setSectionResizeMode(
+        QHeaderView::ResizeToContents);
+
+    connect(m_ui.tvregions, &QTreeView::doubleClicked, this,
+            &RegionsDialog::double_clicked);
 
     connect(m_ui.cbregisters, &QComboBox::currentIndexChanged, this,
             &RegionsDialog::populate_regions);
