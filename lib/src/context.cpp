@@ -122,6 +122,12 @@ bool Context::load(const RDProcessorPlugin* plugin) {
             }
         }
 
+        // Sort analyzers by order
+        std::ranges::sort(this->analyzerplugins,
+                          [](const auto* lhs, const auto* rhs) {
+                              return lhs->order < rhs->order;
+                          });
+
         return true;
     }
 
