@@ -4,6 +4,7 @@
 #include "../plugins/pluginmanager.h"
 #include "../state.h"
 #include "../utils/utils.h"
+#include <limits>
 #include <redasm/analyzer.h>
 
 namespace redasm::builtins {
@@ -42,7 +43,7 @@ RDAnalyzerPlugin autorename_analyzer = {
     .id = "autorename",
     .name = "Autorename Nullsubs and Thunks",
     .flags = PF_LAST | AF_SELECTED,
-    .order = 0,
+    .order = std::numeric_limits<u32>::max(),
     .is_enabled =
         [](const RDAnalyzerPlugin*) {
             const RDLoaderPlugin* ldr = state::context->loaderplugin;
