@@ -38,6 +38,7 @@ public:
     void flow(RDAddress address);
     u32 tick();
 
+    void reset() { m_state = {}; }
     void enqueue_flow(RDAddress address) { m_flow = address; }
 
     void enqueue_jump(RDAddress address) {
