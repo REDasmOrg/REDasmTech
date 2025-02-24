@@ -7,9 +7,25 @@
 
 namespace {
 
+const char* x86_16_prologues[] = {
+    "55 89 E5 83 EC ??", // Setup with local variable allocation
+    "55 89 E5",          // Standard stack frame setup (C functions)
+    "60 06",             // Full register save (ISRs, BIOS)
+    "C8 ?? 00",          // Pascal-like stack frame setup
+    nullptr,
+};
+
+const char* x86_32_prologues[] = {
+    "55 8B EC 83 EC ??", // Setup with local variable allocation
+    "55 8B EC",          // Standard function prologue (CDECL, STDCALL)
+    "C8 ?? 00",          // Pascal calling convention or GCC-specific
+    nullptr,
+};
+
 struct X86Processor {
     ZydisDecoder decoder;
     std::array<char, ZYDIS_MAX_INSTRUCTION_LENGTH> buffer;
+    const char** prologues{nullptr};
 };
 
 void apply_optype(const ZydisDecodedOperand& zop, RDOperand& op) {
@@ -250,7 +266,8 @@ void decode(RDProcessor* proc, RDInstruction* instr) {
     switch(zinstr.mnemonic) {
         case ZYDIS_MNEMONIC_HLT:
         case ZYDIS_MNEMONIC_INT3:
-        case ZYDIS_MNEMONIC_RET: instr->features |= IF_STOP; break;
+        case ZYDIS_MNEMONIC_RET:
+        case ZYDIS_MNEMONIC_IRET: instr->features |= IF_STOP; break;
 
         case ZYDIS_MNEMONIC_INT:
             rd_getenvironment()->update_instruction(instr);
@@ -411,11 +428,23 @@ void register_processor(RDProcessorPlugin* plugin, const char* id,
     plugin->create = [](const RDProcessorPlugin*) {
         auto* self = new X86Processor();
         ZydisDecoderInit(&self->decoder, Mode, Width);
+
+        if constexpr(Mode == ZYDIS_MACHINE_MODE_REAL_16)
+            self->prologues = x86_16_prologues;
+        else if constexpr(Mode == ZYDIS_MACHINE_MODE_LEGACY_32)
+            self->prologues = x86_32_prologues;
+        else
+            self->prologues = nullptr;
+
         return reinterpret_cast<RDProcessor*>(self);
     };
 
     plugin->destroy = [](RDProcessor* self) {
         delete reinterpret_cast<X86Processor*>(self);
+    };
+
+    plugin->get_prologues = [](const RDProcessor* self) {
+        return reinterpret_cast<const X86Processor*>(self)->prologues;
     };
 
     rd_registerprocessor(plugin);
