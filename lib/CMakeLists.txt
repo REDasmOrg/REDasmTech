@@ -32,6 +32,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/utils/process/process.cpp
         src/utils/hash.cpp
         src/utils/utils.cpp
+        src/utils/pattern.cpp
         src/memory/buffer.cpp
         src/memory/memory.cpp
         src/memory/stringfinder.cpp
