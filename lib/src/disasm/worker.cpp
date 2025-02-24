@@ -118,7 +118,7 @@ void Worker::analyze_step() {
     const Context* ctx = state::context;
 
     for(const RDAnalyzerPlugin* plugin : ctx->analyzerplugins) {
-        if(!(plugin->flags & AF_SELECTED) ||
+        if(!ctx->selectedanalyzerplugins.contains(plugin) ||
            (plugin->flags & AF_RUNONCE && m_analyzerruns[plugin->id] > 0))
             continue;
 
