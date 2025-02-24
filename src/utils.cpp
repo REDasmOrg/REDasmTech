@@ -21,7 +21,6 @@ float cellw{}, cellh{};
 float cell_width() {
     if(!utils::cellw) {
         QFontMetricsF fm{REDasmSettings::font()};
-        // utils::cellw = fm.horizontalAdvance(" ");
         utils::cellw = fm.horizontalAdvance(" ");
     }
 
@@ -40,9 +39,9 @@ float cell_height() {
 QString to_hex_addr(RDAddress address, const RDSegment* seg) {
     if(!seg) seg = rd_findsegment(address);
 
-    QString s = QString::number(address, 16);
+    QString s = QString::number(address, 16).toUpper();
     if(seg) return s.rightJustified(seg->bits / 4, '0');
-    return s.toUpper();
+    return s;
 }
 
 void show_detail(const QString& html, QWidget* parent) {
