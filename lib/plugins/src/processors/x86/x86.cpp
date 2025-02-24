@@ -17,6 +17,7 @@ const char* x86_16_prologues[] = {
 
 const char* x86_32_prologues[] = {
     "55 8B EC 83 EC ??", // Setup with local variable allocation
+    "8B FF 55 8B EC",    // Hot-patchable standard prologue (ms-hotpatch)
     "55 8B EC",          // Standard function prologue (CDECL, STDCALL)
     "C8 ?? 00",          // Pascal calling convention or GCC-specific
     nullptr,
