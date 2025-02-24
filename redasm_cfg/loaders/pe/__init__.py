@@ -190,7 +190,7 @@ class PELoader:
             dbgva = 0
 
             if dbgdir.AddressOfRawData:
-                dbgva = PE.self.from_rva(dbgdir.AddressOfRawData)
+                dbgva = self.from_rva(dbgdir.AddressOfRawData)
 
             if not dbgva and dbgdir.PointerToRawData:
                 dbgva = redasm.to_address(dbgdir.PointerToRawData)
