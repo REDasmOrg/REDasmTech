@@ -37,6 +37,7 @@ typedef void (*RDProcessorPluginEmulate)(RDProcessor*, RDEmulator*, const RDInst
 typedef bool (*RDProcessorPluginLift)(RDProcessor*, RDILList*, const RDInstruction*);
 typedef const char* (*RDProcessorPluginGetMnemonic)(const RDProcessor*, u32);
 typedef const char* (*RDProcessorPluginGetRegisterName)(const RDProcessor*, int);
+typedef const char** (*RDProcessorPluginGetPrologues)(const RDProcessor*);
 typedef void (*RDProcessorPluginRenderSegment)(const RDProcessor*, RDRenderer*, const RDSegment*);
 typedef void (*RDProcessorPluginRenderFunction)(const RDProcessor*, RDRenderer*, const RDFunction*);
 typedef void (*RDProcessorPluginRenderInstruction)(const RDProcessor*, RDRenderer*, const RDInstruction*);
@@ -49,6 +50,7 @@ typedef struct RDProcessorPlugin {
     RDProcessorPluginSetup setup;
     RDProcessorPluginGetMnemonic get_mnemonic;
     RDProcessorPluginGetRegisterName get_registername;
+    RDProcessorPluginGetPrologues get_prologues;
     RDProcessorPluginDecode decode;
     RDProcessorPluginEmulate emulate;
     RDProcessorPluginLift lift;

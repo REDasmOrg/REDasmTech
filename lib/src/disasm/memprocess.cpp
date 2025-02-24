@@ -7,6 +7,7 @@
 #include "../memory/stringfinder.h"
 #include "../state.h"
 #include "../typing/base.h"
+#include "../utils/pattern.h"
 #include "../utils/utils.h"
 #include "function.h"
 #include <unordered_set>
@@ -392,9 +393,44 @@ void process_refsto(Context* ctx, const RDSegment* seg, RDAddress& address) {
         });
 }
 
+void process_prologues() {
+    Context* ctx = state::context;
+    if(!ctx->processorplugin->get_prologues) return;
+
+    const char** prologues =
+        ctx->processorplugin->get_prologues(ctx->processor);
+    if(!prologues) return;
+
+    std::vector<pattern::Compiled> patterns = pattern::compile_all(prologues);
+    if(patterns.empty()) return;
+
+    spdlog::info("Finding function prologues...");
+    ctx->worker->emulator.reset();
+
+    for(const RDSegment& seg : ctx->program.segments) {
+        if(!(seg.perm & SP_X)) continue;
+
+        for(usize idx = 0; idx < seg.mem->length;) {
+            usize l = 1;
+
+            for(const pattern::Compiled& pat : patterns) {
+                if(pattern::match_mbytes(pat, seg.mem, idx)) {
+                    ctx->set_function(seg.start + idx, 0);
+                    l = pat.size();
+                    break;
+                }
+            }
+
+            idx += l;
+        }
+    }
+}
+
 } // namespace
 
 void merge_code(Emulator* e) {
+    memprocess::process_prologues();
+
     const Context* ctx = state::context;
 
     for(const RDSegment& seg : ctx->program.segments) {
