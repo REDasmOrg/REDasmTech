@@ -20,9 +20,11 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args) {
     PyObject* idattr = PyObject_GetAttrString(pyclass, "id");
     PyObject* nameattr = PyObject_GetAttrString(pyclass, "name");
 
-    PyObject* flagsattr = nullptr;
+    PyObject *flagsattr = nullptr, *orderattr = nullptr;
     if(PyObject_HasAttrString(pyclass, "flags"))
         flagsattr = PyObject_GetAttrString(pyclass, "flags");
+    if(PyObject_HasAttrString(pyclass, "order"))
+        orderattr = PyObject_GetAttrString(pyclass, "order");
 
     auto* plugin = new RDPYAnalyzerPlugin{};
     plugin->pyclass = pyclass;
@@ -30,6 +32,7 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args) {
     plugin->base.id = PyUnicode_AsUTF8(idattr);
     plugin->base.name = PyUnicode_AsUTF8(nameattr);
     plugin->base.flags = flagsattr ? PyLong_AsUnsignedLong(flagsattr) : 0;
+    plugin->base.order = orderattr ? PyLong_AsUnsignedLong(orderattr) : 0;
 
     plugin->base.on_init = [](const RDAnalyzerPlugin* arg) {
         const auto* plugin = reinterpret_cast<const RDPYAnalyzerPlugin*>(arg);
@@ -64,6 +67,7 @@ PyObject* register_analyzer(PyObject* /*self*/, PyObject* args) {
         plugin->base.is_enabled = [](const RDAnalyzerPlugin* arg) -> bool {
             const auto* plugin =
                 reinterpret_cast<const RDPYAnalyzerPlugin*>(arg);
+
             PyObject* res =
                 PyObject_CallMethod(plugin->pyclass, "is_enabled", nullptr);
 
