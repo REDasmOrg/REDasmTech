@@ -485,6 +485,20 @@ const RDSegment* rd_findsegment(RDAddress address) {
     return redasm::state::context->program.find_segment(address);
 }
 
+void rd_addregchange(RDAddress address, int reg, u64 val) {
+    spdlog::trace("rd_addregchange({:x}, {}, {:x})", address, reg, val);
+    if(redasm::state::context)
+        redasm::state::context->add_regchange(address, reg, val);
+}
+
+void rd_addregchange_from(RDAddress address, int reg, u64 val,
+                          RDAddress fromaddr) {
+    spdlog::trace("rd_addregchange_from({:x}, {}, {:x})", address, reg, val,
+                  fromaddr);
+    if(redasm::state::context)
+        redasm::state::context->add_regchange(address, reg, val, fromaddr);
+}
+
 void rd_log(const char* s) {
     spdlog::trace("rd_log('{}')", s);
     if(s) redasm::state::log(s);

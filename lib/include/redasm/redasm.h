@@ -90,6 +90,9 @@ REDASM_EXPORT const char* rd_rendertext(RDAddress address);
 REDASM_EXPORT bool rd_tooffset(RDAddress address, RDOffset* offset);
 REDASM_EXPORT bool rd_toaddress(RDOffset offset, RDAddress* address);
 REDASM_EXPORT const RDSegment* rd_findsegment(RDAddress address);
+REDASM_EXPORT void rd_addregchange(RDAddress address, int reg, u64 val);
+REDASM_EXPORT void rd_addregchange_from(RDAddress address, int reg, u64 val,
+                                        RDAddress fromaddr);
 
 REDASM_EXPORT usize rd_getentries(RDAddress** entries);
 REDASM_EXPORT bool rd_tick(const RDWorkerStatus** s);
