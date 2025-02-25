@@ -213,8 +213,12 @@ PyObject* get_loader(PyObject* /*self*/, PyObject* /*args*/) {
         const RDLoaderPlugin* plugin = rd_getloaderplugin();
         if(!plugin) return nullptr;
 
-        if(rdplugin_isorigin(plugin, python::ID))
-            return reinterpret_cast<PyObject*>(l);
+        if(rdplugin_isorigin(plugin, python::ID)) {
+            auto* obj = reinterpret_cast<PyObject*>(l);
+            Py_INCREF(obj);
+            return obj;
+        }
+
         return PyCapsule_New(l, nullptr, nullptr);
     }
 
