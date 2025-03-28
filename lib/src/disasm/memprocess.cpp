@@ -1,6 +1,5 @@
 #include "memprocess.h"
 #include "../context.h"
-#include "../error.h"
 #include "../listing.h"
 #include "../memory/mbyte.h"
 #include "../memory/memory.h"
@@ -22,7 +21,7 @@ void process_listing_array(const Context* ctx, Listing& l, RDAddress& address,
 template<typename Function>
 void process_hexdump(Listing& l, RDAddress& address, Function f) {
     const RDSegment* seg = l.current_segment();
-    assume(seg);
+    ct_assume(seg);
 
     RDAddress start = address;
     usize len = 0;
@@ -35,44 +34,6 @@ void process_hexdump(Listing& l, RDAddress& address, Function f) {
     }
 
     if(address > start) l.hex_dump(start, address);
-}
-
-void process_regions() {
-    Context* ctx = state::context;
-    assume(ctx);
-    map_clear(ctx->program.regions);
-
-    Database::RegList regs = ctx->get_changed_regs();
-
-    for(int r : regs) {
-        Database::RegChanges changes = ctx->get_regchanges_from_reg(r);
-
-        std::ranges::sort(changes, [](const Database::RegChange& a,
-                                      const Database::RegChange& b) {
-            return a.address < b.address;
-        });
-
-        Vect(RDRegion) regions = vect_create(RDRegion);
-
-        for(usize i = 0; i < changes.size(); i++) {
-            const Database::RegChange& rc = changes[i];
-            RDAddress start = rc.address, end;
-
-            if(i + 1 < changes.size())
-                end = changes[i + 1].address;
-            else
-                end = static_cast<RDAddress>(-1);
-
-            vect_add(RDRegion, regions,
-                     {
-                         .start = start,
-                         .end = end,
-                         .value = rc.value,
-                     });
-        }
-
-        map_set(RDProgramRegion, ctx->program.regions, r, regions);
-    }
 }
 
 void process_listing_unknown(Listing& l, RDAddress& address) {
@@ -88,7 +49,7 @@ LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
     l.type(address, t);
 
     const typing::TypeDef* td = ctx->types.get_typedef(t);
-    assume(td);
+    ct_assume(td);
 
     if(td->is_struct()) { // Struct creates a new scope
         l.push_type(t);
@@ -98,7 +59,7 @@ LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
             const auto& [fieldtype, _] = td->dict[j];
 
             const typing::TypeDef* ftd = ctx->types.get_typedef(fieldtype);
-            assume(ftd);
+            ct_assume(ftd);
 
             l.push_fieldindex(j);
 
@@ -132,12 +93,12 @@ LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
             case typing::ids::WSTR:
             case typing::ids::STR: {
                 const RDSegment* seg = l.current_segment();
-                assume(seg);
+                ct_assume(seg);
                 address += memory::get_length(seg, address);
                 break;
             }
 
-            default: unreachable;
+            default: ct_unreachable;
         }
     }
 
@@ -146,13 +107,13 @@ LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
 
 void process_listing_array(const Context* ctx, Listing& l, RDAddress& address,
                            RDType t) {
-    assume(t.n > 0);
+    ct_assume(t.n > 0);
 
     l.type(address, t);
     l.push_indent();
 
     const typing::TypeDef* td = ctx->types.get_typedef(t);
-    assume(td);
+    ct_assume(td);
 
     switch(td->get_id()) {
         // Array of chars are handled differently
@@ -174,11 +135,11 @@ void process_listing_array(const Context* ctx, Listing& l, RDAddress& address,
 
 void process_listing_data(const Context* ctx, Listing& l, RDAddress& address) {
     const RDSegment* seg = l.current_segment();
-    assume(seg);
+    ct_assume(seg);
 
     if(memory::has_flag(seg, address, BF_TYPE)) {
         auto type = ctx->get_type(address);
-        assume(type);
+        ct_assume(type);
 
         if(type->n > 0)
             memprocess::process_listing_array(ctx, l, address, *type);
@@ -187,15 +148,15 @@ void process_listing_data(const Context* ctx, Listing& l, RDAddress& address) {
     }
     else if(memory::has_flag(seg, address, BF_FILL)) {
         usize len = memory::get_length(seg, address);
-        if(len <= 1) except("Invalid length @ {:x} (FILL)", address);
+        if(len <= 1) ct_exceptf("Invalid length @ %x (FILL)", address);
         l.fill(address, address + len);
         address += len;
     }
     else {
         auto mb = memory::get_mbyte(seg, address);
-        assume(mb);
-        except("Unhandled data byte @ {:x}, value {}", address,
-               utils::to_hex(*mb, 32));
+        ct_assume(mb);
+        ct_exceptf("Unhandled data byte @ %x}, value %s", address,
+                   utils::to_hex(*mb, 32));
     }
 }
 
@@ -244,7 +205,7 @@ void process_function_graph(const Context* ctx,
         if(startaddr == address) f.graph.set_root(n);
 
         const RDSegment* seg = ctx->program.find_segment(startaddr);
-        assume(seg);
+        ct_assume(seg);
 
         RDAddress endaddr = startaddr;
 
@@ -281,7 +242,7 @@ void process_function_graph(const Context* ctx,
                 while(curraddr < seg->end &&
                       memory::has_flag(seg, curraddr, BF_DFLOW)) {
                     usize len = memory::get_length(seg, curraddr);
-                    if(!len) except("Invalid length @ {:x} (DS)", curraddr);
+                    if(!len) ct_exceptf("Invalid length @ %x (DS)", curraddr);
                     curraddr += len;
                 }
 
@@ -291,7 +252,7 @@ void process_function_graph(const Context* ctx,
                 if(curraddr < seg->end &&
                    memory::has_flag(seg, curraddr, BF_FLOW)) {
                     usize len = memory::get_length(seg, curraddr);
-                    if(!len) except("Invalid length @ {:x} (CJ)", curraddr);
+                    if(!len) ct_exceptf("Invalid length @ %x (CJ)", curraddr);
                     curraddr += len;
 
                     if(curraddr < seg->end) {
@@ -305,13 +266,13 @@ void process_function_graph(const Context* ctx,
 
             endaddr = curraddr;
             usize len = memory::get_length(seg, curraddr);
-            if(!len) except("Invalid length @ {:x} (END)", curraddr);
+            if(!len) ct_exceptf("Invalid length @ %x (END)", curraddr);
             if(!memory::has_flag(seg, curraddr, BF_FLOW)) break;
             curraddr += len;
         }
 
         Function::BasicBlock* bb = f.get_basic_block(n);
-        assume(bb);
+        ct_assume(bb);
         bb->end = std::min<RDAddress>(endaddr, seg->end - 1);
     }
 }
@@ -320,8 +281,8 @@ void process_listing_code(const Context* ctx, Listing& l,
                           std::vector<Function>& functions,
                           RDAddress& address) {
     const RDSegment* seg = l.current_segment();
-    assume(seg);
-    assume(memory::has_flag(seg, address, BF_CODE));
+    ct_assume(seg);
+    ct_assume(memory::has_flag(seg, address, BF_CODE));
 
     if(memory::has_flag(seg, address, BF_FUNCTION)) {
         l.pop_indent(2);
@@ -329,8 +290,8 @@ void process_listing_code(const Context* ctx, Listing& l,
         l.push_indent(2);
 
         const RDSegment* s = l.current_segment();
-        assume(s);
-        assume(s->perm & SP_X);
+        ct_assume(s);
+        ct_assume(s->perm & SP_X);
         memprocess::process_function_graph(ctx, functions, address);
     }
     else if(memory::has_flag(seg, address, BF_REFSTO)) {
@@ -342,7 +303,7 @@ void process_listing_code(const Context* ctx, Listing& l,
     l.instruction(address);
 
     usize len = memory::get_length(seg, address);
-    if(!len) except("Invalid length @ {:x} (CODE)", address);
+    if(!len) ct_exceptf("Invalid length @ %x (CODE)", address);
     address += len;
 }
 
@@ -363,11 +324,11 @@ void process_refsto(Context* ctx, const RDSegment* seg, RDAddress& address) {
     }
 
     const RDProcessorPlugin* plugin = ctx->processorplugin;
-    assume(plugin);
+    ct_assume(plugin);
     auto addrtype = ctx->types.int_from_bytes(plugin->address_size);
-    assume(addrtype.has_value());
+    ct_assume(addrtype.has_value());
     auto inttype = ctx->types.int_from_bytes(plugin->integer_size);
-    assume(inttype.has_value());
+    ct_assume(inttype.has_value());
 
     stringfinder::classify(address)
         .map([&](const RDStringResult& x) {
@@ -407,15 +368,16 @@ void process_prologues() {
     spdlog::info("Finding function prologues...");
     ctx->worker->emulator.reset();
 
-    for(const RDSegment& seg : ctx->program.segments) {
-        if(!(seg.perm & SP_X)) continue;
+    const RDSegment* seg;
+    slice_foreach(seg, &ctx->program.segments) {
+        if(!(seg->perm & SP_X)) continue;
 
-        for(usize idx = 0; idx < seg.mem->length;) {
+        for(usize idx = 0; idx < seg->mem->length;) {
             usize l = 1;
 
             for(const pattern::Compiled& pat : patterns) {
-                if(pattern::match_mbytes(pat, seg.mem, idx)) {
-                    ctx->set_function(seg.start + idx, 0);
+                if(pattern::match_mbytes(pat, seg->mem, idx)) {
+                    ctx->set_function(seg->start + idx, 0);
                     l = pat.size();
                     break;
                 }
@@ -433,7 +395,8 @@ void merge_code(Emulator* e) {
 
     const Context* ctx = state::context;
 
-    for(const RDSegment& seg : ctx->program.segments) {
+    const RDSegment* seg;
+    slice_foreach(seg, &ctx->program.segments) {
         //     if(!(seg.perm & SP_X) || seg.offset == seg.endoffset) continue;
         //
         //     usize idx = seg.index;
@@ -456,21 +419,20 @@ void merge_code(Emulator* e) {
 }
 
 void process_memory() {
-    memprocess::process_regions();
-
     Context* ctx = state::context;
     std::vector<Function> f;
 
-    for(RDSegment& seg : ctx->program.segments) {
-        for(RDAddress address = seg.start; address < seg.end;) {
+    RDSegment* seg;
+    slice_foreach(seg, &ctx->program.segments) {
+        for(RDAddress address = seg->start; address < seg->end;) {
 
-            if(memory::has_flag(&seg, address, BF_FUNCTION))
+            if(memory::has_flag(seg, address, BF_FUNCTION))
                 memprocess::process_function_graph(ctx, f, address++);
-            else if(memory::has_flag(&seg, address, BF_REFSTO))
-                memprocess::process_refsto(ctx, &seg, address);
-            else if(memory::is_unknown(&seg, address) &&
-                    !memory::has_flag(&seg, address, BF_REFSFROM | BF_REFSTO)) {
-                memprocess::process_unknown_data(ctx, &seg, address);
+            else if(memory::has_flag(seg, address, BF_REFSTO))
+                memprocess::process_refsto(ctx, seg, address);
+            else if(memory::is_unknown(seg, address) &&
+                    !memory::has_flag(seg, address, BF_REFSFROM | BF_REFSTO)) {
+                memprocess::process_unknown_data(ctx, seg, address);
             }
             else
                 address++;
@@ -481,36 +443,35 @@ void process_memory() {
 }
 
 void process_listing() {
-    memprocess::process_regions();
-
     const Context* ctx = state::context;
-    assume(ctx);
+    ct_assume(ctx);
 
     Listing l;
     std::vector<Function> f;
 
-    for(const RDSegment& seg : ctx->program.segments) {
-        l.segment(&seg);
+    const RDSegment* seg;
+    slice_foreach(seg, &ctx->program.segments) {
+        l.segment(seg);
 
-        for(RDAddress address = seg.start; address < seg.end;) {
-            if(memory::is_unknown(&seg, address)) {
+        for(RDAddress address = seg->start; address < seg->end;) {
+            if(memory::is_unknown(seg, address)) {
                 memprocess::process_listing_unknown(l, address);
                 continue;
             }
 
-            if(memory::has_flag(&seg, address, BF_DATA)) {
+            if(memory::has_flag(seg, address, BF_DATA)) {
                 memprocess::process_listing_data(ctx, l, address);
                 continue;
             }
 
-            if(memory::has_flag(&seg, address, BF_CODE)) {
+            if(memory::has_flag(seg, address, BF_CODE)) {
                 l.push_indent(4);
                 memprocess::process_listing_code(ctx, l, f, address);
                 l.pop_indent(4);
                 continue;
             }
 
-            unreachable;
+            ct_unreachable;
         }
     }
 

@@ -1,6 +1,5 @@
 #include "context.h"
 #include "api/marshal.h"
-#include "error.h"
 #include "memory/memory.h"
 #include "plugins/pluginmanager.h"
 #include "state.h"
@@ -38,7 +37,7 @@ std::string_view get_refname(usize reftype) {
         default: break;
     }
 
-    unreachable;
+    ct_unreachable;
 }
 
 void add_noncodeproblem(const RDSegment* seg, RDAddress address, usize type) {
@@ -57,12 +56,7 @@ void add_noncodeproblem(const RDSegment* seg, RDAddress address, usize type) {
 } // namespace
 
 Context::Context(RDBuffer* file) {
-    this->problems = vect_create(RDProblem);
-
-    vect_setitemdel(this->problems, [](void* x) {
-        delete[] reinterpret_cast<RDProblem*>(x)->problem;
-    });
-
+    slice_init(&this->problems, nullptr, nullptr);
     this->program.file = file;
 }
 
@@ -71,14 +65,16 @@ Context::~Context() {
     delete this->worker;
 
     if(state::context == this) rdbuffer_destroy(this->program.file);
-
     pm::destroy_instance(this->processorplugin, this->processor);
     pm::destroy_instance(this->loaderplugin, this->loader);
-    vect_destroy(this->problems);
+
+    RDProblem* p;
+    slice_foreach(p, &this->problems) delete[] p->problem;
+    slice_destroy(&this->problems);
 }
 
 bool Context::parse(const RDLoaderPlugin* plugin, const RDLoaderRequest* req) {
-    assume(plugin->parse);
+    ct_assume(plugin->parse);
     this->loaderplugin = plugin;
     this->loader = pm::create_instance(plugin);
 
@@ -91,7 +87,7 @@ bool Context::parse(const RDLoaderPlugin* plugin, const RDLoaderRequest* req) {
         }
 
         if(!pp) pp = pm::find_processor("null");
-        assume(pp);
+        ct_assume(pp);
         this->processorplugin = pp;
         return true;
     }
@@ -102,8 +98,8 @@ bool Context::parse(const RDLoaderPlugin* plugin, const RDLoaderRequest* req) {
 bool Context::load(const RDProcessorPlugin* plugin) {
     if(!plugin) plugin = pm::find_processor("null");
     this->processorplugin = plugin;
-    assume(this->loaderplugin);
-    assume(this->processorplugin);
+    ct_assume(this->loaderplugin);
+    ct_assume(this->processorplugin);
 
     m_database = new Database{plugin->id, this->program.file->source};
     this->processor = pm::create_instance(plugin);
@@ -111,14 +107,14 @@ bool Context::load(const RDProcessorPlugin* plugin) {
 
     if(this->loaderplugin->load &&
        this->loaderplugin->load(this->loader, this->program.file)) {
-        vect_foreach(const RDAnalyzerPlugin*, p, pm::analyzers) {
-            const RDAnalyzerPlugin* ap = *p;
 
+        const RDAnalyzerPlugin** p;
+        slice_foreach(p, &pm::analyzers) {
             // Assume true if 'isenabled' is not implemented
-            if(!ap->is_enabled || ap->is_enabled(ap)) {
-                this->analyzerplugins.push_back(ap);
-                if(ap->flags & AF_SELECTED)
-                    this->selectedanalyzerplugins.insert(ap);
+            if(!(*p)->is_enabled || (*p)->is_enabled((*p))) {
+                this->analyzerplugins.push_back((*p));
+                if((*p)->flags & AF_SELECTED)
+                    this->selectedanalyzerplugins.insert((*p));
             }
         }
 
@@ -128,6 +124,7 @@ bool Context::load(const RDProcessorPlugin* plugin) {
                               return lhs->order < rhs->order;
                           });
 
+        this->worker->emulator.setup();
         return true;
     }
 
@@ -166,7 +163,7 @@ bool Context::set_function(RDAddress address, usize flags) {
 bool Context::set_entry(RDAddress address, const std::string& name) {
     if(RDSegment* seg = this->program.find_segment(address); seg) {
         memory::set_flag(seg, address, BF_EXPORT);
-        if(seg->perm & SP_X) assume(this->set_function(address, 0));
+        if(seg->perm & SP_X) ct_assume(this->set_function(address, 0));
         this->set_name(address, name, 0);
         this->entrypoints.push_back(address);
         return true;
@@ -232,7 +229,7 @@ void Context::add_ref(RDAddress fromaddr, RDAddress toaddr, usize type) {
             break;
         }
 
-        default: unreachable;
+        default: ct_unreachable;
     }
 }
 
@@ -319,26 +316,38 @@ tl::optional<RDAddress> Context::get_address(std::string_view name,
     return tl::nullopt;
 }
 
-Database::RegChanges
-Context::get_regchanges_from_addr(RDAddress address) const {
-    return m_database->get_regchanges_from_addr(address);
+bool Context::add_sreg_range(RDAddress start, RDAddress end, int sreg,
+                             u64 val) {
+    return this->program.add_sreg_range(start, end, sreg, val);
 }
 
-Database::RegChanges Context::get_regchanges_from_reg(int reg) const {
-    return m_database->get_regchanges_from_reg(reg);
+Database::SRegChanges Context::get_sregs_from_addr(RDAddress address) const {
+    const RDSegment* seg = this->program.find_segment(address);
+    if(!seg || memory::has_flag(seg, address, BF_SREG)) return {};
+    return m_database->get_sregs_from_addr(address);
 }
 
-Database::RegList Context::get_changed_regs() const {
-    return m_database->get_changed_regs();
+Database::SRegChanges Context::get_sreg_changes(int sreg) const {
+    return m_database->get_sreg_changes(sreg);
 }
 
-void Context::add_regchange(RDAddress address, int reg, u64 val,
-                            const tl::optional<RDAddress>& fromaddr) {
+tl::optional<u64> Context::get_sreg(RDAddress address, int sreg) const {
+    const RDSegment* seg = this->program.find_segment(address);
+    if(!seg || memory::has_flag(seg, address, BF_SREG)) return tl::nullopt;
+    return m_database->get_sreg(address, sreg);
+}
+
+Database::SRegList Context::get_sregs() const {
+    return m_database->get_sregs();
+}
+
+void Context::set_sreg(RDAddress address, int sreg, u64 val,
+                       const tl::optional<RDAddress>& fromaddr) {
     RDSegment* seg = this->program.find_segment(address);
     if(!seg) return;
 
-    memory::set_flag(seg, address, BF_REGCHANGE);
-    m_database->add_regchange(address, reg, val, fromaddr);
+    memory::set_flag(seg, address, BF_SREG);
+    m_database->set_sreg(address, sreg, val, fromaddr);
 }
 
 tl::optional<RDType> Context::get_type(RDAddress address) const {
@@ -373,10 +382,10 @@ std::string Context::get_name(RDAddress address) const {
 
         if(memory::has_flag(seg, address, BF_TYPE)) {
             auto type = this->get_type(address);
-            assume(type);
+            ct_assume(type);
 
             const typing::TypeDef* td = this->types.get_typedef(*type);
-            assume(td);
+            ct_assume(td);
             prefix = utils::to_lower(td->name);
         }
         else if(memory::has_flag(seg, address, BF_FUNCTION))
@@ -472,7 +481,7 @@ Database::RefList Context::get_refs_to(RDAddress toaddr) const {
 
 void Context::add_problem(RDAddress address, std::string_view s) {
     spdlog::warn("add_problem(): {:x} = {}", address, s);
-    vect_add(RDProblem, this->problems, {address, utils::copy_str(s)});
+    slice_push(&this->problems, {address, utils::copy_str(s)});
 }
 
 } // namespace redasm

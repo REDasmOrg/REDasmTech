@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../error.h"
 #include <charconv>
+#include <climits>
 #include <redasm/types.h>
 #include <string>
 #include <string_view>
@@ -30,7 +30,7 @@ Ret to_string(T value, int base = 10, bool sign = false, int bits = 0) {
     constexpr std::string_view DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     static std::array<char, 66> out;
 
-    if(base < 2 || base > 36) except("tostring: invalid base {}", base);
+    if(base < 2 || base > 36) ct_exceptf("tostring: invalid base %d", base);
 
     bool isneg = false;
 

@@ -13,15 +13,15 @@ typedef enum RDMByteFlags {
     BF_MMASK = 0x0001ffff, // Mask for Byte and Common
 
     // Common Flags (non-volatile)
-    BF_BYTE = 1U << 8,       // Indicates the presence of a byte
-    BF_NAME = 1U << 9,       // Named entity
-    BF_COMMENT = 1U << 10,   // Comment flag
-    BF_REFSTO = 1U << 11,    // References to location(s)
-    BF_REFSFROM = 1U << 12,  // References from location(s)
-    BF_REGCHANGE = 1U << 13, // Register Change flag
-    BF_IMPORT = 1U << 14,    // Import flag
-    BF_EXPORT = 1U << 15,    // Export flag
-    BF_FUNCTION = 1U << 16,  // Function flag
+    BF_BYTE = 1U << 8,      // Indicates the presence of a byte
+    BF_NAME = 1U << 9,      // Named entity
+    BF_COMMENT = 1U << 10,  // Comment flag
+    BF_REFSTO = 1U << 11,   // References to location(s)
+    BF_REFSFROM = 1U << 12, // References from location(s)
+    BF_SREG = 1U << 13,     // Segment Register Change
+    BF_IMPORT = 1U << 14,   // Import
+    BF_EXPORT = 1U << 15,   // Export
+    BF_FUNCTION = 1U << 16, // Function
 
     // Data-Specific Flags
     BF_TYPE = 1U << 17, // Type declaration

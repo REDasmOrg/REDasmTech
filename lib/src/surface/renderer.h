@@ -33,7 +33,7 @@ struct Renderer {
     Renderer& constant(u64 c, int base = 0, int flags = 0,
                        RDThemeKind fg = THEME_CONSTANT);
 
-    Renderer& mnem(u32 id, RDThemeKind fg = THEME_CONSTANT);
+    Renderer& mnem(const RDInstruction* instr, RDThemeKind fg = THEME_CONSTANT);
     Renderer& reg(int reg);
 
     Renderer& character(SurfaceRow& row, char ch,
@@ -127,7 +127,7 @@ private:
     SurfaceRows m_rows;
     RDAddress m_curraddress{};
     LIndex m_listingidx{};
-    usize m_segmidx{0};
+    isize m_segmidx{0};
 };
 
 } // namespace redasm

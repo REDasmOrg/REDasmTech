@@ -130,7 +130,7 @@ bool load(RDLoader* self, RDBuffer* file) {
     else
         return false;
 
-    rd_setentry(elf->ehdr.e_entry, "ELF_EntryPoint");
+    rd_setentry(rd_normalizeaddress(elf->ehdr.e_entry), "ELF_EntryPoint");
     return true;
 }
 

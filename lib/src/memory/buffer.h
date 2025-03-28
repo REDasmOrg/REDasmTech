@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../internal/buffer_internal.h"
 #include "../typing/base.h"
 #include "byteorder.h"
 #include <climits>
+#include <redasm/buffer.h>
 #include <string>
 #include <tl/optional.hpp>
 
@@ -37,23 +37,26 @@ tl::optional<T> get_number(const RDBuffer* self, usize idx, bool big) {
 } // namespace impl
 
 usize read(const RDBuffer* self, usize idx, void* dst, usize n);
-RDValue* read_struct_n(const RDBuffer* self, usize idx, usize n,
-                       const RDStructField* fields);
-RDValue* read_struct_n(const RDBuffer* self, usize idx, usize n,
-                       const RDStructField* fields, usize& curridx);
-RDValue* read_struct(const RDBuffer* self, usize idx,
-                     const RDStructField* fields);
-RDValue* read_struct(const RDBuffer* self, usize idx,
-                     const RDStructField* fields, usize& curridx);
+tl::optional<RDValue> read_struct_n(const RDBuffer* self, usize idx, usize n,
+                                    const RDStructField* fields);
+tl::optional<RDValue> read_struct_n(const RDBuffer* self, usize idx, usize n,
+                                    const RDStructField* fields,
+                                    usize& curridx);
+tl::optional<RDValue> read_struct(const RDBuffer* self, usize idx,
+                                  const RDStructField* fields);
+tl::optional<RDValue> read_struct(const RDBuffer* self, usize idx,
+                                  const RDStructField* fields, usize& curridx);
 tl::optional<std::string> get_str(const RDBuffer* self, usize idx);
 tl::optional<std::string> get_str(const RDBuffer* self, usize idx, usize n);
 tl::optional<std::string> get_wstr(const RDBuffer* self, usize idx);
 tl::optional<std::string> get_wstr(const RDBuffer* self, usize idx, usize n);
-RDValue* get_type(const RDBuffer* self, usize idx, typing::FullTypeName tn);
-RDValue* get_type(const RDBuffer* self, usize idx, RDType t);
-RDValue* get_type(const RDBuffer* self, usize idx, typing::FullTypeName tn,
-                  usize& curridx);
-RDValue* get_type(const RDBuffer* self, usize idx, RDType t, usize& curridx);
+tl::optional<RDValue> get_type(const RDBuffer* self, usize idx,
+                               typing::FullTypeName tn);
+tl::optional<RDValue> get_type(const RDBuffer* self, usize idx, RDType t);
+tl::optional<RDValue> get_type(const RDBuffer* self, usize idx,
+                               typing::FullTypeName tn, usize& curridx);
+tl::optional<RDValue> get_type(const RDBuffer* self, usize idx, RDType t,
+                               usize& curridx);
 tl::optional<bool> get_bool(const RDBuffer* self, usize idx);
 tl::optional<char> get_char(const RDBuffer* self, usize idx);
 tl::optional<char> get_wchar(const RDBuffer* self, usize idx);

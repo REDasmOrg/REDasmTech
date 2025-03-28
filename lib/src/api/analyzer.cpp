@@ -15,9 +15,9 @@ bool rd_registeranalyzer_ex(const RDAnalyzerPlugin* plugin,
     return redasm::pm::register_analyzer(plugin, origin);
 }
 
-Vect(const RDAnalyzerPlugin*) rd_getanalyzerplugins() {
+const RDAnalyzerPluginSlice* rd_getanalyzerplugins() {
     spdlog::trace("rd_getanalyzerplugins()");
-    return redasm::pm::analyzers;
+    return &redasm::pm::analyzers;
 }
 
 const RDAnalyzerPlugin** rd_getanalyzers(usize* n) {

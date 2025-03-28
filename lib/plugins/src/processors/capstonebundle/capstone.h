@@ -8,7 +8,8 @@ struct Capstone {
     virtual ~Capstone();
 
     [[nodiscard]] const char* get_mnemonic(u32 id) const;
-    [[nodiscard]] const char* get_registername(int regid) const;
+    [[nodiscard]] virtual const char* get_registername(int regid) const;
+    [[nodiscard]] virtual RDAddress normalize_address(RDAddress address) const;
     virtual bool decode(RDInstruction* instr) = 0;
     virtual void emulate(RDEmulator* e, const RDInstruction* instr) const = 0;
     virtual void render_instruction(RDRenderer* r,

@@ -14,7 +14,8 @@ namespace redasm {
 
 class Emulator {
     struct State {
-        std::unordered_map<int, u64> registers;
+        std::unordered_map<int, u64> sregs;
+        std::unordered_map<int, u64> regs;
         std::map<std::string, u64, std::less<>> states;
     };
 
@@ -22,8 +23,9 @@ class Emulator {
 
 public:
     Emulator();
-    bool decode_prev(RDAddress address, RDInstruction& instr) const;
-    bool decode(RDAddress address, RDInstruction& instr) const;
+    void setup();
+    bool decode_prev(RDAddress address, RDInstruction& instr);
+    bool decode(RDAddress address, RDInstruction& instr);
     bool has_pending_code() const;
     u64 get_reg(int regid) const;
     void set_reg(int regid, u64 val);
@@ -50,7 +52,7 @@ public:
     };
 
 private:
-    void check_regchanges();
+    void check_sregs();
     void execute_delayslots(const RDInstruction& instr);
 
 public:

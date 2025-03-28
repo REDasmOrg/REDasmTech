@@ -5,7 +5,7 @@
 #include "dialogs/flcdialog.h"
 #include "dialogs/loaderdialog.h"
 #include "dialogs/memorymapdialog.h"
-#include "dialogs/regionsdialog.h"
+#include "dialogs/segmentregistersdialog.h"
 #include "dialogs/tabledialog.h"
 #include "models/exportsmodel.h"
 #include "models/importsmodel.h"
@@ -86,8 +86,8 @@ MainWindow::MainWindow(QWidget* parent): QMainWindow{parent}, m_ui{this} {
             &MainWindow::show_welcome_view);
     connect(m_ui.actviewsegments, &QAction::triggered, this,
             &MainWindow::show_segments);
-    connect(m_ui.actviewregions, &QAction::triggered, this,
-            &MainWindow::show_regions);
+    connect(m_ui.actviewsegmentregisters, &QAction::triggered, this,
+            &MainWindow::show_segment_registers);
     connect(m_ui.actviewstrings, &QAction::triggered, this,
             &MainWindow::show_strings);
     connect(m_ui.actviewexports, &QAction::triggered, this,
@@ -419,10 +419,10 @@ void MainWindow::show_segments() {
     dlg->show();
 }
 
-void MainWindow::show_regions() {
-    auto* dlg = new RegionsDialog(this);
+void MainWindow::show_segment_registers() {
+    auto* dlg = new SegmentRegistersDialog(this);
 
-    connect(dlg, &RegionsDialog::double_clicked, this,
+    connect(dlg, &SegmentRegistersDialog::double_clicked, this,
             [&, dlg](const QModelIndex& index) {
                 ContextView* ctxview = this->context_view();
                 if(!ctxview) return;

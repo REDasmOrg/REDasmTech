@@ -11,7 +11,7 @@ class Context;
 
 namespace state {
 
-inline Vect(RDTestResult) tests = nullptr;
+inline RDTestResultSlice tests;
 inline bool initialized = false;
 inline RDInitParams params;
 inline Theme theme;

@@ -7,6 +7,11 @@
 
 namespace {
 
+constexpr std::array<int, 6> SEGMENT_REGISTERS = {
+    ZYDIS_REGISTER_ES, ZYDIS_REGISTER_CS, ZYDIS_REGISTER_SS,
+    ZYDIS_REGISTER_DS, ZYDIS_REGISTER_FS, ZYDIS_REGISTER_GS,
+};
+
 const char* x86_16_prologues[] = {
     "55 89 E5 83 EC ??", // Setup with local variable allocation
     "55 89 E5",          // Standard stack frame setup (C functions)
@@ -282,18 +287,18 @@ void render_instruction(const RDProcessor* /*self*/, RDRenderer* r,
                         const RDInstruction* instr) {
     if(instr->features & IF_STOP) {
         if(instr->features & IF_JUMP)
-            rdrenderer_mnem(r, instr->id, THEME_JUMP);
+            rdrenderer_mnem(r, instr, THEME_JUMP);
         else
-            rdrenderer_mnem(r, instr->id, THEME_RET);
+            rdrenderer_mnem(r, instr, THEME_RET);
     }
     else if(instr->features & IF_JUMP)
-        rdrenderer_mnem(r, instr->id, THEME_JUMPCOND);
+        rdrenderer_mnem(r, instr, THEME_JUMPCOND);
     else if(instr->features & IF_CALL)
-        rdrenderer_mnem(r, instr->id, THEME_CALL);
+        rdrenderer_mnem(r, instr, THEME_CALL);
     else if(instr->features & IF_NOP)
-        rdrenderer_mnem(r, instr->id, THEME_NOP);
+        rdrenderer_mnem(r, instr, THEME_NOP);
     else
-        rdrenderer_mnem(r, instr->id, THEME_DEFAULT);
+        rdrenderer_mnem(r, instr, THEME_DEFAULT);
 
     foreach_operand(i, op, instr) {
         if(i > 0) rdrenderer_text(r, ", ");
@@ -403,12 +408,19 @@ void emulate(RDProcessor* /*self*/, RDEmulator* e, const RDInstruction* instr) {
         rdemulator_flow(e, instr->address + instr->length);
 }
 
-const char* get_mnemonic(const RDProcessor*, u32 id) {
-    return ZydisMnemonicGetString(static_cast<ZydisMnemonic>(id));
-}
+void setup(RDProcessor*, RDEmulator*) { // Setup segment registers
+    const RDSegmentSlice* segments = rd_getsegments();
 
-const char* get_register_name(const RDProcessor*, int reg) {
-    return ZydisRegisterGetString(static_cast<ZydisRegister>(reg));
+    const RDSegment* seg;
+    slice_foreach(seg, segments) {
+        for(int sreg : SEGMENT_REGISTERS) {
+            if(seg->perm & SP_X &&
+               (sreg == ZYDIS_REGISTER_CS || sreg == ZYDIS_REGISTER_DS))
+                rd_addsreg_range(seg->start, seg->end, sreg, seg->start);
+            else
+                rd_addsreg_range(seg->start, seg->end, sreg, 0);
+        }
+    }
 }
 
 template<ZydisMachineMode Mode, ZydisStackWidth Width>
@@ -419,12 +431,11 @@ void register_processor(RDProcessorPlugin* plugin, const char* id,
     plugin->name = name;
     plugin->address_size = addrsize;
     plugin->integer_size = intsize;
-    plugin->get_mnemonic = get_mnemonic;
-    plugin->get_registername = get_register_name;
     plugin->decode = decode;
     plugin->emulate = emulate;
     plugin->lift = x86_lifter::lift;
     plugin->render_instruction = render_instruction;
+    plugin->setup = setup;
 
     plugin->create = [](const RDProcessorPlugin*) {
         auto* self = new X86Processor();
@@ -442,6 +453,14 @@ void register_processor(RDProcessorPlugin* plugin, const char* id,
 
     plugin->destroy = [](RDProcessor* self) {
         delete reinterpret_cast<X86Processor*>(self);
+    };
+
+    plugin->get_mnemonic = [](const RDProcessor*, const RDInstruction* instr) {
+        return ZydisMnemonicGetString(static_cast<ZydisMnemonic>(instr->id));
+    };
+
+    plugin->get_registername = [](const RDProcessor*, int reg) {
+        return ZydisRegisterGetString(static_cast<ZydisRegister>(reg));
     };
 
     plugin->get_prologues = [](const RDProcessor* self) {

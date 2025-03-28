@@ -1,5 +1,4 @@
 #include "memory.h"
-#include "../error.h"
 #include "mbyte.h"
 
 namespace redasm::memory {
@@ -8,7 +7,7 @@ namespace {
 
 tl::optional<std::pair<RDAddress, RDAddress>> find_range(const RDSegment* self,
                                                          RDAddress addr) {
-    assume(self);
+    ct_assume(self);
     if(addr >= self->end) return tl::nullopt;
 
     // Single item range
@@ -34,7 +33,7 @@ tl::optional<std::pair<RDAddress, RDAddress>> find_range(const RDSegment* self,
     if(rend >= self->end || !memory::has_flag(self, rend, BF_END))
         return tl::nullopt; // Not part of a valid range
 
-    assume(rstart <= rend);
+    ct_assume(rstart <= rend);
     return std::make_pair(rstart, rend);
 }
 
@@ -85,7 +84,7 @@ void clear(RDSegment* self, RDAddress address) {
 }
 
 void set_n(RDSegment* self, RDAddress address, usize n, u32 flags) {
-    assume(self);
+    ct_assume(self);
     if(!n) return;
 
     RDAddress end = std::min(address + n, self->end);
@@ -99,14 +98,14 @@ void set_n(RDSegment* self, RDAddress address, usize n, u32 flags) {
 }
 
 void unset_n(RDSegment* self, RDAddress address, usize n) {
-    assume(self);
+    ct_assume(self);
     RDAddress end = std::min(address + n, self->end);
 
     for(RDAddress addr = address; addr < end; addr++) {
         if(memory::has_flag(self, addr, BF_START) ||
            memory::has_flag(self, addr, BF_CONT)) {
             auto r = memory::find_range(self, addr);
-            assume(r);
+            ct_assume(r);
 
             // Unset the overlapping range
             for(RDAddress raddr = r->first; raddr <= r->second; raddr++)

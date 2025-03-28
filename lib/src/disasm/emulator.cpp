@@ -1,7 +1,6 @@
 #include "emulator.h"
 #include "../api/marshal.h"
 #include "../context.h"
-#include "../error.h"
 #include "../memory/mbyte.h"
 #include "../memory/memory.h"
 #include "../state.h"
@@ -9,28 +8,31 @@
 namespace redasm {
 
 Emulator::Emulator() {
-    assume(state::context);
-    assume(m_state.registers.empty());
-    assume(m_state.states.empty());
+    ct_assume(state::context);
+    ct_assume(m_state.regs.empty());
+    ct_assume(m_state.states.empty());
 
     this->dslotinstr = std::make_unique<RDInstruction>();
-    const Context* ctx = state::context;
+}
 
-    if(ctx->processorplugin && ctx->processorplugin->setup)
+void Emulator::setup() {
+    const Context* ctx = state::context;
+    ct_assume(ctx->processorplugin);
+    if(ctx->processorplugin->setup)
         ctx->processorplugin->setup(ctx->processor, api::to_c(this));
 }
 
 void Emulator::flow(RDAddress address) {
     RDSegment* fromseg = state::context->program.find_segment(this->pc);
-    assume(fromseg);
-    assume(fromseg->perm & SP_X);
+    ct_assume(fromseg);
+    ct_assume(fromseg->perm & SP_X);
 
     // Avoid inter-segment flow
     if(address >= fromseg->start && address < fromseg->end) {
         memory::set_flag(fromseg, this->pc, BF_FLOW);
 
         if(this->ndslot) { // Set delay flow too
-            assume(this->dslotinstr->delayslots > 0);
+            ct_assume(this->dslotinstr->delayslots > 0);
 
             // D-Flow until last delay slot
             if(this->ndslot < this->dslotinstr->delayslots)
@@ -46,21 +48,21 @@ void Emulator::add_ref(RDAddress toaddr, usize type) { // NOLINT
 }
 
 void Emulator::add_regchange(RDAddress addr, int reg, u64 val) {
-    state::context->add_regchange(addr, reg, val, this->pc);
+    // state::context->set_sreg(addr, reg, val, this->pc);
 }
 
 u64 Emulator::get_reg(int regid) const {
-    auto it = m_state.registers.find(regid);
-    if(it != m_state.registers.end()) return it->second;
+    auto it = m_state.regs.find(regid);
+    if(it != m_state.regs.end()) return it->second;
     return {};
 }
 
-void Emulator::set_reg(int regid, u64 val) { m_state.registers[regid] = val; }
+void Emulator::set_reg(int regid, u64 val) { m_state.regs[regid] = val; }
 
 u64 Emulator::upd_reg(int regid, u64 val, u64 mask) {
-    auto it = m_state.registers.find(regid);
+    auto it = m_state.regs.find(regid);
 
-    if(it != m_state.registers.end()) {
+    if(it != m_state.regs.end()) {
         it->second = (it->second & ~mask) | (val & mask);
         return it->second;
     }
@@ -105,7 +107,7 @@ u64 Emulator::upd_state(std::string_view s, u64 val, u64 mask) {
         return it->second;
     }
 
-    except("State '{}' not found", s);
+    ct_exceptf("State '%.*s' not found", static_cast<int>(s.size()), s.data());
 }
 
 u32 Emulator::tick() {
@@ -131,12 +133,10 @@ u32 Emulator::tick() {
     Context* ctx = state::context;
 
     this->segment = ctx->program.find_segment(this->pc);
-    assume(this->segment);
+    ct_assume(this->segment);
 
     if(memory::has_flag(this->segment, this->pc, BF_CODE))
         return memory::get_length(this->segment, this->pc);
-
-    this->check_regchanges();
 
     RDInstruction instr = {
         .features = this->ndslot ? IF_DSLOT : IF_NONE,
@@ -146,10 +146,10 @@ u32 Emulator::tick() {
 
     if(instr.length) {
         const RDProcessorPlugin* plugin = ctx->processorplugin;
-        assume(plugin);
+        ct_assume(plugin);
 
         memory::unset_n(this->segment, this->pc, instr.length);
-        assume(plugin->emulate);
+        ct_assume(plugin->emulate);
         plugin->emulate(ctx->processor, api::to_c(this), &instr);
         memory::set_n(this->segment, this->pc, instr.length, BF_CODE);
 
@@ -184,7 +184,7 @@ void Emulator::execute_delayslots(const RDInstruction& instr) {
     this->ndslot = 0;
 }
 
-bool Emulator::decode_prev(RDAddress address, RDInstruction& instr) const {
+bool Emulator::decode_prev(RDAddress address, RDInstruction& instr) {
     RDSegment* seg = state::context->program.find_segment(address);
     if(!seg || seg->start == address) return false;
 
@@ -197,10 +197,11 @@ bool Emulator::decode_prev(RDAddress address, RDInstruction& instr) const {
     return false;
 }
 
-bool Emulator::decode(RDAddress address, RDInstruction& instr) const {
+bool Emulator::decode(RDAddress address, RDInstruction& instr) {
     const RDProcessorPlugin* plugin = state::context->processorplugin;
-    assume(plugin);
+    ct_assume(plugin);
 
+    // this->check_sregs();
     instr.address = address;
 
     if(plugin->decode)
@@ -215,14 +216,11 @@ bool Emulator::decode(RDAddress address, RDInstruction& instr) const {
     return instr.length > 0;
 }
 
-void Emulator::check_regchanges() {
-    if(!memory::has_flag(this->segment, this->pc, BF_REGCHANGE)) return;
+void Emulator::check_sregs() {
+    Database::SRegChanges rc = state::context->get_sregs_from_addr(this->pc);
 
-    Database::RegChanges rc =
-        state::context->get_regchanges_from_addr(this->pc);
-
-    for(const Database::RegChange& rc : rc)
-        m_state.registers[rc.reg] = rc.value;
+    for(const Database::SegmentReg& sreg : rc)
+        m_state.sregs[sreg.reg] = sreg.value;
 }
 
 bool Emulator::has_pending_code() const {

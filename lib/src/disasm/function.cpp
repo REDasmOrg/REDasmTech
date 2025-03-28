@@ -1,5 +1,4 @@
 #include "function.h"
-#include "../error.h"
 #include <algorithm>
 
 namespace redasm {
@@ -47,7 +46,7 @@ RDThemeKind Function::get_theme(const RDGraphEdge& e) const {
 
 void Function::jmp(RDGraphNode src, RDGraphNode dst, RDThemeKind theme) {
     BasicBlock* bb = this->get_basic_block(src);
-    assume(bb);
+    ct_assume(bb);
     bb->theme[dst] = theme;
     this->graph.add_edge(src, dst);
 }

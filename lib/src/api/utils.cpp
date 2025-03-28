@@ -1,5 +1,6 @@
 #include "../utils/utils.h"
 #include <redasm/utils.h>
+#include <spdlog/spdlog.h>
 
 namespace {
 

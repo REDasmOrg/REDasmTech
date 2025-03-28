@@ -26,6 +26,6 @@ public:
 
 private:
     ui::LoaderDialog m_ui;
-    Vect(RDTestResult) m_testresult;
-    Vect(const RDProcessorPlugin*) m_processors { nullptr };
+    const RDTestResultSlice* m_testresult{nullptr};
+    const RDProcessorPluginSlice* m_processors{nullptr};
 };

@@ -1,7 +1,6 @@
 #include "rdil.h"
 #include "../api/marshal.h"
 #include "../context.h"
-#include "../error.h"
 #include "../memory/memory.h"
 #include "../state.h"
 #include "../surface/renderer.h"
@@ -162,7 +161,7 @@ bool get_format_impl(const RDILExpr* e, std::string& res) {
         case RDIL_VAR: res += "var"; break;
         case RDIL_REG: res += "reg"; break;
         case RDIL_SYM: res += "sym"; break;
-        default: except("Unknown IL Expression"); break;
+        default: ct_except("Unknown IL Expression"); break;
     }
 
     return true;
@@ -382,16 +381,18 @@ void generate(const Function& f, ILExprList& res) {
 void generate(const Function& f, ILExprList& res, usize maxn) {
     const Context* ctx = state::context;
     const RDProcessorPlugin* p = ctx->processorplugin;
-    assume(p);
+    ct_assume(p);
+
+    ctx->worker->emulator.reset();
 
     for(const Function::BasicBlock& bb : f.blocks) {
         for(RDAddress address = bb.start; address <= bb.end;) {
             res.currentaddress = address;
 
-            RDInstruction instr{.address = address};
-            if(p->decode) p->decode(ctx->processor, &instr);
+            RDInstruction instr;
+            bool ok = ctx->worker->emulator.decode(address, instr);
 
-            if(!instr.length || !p->lift ||
+            if(!ok || !p->lift ||
                !p->lift(ctx->processor, api::to_c(&res), &instr)) {
                 res.append(res.expr_unknown());
             }
@@ -399,10 +400,10 @@ void generate(const Function& f, ILExprList& res, usize maxn) {
             if(res.size() >= maxn) return;
 
             const RDSegment* seg = ctx->program.find_segment(address);
-            assume(seg);
+            ct_assume(seg);
 
             if(auto nextaddr = memory::get_next(seg, address); nextaddr) {
-                assume(*nextaddr > address);
+                ct_assume(*nextaddr > address);
                 address = *nextaddr;
             }
             else

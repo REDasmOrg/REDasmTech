@@ -1,15 +1,14 @@
 #pragma once
 
-#include "../error.h"
 #include <redasm/redasm.h>
 #include <string_view>
 
 namespace redasm::pm {
 
 constexpr const char* NATIVE = "native";
-inline Vect(const RDLoaderPlugin*) loaders = nullptr;
-inline Vect(const RDProcessorPlugin*) processors = nullptr;
-inline Vect(const RDAnalyzerPlugin*) analyzers = nullptr;
+inline RDLoaderPluginSlice loaders;
+inline RDProcessorPluginSlice processors;
+inline RDAnalyzerPluginSlice analyzers;
 
 // clang-format off
 template<typename T> struct InstanceForPlugin {};
@@ -33,7 +32,7 @@ const RDAnalyzerPlugin* find_analyzer(std::string_view id);
 
 template<typename T>
 pm::InstanceForPlugin<T>::Type* create_instance(const T* plugin) {
-    assume(plugin);
+    ct_assume(plugin);
     using Instance = pm::InstanceForPlugin<T>::Type;
 
     Instance* instance = nullptr;
@@ -46,7 +45,7 @@ template<typename T>
 void destroy_instance(const T* plugin,
                       typename pm::InstanceForPlugin<T>::Type* p) {
     if(!plugin && !p) return;
-    assume(plugin);
+    ct_assume(plugin);
     if(plugin->destroy && p) plugin->destroy(p);
 }
 

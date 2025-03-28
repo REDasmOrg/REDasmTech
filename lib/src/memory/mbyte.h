@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../error.h"
 #include <redasm/byte.h>
 #include <redasm/types.h>
 
@@ -18,7 +17,7 @@ inline bool has_byte(RDMByte self) { return mbyte::has_flag(self, BF_BYTE); }
 inline bool has_common(RDMByte self) { return mbyte::has_flag(self, BF_MCOMM); }
 
 inline u8 get_byte(RDMByte self) {
-    assume(mbyte::has_byte(self));
+    ct_assume(mbyte::has_byte(self));
     return static_cast<u8>(self & 0xFF);
 }
 

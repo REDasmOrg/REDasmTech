@@ -34,16 +34,14 @@ typedef enum RDInstructionFeatures {
     IF_DSLOT = (1 << 4), // Is a delay slot
 } RDInstructionFeatures;
 
-typedef usize RDRegisterOperand;
-
 typedef struct _RDPhraseOperand {
-    RDRegisterOperand base;
-    RDRegisterOperand index;
+    int base;
+    int index;
 } _RDPhraseOperand;
 
 typedef struct _RDDisplOperand {
-    RDRegisterOperand base;
-    RDRegisterOperand index;
+    int base;
+    int index;
 
     union {
         u64 displ;
@@ -55,18 +53,18 @@ typedef struct _RDDisplOperand {
 
 typedef struct _RDUserOperand {
     union {
-        RDRegisterOperand reg1;
+        int reg1;
         usize val1;
         isize s_val1;
     };
 
     union {
-        RDRegisterOperand reg2;
+        int reg2;
         usize val2;
         isize s_val2;
     };
     union {
-        RDRegisterOperand reg3;
+        int reg3;
         usize val3;
         isize s_val3;
     };
@@ -77,7 +75,7 @@ typedef struct RDOperand {
     RDType dtype;
 
     union {
-        RDRegisterOperand reg;
+        int reg;
         u64 addr;
         u64 imm;
         i64 s_imm;

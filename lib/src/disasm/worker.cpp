@@ -1,7 +1,5 @@
 #include "worker.h"
 #include "../context.h"
-#include "../error.h"
-#include "../internal/buffer_internal.h"
 #include "../plugins/pluginmanager.h"
 #include "../state.h"
 #include "memprocess.h"
@@ -69,7 +67,7 @@ bool Worker::execute(const RDWorkerStatus** s) {
             case WS_MERGEDATA2: this->mergedata_step(); break;
 
             case WS_FINALIZE: this->finalize_step(); break;
-            default: unreachable;
+            default: ct_unreachable;
         }
     }
     else {
@@ -102,7 +100,7 @@ void Worker::init_step() {
 void Worker::emulate_step() {
     if(emulator.has_pending_code()) {
         emulator.tick();
-        assume(emulator.segment);
+        ct_assume(emulator.segment);
         m_status->segment = emulator.segment;
         m_status->address.value = emulator.pc;
         m_status->address.valid = true;
@@ -137,7 +135,7 @@ void Worker::analyze_step() {
         else if(m_currentstep == WS_ANALYZE2)
             m_currentstep = WS_EMULATE2;
         else
-            unreachable;
+            ct_unreachable;
     }
     else
         m_currentstep++;

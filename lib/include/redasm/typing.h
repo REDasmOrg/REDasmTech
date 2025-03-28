@@ -36,13 +36,14 @@ typedef struct RDType {
 } RDType;
 
 struct RDValue;
-MapItemStr(RDValueField, const char*, struct RDValue*);
+define_slice(RDValueSlice, RDValue);
+define_hmap(RDValueDict, 1 << 4);
 
 typedef struct RDValue {
     RDType type;
 
-    Vect(RDValue*) list;
-    Map(RDValueField) dict;
+    RDValueSlice list;
+    RDValueDict dict;
     Str str;
 
     // clang-format off
@@ -56,6 +57,14 @@ typedef struct RDValue {
     Str _scratchpad;
 } RDValue;
 
+define_optional(RDValueOpt, RDValue);
+
+typedef struct RDValueHNode {
+    char* key;
+    RDValue value;
+    HListNode hnode;
+} RDValueHNode;
+
 REDASM_EXPORT usize rd_nsizeof(const char* tname);
 REDASM_EXPORT usize rd_tsizeof(const RDType* t);
 REDASM_EXPORT bool rdtype_create(const char* tname, RDType* t);
@@ -64,7 +73,7 @@ REDASM_EXPORT bool rd_intfrombytes(usize bytes, bool sign, RDType* t);
 REDASM_EXPORT const char* rd_typename(const RDType* t);
 REDASM_EXPORT const char* rd_createstruct(const char* name,
                                           const RDStructField* fields);
-REDASM_EXPORT RDValue* rdvalue_create(void);
+REDASM_EXPORT void rdvalue_init(RDValue* v);
 REDASM_EXPORT void rdvalue_destroy(RDValue* self);
 REDASM_EXPORT const char* rdvalue_tostring(RDValue* self);
 REDASM_EXPORT bool rdvalue_islist(const RDValue* self);

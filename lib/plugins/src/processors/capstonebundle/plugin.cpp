@@ -20,8 +20,14 @@ void compile_fields(RDProcessorPlugin* plugin, const char* id, const char* name,
         delete reinterpret_cast<Processor*>(self);
     };
 
-    plugin->get_mnemonic = [](const RDProcessor* self, u32 id) {
-        return reinterpret_cast<const Processor*>(self)->get_mnemonic(id);
+    plugin->normalize_address = [](const RDProcessor* self, RDAddress addr) {
+        return reinterpret_cast<const Processor*>(self)->normalize_address(
+            addr);
+    };
+
+    plugin->get_mnemonic = [](const RDProcessor* self,
+                              const RDInstruction* instr) {
+        return reinterpret_cast<const Processor*>(self)->get_mnemonic(instr);
     };
 
     plugin->get_registername = [](const RDProcessor* self, int regid) {
@@ -46,13 +52,17 @@ void compile_fields(RDProcessorPlugin* plugin, const char* id, const char* name,
 
 RDProcessorPlugin arm32le;
 RDProcessorPlugin arm32be;
+RDProcessorPlugin thumble;
+RDProcessorPlugin thumbbe;
 
 } // namespace
 
 void rdplugin_create() {
     // clang-format off
-    compile_fields<ARM32LEProcessor>(&arm32le, "arm32le", "ARM (Little Endian)", 4, 4);
-    compile_fields<ARM32BEProcessor>(&arm32be, "arm32be", "ARM (Big Endian)", 4, 4);
+    compile_fields<arm32::ARMLE>(&arm32le, "arm32le", "ARM (Little Endian)", 4, 4);
+    compile_fields<arm32::ARMBE>(&arm32be, "arm32be", "ARM (Big Endian)", 4, 4);
+    compile_fields<arm32::THUMBLE>(&thumble, "thumble", "THUMB (Little Endian)", 2, 4);
+    compile_fields<arm32::THUMBBE>(&thumbbe, "thumbbe", "THUMB (Big Endian)", 2, 4);
     // clang-format on
 
     rd_registerprocessor(&arm32le);

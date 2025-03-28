@@ -1,5 +1,4 @@
 #include "theme.h"
-#include "error.h"
 
 namespace redasm {
 

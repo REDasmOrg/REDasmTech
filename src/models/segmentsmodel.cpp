@@ -14,19 +14,19 @@ QString get_segment_type(const RDSegment& seg) {
 } // namespace
 
 SegmentsModel::SegmentsModel(QObject* parent): QAbstractListModel{parent} {
-    m_nsegments = rd_getsegments(&m_segments);
+    m_segments = rd_getsegments();
 }
 
-size_t SegmentsModel::address(const QModelIndex& index) const {
-    return m_segments[index.row()].start;
+RDAddress SegmentsModel::address(const QModelIndex& index) const {
+    return m_segments->data[index.row()].start;
 }
 
 QVariant SegmentsModel::data(const QModelIndex& index, int role) const {
     if(role == Qt::DisplayRole) {
-        const RDSegment& seg = m_segments[index.row()];
+        const RDSegment& seg = m_segments->data[index.row()];
 
         switch(index.column()) {
-            case 0: return m_segments[index.row()].name;
+            case 0: return seg.name;
             case 1: return utils::to_hex_addr(seg.start, &seg);
             case 2: return utils::to_hex_addr(seg.end, &seg);
             case 3: return utils::to_hex_addr(seg.end - seg.start, &seg);
@@ -62,4 +62,7 @@ QVariant SegmentsModel::headerData(int section, Qt::Orientation orientation,
 }
 
 int SegmentsModel::columnCount(const QModelIndex&) const { return 6; }
-int SegmentsModel::rowCount(const QModelIndex&) const { return m_nsegments; }
+
+int SegmentsModel::rowCount(const QModelIndex&) const {
+    return m_segments->length;
+}

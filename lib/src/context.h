@@ -49,15 +49,17 @@ public: // Database Interface
     Database::RefList get_refs_from(RDAddress fromaddr) const;
     Database::RefList get_refs_to_type(RDAddress fromaddr, usize type) const;
     Database::RefList get_refs_to(RDAddress toaddr) const;
-    Database::RegChanges get_regchanges_from_addr(RDAddress address) const;
-    Database::RegChanges get_regchanges_from_reg(int reg) const;
-    Database::RegList get_changed_regs() const;
+    bool add_sreg_range(RDAddress start, RDAddress end, int sreg, u64 val);
+    Database::SRegChanges get_sregs_from_addr(RDAddress address) const;
+    Database::SRegChanges get_sreg_changes(int reg) const;
+    tl::optional<u64> get_sreg(RDAddress address, int reg) const;
+    Database::SRegList get_sregs() const;
 
     tl::optional<RDAddress> get_address(std::string_view name,
                                         bool onlydb = false) const;
 
-    void add_regchange(RDAddress address, int reg, u64 val,
-                       const tl::optional<RDAddress>& fromaddr = tl::nullopt);
+    void set_sreg(RDAddress address, int reg, u64 val,
+                  const tl::optional<RDAddress>& fromaddr = tl::nullopt);
 
 public: // Plugins
     const RDLoaderPlugin* loaderplugin{nullptr};
@@ -69,7 +71,7 @@ public: // Plugins
 
 public:
     Program program;
-    Vect(RDProblem) problems {};
+    RDProblemSlice problems;
     std::vector<RDAddress> entrypoints;
     Worker* worker{nullptr};
     Listing listing;

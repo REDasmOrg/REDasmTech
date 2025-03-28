@@ -1,5 +1,4 @@
 #include "../context.h"
-#include "../error.h"
 #include "../plugins/pluginmanager.h"
 #include "../state.h"
 #include "../utils/utils.h"
@@ -59,13 +58,13 @@ u64 rdemulator_updreg(RDEmulator* self, int regid, u64 val, u64 mask) {
 u64 rdemulator_getstate(const RDEmulator* self, const char* state) {
     spdlog::trace("rdemulator_getstate({}, '{}')", fmt::ptr(self), state);
     if(state) return redasm::api::from_c(self)->get_state(state);
-    except("rdemulator_getstate(): 'state' argument is null");
+    ct_except("rdemulator_getstate(): 'state' argument is null");
 }
 
 u64 rdemulator_takestate(RDEmulator* self, const char* state) {
     spdlog::trace("rdemulator_takestate({}, '{}')", fmt::ptr(self), state);
     if(state) return redasm::api::from_c(self)->take_state(state);
-    except("rdemulator_takestate(): 'state' argument is null");
+    ct_except("rdemulator_takestate(): 'state' argument is null");
 }
 
 void rdemulator_delstate(RDEmulator* self, const char* state) {
@@ -73,7 +72,7 @@ void rdemulator_delstate(RDEmulator* self, const char* state) {
     if(state)
         redasm::api::from_c(self)->del_state(state);
     else
-        except("rdemulator_delstate(): 'state' argument is null");
+        ct_except("rdemulator_delstate(): 'state' argument is null");
 }
 
 void rdemulator_setstate(RDEmulator* self, const char* state, u64 val) {
@@ -82,7 +81,7 @@ void rdemulator_setstate(RDEmulator* self, const char* state, u64 val) {
     if(state)
         redasm::api::from_c(self)->set_state(state, val);
     else
-        except("rdemulator_setstate(): 'state' argument is null");
+        ct_except("rdemulator_setstate(): 'state' argument is null");
 }
 
 u64 rdemulator_updstate(RDEmulator* self, const char* state, u64 val,
@@ -90,7 +89,7 @@ u64 rdemulator_updstate(RDEmulator* self, const char* state, u64 val,
     spdlog::trace("rdemulator_updstate({}, '{}', {:x}, {:x})", fmt::ptr(self),
                   state, val, mask);
     if(state) return redasm::api::from_c(self)->upd_state(state, val, mask);
-    except("rdemulator_setstate(): 'state' argument is null");
+    ct_except("rdemulator_setstate(): 'state' argument is null");
 }
 
 bool rd_registerprocessor(const RDProcessorPlugin* plugin) {
@@ -105,9 +104,9 @@ bool rd_registerprocessor_ex(const RDProcessorPlugin* plugin,
     return redasm::pm::register_processor(plugin, origin);
 }
 
-Vect(const RDProcessorPlugin*) rd_getprocessorplugins() {
+const RDProcessorPluginSlice* rd_getprocessorplugins() {
     spdlog::trace("rd_getprocessorplugins()");
-    return redasm::pm::processors;
+    return &redasm::pm::processors;
 }
 
 const RDProcessorPlugin* rd_getprocessorplugin() {
@@ -119,6 +118,13 @@ const RDProcessorPlugin* rd_getprocessorplugin() {
 const RDProcessor* rd_getprocessor() {
     spdlog::trace("rd_getprocessor()");
     if(redasm::state::context) return redasm::state::context->processor;
+    return nullptr;
+}
+
+const RDEmulator* rd_getemulator() {
+    spdlog::trace("rd_getemulator()");
+    if(redasm::state::context)
+        return redasm::api::to_c(&redasm::state::context->worker->emulator);
     return nullptr;
 }
 
@@ -137,6 +143,16 @@ bool rd_decode(RDAddress address, RDInstruction* instr) {
     if(ctx && instr && rd_isaddress(address))
         return ctx->worker->emulator.decode(address, *instr);
     return false;
+}
+
+RDAddress rd_normalizeaddress(RDAddress address) {
+    spdlog::trace("rd_normalizeaddress({:x})", address);
+    const redasm::Context* ctx = redasm::state::context;
+
+    if(ctx && ctx->processorplugin->normalize_address)
+        return ctx->processorplugin->normalize_address(ctx->processor, address);
+
+    return address;
 }
 
 const char* rd_getregistername(int regid) {
@@ -161,7 +177,7 @@ const char* rd_getmnemonic(const RDInstruction* instr) {
 
     if(instr && ctx && ctx->processorplugin &&
        ctx->processorplugin->get_mnemonic)
-        return ctx->processorplugin->get_mnemonic(ctx->processor, instr->id);
+        return ctx->processorplugin->get_mnemonic(ctx->processor, instr);
 
     return nullptr;
 }

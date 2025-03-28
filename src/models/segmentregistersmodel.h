@@ -3,11 +3,11 @@
 #include <QAbstractListModel>
 #include <redasm/redasm.h>
 
-class RegionsModel: public QAbstractListModel {
+class SegmentRegisterModel: public QAbstractListModel {
     Q_OBJECT
 
 public:
-    explicit RegionsModel(QObject* parent = nullptr);
+    explicit SegmentRegisterModel(QObject* parent = nullptr);
     [[nodiscard]] RDAddress address(const QModelIndex& index) const;
     void set_register(int reg);
 
@@ -20,7 +20,6 @@ public:
                                       int role) const override;
 
 private:
-    RDAddress m_address;
-    const Map(RDProgramRegion) m_regionsbyreg;
-    const Vect(RDRegion) m_regions;
+    const RDSRegRangeHMap* m_segmentregs;
+    QList<const RDSRegRange*> m_ranges;
 };

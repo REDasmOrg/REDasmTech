@@ -1,5 +1,6 @@
 #include "../memory/mbyte.h"
 #include <redasm/byte.h>
+#include <spdlog/spdlog.h>
 
 bool rdmbyte_isunknown(RDMByte self) {
     spdlog::trace("rdmbyte_isunknown({:#04x})", self);

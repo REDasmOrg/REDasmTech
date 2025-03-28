@@ -18,6 +18,7 @@
 #include <redasm/rdil.h>
 #include <redasm/renderer.h>
 #include <redasm/segment.h>
+#include <redasm/sreg.h>
 #include <redasm/stream.h>
 #include <redasm/surface.h>
 #include <redasm/theme.h>
@@ -55,11 +56,15 @@ typedef struct RDProblem {
     const char* problem;
 } RDProblem;
 
+define_slice(RDProblemSlice, RDProblem);
+
 typedef struct RDTestResult {
     const RDLoaderPlugin* loaderplugin;
     const RDProcessorPlugin* processorplugin;
     RDContext* context;
 } RDTestResult;
+
+define_slice(RDTestResultSlice, RDTestResult);
 
 typedef void (*RDLogCallback)(const char*, void*);
 typedef void (*RDStatusCallback)(const char*, void*);
@@ -90,27 +95,24 @@ REDASM_EXPORT const char* rd_rendertext(RDAddress address);
 REDASM_EXPORT bool rd_tooffset(RDAddress address, RDOffset* offset);
 REDASM_EXPORT bool rd_toaddress(RDOffset offset, RDAddress* address);
 REDASM_EXPORT const RDSegment* rd_findsegment(RDAddress address);
-REDASM_EXPORT void rd_addregchange(RDAddress address, int reg, u64 val);
-REDASM_EXPORT void rd_addregchange_from(RDAddress address, int reg, u64 val,
-                                        RDAddress fromaddr);
 
 REDASM_EXPORT usize rd_getentries(RDAddress** entries);
 REDASM_EXPORT bool rd_tick(const RDWorkerStatus** s);
 
 REDASM_EXPORT void rd_addsearchpath(const char* path);
-REDASM_EXPORT Vect(RDProblem) rd_getproblems(void);
-REDASM_EXPORT Vect(RDTestResult) rd_test(RDBuffer* file);
+REDASM_EXPORT const RDProblemSlice* rd_getproblems(void);
+REDASM_EXPORT const RDTestResultSlice* rd_test(RDBuffer* file);
 REDASM_EXPORT void rd_disassemble(void);
 
 REDASM_EXPORT bool rd_setcomment(RDAddress address, const char* comment);
 REDASM_EXPORT bool rd_settype(RDAddress address, const RDType* type,
-                              RDValue** v);
+                              RDValue* v);
 REDASM_EXPORT bool rd_settype_ex(RDAddress address, const RDType* type,
-                                 usize flags, RDValue** v);
+                                 usize flags, RDValue* v);
 REDASM_EXPORT bool rd_settypename(RDAddress address, const char* tname,
-                                  RDValue** v);
+                                  RDValue* v);
 REDASM_EXPORT bool rd_settypename_ex(RDAddress address, const char* tname,
-                                     usize flags, RDValue** v);
+                                     usize flags, RDValue* v);
 REDASM_EXPORT bool rd_setfunction(RDAddress address);
 REDASM_EXPORT bool rd_setfunction_ex(RDAddress address, usize flags);
 REDASM_EXPORT bool rd_setentry(RDAddress address, const char* name);
@@ -120,8 +122,8 @@ REDASM_EXPORT void rd_addproblem(RDAddress address, const char* problem);
 REDASM_EXPORT bool rd_setname(RDAddress address, const char* name);
 REDASM_EXPORT bool rd_setname_ex(RDAddress address, const char* name,
                                  usize flags);
-REDASM_EXPORT RDValue* rd_gettypename(RDAddress address, const char* tname);
-REDASM_EXPORT RDValue* rd_gettype(RDAddress address, const RDType* t);
+REDASM_EXPORT RDValueOpt rd_gettypename(RDAddress address, const char* tname);
+REDASM_EXPORT RDValueOpt rd_gettype(RDAddress address, const RDType* t);
 REDASM_EXPORT bool rd_getaddress(const char* name, RDAddress* address);
 REDASM_EXPORT const char* rd_getname(RDAddress address);
 REDASM_EXPORT const char* rd_getcomment(RDAddress address);

@@ -93,6 +93,10 @@ inline RDEmulator* to_c(Emulator* arg) {
     return reinterpret_cast<RDEmulator*>(arg);
 }
 
+inline const RDEmulator* to_c(const Emulator* arg) {
+    return reinterpret_cast<const RDEmulator*>(arg);
+}
+
 inline RDSurface* to_c(Surface* arg) {
     return reinterpret_cast<RDSurface*>(arg);
 }

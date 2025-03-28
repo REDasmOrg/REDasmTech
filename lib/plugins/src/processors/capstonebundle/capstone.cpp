@@ -26,6 +26,10 @@ const char* Capstone::get_registername(int regid) const {
     return cs_reg_name(this->handle, regid);
 }
 
+RDAddress Capstone::normalize_address(RDAddress address) const {
+    return address;
+}
+
 bool Capstone::disasm(RDInstruction* instr, u8* data, usize size) const {
     usize n = rd_read(instr->address, data, size);
     if(n != size) return false;

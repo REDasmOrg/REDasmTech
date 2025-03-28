@@ -41,7 +41,7 @@ target_sources(${PROJECT_NAME}
         src/models/recentfilesmodel.cpp
         src/models/segmentsmodel.cpp
         src/models/referencesmodel.cpp
-        src/models/regionsmodel.cpp
+        src/models/segmentregistersmodel.cpp
         src/models/symbolsfiltermodel.cpp
         src/models/symbolsmodel.cpp
         src/models/exportsmodel.cpp
@@ -55,7 +55,7 @@ target_sources(${PROJECT_NAME}
         src/dialogs/loaderdialog.cpp
         src/dialogs/analyzerdialog.cpp
         src/dialogs/memorymapdialog.cpp
-        src/dialogs/regionsdialog.cpp
+        src/dialogs/segmentregistersdialog.cpp
         src/dialogs/errordialog.cpp
         src/dialogs/settingsdialog.cpp
         src/dialogs/aboutdialog.cpp

@@ -23,7 +23,7 @@ private Q_SLOTS:
     void toggle_rdil();
     void select_file();
     void show_segments();
-    void show_regions();
+    void show_segment_registers();
     void show_strings();
     void show_exports();
     void show_imports();

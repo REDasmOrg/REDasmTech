@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../error.h"
 #include <algorithm>
 #include <redasm/buffer.h>
 #include <redasm/types.h>
@@ -22,7 +21,7 @@ inline void sort(std::vector<Compiled>& patterns) {
 }
 
 inline std::vector<Compiled> compile_all(const char** psource) {
-    assume(psource);
+    ct_assume(psource);
 
     std::vector<pattern::Compiled> patterns;
     for(const char** p = psource; *p; p++)

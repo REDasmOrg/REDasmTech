@@ -18,17 +18,16 @@ bool rd_addsegment_n(const char* name, RDAddress base, usize n, u32 perm,
     return rd_addsegment(name, base, base + n, perm, bits);
 }
 
-usize rd_getsegments(const RDSegment** segments) {
-    spdlog::trace("rd_getsegments({})", fmt::ptr(segments));
-    if(!redasm::state::context) return 0;
-    if(segments) *segments = redasm::state::context->program.segments.data();
-    return redasm::state::context->program.segments.size();
+const RDSegmentSlice* rd_getsegments() {
+    spdlog::trace("rd_getsegments()");
+    if(!redasm::state::context) return nullptr;
+    return &redasm::state::context->program.segments;
 }
 
-const Map(RDProgramRegion) rd_getregions() {
-    spdlog::trace("rd_getregions()");
+const RDSRegRangeHMap* rd_getsegmentregisters() {
+    spdlog::trace("rd_getsegmentregisters()");
     if(!redasm::state::context) return nullptr;
-    return redasm::state::context->program.regions;
+    return &redasm::state::context->program.segmentregs;
 }
 
 bool rd_mapfile(RDOffset off, RDAddress start, RDAddress end) {

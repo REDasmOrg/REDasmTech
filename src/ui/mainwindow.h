@@ -22,7 +22,7 @@ struct MainWindow {
     QAction* actwinrestoredefault;
     QAction *acttoolsflc, *acttoolsproblems;
     QAction *actedit, *actview, *acttools;
-    QAction *actviewmemorymap, *actviewsegments, *actviewregions,
+    QAction *actviewmemorymap, *actviewsegments, *actviewsegmentregisters,
         *actviewstrings, *actviewimports, *actviewexports;
     QAction* acttbseparator;
     ::LogView* logview;
@@ -86,8 +86,8 @@ struct MainWindow {
         this->actviewsegments = this->mnuview->addAction(
             "S&egments", QKeySequence{Qt::CTRL | Qt::SHIFT | Qt::Key_S});
 
-        this->actviewregions = this->mnuview->addAction(
-            "&Regions", QKeySequence{Qt::CTRL | Qt::SHIFT | Qt::Key_R});
+        this->actviewsegmentregisters = this->mnuview->addAction(
+            "Se&gment Registers", QKeySequence{Qt::CTRL | Qt::ALT | Qt::Key_S});
 
         this->actviewstrings = this->mnuview->addAction(
             FA_ICON(0xf031), "&Strings", QKeySequence{Qt::CTRL | Qt::Key_S});

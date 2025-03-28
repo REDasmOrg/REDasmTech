@@ -7,22 +7,22 @@
 
 namespace ui {
 
-struct RegionsDialog {
+struct SegmentRegistersDialog {
     QComboBox* cbregisters;
-    QTreeView* tvregions;
+    QTreeView* tvsregs;
 
-    explicit RegionsDialog(QDialog* self) {
+    explicit SegmentRegistersDialog(QDialog* self) {
         self->setAttribute(Qt::WA_DeleteOnClose);
         self->setWindowTitle("Regions");
         self->setModal(true);
         self->resize(800, 600);
 
         this->cbregisters = new QComboBox();
-        this->tvregions = new QTreeView();
+        this->tvsregs = new QTreeView();
 
         auto* vbox = new QVBoxLayout(self);
         vbox->addWidget(this->cbregisters);
-        vbox->addWidget(this->tvregions, 1);
+        vbox->addWidget(this->tvsregs, 1);
     }
 };
 

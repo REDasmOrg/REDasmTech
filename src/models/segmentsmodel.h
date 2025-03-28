@@ -8,7 +8,7 @@ class SegmentsModel: public QAbstractListModel {
 
 public:
     explicit SegmentsModel(QObject* parent = nullptr);
-    [[nodiscard]] size_t address(const QModelIndex& index) const;
+    [[nodiscard]] RDAddress address(const QModelIndex& index) const;
 
 public:
     [[nodiscard]] QVariant data(const QModelIndex& index,
@@ -19,6 +19,5 @@ public:
     [[nodiscard]] int rowCount(const QModelIndex&) const override;
 
 private:
-    const RDSegment* m_segments{nullptr};
-    usize m_nsegments{};
+    const RDSegmentSlice* m_segments{nullptr};
 };

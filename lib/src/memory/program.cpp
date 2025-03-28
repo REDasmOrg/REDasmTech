@@ -1,5 +1,4 @@
 #include "program.h"
-#include "../internal/buffer_internal.h"
 #include "../utils/utils.h"
 #include "mbyte.h"
 #include <algorithm>
@@ -8,29 +7,38 @@ namespace redasm {
 
 namespace {
 
-template<typename T>
-bool range_overlaps(T s1, T e1, T s2, T e2) {
-    return s1 < e2 && s2 < e1;
+template<typename T, typename Slice>
+T* find_range(const Slice& s, RDAddress address) {
+    auto res = slice_bsearch(
+        &s, address, +[](const RDAddress* key, const T* item) {
+            RDAddress addr = reinterpret_cast<RDAddress>(key);
+            if(addr < item->start) return -1;
+            if(addr >= item->end) return 1;
+            return 0;
+        });
+
+    if(res.found) return &s.data[res.index];
+    return nullptr;
 }
 
 } // namespace
 
 Program::Program() {
-    this->regions = map_create(RDProgramRegion);
-
-    map_setitemdel(this->regions, [](MapBucket* b) {
-        auto* pr = reinterpret_cast<RDProgramRegion*>(b);
-        vect_destroy(pr->value);
-    });
+    slice_init(&this->segments, nullptr, nullptr);
+    hmap_init(&this->segmentregs, nullptr);
 }
 
 Program::~Program() {
-    for(RDSegment& s : this->segments) {
-        rdbuffer_destroy(s.mem);
-        delete[] s.name;
+    RDSegment* it;
+    slice_foreach(it, &this->segments) {
+        rdbuffer_destroy(it->mem);
+        delete[] it->name;
     }
 
-    map_destroy(this->regions);
+    slice_destroy(&this->segments);
+
+    RDSRegRange* n;
+    hmap_foreach(n, &this->segmentregs, RDSRegRange, hnode) delete n;
 }
 
 tl::optional<RDOffset> Program::to_offset(RDAddress address) const {
@@ -76,13 +84,13 @@ bool Program::add_segment(std::string_view name, RDAddress start, RDAddress end,
                           u32 perm, u32 bits) {
     if(start >= end) return false;
 
-    auto it = std::ranges::lower_bound(
-        this->segments, start,
-        [](RDAddress endaddr, RDAddress addr) { return endaddr <= addr; },
-        [](const RDSegment& s) { return s.end; });
+    auto r = slice_bsearch(
+        &this->segments, start,
+        +[](const RDAddress* key, const RDSegment* val) -> int {
+            return reinterpret_cast<RDAddress>(key) - val->end;
+        });
 
-    if(it != this->segments.end() && it->start < end)
-        return false; // Overlap detected
+    if(r.found) return false; // Overlap detected
 
     RDSegment s = {
         .name = utils::copy_str(name),
@@ -93,7 +101,7 @@ bool Program::add_segment(std::string_view name, RDAddress start, RDAddress end,
         .mem = rdbuffer_creatememory(end - start),
     };
 
-    this->segments.insert(it, s);
+    slice_insert(&this->segments, r.index, s);
 
     for(const FileMapping& m : this->mappings) {
         usize mapend = m.base + m.length;
@@ -113,6 +121,89 @@ bool Program::add_segment(std::string_view name, RDAddress start, RDAddress end,
     return true;
 }
 
+bool Program::add_sreg_range(RDAddress start, RDAddress end, int sreg,
+                             u64 val) {
+    if(start >= end) return false;
+
+    // Vect(RDSRegRange) ranges = nullptr;
+    // if(auto* r = map_get(Vect(RDSRegRange), this->segmentregs, sreg); r)
+    //     ranges = *r;
+    // else {
+    //     ranges = vect_create(RDSRegRange);
+    //     map_set(this->segmentregs, sreg, ranges);
+    // }
+    // ct_assume(ranges);
+    //
+    // uintptr_t idx = vect_bsearch(
+    //     ranges, &start, +[](const RDAddress* start, const RDSegment* seg) {
+    //         return *start < seg->start;
+    //     });
+    //
+    // // Check if we can extend or merge with previous range
+    // if(idx > 0) {
+    //     RDSRegRange* prev = vect_ref(RDSRegRange, ranges, idx - 1);
+    //
+    //     if(prev->end >= start) { // Overlap or adjacency
+    //         if(prev->value == val) {
+    //             prev->end = std::max(prev->end, end); // Extend
+    //             return true;
+    //         }
+    //         if(prev->end > start) { // Split the previous range
+    //             prev->end = start;
+    //
+    //             vect_ins(RDSRegRange, ranges, idx,
+    //                      {.start = start, .end = prev->end, .value = val});
+    //         }
+    //     }
+    // }
+    //
+    // // Merge with next range if possible
+    // while(idx < vect_length(ranges) &&
+    //       vect_at(RDSRegRange, ranges, idx)->start <= end) {
+    //     RDSRegRange* r = vect_ref(RDSRegRange, ranges, idx);
+    //
+    //     if(r->value == val) { // Remove and continue merging
+    //         end = std::max(end, r->end);
+    //         idx = vect_del(ranges, idx);
+    //     }
+    //     else if(r->start < end) { // Split the next range
+    //         r->end = end;
+    //         vect_ins(RDSRegRange, ranges, idx,
+    //                  {.start = end, .end = r->end, .value = r->value});
+    //     }
+    //     else
+    //         break;
+    // }
+    //
+    // // Insert the new range
+    // vect_ins(RDSRegRange, ranges, idx,
+    //          {.start = start, .end = end, .value = val});
+
+    return true;
+}
+
+void Program::set_sreg(RDAddress address, int sreg, u64 val) { // NOLINT
+    // Vect(RDSRegRange)* ranges = map_get(RDSRegItem, this->segmentregs, sreg);
+    // if(!ranges) return;
+    //
+    // RDSRegRange* it = std::ranges::lower_bound(
+    //     vect_begin(*ranges), vect_end(*ranges), address,
+    //     [](RDAddress end, RDAddress addr) { return end <= addr; },
+    //     [](const RDSRegRange& r) { return r.end; });
+    //
+    // if(it == vect_end(*ranges) || it->start > address) return;
+    //
+    // if(it->start != address) {
+    //     RDAddress oldend = it->end;
+    //     it->end = address;
+    //
+    //     vect_ins_iter(RDSRegRange, *ranges, it + 1,
+    //                   {.start = address, .end = oldend, .value = val});
+    // }
+    // else
+    //     it->value = val;
+}
+
 bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
     if(start >= end) return false;
 
@@ -125,16 +216,17 @@ bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
         .offset = off,
     };
 
-    for(RDSegment& s : this->segments) {
-        if(start < s.end && end > s.start) {
-            usize overlapstart = std::max(start, s.start);
-            usize overlapend = std::min(end, s.end);
-            usize segmentoff = overlapstart - s.start;
+    RDSegment* s;
+    slice_foreach(s, &this->segments) {
+        if(start < s->end && end > s->start) {
+            usize overlapstart = std::max(start, s->start);
+            usize overlapend = std::min(end, s->end);
+            usize segmentoff = overlapstart - s->start;
             usize fileoff = off + (overlapstart - start);
             usize copylen = overlapend - overlapstart;
 
             for(usize i = fileoff; i < fileoff + copylen; i++)
-                mbyte::set_byte(&s.mem->m_data[segmentoff++],
+                mbyte::set_byte(&s->mem->m_data[segmentoff++],
                                 this->file->data[i]);
         }
     }
@@ -148,23 +240,18 @@ bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
     return true;
 }
 
-RDSegment* Program::find_segment(RDAddress address) {
-    auto it = std::ranges::lower_bound(
-        this->segments, address,
-        [](RDAddress start, RDAddress addr) { return start < addr; },
-        [](const RDSegment& s) { return s.start; });
-
-    if(it != this->segments.end() && address >= it->start && address < it->end)
-        return std::addressof(*it);
-
-    if(it != this->segments.begin()) {
-        --it;
-
-        if(address >= it->start && address < it->end)
-            return std::addressof(*it);
+RDSRegRange* Program::find_sreg_range(RDAddress address, int r) {
+    RDSRegRange* range;
+    hmap_foreach_key(range, &this->segmentregs, RDSRegRange, hnode, r) {
+        if(range->sreg == r && range->start >= address && address < range->end)
+            return range;
     }
 
     return nullptr;
+}
+
+RDSegment* Program::find_segment(RDAddress address) { // NOLINT
+    return redasm::find_range<RDSegment>(this->segments, address);
 }
 
 Function* Program::find_function(RDAddress address) {

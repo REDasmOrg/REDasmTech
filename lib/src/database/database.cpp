@@ -1,7 +1,7 @@
 #include "database.h"
-#include "../error.h"
 #include <cctype>
 #include <filesystem>
+#include <spdlog/spdlog.h>
 
 namespace redasm {
 
@@ -22,10 +22,11 @@ struct SQLQueries {
         SET_TYPE,
         GET_TYPE,
         ADD_SEGMENT,
-        ADD_REGCHANGE,
-        GET_REGCHANGES_FROM_ADDR,
-        GET_REGCHANGES_FROM_REG,
-        GET_CHANGED_REGS,
+        SET_SREG,
+        GET_SREG,
+        GET_SREGS_FROM_ADDR,
+        GET_SREG_CHANGES,
+        GET_SREGS,
         SET_USERDATA,
         GET_USERDATA,
     };
@@ -42,6 +43,7 @@ concept SQLBindable =
     std::same_as<T, std::string> || 
     std::same_as<T, std::string_view> ||
     std::same_as<T, RDAddress> || 
+    std::same_as<T, isize> ||
     std::same_as<T, int> ||
     std::same_as<T, u64> ||
     std::same_as<T, u32> ||
@@ -54,13 +56,17 @@ void sql_bindparam(sqlite3* db, sqlite3_stmt* stmt, std::string_view n,
     using U = std::decay_t<T>;
 
     int idx = sqlite3_bind_parameter_index(stmt, n.data());
-    if(!idx) except("SQL: parameter '{}' not found", n);
+    if(!idx) {
+        ct_exceptf("SQL: parameter '%.*s' not found",
+                   static_cast<int>(n.size()), n.data());
+    }
 
     int res = SQLITE_ERROR;
     if constexpr(std::is_same_v<U, std::string> ||
                  std::is_same_v<U, std::string_view>)
         res = sqlite3_bind_text(stmt, idx, v.data(), v.size(), SQLITE_STATIC);
-    else if constexpr(std::is_same_v<U, RDAddress> || std::is_same_v<U, u64>)
+    else if constexpr(std::is_same_v<U, RDAddress> || std::is_same_v<U, u64> ||
+                      std::is_same_v<U, isize>)
         res = sqlite3_bind_int64(stmt, idx, static_cast<sqlite3_int64>(v));
     else if constexpr(std::is_same_v<U, u32> || std::is_same_v<U, u8> ||
                       std::is_same_v<U, int>)
@@ -68,13 +74,13 @@ void sql_bindparam(sqlite3* db, sqlite3_stmt* stmt, std::string_view n,
     else if constexpr(std::is_same_v<U, std::nullptr_t>)
         res = sqlite3_bind_null(stmt, idx);
 
-    if(res != SQLITE_OK) except("SQL: {}", sqlite3_errmsg(db));
+    if(res != SQLITE_OK) ct_exceptf("SQL: %s", sqlite3_errmsg(db));
 }
 
 int sql_step(sqlite3* db, sqlite3_stmt* stmt) {
     int res = sqlite3_step(stmt);
     if((res == SQLITE_ROW) || (res == SQLITE_DONE)) return res;
-    except("SQL: {}", sqlite3_errmsg(db));
+    ct_exceptf("SQL: %s", sqlite3_errmsg(db));
 }
 
 constexpr std::string_view DB_SCHEMA = R"(
@@ -122,7 +128,7 @@ constexpr std::string_view DB_SCHEMA = R"(
         name TEXT NOT NULL
     );
 
-    CREATE TABLE RegChanges(
+    CREATE TABLE SegmentRegisters(
         address INTEGER NOT NULL,
         reg INTEGER NOT NULL,
         value INTEGER NOT NULL,
@@ -134,11 +140,11 @@ constexpr std::string_view DB_SCHEMA = R"(
 } // namespace
 
 Database::Database(std::string_view ldrid, std::string_view source) {
-    assume(!source.empty());
+    ct_assume(!source.empty());
 
     m_dbname = fs::path{source}.filename().replace_extension(".rdb").string();
     m_dbroot = (fs::path{source}.remove_filename() / m_dbname / ldrid).string();
-    assume(!m_dbroot.empty());
+    ct_assume(!m_dbroot.empty());
 
     if(fs::exists(m_dbroot)) // Remove old database
         fs::remove_all(m_dbroot);
@@ -147,12 +153,12 @@ Database::Database(std::string_view ldrid, std::string_view source) {
     fs::create_directories(m_dbroot);
 
     fs::path dbfile = fs::path{m_dbroot} / DATABASE_FILE;
-    assume(!sqlite3_open(dbfile.string().c_str(), &m_db));
+    ct_assume(!sqlite3_open(dbfile.string().c_str(), &m_db));
 
     char* errmsg = nullptr;
     int rc = sqlite3_exec(m_db, DB_SCHEMA.data(), nullptr, nullptr, &errmsg);
 
-    if(rc != SQLITE_OK) except("SQLite Error: {}", errmsg);
+    if(rc != SQLITE_OK) ct_exceptf("SQLite Error: %s", errmsg);
 }
 
 Database::~Database() {
@@ -181,8 +187,10 @@ sqlite3_stmt* Database::prepare_query(int q, std::string_view s) const {
     if(auto it = m_queries.find(q); it == m_queries.end()) {
         if(int rc =
                sqlite3_prepare_v2(m_db, s.data(), s.size(), &stmt, nullptr);
-           rc != SQLITE_OK)
-            except("SQL: {}\nQUERY: {}", sqlite3_errmsg(m_db), s);
+           rc != SQLITE_OK) {
+            ct_exceptf("SQL: %s\nQUERY: %.*s", sqlite3_errmsg(m_db),
+                       static_cast<int>(s.size()), s.data());
+        }
 
         m_queries[q] = stmt;
     }
@@ -238,17 +246,33 @@ void Database::add_ref(RDAddress fromaddr, RDAddress toaddr, usize type) {
     sql_step(m_db, stmt);
 }
 
-Database::RegChanges Database::get_regchanges_from_addr(RDAddress addr) const {
+tl::optional<u64> Database::get_sreg(RDAddress addr, int reg) const {
+    sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_SREG, R"(
+        SELECT value
+        FROM SegmentRegisters
+        WHERE address = :address AND reg == :reg
+    )");
+
+    sql_bindparam(m_db, stmt, ":address", addr);
+    sql_bindparam(m_db, stmt, ":reg", reg);
+
+    if(sql_step(m_db, stmt) == SQLITE_ROW)
+        return static_cast<u64>(sqlite3_column_int64(stmt, 0));
+
+    return tl::nullopt;
+}
+
+Database::SRegChanges Database::get_sregs_from_addr(RDAddress addr) const {
     sqlite3_stmt* stmt =
-        this->prepare_query(SQLQueries::GET_REGCHANGES_FROM_ADDR, R"(
+        this->prepare_query(SQLQueries::GET_SREGS_FROM_ADDR, R"(
         SELECT reg, value, fromaddr
-        FROM RegChanges
+        FROM SegmentRegisters
         WHERE address = :address
     )");
 
     sql_bindparam(m_db, stmt, ":address", addr);
 
-    RegChanges rc;
+    SRegChanges rc;
 
     while(sql_step(m_db, stmt) == SQLITE_ROW) {
         tl::optional<RDAddress> fromaddr = tl::nullopt;
@@ -263,24 +287,23 @@ Database::RegChanges Database::get_regchanges_from_addr(RDAddress addr) const {
     return rc;
 }
 
-Database::RegChanges Database::get_regchanges_from_reg(int reg) const {
-    sqlite3_stmt* stmt =
-        this->prepare_query(SQLQueries::GET_REGCHANGES_FROM_REG, R"(
+Database::SRegChanges Database::get_sreg_changes(int sreg) const {
+    sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_SREG_CHANGES, R"(
         SELECT address, value, fromaddr
-        FROM RegChanges
+        FROM SegmentRegisters
         WHERE reg = :reg
     )");
 
-    sql_bindparam(m_db, stmt, ":reg", reg);
+    sql_bindparam(m_db, stmt, ":reg", sreg);
 
-    RegChanges rc;
+    SRegChanges rc;
 
     while(sql_step(m_db, stmt) == SQLITE_ROW) {
         tl::optional<RDAddress> fromaddr = tl::nullopt;
         if(sqlite3_column_type(stmt, 2) != SQLITE_NULL)
             fromaddr = static_cast<RDAddress>(sqlite3_column_int64(stmt, 2));
 
-        rc.emplace_back(static_cast<u64>(sqlite3_column_int64(stmt, 0)), reg,
+        rc.emplace_back(static_cast<u64>(sqlite3_column_int64(stmt, 0)), sreg,
                         static_cast<u64>(sqlite3_column_int64(stmt, 1)),
                         fromaddr);
     }
@@ -288,24 +311,24 @@ Database::RegChanges Database::get_regchanges_from_reg(int reg) const {
     return rc;
 }
 
-Database::RegList Database::get_changed_regs() const {
-    sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_CHANGED_REGS, R"(
+Database::SRegList Database::get_sregs() const {
+    sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_SREGS, R"(
         SELECT DISTINCT reg
-        FROM RegChanges
+        FROM SegmentRegisters
     )");
 
-    Database::RegList changedregs;
+    Database::SRegList sregs;
 
     while(sql_step(m_db, stmt) == SQLITE_ROW)
-        changedregs.emplace_back(sqlite3_column_int(stmt, 0));
+        sregs.emplace_back(sqlite3_column_int(stmt, 0));
 
-    return changedregs;
+    return sregs;
 }
 
-void Database::add_regchange(RDAddress addr, int reg, u64 val,
-                             const tl::optional<RDAddress>& fromaddr) {
-    sqlite3_stmt* stmt = this->prepare_query(SQLQueries::ADD_REGCHANGE, R"(
-        INSERT INTO RegChanges (address, reg, value, fromaddr) 
+void Database::set_sreg(RDAddress addr, int reg, u64 val,
+                        const tl::optional<RDAddress>& fromaddr) {
+    sqlite3_stmt* stmt = this->prepare_query(SQLQueries::SET_SREG, R"(
+        INSERT INTO SegmentRegisters (address, reg, value, fromaddr) 
             VALUES (:address, :reg, :val, :fromaddr)
         ON CONFLICT DO 
             UPDATE SET reg = EXCLUDED.reg

@@ -1,8 +1,8 @@
 #include "pattern.h"
-#include "../internal/buffer_internal.h"
 #include "../memory/mbyte.h"
 #include "utils.h"
 #include <cctype>
+#include <spdlog/spdlog.h>
 
 namespace redasm::pattern {
 

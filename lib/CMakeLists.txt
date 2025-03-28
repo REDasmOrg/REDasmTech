@@ -18,6 +18,7 @@ add_library(${PROJECT_NAME_LIB} SHARED)
 target_compile_definitions(${PROJECT_NAME_LIB}
     PUBLIC
         MINIZ_NO_ZLIB_COMPATIBLE_NAMES
+        CT_EXPORTS
 
     PRIVATE
       SHARED_OBJECT_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}"
@@ -66,6 +67,8 @@ target_sources(${PROJECT_NAME_LIB}
         src/builtins/analyzer.cpp
 
     PRIVATE # API
+        src/api/ct.c
+        src/api/redasm.cpp
         src/api/redasm.cpp
         src/api/program.cpp
         src/api/marshal.cpp
@@ -90,6 +93,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/renderer.cpp
         src/api/graph.cpp
         src/api/rdil.cpp
+        src/api/sreg.cpp
 )
 
 target_include_directories(${PROJECT_NAME_LIB} PUBLIC "${PROJECT_SOURCE_DIR}/include")

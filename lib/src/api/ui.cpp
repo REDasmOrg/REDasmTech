@@ -1,9 +1,9 @@
-#include "../error.h"
 #include "../state.h"
 #include <redasm/ui.h>
+#include <spdlog/spdlog.h>
 
 #define return_ui_call(f, ...)                                                 \
-    if(!redasm::state::params.ui.f) except("UI method '{}' not set", #f);      \
+    if(!redasm::state::params.ui.f) ct_exceptf("UI method '%s' not set", #f);  \
     return redasm::state::params.ui.f(__VA_ARGS__);
 
 void rdui_message(const char* title, const char* text) {

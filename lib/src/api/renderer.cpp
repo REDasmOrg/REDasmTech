@@ -13,10 +13,11 @@ void rdrenderer_themed(RDRenderer* self, const char* s, RDThemeKind kind) {
         spdlog::error("rdrenderer_themed: invalid string");
 }
 
-void rdrenderer_mnem(RDRenderer* self, u32 id, RDThemeKind kind) {
-    spdlog::trace("rdrenderer_mnem({}, {}, {})", fmt::ptr(self), id,
-                  static_cast<int>(kind));
-    redasm::api::from_c(self)->mnem(id, kind);
+void rdrenderer_mnem(RDRenderer* self, const RDInstruction* instr,
+                     RDThemeKind kind) {
+    spdlog::trace("rdrenderer_mnem({}, {}, {})", fmt::ptr(self),
+                  fmt::ptr(instr), static_cast<int>(kind));
+    redasm::api::from_c(self)->mnem(instr, kind);
 }
 
 void rdrenderer_unkn(RDRenderer* self) {

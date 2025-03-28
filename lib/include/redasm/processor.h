@@ -7,6 +7,7 @@
 #include <redasm/rdil.h>
 #include <redasm/renderer.h>
 #include <redasm/segment.h>
+#include <redasm/sreg.h>
 
 RD_HANDLE(RDEmulator);
 RD_HANDLE(RDProcessor);
@@ -35,9 +36,10 @@ typedef void (*RDProcessorPluginSetup)(RDProcessor*, RDEmulator*);
 typedef void (*RDProcessorPluginDecode)(RDProcessor*, RDInstruction*);
 typedef void (*RDProcessorPluginEmulate)(RDProcessor*, RDEmulator*, const RDInstruction*);
 typedef bool (*RDProcessorPluginLift)(RDProcessor*, RDILList*, const RDInstruction*);
-typedef const char* (*RDProcessorPluginGetMnemonic)(const RDProcessor*, u32);
+typedef const char* (*RDProcessorPluginGetMnemonic)(const RDProcessor*, const RDInstruction*);
 typedef const char* (*RDProcessorPluginGetRegisterName)(const RDProcessor*, int);
 typedef const char** (*RDProcessorPluginGetPrologues)(const RDProcessor*);
+typedef RDAddress (*RDProcessorPluginNormalizeAddress)(const RDProcessor*, RDAddress);
 typedef void (*RDProcessorPluginRenderSegment)(const RDProcessor*, RDRenderer*, const RDSegment*);
 typedef void (*RDProcessorPluginRenderFunction)(const RDProcessor*, RDRenderer*, const RDFunction*);
 typedef void (*RDProcessorPluginRenderInstruction)(const RDProcessor*, RDRenderer*, const RDInstruction*);
@@ -51,6 +53,7 @@ typedef struct RDProcessorPlugin {
     RDProcessorPluginGetMnemonic get_mnemonic;
     RDProcessorPluginGetRegisterName get_registername;
     RDProcessorPluginGetPrologues get_prologues;
+    RDProcessorPluginNormalizeAddress normalize_address;
     RDProcessorPluginDecode decode;
     RDProcessorPluginEmulate emulate;
     RDProcessorPluginLift lift;
@@ -58,6 +61,8 @@ typedef struct RDProcessorPlugin {
     RDProcessorPluginRenderFunction render_function;
     RDProcessorPluginRenderInstruction render_instruction;
 } RDProcessorPlugin;
+
+define_slice(RDProcessorPluginSlice, const RDProcessorPlugin*);
 
 REDASM_EXPORT const RDSegment* rdemulator_getsegment(const RDEmulator* self);
 REDASM_EXPORT u32 rdemulator_getdslotinfo(const RDEmulator* self,
@@ -83,11 +88,13 @@ REDASM_EXPORT void rdemulator_addref(RDEmulator* self, RDAddress toaddr,
 REDASM_EXPORT bool rd_registerprocessor(const RDProcessorPlugin* plugin);
 REDASM_EXPORT bool rd_registerprocessor_ex(const RDProcessorPlugin* plugin,
                                            const char* origin);
-REDASM_EXPORT Vect(const RDProcessorPlugin*) rd_getprocessorplugins(void);
+REDASM_EXPORT const RDProcessorPluginSlice* rd_getprocessorplugins(void);
 REDASM_EXPORT const RDProcessorPlugin* rd_getprocessorplugin(void);
 REDASM_EXPORT const RDProcessor* rd_getprocessor(void);
+REDASM_EXPORT const RDEmulator* rd_getemulator(void);
 REDASM_EXPORT bool rd_decode_prev(RDAddress address, RDInstruction* instr);
 REDASM_EXPORT bool rd_decode(RDAddress address, RDInstruction* instr);
+REDASM_EXPORT RDAddress rd_normalizeaddress(RDAddress address);
 REDASM_EXPORT const char* rd_getregistername(int regid);
 REDASM_EXPORT const char* rd_getmnemonic(const RDInstruction* instr);
 REDASM_EXPORT bool rd_matchmnemonic(const RDInstruction* instr,

@@ -95,7 +95,7 @@ void ElfFormat<Bits>::process_init_fini(const SHDR& shdr,
     const usize S = rd_nsizeof(TYPE);
     const usize N = shdr.sh_size / S;
 
-    RDValue* v = nullptr;
+    RDValue v;
     RDAddress addr = shdr.sh_addr;
 
     for(usize i = 0; i < N; i++, addr += S) {
@@ -104,16 +104,16 @@ void ElfFormat<Bits>::process_init_fini(const SHDR& shdr,
         RDAddress itemaddr;
 
         if constexpr(Bits == 64)
-            itemaddr = v->u64_v;
+            itemaddr = v.u64_v;
         else
-            itemaddr = v->u32_v;
+            itemaddr = v.u32_v;
 
         if(!itemaddr || itemaddr == -1ULL) continue;
 
         std::string fn = prefix + rd_tohex_n(addr, 0);
         rd_setfunction(addr);
         rd_setname(addr, fn.c_str());
-        rdvalue_destroy(v);
+        rdvalue_destroy(&v);
     }
 }
 
@@ -121,12 +121,12 @@ template<int Bits>
 void ElfFormat<Bits>::process_strings(const SHDR& shdr) const {
     RDAddress address = shdr.sh_addr;
     RDAddress endaddress = address++ + shdr.sh_size; // First is always 00
-    RDValue* v = nullptr;
+    RDValue v;
 
     while(address < endaddress) {
         if(!rd_settypename(address, "str", &v)) break;
-        address += rdvalue_getlength(v) + 1;
-        rdvalue_destroy(v);
+        address += rdvalue_getlength(&v) + 1;
+        rdvalue_destroy(&v);
     }
 }
 

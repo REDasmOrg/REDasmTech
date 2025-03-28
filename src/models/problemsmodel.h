@@ -20,5 +20,5 @@ public:
                                       int role) const override;
 
 private:
-    Vect(RDProblem) m_problems {};
+    const RDProblemSlice* m_problems{nullptr};
 };

@@ -9,8 +9,8 @@ LoaderDialog::LoaderDialog(RDBuffer* buffer, QWidget* parent)
     this->populate_processors();
     m_testresult = rd_test(buffer);
 
-    for(usize i = 0; i < vect_length(m_testresult); i++)
-        m_ui.lwloaders->addItem(m_testresult[i].loaderplugin->name);
+    for(isize i = 0; i < m_testresult->length; i++)
+        m_ui.lwloaders->addItem(m_testresult->data[i].loaderplugin->name);
 
     this->populate_loglevels();
 
@@ -27,24 +27,26 @@ LoaderDialog::LoaderDialog(RDBuffer* buffer, QWidget* parent)
             &LoaderDialog::on_processor_changed);
 
     // Trigger "on_loader_changed"
-    if(vect_length(m_testresult) > 0) m_ui.lwloaders->setCurrentRow(0);
+    if(m_testresult->length > 0) m_ui.lwloaders->setCurrentRow(0);
 }
 
 void LoaderDialog::on_loader_changed(int currentrow) {
     if(currentrow != -1)
-        this->select_processor(m_testresult[currentrow].processorplugin);
+        this->select_processor(m_testresult->data[currentrow].processorplugin);
 }
 
 void LoaderDialog::on_processor_changed(int currentrow) {
     int loaderidx = m_ui.lwloaders->currentRow();
     if(loaderidx == -1) return;
 
-    if(currentrow != -1)
-        m_testresult[loaderidx].processorplugin = m_processors[currentrow];
+    if(currentrow != -1) {
+        m_testresult->data[loaderidx].processorplugin =
+            m_processors->data[currentrow];
+    }
 }
 
 void LoaderDialog::accept() {
-    const RDTestResult& tr = m_testresult[m_ui.lwloaders->currentRow()];
+    const RDTestResult& tr = m_testresult->data[m_ui.lwloaders->currentRow()];
     this->selected = rd_select(&tr);
 
     if(this->selected) {
@@ -68,8 +70,8 @@ void LoaderDialog::reject() {
 }
 
 void LoaderDialog::select_processor(const RDProcessorPlugin* proc) {
-    for(usize i = 0; i < vect_length(m_processors); i++) {
-        if(m_processors[i]->id == proc->id) {
+    for(isize i = 0; i < m_processors->length; i++) {
+        if(m_processors->data[i]->id == proc->id) {
             m_ui.cbprocessors->setCurrentIndex(i);
             return;
         }
@@ -81,7 +83,8 @@ void LoaderDialog::select_processor(const RDProcessorPlugin* proc) {
 void LoaderDialog::populate_processors() {
     m_processors = rd_getprocessorplugins();
 
-    vect_foreach(const RDProcessorPlugin*, plugin, m_processors)
+    const RDProcessorPlugin** plugin;
+    slice_foreach(plugin, m_processors)
         m_ui.cbprocessors->addItem((*plugin)->name);
 }
 

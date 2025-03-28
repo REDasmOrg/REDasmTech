@@ -15,15 +15,25 @@ namespace {
 
 std::unordered_map<const void*, std::string> origins;
 
-template<typename T>
-void unregister_plugins(Vect(const T*) plugins) {
-    vect_foreach(const T*, plugin, plugins) {
-        if((*plugin)->on_shutdown) (*plugin)->on_shutdown(*plugin);
+template<typename PluginType, typename SliceType>
+void unregister_plugins(const SliceType& plugins) {
+    const PluginType** p;
+    slice_foreach(p, &plugins) {
+        if((*p)->on_shutdown) (*p)->on_shutdown(*p);
     }
 }
 
-template<typename T>
-bool register_plugin(Vect(const T*) plugins, const T* plugin,
+template<typename PluginType, typename SliceType>
+const PluginType* find_plugin(const SliceType& plugins, std::string_view id) {
+    const PluginType** p;
+    slice_foreach(p, &plugins) {
+        if((*p)->id == id) return *p;
+    }
+    return nullptr;
+}
+
+template<typename SliceType, typename PluginType>
+bool register_plugin(SliceType& plugins, const PluginType* plugin,
                      const char* origin) {
     if(!plugin) return false;
 
@@ -49,38 +59,29 @@ bool register_plugin(Vect(const T*) plugins, const T* plugin,
         return false;
     }
 
-    auto it =
-        std::ranges::find_if(vect_begin(plugins), vect_end(plugins),
-                             [&](const T* x) { return x->id == plugin->id; });
-
-    if(it != vect_end(plugins)) {
-        state::error(fmt::format("Analyzer '{}' already exists", plugin->id));
-        return false;
+    const PluginType** it;
+    slice_foreach(it, &plugins) {
+        if((*it)->id == plugin->id) {
+            state::error(
+                fmt::format("Analyzer '{}' already exists", plugin->id));
+            return false;
+        }
     }
 
     spdlog::info(R"(Registered plugin "{}" ({}))", plugin->name, plugin->id);
     if(plugin->on_init) plugin->on_init(plugin);
-    vect_add(const T*, plugins, plugin);
+    slice_push(&plugins, plugin);
     pm::origins[plugin] = origin;
     return true;
-}
-
-template<typename T>
-const T* find_plugin(Vect(const T*) plugins, std::string_view id) {
-    vect_foreach(const T*, plugin, plugins) {
-        if((*plugin)->id == id) return *plugin;
-    }
-
-    return nullptr;
 }
 
 } // namespace
 
 void create() {
     spdlog::info("Loading Plugins");
-    pm::loaders = vect_create(const RDLoaderPlugin*);
-    pm::processors = vect_create(const RDProcessorPlugin*);
-    pm::analyzers = vect_create(const RDAnalyzerPlugin*);
+    slice_init(&pm::loaders, nullptr, nullptr);
+    slice_init(&pm::processors, nullptr, nullptr);
+    slice_init(&pm::analyzers, nullptr, nullptr);
     builtins::register_loaders();
     builtins::register_processors();
     builtins::register_analyzers();
@@ -89,13 +90,13 @@ void create() {
 
 void destroy() {
     spdlog::info("Unloading Plugins");
-    pm::unregister_plugins(pm::analyzers);
-    pm::unregister_plugins(pm::processors);
-    pm::unregister_plugins(pm::loaders);
+    pm::unregister_plugins<RDAnalyzerPlugin>(pm::analyzers);
+    pm::unregister_plugins<RDProcessorPlugin>(pm::processors);
+    pm::unregister_plugins<RDLoaderPlugin>(pm::loaders);
     pm::origins.clear();
-    vect_destroy(pm::analyzers);
-    vect_destroy(pm::processors);
-    vect_destroy(pm::loaders);
+    slice_destroy(&pm::analyzers);
+    slice_destroy(&pm::processors);
+    slice_destroy(&pm::loaders);
     mm::unload_all();
 }
 
@@ -141,15 +142,15 @@ bool register_analyzer(const RDAnalyzerPlugin* plugin, const char* origin) {
 }
 
 const RDLoaderPlugin* find_loader(std::string_view id) {
-    return pm::find_plugin(pm::loaders, id);
+    return pm::find_plugin<RDLoaderPlugin>(pm::loaders, id);
 }
 
 const RDProcessorPlugin* find_processor(std::string_view id) {
-    return pm::find_plugin(pm::processors, id);
+    return pm::find_plugin<RDProcessorPlugin>(pm::processors, id);
 }
 
 const RDAnalyzerPlugin* find_analyzer(std::string_view id) {
-    return pm::find_plugin(pm::analyzers, id);
+    return pm::find_plugin<RDAnalyzerPlugin>(pm::analyzers, id);
 }
 
 } // namespace redasm::pm

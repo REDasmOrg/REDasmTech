@@ -1,7 +1,6 @@
 #include "renderer.h"
 #include "../api/marshal.h"
 #include "../context.h"
-#include "../error.h"
 #include "../memory/memory.h"
 #include "../rdil/rdil.h"
 #include "../state.h"
@@ -25,8 +24,8 @@ Renderer::Renderer(usize f): flags{f} {}
 usize Renderer::current_address() const { return m_curraddress; }
 
 const RDSegment* Renderer::current_segment() const {
-    if(m_segmidx >= state::context->program.segments.size()) return nullptr;
-    return &state::context->program.segments[m_segmidx];
+    if(m_segmidx >= state::context->program.segments.length) return nullptr;
+    return &state::context->program.segments.data[m_segmidx];
 }
 
 void Renderer::highlight_row(int row) {
@@ -119,7 +118,7 @@ void Renderer::fill_columns() {
         while(row.cells.size() < ncols)
             this->character(row, ' ');
 
-        assume(row.length <= row.cells.size());
+        ct_assume(row.length <= row.cells.size());
     }
 }
 
@@ -132,15 +131,11 @@ void Renderer::set_current_item(LIndex lidx, const ListingItem& item) {
 Renderer& Renderer::instr() {
     const Context* ctx = state::context;
     const RDProcessorPlugin* p = ctx->processorplugin;
-    assume(p);
+    ct_assume(p);
 
-    RDInstruction instr = {
-        .address = this->current_address(),
-    };
+    RDInstruction instr{};
 
-    p->decode(ctx->processor, &instr);
-
-    if(!instr.length || !p->render_instruction)
+    if(!ctx->worker->emulator.decode(this->current_address(), instr))
         this->unknown();
     else
         p->render_instruction(ctx->processor, api::to_c(this), &instr);
@@ -151,18 +146,13 @@ Renderer& Renderer::instr() {
 Renderer& Renderer::rdil() {
     const Context* ctx = state::context;
     const RDProcessorPlugin* p = ctx->processorplugin;
-    assume(p);
+    ct_assume(p);
 
     rdil::ILExprList el;
+    RDInstruction instr{};
+    bool ok = ctx->worker->emulator.decode(this->current_address(), instr);
 
-    RDInstruction instr{
-        .address = this->current_address(),
-    };
-
-    if(p->decode) p->decode(ctx->processor, &instr);
-
-    if(!instr.length || !p->lift ||
-       !p->lift(ctx->processor, api::to_c(&el), &instr))
+    if(!ok || !p->lift || !p->lift(ctx->processor, api::to_c(&el), &instr))
         el.clear();
 
     if(el.empty()) el.append(el.expr_unknown());
@@ -248,7 +238,7 @@ Renderer& Renderer::new_row(const ListingItem& item) {
         if(s) this->chunk(s->name).chunk(":");
 
         const RDProcessorPlugin* p = state::context->processorplugin;
-        assume(p);
+        ct_assume(p);
         this->chunk(utils::to_hex(m_curraddress, s ? s->bits : -1)).ws(2);
 
         if(item.indent) this->ws(item.indent);
@@ -281,19 +271,19 @@ Renderer& Renderer::constant(u64 c, int base, int flags, RDThemeKind fg) {
     return *this;
 }
 
-Renderer& Renderer::mnem(u32 id, RDThemeKind fg) {
+Renderer& Renderer::mnem(const RDInstruction* instr, RDThemeKind fg) {
     const Context* ctx = state::context;
     const RDProcessorPlugin* p = ctx->processorplugin;
-    assume(p);
+    ct_assume(p);
 
     std::string_view mnemstr;
 
     if(p->get_mnemonic) {
-        const char* res = p->get_mnemonic(ctx->processor, id);
+        const char* res = p->get_mnemonic(ctx->processor, instr);
         if(res) mnemstr = res;
     }
 
-    if(mnemstr.empty()) mnemstr = utils::to_string(id, 10);
+    if(mnemstr.empty()) mnemstr = utils::to_string(instr->id, 10);
     this->chunk(mnemstr, fg);
     this->prevmnemonic = true;
     return *this;
@@ -302,7 +292,7 @@ Renderer& Renderer::mnem(u32 id, RDThemeKind fg) {
 Renderer& Renderer::reg(int reg) {
     const Context* ctx = state::context;
     const RDProcessorPlugin* p = ctx->processorplugin;
-    assume(p);
+    ct_assume(p);
 
     std::string_view regname;
 
@@ -362,13 +352,13 @@ Renderer& Renderer::chunk(std::string_view arg, RDThemeKind fg,
 }
 
 void Renderer::check_current_segment(const ListingItem& item) {
-    if(m_segmidx < state::context->program.segments.size()) {
-        const RDSegment& s = state::context->program.segments[m_segmidx];
+    if(m_segmidx < state::context->program.segments.length) {
+        const RDSegment& s = state::context->program.segments.data[m_segmidx];
         if(item.address >= s.start && item.address < s.end) return;
     }
 
-    for(usize i = 0; i < state::context->program.segments.size(); i++) {
-        const RDSegment& s = state::context->program.segments[i];
+    for(isize i = 0; i < state::context->program.segments.length; i++) {
+        const RDSegment& s = state::context->program.segments.data[i];
 
         if(item.address >= s.start && item.address < s.end) {
             m_segmidx = i;
@@ -376,7 +366,7 @@ void Renderer::check_current_segment(const ListingItem& item) {
         }
     }
 
-    m_segmidx = state::context->program.segments.size();
+    m_segmidx = state::context->program.segments.length;
 }
 
 std::string Renderer::word_at(const SurfaceRows& rows, int row, int col) {

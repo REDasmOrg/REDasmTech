@@ -22,3 +22,5 @@ typedef struct RDSegment {
     u32 bits;
     RDBuffer* mem;
 } RDSegment;
+
+define_slice(RDSegmentSlice, RDSegment);

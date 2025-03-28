@@ -35,24 +35,32 @@ void rdstream_rewind(RDStream* self) {
     self->position = 0;
 }
 
-RDValue* rdstream_peek_struct_n(RDStream* self, usize n,
-                                const RDStructField* fields) {
+RDValueOpt rdstream_peek_struct_n(RDStream* self, usize n,
+                                  const RDStructField* fields) {
     spdlog::trace("rdstream_peek_struct_n({}, {}, {})", fmt::ptr(self), n,
                   fmt::ptr(fields));
-    return redasm::buffer::read_struct_n(self->buffer, self->position, n,
-                                         fields);
+    auto res =
+        redasm::buffer::read_struct_n(self->buffer, self->position, n, fields);
+
+    if(res) return RDValueOpt_some(*res);
+    return RDValueOpt_none();
 }
 
-RDValue* rdstream_peek_struct(RDStream* self, const RDStructField* fields) {
+RDValueOpt rdstream_peek_struct(RDStream* self, const RDStructField* fields) {
     spdlog::trace("rdstream_peek_struct({}, {})", fmt::ptr(self),
                   fmt::ptr(fields));
-    return redasm::buffer::read_struct(self->buffer, self->position, fields);
+    auto res =
+        redasm::buffer::read_struct(self->buffer, self->position, fields);
+    if(res) return RDValueOpt_some(*res);
+    return RDValueOpt_none();
 }
 
-RDValue* rdstream_peek_type(const RDStream* self, const char* tname) {
+RDValueOpt rdstream_peek_type(const RDStream* self, const char* tname) {
     spdlog::trace("rdstream_peek_type({}, '{}')", fmt::ptr(self), tname);
-    if(!tname) return nullptr;
-    return redasm::buffer::get_type(self->buffer, self->position, tname);
+    if(!tname) return RDValueOpt_none();
+    auto res = redasm::buffer::get_type(self->buffer, self->position, tname);
+    if(res) return RDValueOpt_some(*res);
+    return RDValueOpt_none();
 }
 
 bool rdstream_peek_strz(const RDStream* self, const char** v) {
@@ -203,35 +211,43 @@ bool rdstream_peek_i64be(const RDStream* self, i64* v) {
     return res.has_value();
 }
 
-RDValue* rdstream_read_struct_n(RDStream* self, usize n,
-                                const RDStructField* fields) {
+RDValueOpt rdstream_read_struct_n(RDStream* self, usize n,
+                                  const RDStructField* fields) {
     spdlog::trace("rdstream_read_struct_n({}, {}, {})", fmt::ptr(self), n,
                   fmt::ptr(fields));
     usize pos = self->position;
-    RDValue* res =
-        redasm::buffer::read_struct_n(self->buffer, pos, n, fields, pos);
-    if(res) self->position = pos;
-    return res;
+    auto res = redasm::buffer::read_struct_n(self->buffer, pos, n, fields, pos);
+    if(res) {
+        self->position = pos;
+        return RDValueOpt_some(*res);
+    }
+    return RDValueOpt_none();
 }
 
-RDValue* rdstream_read_struct(RDStream* self, const RDStructField* fields) {
+RDValueOpt rdstream_read_struct(RDStream* self, const RDStructField* fields) {
     spdlog::trace("rdstream_read_struct({}, {})", fmt::ptr(self),
                   fmt::ptr(fields));
     usize pos = self->position;
-    RDValue* res = redasm::buffer::read_struct(self->buffer, pos, fields, pos);
-    if(res) self->position = pos;
-    return res;
+    auto res = redasm::buffer::read_struct(self->buffer, pos, fields, pos);
+    if(res) {
+        self->position = pos;
+        return RDValueOpt_some(*res);
+    }
+    return RDValueOpt_none();
 }
 
-RDValue* rdstream_read_type(RDStream* self, const char* tname) {
+RDValueOpt rdstream_read_type(RDStream* self, const char* tname) {
     spdlog::trace("rdstream_read_type({}, '{}')", fmt::ptr(self),
                   fmt::ptr(tname));
-    if(!tname) return nullptr;
+    if(!tname) return RDValueOpt_none();
 
     usize pos = self->position;
-    RDValue* res = redasm::buffer::get_type(self->buffer, pos, tname, pos);
-    if(res) self->position = pos;
-    return res;
+    auto res = redasm::buffer::get_type(self->buffer, pos, tname, pos);
+    if(res) {
+        self->position = pos;
+        return RDValueOpt_some(*res);
+    }
+    return RDValueOpt_none();
 }
 
 bool rdstream_read_strz(RDStream* self, const char** v) {

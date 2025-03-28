@@ -1,6 +1,7 @@
 #pragma once
 
 #include <redasm/byte.h>
+#include <redasm/instruction.h>
 #include <redasm/theme.h>
 #include <redasm/types.h>
 #include <redasm/typing.h>
@@ -24,7 +25,8 @@ typedef enum RDRendererFlags {
 
 REDASM_EXPORT void rdrenderer_themed(RDRenderer* self, const char* s,
                                      RDThemeKind kind);
-REDASM_EXPORT void rdrenderer_mnem(RDRenderer* self, u32 id, RDThemeKind kind);
+REDASM_EXPORT void rdrenderer_mnem(RDRenderer* self, const RDInstruction* instr,
+                                   RDThemeKind kind);
 REDASM_EXPORT void rdrenderer_unkn(RDRenderer* self);
 REDASM_EXPORT void rdrenderer_reg(RDRenderer* self, int reg);
 REDASM_EXPORT void rdrenderer_text(RDRenderer* self, const char* s);

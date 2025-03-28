@@ -6,8 +6,8 @@ ProblemsModel::ProblemsModel(QObject* parent): QAbstractListModel{parent} {
 }
 
 RDAddress ProblemsModel::address(const QModelIndex& index) const {
-    if(static_cast<usize>(index.row()) < vect_length(m_problems))
-        return m_problems[index.row()].address;
+    if(index.row() < m_problems->length)
+        return m_problems->data[index.row()].address;
 
     qFatal("Cannot get problem");
     return {};
@@ -18,8 +18,11 @@ QVariant ProblemsModel::data(const QModelIndex& index, int role) const {
 
     if(role == Qt::DisplayRole) {
         switch(index.column()) {
-            case 0: return utils::to_hex_addr(m_problems[index.row()].address);
-            case 1: return QString::fromUtf8(m_problems[index.row()].problem);
+            case 0:
+                return utils::to_hex_addr(
+                    m_problems->data[index.row()].address);
+            case 1:
+                return QString::fromUtf8(m_problems->data[index.row()].problem);
             default: break;
         }
     }
@@ -48,5 +51,5 @@ QVariant ProblemsModel::headerData(int section, Qt::Orientation orientation,
 int ProblemsModel::columnCount(const QModelIndex&) const { return 2; }
 
 int ProblemsModel::rowCount(const QModelIndex&) const {
-    return vect_length(m_problems);
+    return m_problems->length;
 }

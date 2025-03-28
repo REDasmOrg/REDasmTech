@@ -1,5 +1,4 @@
 #include "basetypes.h"
-#include "../error.h"
 #include "../utils/utils.h"
 #include <cctype>
 
@@ -8,7 +7,10 @@ namespace redasm::typing {
 namespace {
 
 void parse_string(FullTypeName tn, std::string_view& name, usize& n) {
-    if(tn.empty()) except("typing::parse('{}'): type is empty", tn);
+    if(tn.empty()) {
+        ct_exceptf("typing::parse('%.*s'): type is empty",
+                   static_cast<int>(tn.size()), tn.data());
+    }
 
     usize idx = 0;
     std::string_view strn;
@@ -23,15 +25,20 @@ void parse_string(FullTypeName tn, std::string_view& name, usize& n) {
         name = tn.substr(0, idx);
     }
 
-    if(name.empty()) except("typing::parse('{}'): type is empty", tn);
+    if(name.empty()) {
+        ct_exceptf("typing::parse('%.*s'): type is empty",
+                   static_cast<int>(tn.size()), tn.data());
+    }
 
     if(idx < tn.size() && tn[idx] == '[') {
         usize startidx = idx + 1;
         while(idx < tn.size() && tn[idx] != ']')
             idx++;
 
-        if(idx >= tn.size())
-            except("typing::parse('{}'): index out of bounds", tn);
+        if(idx >= tn.size()) {
+            ct_exceptf("typing::parse('%.*s'): index out of bounds",
+                       static_cast<int>(tn.size()), tn.data());
+        }
 
         strn = tn.substr(startidx, idx - startidx);
         idx++; // Skip ']'
@@ -39,8 +46,11 @@ void parse_string(FullTypeName tn, std::string_view& name, usize& n) {
 
     if(!strn.empty()) {
         auto nval = utils::to_integer(strn);
-        if(!nval || !nval.value())
-            except("typing::parse('{}'): invalid size", tn);
+
+        if(!nval || !nval.value()) {
+            ct_exceptf("typing::parse('%.*s'): index valid size",
+                       static_cast<int>(tn.size()), tn.data());
+        }
 
         n = *nval;
     }
@@ -48,7 +58,8 @@ void parse_string(FullTypeName tn, std::string_view& name, usize& n) {
     // Ignore trailing whitespaces and check for junk
     while(idx < tn.size()) {
         if(std::isspace(idx++)) continue;
-        except("typing::parse('{}'): invalid type", tn);
+        ct_exceptf("typing::parse('%.*s'): index type",
+                   static_cast<int>(tn.size()), tn.data());
     }
 }
 
@@ -107,10 +118,12 @@ const TypeDef* BaseTypes::get_typedef(RDType t,
     auto it = this->m_registered.find(t.id);
 
     if(it == this->m_registered.end()) {
-        if(!namehint.empty())
-            except("Type '{}' not found", namehint);
+        if(!namehint.empty()) {
+            ct_exceptf("Type '%.*s' not found",
+                       static_cast<int>(namehint.size()), namehint.data());
+        }
         else
-            except("Type id '{:x}' not found", t.id);
+            ct_exceptf("Type id '%x' not found", t.id);
     }
 
     return &it->second;
@@ -123,8 +136,10 @@ ParsedType BaseTypes::parse(FullTypeName tn) const {
 
     const TypeDef* td = this->get_typedef(name);
 
-    if(td->is_var() && n)
-        except("Cannot create an array of variable sized type '{}'", tn);
+    if(td->is_var() && n) {
+        ct_exceptf("Cannot create an array of variable sized type '%.*s'",
+                   static_cast<int>(tn.size()), tn.data());
+    }
 
     return ParsedType{
         .tdef = td,
@@ -133,7 +148,7 @@ ParsedType BaseTypes::parse(FullTypeName tn) const {
 }
 
 std::string BaseTypes::to_string(ParsedType pt) const {
-    assume(pt.tdef);
+    ct_assume(pt.tdef);
     if(pt.n > 0) return fmt::format("{}[{}]", pt.tdef->name, pt.n);
     return pt.tdef->name;
 }
@@ -151,7 +166,7 @@ std::string BaseTypes::to_string(RDType t) const {
 
 TypeName BaseTypes::type_name(RDType t) const {
     auto it = this->m_registered.find(t.id);
-    if(it == this->m_registered.end()) except("Type id {:x} not found", t.id);
+    if(it == this->m_registered.end()) ct_exceptf("Type id %x not found", t.id);
     return it->second.name;
 }
 

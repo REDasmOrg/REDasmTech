@@ -63,6 +63,8 @@ CheckOptions:
     value: lower_case
   - key: readability-identifier-naming.FunctionCase
     value: lower_case
+  - key: readability-identifier-naming.FunctionIgnoredRegexp
+    value: '_.*$'
   - key: readability-identifier-naming.NamespaceCase
     value: lower_case
   - key: readability-identifier-naming.PrivateMemberPrefix

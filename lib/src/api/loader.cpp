@@ -13,9 +13,9 @@ bool rd_registerloader_ex(const RDLoaderPlugin* plugin, const char* origin) {
     return redasm::pm::register_loader(plugin, origin);
 }
 
-Vect(const RDLoaderPlugin*) rd_getloaderplugins() {
+const RDLoaderPluginSlice* rd_getloaderplugins() {
     spdlog::trace("rd_getloaderplugins()");
-    return redasm::pm::loaders;
+    return &redasm::pm::loaders;
 }
 
 const RDLoaderPlugin* rd_getloaderplugin() {

@@ -24,64 +24,64 @@ tl::optional<std::string> surface_checkaddr(T v, bool& isaddr) {
     return tl::nullopt;
 }
 
-std::string surface_valuestr(const RDValue* v, bool& isaddr) {
-    assume(!v->type.n);
+std::string surface_valuestr(const RDValue& v, bool& isaddr) {
+    ct_assume(!v.type.n);
 
-    switch(v->type.id) {
+    switch(v.type.id) {
         case typing::ids::I8: {
-            if(v->i8_v < 0) return utils::to_string<std::string>(v->i8_v);
-            return surface_checkaddr(v->i8_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v->i8_v));
+            if(v.i8_v < 0) return utils::to_string<std::string>(v.i8_v);
+            return surface_checkaddr(v.i8_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v.i8_v));
         }
 
         case typing::ids::I16:
         case typing::ids::I16BE: {
-            if(v->i16_v < 0) return utils::to_string<std::string>(v->i16_v);
-            return surface_checkaddr(v->i16_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v->i16_v));
+            if(v.i16_v < 0) return utils::to_string<std::string>(v.i16_v);
+            return surface_checkaddr(v.i16_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v.i16_v));
         }
 
         case typing::ids::I32:
         case typing::ids::I32BE: {
-            if(v->i32_v < 0) return utils::to_string<std::string>(v->i32_v);
-            return surface_checkaddr(v->i32_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v->i32_v));
+            if(v.i32_v < 0) return utils::to_string<std::string>(v.i32_v);
+            return surface_checkaddr(v.i32_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v.i32_v));
         }
 
         case typing::ids::I64:
         case typing::ids::I64BE: {
-            if(v->i64_v < 0) return utils::to_string<std::string>(v->i64_v);
-            return surface_checkaddr(v->i64_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v->i64_v));
+            if(v.i64_v < 0) return utils::to_string<std::string>(v.i64_v);
+            return surface_checkaddr(v.i64_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v.i64_v));
         }
 
         case typing::ids::U8: {
-            return surface_checkaddr(v->u8_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v->u8_v));
+            return surface_checkaddr(v.u8_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v.u8_v));
         }
 
         case typing::ids::U16:
         case typing::ids::U16BE: {
-            return surface_checkaddr(v->u16_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v->u16_v));
+            return surface_checkaddr(v.u16_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v.u16_v));
         }
 
         case typing::ids::U32:
         case typing::ids::U32BE: {
-            return surface_checkaddr(v->u32_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v->u32_v));
+            return surface_checkaddr(v.u32_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v.u32_v));
         }
 
         case typing::ids::U64:
         case typing::ids::U64BE: {
-            return surface_checkaddr(v->u64_v, isaddr)
-                .value_or(utils::to_hex<std::string>(v->u64_v));
+            return surface_checkaddr(v.u64_v, isaddr)
+                .value_or(utils::to_hex<std::string>(v.u64_v));
         }
 
         default: break;
     }
 
-    unreachable;
+    ct_unreachable;
 }
 
 } // namespace
@@ -136,6 +136,7 @@ const Function* Surface::current_function() const {
 
 void Surface::render_function(const Function& f) {
     m_renderer->clear();
+    state::context->worker->emulator.reset();
     const Listing& listing = state::context->listing;
 
     for(const Function::BasicBlock& bb : f.blocks) {
@@ -148,7 +149,7 @@ void Surface::render_function(const Function& f) {
         }
 
         auto endit = listing.upper_bound(bb.end, startit);
-        assume(startit < endit);
+        ct_assume(startit < endit);
         LIndex startidx = std::distance(listing.begin(), startit);
         LIndex n = std::distance(startit, endit);
         this->render_range(startidx, n);
@@ -159,6 +160,7 @@ void Surface::render_function(const Function& f) {
 
 void Surface::render(usize n) {
     m_renderer->clear();
+    state::context->worker->emulator.reset();
     this->start.map([&](LIndex s) { this->render_range(s, n); });
     this->render_finalize();
 }
@@ -257,7 +259,7 @@ const std::vector<RDSurfacePath>& Surface::get_path() const {
         if(item.type != LISTINGITEM_INSTRUCTION) continue;
 
         const RDSegment* seg = ctx->program.find_segment(item.address);
-        assume(seg);
+        ct_assume(seg);
 
         if(memory::has_flag(seg, item.address, BF_JUMPDST)) {
             for(const auto& [toaddr, type] :
@@ -430,7 +432,7 @@ bool Surface::has_selection() const {
 bool Surface::has_rdil() const { return m_renderer->has_flag(SURFACE_RDIL); }
 
 const ListingItem& Surface::get_listing_item(const SurfaceRow& sfrow) const {
-    assume(sfrow.listingindex < state::context->listing.size());
+    ct_assume(sfrow.listingindex < state::context->listing.size());
     return state::context->listing[sfrow.listingindex];
 }
 
@@ -560,7 +562,7 @@ void Surface::render_hexdump(const ListingItem& item) {
     static constexpr usize HEX_WIDTH = 16;
 
     const RDSegment* seg = state::context->program.find_segment(item.address);
-    assume(seg);
+    ct_assume(seg);
     usize c = 0;
     m_renderer->new_row(item);
 
@@ -600,7 +602,7 @@ void Surface::render_hexdump(const ListingItem& item) {
 void Surface::render_fill(const ListingItem& item) {
     const Context* ctx = state::context;
     const RDSegment* seg = ctx->program.find_segment(item.address);
-    assume(seg);
+    ct_assume(seg);
 
     m_renderer->new_row(item).chunk(".fill", THEME_FUNCTION).ws();
     auto mb = memory::get_mbyte(seg, item.address);
@@ -628,10 +630,10 @@ void Surface::render_segment(const ListingItem& item) {
 
     const Context* ctx = state::context;
     const RDProcessorPlugin* p = ctx->processorplugin;
-    assume(p);
+    ct_assume(p);
 
     const RDSegment* s = ctx->program.find_segment(item.address);
-    assume(s);
+    ct_assume(s);
 
     if(p->render_segment)
         p->render_segment(ctx->processor, api::to_c(m_renderer.get()), s);
@@ -647,10 +649,10 @@ void Surface::render_function(const ListingItem& item) {
 
     const Context* ctx = state::context;
     const RDProcessorPlugin* p = ctx->processorplugin;
-    assume(p);
+    ct_assume(p);
 
     const Function* f = state::context->program.find_function(item.address);
-    assume(f);
+    ct_assume(f);
 
     if(p->render_function)
         p->render_function(ctx->processor, api::to_c(m_renderer.get()),
@@ -661,21 +663,21 @@ void Surface::render_function(const ListingItem& item) {
 }
 
 void Surface::render_type(const ListingItem& item) {
-    assume(item.dtype_context);
-    assume(item.dtype);
+    ct_assume(item.dtype_context);
+    ct_assume(item.dtype);
 
     auto type = item.dtype_context;
-    assume(type);
+    ct_assume(type);
 
     const Context* ctx = state::context;
     const RDSegment* seg = ctx->program.find_segment(item.address);
-    assume(seg);
+    ct_assume(seg);
 
     const typing::TypeDef* td = ctx->types.get_typedef(*type);
     std::string fname;
 
     if(item.field_index) {
-        assume(*item.field_index < td->dict.size());
+        ct_assume(*item.field_index < td->dict.size());
         auto f = td->dict.at(*item.field_index);
         fname = f.second;
         type = item.dtype;
@@ -684,7 +686,7 @@ void Surface::render_type(const ListingItem& item) {
     else
         fname = ctx->get_name(item.address);
 
-    assume(type);
+    ct_assume(type);
     std::string t = ctx->types.to_string(*type);
 
     m_renderer->new_row(item);
@@ -736,13 +738,12 @@ void Surface::render_type(const ListingItem& item) {
         case typing::ids::U32BE:
         case typing::ids::I64BE:
         case typing::ids::U64BE: {
-            if(RDValue* v = memory::get_type(seg, item.address, td->to_type());
-               v) {
+            if(auto v = memory::get_type(seg, item.address, td->to_type()); v) {
                 bool isaddr = false;
-                std::string vs = surface_valuestr(v, isaddr);
+                std::string vs = surface_valuestr(*v, isaddr);
                 m_renderer->word("=").chunk(vs, isaddr ? THEME_ADDRESS
                                                        : THEME_CONSTANT);
-                rdvalue_destroy(v);
+                rdvalue_destroy(&v.value());
             }
             else
                 m_renderer->word("=").unknown();
@@ -765,7 +766,7 @@ void Surface::render_type(const ListingItem& item) {
             break;
         }
 
-        default: unreachable; break;
+        default: ct_unreachable; break;
     }
 }
 
@@ -773,7 +774,7 @@ void Surface::render_comment(const ListingItem& item) {
     if(m_renderer->has_flag(SURFACE_NOCOMMENTS)) return;
 
     const RDSegment* seg = state::context->program.find_segment(item.address);
-    assume(seg);
+    ct_assume(seg);
     if(!memory::has_flag(seg, item.address, BF_COMMENT)) return;
 
     m_renderer->ws(8);
@@ -803,9 +804,9 @@ void Surface::render_refs(const ListingItem& item) {
         }
 
         auto type = ctx->get_type(fromaddr);
-        assume(type);
+        ct_assume(type);
         const typing::TypeDef* td = ctx->types.get_typedef(*type);
-        assume(td);
+        ct_assume(td);
 
         switch(td->get_id()) {
             case typing::ids::CHAR: {
@@ -860,25 +861,25 @@ void Surface::render_refs(const ListingItem& item) {
 }
 
 void Surface::render_array(const ListingItem& item) {
-    assume(item.dtype_context);
-    assume(item.dtype);
+    ct_assume(item.dtype_context);
+    ct_assume(item.dtype);
 
     const Context* ctx = state::context;
     auto type = item.dtype;
     std::string chars;
 
     const typing::TypeDef* td = state::context->types.get_typedef(*type);
-    assume(td);
+    ct_assume(td);
 
     if(td->get_id() == typing::ids::CHAR ||
        td->get_id() == typing::ids::WCHAR) {
         const RDSegment* seg = ctx->program.find_segment(item.address);
-        assume(seg);
+        ct_assume(seg);
         RDAddress addr = item.address;
 
         for(usize i = 0; i < type->n && addr < seg->end;
             i++, addr += td->size) {
-            RDValue* b = memory::get_type(seg, addr, td->to_type());
+            auto b = memory::get_type(seg, addr, td->to_type());
 
             if(!b) {
                 chars += "\",?\"";
@@ -890,16 +891,16 @@ void Surface::render_array(const ListingItem& item) {
             else
                 chars += fmt::format("\\x{}", static_cast<int>(b->ch_v));
 
-            rdvalue_destroy(b);
+            rdvalue_destroy(&b.value());
         }
     }
 
     if(item.field_index) {
         auto ptc = item.dtype_context;
-        assume(ptc);
+        ct_assume(ptc);
         const typing::TypeDef* ptd = ctx->types.get_typedef(*ptc);
 
-        assume(*item.field_index < ptd->dict.size());
+        ct_assume(*item.field_index < ptd->dict.size());
         auto field = ptd->dict[*item.field_index];
         m_renderer->new_row(item);
         if(td->is_struct()) m_renderer->function("struct ");

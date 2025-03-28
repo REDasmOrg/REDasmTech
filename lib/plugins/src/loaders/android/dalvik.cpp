@@ -135,8 +135,8 @@ void register_types(RDProcessor*, RDEmulator*) {
     rd_createstruct("FILL_ARRAY_DATA", dalvik::FILLARRAYDATA_TYPE);
 }
 
-const char* get_mnemonic(const RDProcessor*, u32 id) {
-    return dexGetOpcodeName(static_cast<Opcode>(id));
+const char* get_mnemonic(const RDProcessor*, const RDInstruction* instr) {
+    return dexGetOpcodeName(static_cast<Opcode>(instr->id));
 }
 
 const char* get_registername(const RDProcessor*, int regid) {
@@ -381,7 +381,7 @@ struct DalvikProcessor {
     }
 
     void render_instruction(RDRenderer* r, const RDInstruction* instr) const {
-        rdrenderer_mnem(r, instr->id, dalvik::get_op_theme(instr->id));
+        rdrenderer_mnem(r, instr, dalvik::get_op_theme(instr->id));
 
         foreach_operand(i, op, instr) {
             if(i) rdrenderer_text(r, ",");

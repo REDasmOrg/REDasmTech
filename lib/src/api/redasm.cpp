@@ -17,7 +17,7 @@ bool rd_init(const RDInitParams* params) {
     if(redasm::state::initialized) return true;
     redasm::state::initialized = true;
 
-    redasm::state::tests = vect_create(RDTestResult);
+    slice_init(&redasm::state::tests, nullptr, nullptr);
 
     // clang-format off
     redasm::state::params = {
@@ -45,7 +45,7 @@ void rd_deinit() {
     if(!redasm::state::initialized) return;
     redasm::state::initialized = false;
     rdcontext_destroy();
-    vect_destroy(redasm::state::tests);
+    slice_destroy(&redasm::state::tests);
     redasm::pm::destroy();
 }
 
@@ -120,18 +120,18 @@ usize rd_getrefstotype(RDAddress toaddr, usize type, const RDRef** refs) {
     return r.size();
 }
 
-Vect(RDProblem) rd_getproblems() {
+const RDProblemSlice* rd_getproblems() {
     spdlog::trace("rd_getproblems()");
     const redasm::Context* ctx = redasm::state::context;
-    if(ctx) return ctx->problems;
+    if(ctx) return &ctx->problems;
     return nullptr;
 }
 
-Vect(RDTestResult) rd_test(RDBuffer* file) {
+const RDTestResultSlice* rd_test(RDBuffer* file) {
     spdlog::trace("rd_test({})", fmt::ptr(file));
 
     redasm::state::context = nullptr; // Deselect active context
-    vect_clear(redasm::state::tests);
+    slice_clear(&redasm::state::tests);
 
     RDLoaderRequest req = {
         .file = file,
@@ -140,20 +140,16 @@ Vect(RDTestResult) rd_test(RDBuffer* file) {
         .ext = redasm::utils::get_ext(file->source).data(),       // NOLINT
     };
 
-    vect_foreach(const RDLoaderPlugin*, p, redasm::pm::loaders) {
-        const RDLoaderPlugin* lp = *p;
-        if(!lp->parse) continue;
+    const RDLoaderPlugin** p;
+    slice_foreach(p, &redasm::pm::loaders) {
+        if(!(*p)->parse) continue;
 
         auto* ctx = new redasm::Context{file};
         redasm::state::context = ctx;
 
-        if(ctx->parse(lp, &req)) {
-            vect_add(RDTestResult, redasm::state::tests,
-                     {
-                         lp,
-                         ctx->processorplugin,
-                         redasm::api::to_c(ctx),
-                     });
+        if(ctx->parse(*p, &req)) {
+            slice_push(&redasm::state::tests,
+                       {*p, ctx->processorplugin, redasm::api::to_c(ctx)});
         }
         else {
             redasm::state::context = nullptr;
@@ -165,13 +161,12 @@ Vect(RDTestResult) rd_test(RDBuffer* file) {
     redasm::state::context = nullptr;
 
     // Sort results by priority
-    std::ranges::stable_partition(vect_begin(redasm::state::tests),
-                                  vect_end(redasm::state::tests),
-                                  std::not_fn([](const RDTestResult& x) {
-                                      return x.loaderplugin->flags & PF_LAST;
-                                  }));
+    slice_stablepartition(
+        &redasm::state::tests, +[](const RDTestResult* x) {
+            return !(x->loaderplugin->flags & PF_LAST);
+        });
 
-    return redasm::state::tests;
+    return &redasm::state::tests;
 }
 
 bool rd_select(const RDTestResult* seltr) {
@@ -180,21 +175,22 @@ bool rd_select(const RDTestResult* seltr) {
     bool ok = false;
 
     if(seltr) {
-        assume(seltr->loaderplugin);
-        assume(seltr->processorplugin);
-        assume(seltr->context);
+        ct_assume(seltr->loaderplugin);
+        ct_assume(seltr->processorplugin);
+        ct_assume(seltr->context);
         redasm::state::context = redasm::api::from_c(seltr->context);
         ok = redasm::state::context->load(seltr->processorplugin);
         if(!ok) rdcontext_destroy();
     }
 
     // Discard other instances
-    vect_foreach(RDTestResult, tr, redasm::state::tests) {
+    RDTestResult* tr;
+    slice_foreach(tr, &redasm::state::tests) {
         if(!seltr || tr->context != seltr->context)
             delete redasm::api::from_c(tr->context);
     }
 
-    vect_clear(redasm::state::tests);
+    slice_clear(&redasm::state::tests);
     return ok;
 }
 
@@ -218,11 +214,12 @@ void rd_disassemble() {
 void rd_discard() {
     spdlog::trace("rd_discard()");
 
-    vect_foreach(RDTestResult, tr, redasm::state::tests) {
+    RDTestResult* tr;
+    slice_foreach(tr, &redasm::state::tests) {
         delete redasm::api::from_c(tr->context);
     }
 
-    vect_clear(redasm::state::tests);
+    slice_clear(&redasm::state::tests);
 }
 
 void rd_addsearchpath(const char* sp) {
@@ -305,27 +302,34 @@ const char* rd_getcomment(RDAddress address) {
     return res.empty() ? nullptr : res.c_str();
 }
 
-RDValue* rd_gettype(RDAddress address, const RDType* t) {
+RDValueOpt rd_gettype(RDAddress address, const RDType* t) {
     spdlog::trace("rd_gettype({:x}, {})", address, fmt::ptr(t));
-    if(!redasm::state::context || !t) return nullptr;
+    if(!redasm::state::context || !t) return RDValueOpt_none();
 
     const RDSegment* seg =
         redasm::state::context->program.find_segment(address);
 
-    if(seg) return redasm::memory::get_type(seg, address, *t);
-    return nullptr;
+    if(seg) {
+        auto v = redasm::memory::get_type(seg, address, *t);
+        if(v) return RDValueOpt_some(*v);
+    }
+
+    return RDValueOpt_none();
 }
 
-RDValue* rd_gettypename(RDAddress address, const char* tname) {
+RDValueOpt rd_gettypename(RDAddress address, const char* tname) {
     spdlog::trace("rd_gettypename({:x}, '{}')", address, tname);
-    if(!redasm::state::context || !tname) return nullptr;
+    if(!redasm::state::context || !tname) return RDValueOpt_none();
 
     const RDSegment* seg =
         redasm::state::context->program.find_segment(address);
 
-    if(seg) return redasm::memory::get_type(seg, address, tname);
+    if(seg) {
+        auto v = redasm::memory::get_type(seg, address, tname);
+        if(v) return RDValueOpt_some(*v);
+    }
 
-    return nullptr;
+    return RDValueOpt_none();
 }
 
 bool rd_setcomment(RDAddress address, const char* comment) {
@@ -335,12 +339,12 @@ bool rd_setcomment(RDAddress address, const char* comment) {
            redasm::state::context->set_comment(address, comment);
 }
 
-bool rd_settype(RDAddress address, const RDType* type, RDValue** v) {
+bool rd_settype(RDAddress address, const RDType* type, RDValue* v) {
     return rd_settype_ex(address, type, 0, v);
 }
 
 bool rd_settype_ex(RDAddress address, const RDType* type, usize flags,
-                   RDValue** v) {
+                   RDValue* v) {
     spdlog::trace("rd_settype_ex({:x}, {}, {})", address, fmt::ptr(type), flags,
                   fmt::ptr(v));
 
@@ -352,8 +356,9 @@ bool rd_settype_ex(RDAddress address, const RDType* type, usize flags,
 
     if(redasm::state::context->set_type(address, *type, flags)) {
         if(v) {
-            *v = redasm::memory::get_type(seg, address, *type);
-            assume(*v);
+            auto t = redasm::memory::get_type(seg, address, *type);
+            ct_assume(t);
+            *v = *t;
         }
 
         return true;
@@ -362,12 +367,12 @@ bool rd_settype_ex(RDAddress address, const RDType* type, usize flags,
     return false;
 }
 
-bool rd_settypename(RDAddress address, const char* tname, RDValue** v) {
+bool rd_settypename(RDAddress address, const char* tname, RDValue* v) {
     return rd_settypename_ex(address, tname, 0, v);
 }
 
 bool rd_settypename_ex(RDAddress address, const char* tname, usize flags,
-                       RDValue** v) {
+                       RDValue* v) {
     spdlog::trace("rd_settypename_ex({:x}, '{}', {}, {})", address, tname,
                   flags, fmt::ptr(v));
     if(!redasm::state::context || !tname) return false;
@@ -378,8 +383,9 @@ bool rd_settypename_ex(RDAddress address, const char* tname, usize flags,
 
     if(redasm::state::context->set_type(address, tname, flags)) {
         if(v) {
-            *v = redasm::memory::get_type(seg, address, tname);
-            assume(*v);
+            auto t = redasm::memory::get_type(seg, address, tname);
+            ct_assume(t);
+            *v = *t;
         }
 
         return true;
@@ -483,20 +489,6 @@ const RDSegment* rd_findsegment(RDAddress address) {
     spdlog::trace("rd_findsegment({:x})", address);
     if(!redasm::state::context) return nullptr;
     return redasm::state::context->program.find_segment(address);
-}
-
-void rd_addregchange(RDAddress address, int reg, u64 val) {
-    spdlog::trace("rd_addregchange({:x}, {}, {:x})", address, reg, val);
-    if(redasm::state::context)
-        redasm::state::context->add_regchange(address, reg, val);
-}
-
-void rd_addregchange_from(RDAddress address, int reg, u64 val,
-                          RDAddress fromaddr) {
-    spdlog::trace("rd_addregchange_from({:x}, {}, {:x})", address, reg, val,
-                  fromaddr);
-    if(redasm::state::context)
-        redasm::state::context->add_regchange(address, reg, val, fromaddr);
 }
 
 void rd_log(const char* s) {

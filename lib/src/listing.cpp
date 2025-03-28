@@ -1,5 +1,4 @@
 #include "listing.h"
-#include "error.h"
 #include "memory/memory.h"
 #include <algorithm>
 #include <utility>
@@ -60,14 +59,14 @@ tl::optional<RDType> Listing::current_type() const {
 void Listing::push_fieldindex(usize arg) { m_fieldindex.push_back(arg); }
 
 void Listing::pop_fieldindex() {
-    assume(!m_fieldindex.empty());
+    ct_assume(!m_fieldindex.empty());
     m_fieldindex.pop_back();
 }
 
 void Listing::push_type(RDType t) { m_currtype.push_back(t); }
 
 void Listing::pop_type() {
-    assume(!m_currtype.empty());
+    ct_assume(!m_currtype.empty());
     m_currtype.pop_back();
 }
 
@@ -131,7 +130,7 @@ LIndex Listing::push_item(RDListingItemType type, RDAddress address) {
 }
 
 void Listing::check_flags(LIndex lidx, RDAddress address) {
-    assume(m_currentsegment);
+    ct_assume(m_currentsegment);
 
     if(memory::has_flag(m_currentsegment, address, BF_IMPORT))
         m_imports.push_back(lidx);

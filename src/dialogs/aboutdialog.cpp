@@ -53,12 +53,11 @@ void compile_searchpaths(QString& html) {
 }
 
 void compile_plugins(QString& html) {
-    Vect(const RDLoaderPlugin*) loaders = rd_getloaderplugins();
-    Vect(const RDProcessorPlugin*) processors = rd_getprocessorplugins();
+    const RDLoaderPluginSlice* loaders = rd_getloaderplugins();
+    const RDProcessorPluginSlice* processors = rd_getprocessorplugins();
     QString plugins;
 
-    for(usize i = 0; i < qMax(vect_length(loaders), vect_length(processors));
-        i++) {
+    for(isize i = 0; i < qMax(loaders->length, processors->length); i++) {
         QString row = R"(
             <tr>
                 <td align="center" valign="middle">%1</td>
@@ -66,16 +65,17 @@ void compile_plugins(QString& html) {
             </tr>
         )";
 
-        if(i < vect_length(loaders))
-            row = row.arg(
-                QString{"%1 (%2)"}.arg(loaders[i]->name).arg(loaders[i]->id));
+        if(i < loaders->length)
+            row = row.arg(QString{"%1 (%2)"}
+                              .arg(loaders->data[i]->name)
+                              .arg(loaders->data[i]->id));
         else
             row = row.arg(QString{});
 
-        if(i < vect_length(processors)) {
+        if(i < processors->length) {
             row = row.arg(QString{"%1 (%2)"}
-                              .arg(processors[i]->name)
-                              .arg(processors[i]->id));
+                              .arg(processors->data[i]->name)
+                              .arg(processors->data[i]->id));
         }
         else
             row = row.arg(QString{});

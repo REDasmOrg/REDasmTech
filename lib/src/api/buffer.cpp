@@ -1,5 +1,4 @@
 #include "../memory/buffer.h"
-#include "../internal/buffer_internal.h"
 #include "../utils/utils.h"
 #include <fstream>
 #include <redasm/buffer.h>
@@ -83,18 +82,22 @@ usize rdbuffer_read(const RDBuffer* self, usize idx, void* dst, usize n) {
     return redasm::buffer::read(self, idx, dst, n);
 }
 
-RDValue* rdbuffer_readstruct_n(const RDBuffer* self, usize idx, usize n,
-                               const RDStructField* fields) {
+RDValueOpt rdbuffer_readstruct_n(const RDBuffer* self, usize idx, usize n,
+                                 const RDStructField* fields) {
     spdlog::trace("rdbuffer_readstruct_n({}, {:x}, {}, {})", fmt::ptr(self),
                   idx, n, fmt::ptr(fields));
-    return redasm::buffer::read_struct_n(self, idx, n, fields);
+    auto v = redasm::buffer::read_struct_n(self, idx, n, fields);
+    if(v) return RDValueOpt_some(*v);
+    return RDValueOpt_none();
 }
 
-RDValue* rdbuffer_readstruct(const RDBuffer* self, usize idx,
-                             const RDStructField* fields) {
+RDValueOpt rdbuffer_readstruct(const RDBuffer* self, usize idx,
+                               const RDStructField* fields) {
     spdlog::trace("rdbuffer_readstruct({}, {:x}, {})", fmt::ptr(self), idx,
                   fmt::ptr(fields));
-    return redasm::buffer::read_struct(self, idx, fields);
+    auto v = redasm::buffer::read_struct(self, idx, fields);
+    if(v) return RDValueOpt_some(*v);
+    return RDValueOpt_none();
 }
 
 bool rdbuffer_getmbyte(const RDBuffer* self, usize idx, RDMByte* v) {
@@ -265,19 +268,23 @@ bool rdbuffer_getwstr(const RDBuffer* self, usize idx, usize n,
     return res.has_value();
 }
 
-RDValue* rdbuffer_gettypename(const RDBuffer* self, usize idx,
-                              const char* tname) {
+RDValueOpt rdbuffer_gettypename(const RDBuffer* self, usize idx,
+                                const char* tname) {
     spdlog::trace("rdbuffer_gettypename({}, {:x}, '{}')", fmt::ptr(self), idx,
                   tname);
-    if(!tname) return nullptr;
-    return redasm::buffer::get_type(self, idx, tname);
+    if(!tname) return RDValueOpt_none();
+    auto v = redasm::buffer::get_type(self, idx, tname);
+    if(v) return RDValueOpt_some(*v);
+    return RDValueOpt_none();
 }
 
-RDValue* rdbuffer_gettype(const RDBuffer* self, usize idx, const RDType* t) {
+RDValueOpt rdbuffer_gettype(const RDBuffer* self, usize idx, const RDType* t) {
     spdlog::trace("rdbuffer_gettype({}, {:x}, {})", fmt::ptr(self), idx,
                   fmt::ptr(t));
-    if(!t) return nullptr;
-    return redasm::buffer::get_type(self, idx, *t);
+    if(!t) return RDValueOpt_none();
+    auto v = redasm::buffer::get_type(self, idx, *t);
+    if(v) return RDValueOpt_some(*v);
+    return RDValueOpt_none();
 }
 
 void rdbuffer_destroy(RDBuffer* self) {

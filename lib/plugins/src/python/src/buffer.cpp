@@ -345,7 +345,7 @@ PySequenceMethods memory_sequence_methods = []() {
         PyObject* pb = python::new_simplenamespace();
         // clang-format off
         PyObject_SetAttrString(pb, "name", PyBool_FromLong(rdmbyte_hasflag(b, BF_NAME))); 
-        PyObject_SetAttrString(pb, "region", PyBool_FromLong(rdmbyte_hasflag(b, BF_REGCHANGE)));
+        PyObject_SetAttrString(pb, "region", PyBool_FromLong(rdmbyte_hasflag(b, BF_SREG)));
         PyObject_SetAttrString(pb, "import", PyBool_FromLong(rdmbyte_hasflag(b, BF_IMPORT)));
         PyObject_SetAttrString(pb, "export", PyBool_FromLong(rdmbyte_hasflag(b, BF_EXPORT)));
         PyObject_SetAttrString(pb, "unknown", PyBool_FromLong(rdmbyte_isunknown(b))); 
