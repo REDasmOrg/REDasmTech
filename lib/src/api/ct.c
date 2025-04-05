@@ -129,11 +129,11 @@ void mem_free(void* ptr, isize n, Allocator a, void* ctx) {
 }
 
 #define slice_defaultcapacity 256
-define_slice(InternalReplicaSlice, void);
+define_slice(SliceInternalReplica, void);
 
 void slice_init(void* self, Allocator a, void* ctx) {
     ct_assume(self);
-    InternalReplicaSlice* slice = (InternalReplicaSlice*)self;
+    SliceInternalReplica* slice = (SliceInternalReplica*)self;
     slice->data = NULL;
     slice->length = 0;
     slice->capacity = 0;
@@ -143,7 +143,7 @@ void slice_init(void* self, Allocator a, void* ctx) {
 
 void _slice_insert(void* self, isize idx, isize dsize) {
     ct_assume(self);
-    InternalReplicaSlice* slice = (InternalReplicaSlice*)self;
+    SliceInternalReplica* slice = (SliceInternalReplica*)self;
 
     // Normalize index: -1 or length means "append"
     if(idx == -1) idx = slice->length;
@@ -163,7 +163,7 @@ void _slice_insert(void* self, isize idx, isize dsize) {
 
 void _slice_grow(void* self, isize dsize) {
     ct_assume(self);
-    InternalReplicaSlice* slice = (InternalReplicaSlice*)self;
+    SliceInternalReplica* slice = (SliceInternalReplica*)self;
 
     if(slice->length >= slice->capacity) {
         _slice_reserve(self,
@@ -175,7 +175,7 @@ void _slice_grow(void* self, isize dsize) {
 
 void _slice_reserve(void* self, isize n, isize dsize) {
     ct_assume(self);
-    InternalReplicaSlice* slice = (InternalReplicaSlice*)self;
+    SliceInternalReplica* slice = (SliceInternalReplica*)self;
     if(slice->capacity >= n) return;
 
     slice->data = mem_realloc0(slice->data, slice->capacity * dsize, n * dsize,
@@ -183,9 +183,50 @@ void _slice_reserve(void* self, isize n, isize dsize) {
     slice->capacity = n;
 }
 
+void _slice_erase(void* self, isize idx, usize dsize) {
+    ct_assume(self);
+    SliceInternalReplica* slice = (SliceInternalReplica*)self;
+
+    if(idx == -1) idx = slice->length = -1;
+
+    ct_except_if(idx < 0 && idx >= slice->length,
+                 "_slice_erase: invalid index");
+
+    if(idx < slice->length - 1) {
+        void* dst = (char*)slice->data + (idx * dsize);
+        void* src = (char*)slice->data + ((idx + 1) * dsize);
+        usize sz = (slice->length - idx - 1) * dsize;
+        memmove(dst, src, sz);
+    }
+
+    slice->length -= 1;
+}
+
+void _slice_eraserange(void* self, isize start, isize end, usize dsize) {
+    ct_assume(self);
+    SliceInternalReplica* slice = (SliceInternalReplica*)self;
+
+    isize n = slice->length;
+    if(start < 0) start += n;
+    if(end < 0) end += n;
+
+    if(start < 0) start = 0;
+    if(end > n) end = n;
+    if(start >= end) return;
+
+    if(end < slice->length) {
+        void* dst = (char*)slice->data + (start * dsize);
+        void* src = (char*)slice->data + (end * dsize);
+        usize sz = (slice->length - end) * dsize;
+        memmove(dst, src, sz);
+    }
+
+    slice->length -= n;
+}
+
 void _slice_destroy(void* self, isize dsize) {
     ct_assume(self);
-    InternalReplicaSlice* slice = (InternalReplicaSlice*)self;
+    SliceInternalReplica* slice = (SliceInternalReplica*)self;
     if(!slice->data) return;
 
     mem_free(slice->data, slice->capacity * dsize, slice->alloc, slice->ctx);
@@ -198,7 +239,7 @@ void _slice_destroy(void* self, isize dsize) {
 BSearchResult _slice_bsearch(const void* self, isize dsize, const void* key,
                              SliceCompare cmp) {
     ct_assume(self);
-    InternalReplicaSlice* slice = (InternalReplicaSlice*)self;
+    SliceInternalReplica* slice = (SliceInternalReplica*)self;
     if(!slice->data) return (BSearchResult){false, -1};
 
     isize low = 0, high = slice->length;
@@ -222,7 +263,7 @@ BSearchResult _slice_bsearch(const void* self, isize dsize, const void* key,
 CT_API isize _slice_stablepartition(const void* self, isize dsize,
                                     SlicePredicate pred) {
     ct_assume(self);
-    InternalReplicaSlice* slice = (InternalReplicaSlice*)self;
+    SliceInternalReplica* slice = (SliceInternalReplica*)self;
     if(!slice->length) return 0;
 
     isize c = slice->length;
@@ -287,26 +328,30 @@ void str_reserve(Str* self, isize n) {
     slice_reserve(self, n + 1);
 }
 
+int str_compare(const Str* self, const Str* rhs) {
+    int i = 0;
+    while(i < self->length && i < rhs->length) {
+        if(self->data[i] != rhs->data[i])
+            return (u8)self->data[i] - (u8)rhs->data[i];
+        i++;
+    }
+
+    // If all compared characters so far are equal
+    if(i == self->length && i == rhs->length) return 0;
+    if(i == self->length) return -((u8)rhs->data[i]);
+    if(i == rhs->length) return (u8)self->data[i];
+    ct_unreachable;
+}
+
 bool str_equals(const Str* self, const Str* rhs) {
     return self && rhs && self->length == rhs->length &&
            (!self->length || !memcmp(self->data, rhs->data, self->length));
 }
 
-void str_deleterange(Str* self, isize start, isize end) {
+void str_eraserange(Str* self, isize start, isize end) {
     ct_assume(self);
-    ct_except_if(str_isview(self), "str_deleterange: cannot mutate a view");
-
-    isize len = self->length;
-    if(start < 0) start += len;
-    if(end < 0) end += len;
-
-    if(start < 0) start = 0;
-    if(end > len) end = len;
-    if(start >= end) return;
-
-    isize n = end - start;
-    memmove(self->data + start, self->data + end, self->length - end);
-    self->length -= n;
+    ct_except_if(str_isview(self), "str_eraserange: cannot mutate a view");
+    _slice_eraserange(self, start, end, sizeof(*self->data));
     self->data[self->length] = 0;
 }
 
@@ -359,7 +404,7 @@ void _str_replace_n(Str* self, const char* from, isize nfrom, const char* to,
 
     isize i = 0;
     while((i = str_indexof(self, from)) != -1) {
-        str_deleterange(self, i, i + nfrom);
+        str_eraserange(self, i, i + nfrom);
         _str_insert_n(self, i, to, nto);
     }
 }
@@ -529,23 +574,6 @@ void str_clear(Str* self) {
     slice_clear(self);
 }
 
-void list_push_tail(List* self, ListNode* n) {
-    ct_assume(self);
-    ct_assume(n);
-
-    if(self->tail) {
-        self->tail->next = n;
-        n->prev = self->tail;
-        n->next = NULL;
-        self->tail = n;
-    }
-    else {
-        ct_assume(!self->head);
-        self->head = self->tail = n;
-        n->prev = n->next = NULL;
-    }
-}
-
 StrSplit _strsplit_create_n(const Str* self, const char* sep, isize n) {
     return (StrSplit){
         .source = self,
@@ -591,58 +619,72 @@ Str str_split_next(StrSplit* it) {
     return last;
 }
 
-void list_push(List* self, ListNode* n) {
+void list_init(ListNode* self) {
     ct_assume(self);
+    self->next = self->prev = self;
+}
+
+void list_erase(ListNode* self) {
+    ct_assume(self);
+    self->prev->next = self->next;
+    self->next->prev = self->prev;
+    self->next = self->prev = self;
+}
+
+void list_insert(ListNode* prev, ListNode* next, ListNode* n) {
+    ct_assume(prev);
+    ct_assume(next);
     ct_assume(n);
 
-    if(self->head) {
-        self->head->prev = n;
-        n->next = self->head;
-        n->prev = NULL;
-        self->head = n;
-    }
-    else {
-        ct_assume(!self->tail);
-        self->head = self->tail = n;
-        n->prev = n->next = NULL;
-    }
+    n->next = next;
+    n->prev = prev;
+    prev->next = n;
+    next->prev = n;
 }
 
-void list_init(List* self) {
+void list_insert_prev(ListNode* self, ListNode* n) {
     ct_assume(self);
-    self->head = self->tail = NULL;
+    list_insert(self, self->next, n);
 }
 
-void list_del(List* self, ListNode* n) {
+void list_insert_next(ListNode* self, ListNode* n) {
     ct_assume(self);
-    ct_assume(n);
-
-    if(n->next) n->next->prev = n->prev;
-    if(n->prev) n->prev->next = n->next;
-    if(self->head == n) self->head = n->next;
-    if(self->tail == n) self->tail = n->prev;
-    n->prev = n->next = NULL;
+    list_insert(self->prev, self, n);
 }
 
-void hlist_push(HList* self, HListNode* n) {
+ListNode* list_pop_first(ListNode* self) {
+    if(self->next == self) return NULL;
+    ListNode* node = self->next;
+    list_erase(node);
+    return node;
+}
+
+ListNode* list_pop_last(ListNode* self) {
+    if(self->prev == self) return NULL;
+    ListNode* node = self->prev;
+    list_erase(node);
+    return node;
+}
+
+void hlist_insert(HList* self, HListNode* n) {
     n->next = self->first;
     if(n->next) n->next->backlink = &n->next;
     self->first = n;
     n->backlink = &self->first;
 }
 
-void hlist_del(HListNode* n) {
+void hlist_erase(HListNode* n) {
     if(n->next) n->next->backlink = n->backlink;
     *n->backlink = n->next;
 }
+
+uptr _hmap_directhash(const void* p) { return (uptr)p; }
 
 void _hmap_init(HList* self, usize n) {
     ct_assume(self);
     for(usize i = 0; i < n; i++)
         self[i].first = NULL;
 }
-
-uptr _hmap_directhash(const void* p) { return (uptr)p; }
 
 unsigned long _hmap_bits(unsigned long cap) {
     if(!cap) return sizeof(unsigned long) * CHAR_BIT;
@@ -668,4 +710,345 @@ unsigned long _hmap_bits(unsigned long cap) {
 #else
 #error "No CLZ intrinsic found"
 #endif
+}
+
+static void _rbtree_rol(RBTree* self, RBTreeNode* n) {
+    RBTreeNode* c = n->right;
+    n->right = c->left;
+    if(c->left) c->left->parent = n;
+
+    c->parent = n->parent;
+    if(!n->parent)
+        self->root = c;
+    else if(n == n->parent->left)
+        n->parent->left = c;
+    else
+        n->parent->right = c;
+
+    c->left = n;
+    n->parent = c;
+}
+
+static void _rbtree_ror(RBTree* self, RBTreeNode* n) {
+    RBTreeNode* c = n->left;
+    n->left = c->right;
+    if(c->right) c->right->parent = n;
+
+    c->parent = n->parent;
+    if(!n->parent)
+        self->root = c;
+    else if(n == n->parent->right)
+        n->parent->right = c;
+    else
+        n->parent->left = c;
+
+    c->right = n;
+    n->parent = c;
+}
+
+void _rbtree_ins_rebalance(RBTree* self, RBTreeNode* n) {
+    ct_assume(self);
+    ct_assume(n);
+
+    while(n != self->root && !n->parent->black) {
+        RBTreeNode* parent = n->parent;
+        RBTreeNode* gparent = parent->parent;
+        ct_assume(gparent);
+
+        bool isleft = (parent == gparent->left);
+        RBTreeNode* uncle = isleft ? gparent->right : gparent->left;
+
+        if(uncle && !uncle->black) { // Case 1: Recolor
+            parent->black = uncle->black = true;
+            gparent->black = false;
+            n = gparent;
+            continue;
+        }
+
+        if(isleft) {
+            if(n == parent->right) { // Case 2: Left-Right
+                n = parent;
+                _rbtree_rol(self, n);
+                parent = n->parent;
+                gparent = parent->parent;
+            }
+            // Case 3: Left-Left
+            parent->black = true;
+            gparent->black = false;
+            _rbtree_ror(self, gparent);
+        }
+        else {
+            if(n == parent->left) { // Case 2: Right-Left
+                n = parent;
+                _rbtree_ror(self, n);
+                parent = n->parent;
+                gparent = parent->parent;
+            }
+            // Case 3: Right-Right
+            parent->black = true;
+            gparent->black = false;
+            _rbtree_rol(self, gparent);
+        }
+    }
+
+    ct_assume(self->root);
+    self->root->black = true;
+}
+
+static void _rbtree_del_rebalance(RBTree* self, RBTreeNode* n,
+                                  RBTreeNode* parent) {
+    while((!n || n->black) && n != self->root) {
+        bool left = (parent->left == n);
+        RBTreeNode* sibl = left ? parent->right : parent->left;
+
+        if(sibl && !sibl->black) {
+            sibl->black = true;
+            parent->black = false;
+            if(left)
+                _rbtree_rol(self, parent);
+            else
+                _rbtree_ror(self, parent);
+            sibl = left ? parent->right : parent->left;
+        }
+
+        if((!sibl || ((!sibl->left || sibl->left->black) &&
+                      (!sibl->right || sibl->right->black)))) {
+            if(sibl) sibl->black = false;
+            n = parent;
+            parent = n->parent;
+        }
+        else {
+            if(left) {
+                if(!sibl->right || sibl->right->black) {
+                    if(sibl->left) sibl->left->black = true;
+                    sibl->black = false;
+                    _rbtree_ror(self, sibl);
+                    sibl = parent->right;
+                }
+                sibl->black = parent->black;
+                parent->black = true;
+                if(sibl->right) sibl->right->black = true;
+                _rbtree_rol(self, parent);
+                break;
+            }
+            if(!sibl->left || sibl->left->black) {
+                if(sibl->right) sibl->right->black = true;
+                sibl->black = false;
+                _rbtree_ror(self, sibl);
+                sibl = parent->left;
+            }
+            sibl->black = parent->black;
+            parent->black = true;
+            if(sibl->left) sibl->left->black = true;
+            _rbtree_rol(self, parent);
+            break;
+        }
+    }
+
+    if(n) n->black = true;
+}
+
+static void _rbtree_push(RBTreeNode* n, RBTreeNode* parent, RBTreeNode** link) {
+    n->parent = parent;
+    n->left = n->right = NULL;
+    *link = n;
+}
+
+RBTreeNode* _rbtree_find(const RBTree* self, const void* k) {
+    ct_assume(self);
+    RBTreeNode* node = self->root;
+
+    while(node) {
+        int c = self->keycmp(k, node);
+        if(c < 0)
+            node = node->left;
+        else if(c > 0)
+            node = node->right;
+        else
+            return node;
+    }
+
+    return NULL;
+}
+
+void rbtree_init(RBTree* self, RBTreeNodeCompare nodecmp,
+                 RBTreeKeyCompare keycmp) {
+    ct_assume(self);
+    ct_assume(nodecmp);
+    ct_assume(keycmp);
+    self->root = NULL;
+    self->length = 0;
+    self->nodecmp = nodecmp;
+    self->keycmp = keycmp;
+}
+
+RBTreeNode* rbtree_first(const RBTree* self) {
+    ct_assume(self);
+    RBTreeNode* n = self->root;
+    while(n && n->left)
+        n = n->left;
+    return n;
+}
+
+RBTreeNode* rbtree_last(const RBTree* self) {
+    ct_assume(self);
+    RBTreeNode* n = self->root;
+    while(n && n->right)
+        n = n->right;
+    return n;
+}
+
+RBTreeNode* rbtree_left_deepest(const RBTreeNode* n) {
+    while(n) {
+        if(n->left)
+            n = n->left;
+        else if(n->right)
+            n = n->right;
+        else
+            break;
+    }
+
+    return (RBTreeNode*)n;
+}
+
+RBTreeNode* rbtree_right_deepest(const RBTreeNode* n) {
+    while(n) {
+        if(n->right)
+            n = n->right;
+        else if(n->left)
+            n = n->left;
+        else
+            break;
+    }
+
+    return (RBTreeNode*)n;
+}
+
+RBTreeNode* rbtree_prev(const RBTreeNode* n) {
+    if(n->left) {
+        n = n->left;
+        while(n->right)
+            n = n->right;
+        return (RBTreeNode*)n;
+    }
+
+    RBTreeNode* p = n->parent;
+    while(p && n == p->left) {
+        n = p;
+        p = p->parent;
+    }
+
+    return p;
+}
+
+RBTreeNode* rbtree_next(const RBTreeNode* n) {
+    if(n->right) {
+        n = n->right;
+        while(n->left)
+            n = n->left;
+        return (RBTreeNode*)n;
+    }
+
+    RBTreeNode* p = n->parent;
+    while(p && n == p->right) {
+        n = p;
+        p = p->parent;
+    }
+
+    return p;
+}
+
+RBTreeNode* rbtree_prev_postorder(const RBTreeNode* n) {
+    ct_assume(n);
+    RBTreeNode* p = n->parent;
+    if(p && n == p->right && p->left) return rbtree_right_deepest(p->left);
+    return p;
+}
+
+RBTreeNode* rbtree_next_postorder(const RBTreeNode* n) {
+    ct_assume(n);
+    RBTreeNode* p = n->parent;
+    if(p && n == p->left && p->right) return rbtree_left_deepest(p->right);
+    return p;
+}
+
+bool rbtree_insert(RBTree* self, RBTreeNode* n) {
+    ct_assume(self);
+    RBTreeNode **link = &self->root, *parent = NULL;
+
+    while(*link) {
+        parent = *link;
+        int c = self->nodecmp(n, *link);
+        if(c < 0)
+            link = &parent->left;
+        else if(c > 0)
+            link = &parent->right;
+        else
+            return false;
+    }
+
+    _rbtree_push(n, parent, link);
+    _rbtree_ins_rebalance(self, n);
+    ++self->length;
+    return true;
+}
+
+void rbtree_erase(RBTree* self, RBTreeNode* n) {
+    RBTreeNode *child, *parent;
+    bool isnodeblack;
+
+    if(n->left && n->right) {
+        // Swap with successor
+        RBTreeNode* next = rbtree_next(n);
+        // Swap contents instead of pointers
+        // (user must manage container's identity if needed)
+        // Swap node <-> next in-place
+
+        // Actual node to delete is now `next`
+        RBTreeNode* nleft = n->left;
+        RBTreeNode* nright = n->right;
+        RBTreeNode* nparent = n->parent;
+        bool nblack = n->black;
+
+        *n = *next; // Copy successor into node (shallow)
+        n->left = nleft;
+        n->right = nright;
+        n->parent = nparent;
+        n->black = nblack;
+
+        n = next;
+    }
+
+    child = n->left ? n->left : n->right;
+    parent = n->parent;
+    isnodeblack = n->black;
+
+    if(child) child->parent = parent;
+
+    if(!parent)
+        self->root = child;
+    else if(parent->left == n)
+        parent->left = child;
+    else
+        parent->right = child;
+
+    if(isnodeblack) _rbtree_del_rebalance(self, child, parent);
+    --self->length;
+}
+
+void rbtree_replace(RBTreeNode** self, RBTreeNode* oldn, RBTreeNode* newn) {
+    newn->parent = oldn->parent;
+    newn->left = oldn->left;
+    newn->right = oldn->right;
+    newn->black = oldn->black;
+
+    if(newn->left) newn->left->parent = newn;
+    if(newn->right) newn->right->parent = newn;
+
+    if(!oldn->parent)
+        *self = newn;
+    else if(oldn->parent->left == oldn)
+        oldn->parent->left = newn;
+    else
+        oldn->parent->right = newn;
 }

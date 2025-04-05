@@ -1,6 +1,6 @@
 //    ___  _____
-//   / __\/__   \  C Toolkit
-//  / /     / /\/  v1.0 - github.com/Dax89
+//   / __\/__   \    C Toolkit
+//  / /     / /\/    v1.0 - github.com/Dax89
 // / /___  / /
 // \____/  \/
 //
@@ -14,17 +14,17 @@ extern "C" {
 #endif
 
 #if defined(_MSC_VER)
-#if defined(CT_EXPORTS)
-#define CT_API __declspec(dllexport)
+    #if defined(CT_EXPORTS)
+        #define CT_API __declspec(dllexport)
+    #else
+        #define CT_API __declspec(dllimport)
+    #endif
 #else
-#define CT_API __declspec(dllimport)
-#endif
-#else
-#if defined(CT_EXPORTS)
-#define CT_API __attribute__((visibility("default")))
-#else
-#define CT_API
-#endif
+    #if defined(CT_EXPORTS)
+        #define CT_API __attribute__((visibility("default")))
+    #else
+        #define CT_API
+    #endif
 #endif
 
 #include <stdbool.h>
@@ -53,23 +53,23 @@ typedef intptr_t iptr;
 // NOLINTEND
 
 #if defined(__GNUC__) // GCC, Clang, ICC
-#define intrinsic_trap() __builtin_trap()
-#define intrinsic_unreachable() __builtin_unreachable()
-#define intrinsic_unlikely(x) __builtin_expect(!!(x), 0)
+    #define intrinsic_trap() __builtin_trap()
+    #define intrinsic_unreachable() __builtin_unreachable()
+    #define intrinsic_unlikely(x) __builtin_expect(!!(x), 0)
 #elif defined(_MSC_VER) // MSVC
-#define intrinsic_trap() __debugbreak()
-#define intrinsic_unreachable() __assume(false)
-#define intrinsic_unlikely(x) (!!(x))
+    #define intrinsic_trap() __debugbreak()
+    #define intrinsic_unreachable() __assume(false)
+    #define intrinsic_unlikely(x) (!!(x))
 #else
-#error "ct.h: unsupported compiler"
+    #error "ct.h: unsupported compiler"
 #endif
 
 #if defined(_MSC_VER)
-#define CT_NORET __declspec(noreturn)
+    #define CT_NORET __declspec(noreturn)
 #elif defined(__GNUC__) || defined(__clang__)
-#define CT_NORET __attribute__((noreturn))
+    #define CT_NORET __attribute__((noreturn))
 #else
-#define CT_NORET _Noreturn
+    #define CT_NORET _Noreturn
 #endif
 
 // *** Error handling *** //
@@ -113,7 +113,7 @@ CT_API CT_NORET void _except_impl(const char* file, int line, const char* fmt,
 // *** Error handling *** //
 
 // *** Misc utilities *** //
-#define ct_parentstruct(ptr, T, m) ((T*)((char*)(ptr) - offsetof(T, m)))
+#define ct_containerof(ptr, T, m) ((T*)((char*)(ptr) - offsetof(T, m)))
 
 #define define_optional(name, T)                                               \
     typedef struct name {                                                      \
@@ -198,8 +198,11 @@ typedef struct BSearchResult {
 #define slice_empty(self) ((self)->length == 0)
 #define slice_reserve(self, n) _slice_reserve(self, n, sizeof(*(self)->data))
 #define slice_destroy(self) _slice_destroy(self, sizeof(*(self)->data))
+#define slice_erase(self) _slice_erase(self, sizeof(*(self)->data))
 #define slice_pop(self) ((self)->data[--(self)->length])
 #define slice_isnull(self) (!!(self)->data)
+#define slice_first(self) ((self)->data[0])
+#define slice_last(self) ((self)->data[(self)->length - 1])
 
 #define slice_insert(self, idx, ...)                                           \
     do {                                                                       \
@@ -237,6 +240,8 @@ CT_API void slice_init(void* self, Allocator a, void* ctx);
 CT_API void _slice_reserve(void* self, isize n, isize dsize);
 CT_API void _slice_insert(void* self, isize idx, isize dsize);
 CT_API void _slice_grow(void* self, isize dsize);
+CT_API void _slice_erase(void* self, isize idx, usize dsize);
+CT_API void _slice_eraserange(void* self, isize idx, isize n, usize dsize);
 CT_API void _slice_destroy(void* self, isize dsize);
 CT_API BSearchResult _slice_bsearch(const void* self, isize dsize,
                                     const void* key, SliceCompare cmp);
@@ -259,6 +264,7 @@ typedef struct StrSplit {
 #define str_ismutable(self) ((self)->alloc != NULL)
 #define str_isnull(self) slice_isnull
 #define str_empty slice_empty
+#define str_erase slice_erase
 #define str_foreach slice_foreach
 
 CT_API Str str_create_n(const char* s, isize n, Allocator a, void* ctx);
@@ -271,10 +277,11 @@ CT_API void str_ncat(Str* self, const char* s, isize n);
 CT_API void str_resize(Str* self, isize n);
 CT_API void str_reserve(Str* self, isize n);
 CT_API void str_destroy(Str* self);
-CT_API void str_deleterange(Str* self, isize start, isize end);
+CT_API void str_eraserange(Str* self, isize start, isize end);
 CT_API void str_tolower(Str* self);
 CT_API void str_toupper(Str* self);
 CT_API void str_trim(Str* self);
+CT_API int str_compare(const Str* self, const Str* rhs);
 CT_API bool str_equals(const Str* self, const Str* rhs);
 CT_API usize _str_hash_n(const char* s, isize n);
 CT_API bool _str_startswith_n(const Str* self, const char* s, isize n);
@@ -392,37 +399,40 @@ typedef struct ListNode {
     struct ListNode* next;
 } ListNode;
 
-typedef struct List {
-    ListNode* head;
-    ListNode* tail;
-} List;
-
-#define list_item(self, T, m) ct_parentstruct(self, T, m)
-
-#define list_first(self, T, m)                                                 \
-    ((self)->head ? list_item((self)->head, T, m) : NULL)
-
-#define list_last(self, T, m)                                                  \
-    ((self)->tail ? list_item((self)->tail, T, m) : NULL)
-
-#define list_next(self, T, m)                                                  \
-    ((self)->m.next ? list_item((self)->m.next, T, m) : NULL)
+#define list_item(self, T, m) ct_containerof(self, T, m)
+#define list_first(self, T, m) list_item((self)->next, T, m);
+#define list_last(self, T, m) list_item((self)->prev, T, m);
+#define list_next(self, T, m) list_item((self)->m.next, T, m)
+#define list_prev(self, T, m) list_item((self)->m.prev, T, m)
 
 #define list_foreach(it, self, T, m)                                           \
-    for(it = list_first((self), T, m); !!(it); it = list_next(it, T, m))
+    for(it = list_item((self)->next, T, m); &(it)->m != (self);                \
+        it = list_next(it, T, m))
 
-#define list_foreach_safe(it, tmp, self, T, m)                                 \
-    for(it = list_first(self, T, m), tmp = it ? list_next(it, T, m) : NULL;    \
-        !!(it); it = tmp, tmp = it ? list_next(it, T, m) : NULL)
+#define list_foreach_safe(it, itnext, self, T, m)                              \
+    for(it = list_item((self)->next, T, m),                                    \
+    itnext = list_item((self)->next->next, T, m);                              \
+        &(it)->m != (self);                                                    \
+        it = itnext, itnext = list_item(itnext->m.next, T, m))
 
-CT_API void list_init(List* self);
-CT_API void list_push_tail(List* self, ListNode* n);
-CT_API void list_push(List* self, ListNode* n);
-CT_API void list_del(List* self, ListNode* n);
+#define list_foreach_from(it, self, T, m)                                      \
+    for(; &(it)->m != (self); it = list_next(it, T, m))
 
-static inline isize list_length(const List* self) {
+CT_API void list_init(ListNode* self);
+CT_API void list_erase(ListNode* self);
+CT_API void list_insert(ListNode* prev, ListNode* next, ListNode* n);
+CT_API void list_insert_prev(ListNode* self, ListNode* n);
+CT_API void list_insert_next(ListNode* self, ListNode* n);
+CT_API ListNode* list_pop_first(ListNode* self);
+CT_API ListNode* list_pop_last(ListNode* self);
+
+static inline bool list_empty(const ListNode* self) {
+    return self->prev == self->next;
+}
+
+static inline isize list_length(const ListNode* self) {
     isize c = 0;
-    for(ListNode* node = self->head; !!node; node = node->next)
+    for(ListNode* n = self->next; n != self; n = n->next)
         ++c;
     return c;
 }
@@ -439,23 +449,22 @@ typedef struct HList {
     HListNode* first;
 } HList;
 
-#define hlist_item(self, T, m) ct_parentstruct(self, T, m)
-
-#define hlist_first(self, T, m)                                                \
-    ((self)->first ? hlist_item((self)->first, T, m) : NULL)
-
-#define hlist_next(it, T, m)                                                   \
-    ((it)->m.next ? hlist_item((it)->m.next, T, m) : NULL)
+#define hlist_item(self, T, m) ct_containerof(self, T, m)
+#define hlist_item_safe(self, T, m) ((self) ? hlist_item(self, T, m) : NULL)
+#define hlist_next(self, T, m) hlist_item((self)->m.next, T, m)
 
 #define hlist_foreach(it, self, T, m)                                          \
-    for(it = hlist_first(self, T, m); it; it = hlist_next(it, T, m))
+    for(it = hlist_item_safe((self)->first, T, m); it;                         \
+        it = hlist_item_safe((it)->m.next, T, m))
 
-#define hlist_foreach_safe(it, tmp, self, T, m)                                \
-    for(it = hlist_first(self, T, m), tmp = it ? hlist_next(it, T, m) : NULL;  \
-        !!(it); it = tmp, tmp = it ? hlist_next(it, T, m) : NULL)
+#define hlist_foreach_safe(it, itnext, self, T, m)                             \
+    for(it = hlist_item_safe((self)->first, T, m),                             \
+    itnext = it ? hlist_item_safe((it)->m.next, T, m) : NULL;                  \
+        it;                                                                    \
+        it = itnext, itnext = it ? hlist_item_safe((it)->m.next, T, m) : NULL)
 
-CT_API void hlist_push(HList* self, HListNode* n);
-CT_API void hlist_del(HListNode* n);
+CT_API void hlist_insert(HList* self, HListNode* n);
+CT_API void hlist_erase(HListNode* n);
 
 static inline bool hlist_empty(const HList* self) {
     return self->first == NULL;
@@ -478,15 +487,17 @@ typedef uptr (*HMapHash)(const void*);
         HMapHash hash;                                                         \
     } name
 
+// NOLINTBEGIN
+#define hmap_hash(self, key) ((self)->hash((const void*)((uptr)key)) * 11)
+// NOLINTEND
 #define hmap_capacity(self) (sizeof((self)->data) / sizeof(*(self)->data))
 #define hmap_bits(self) _hmap_bits(hmap_capacity(self))
-#define hmap_index(self, k) (_hmap_hash(self, k) & (hmap_capacity(self) - 1))
-#define hmap_set(self, n, k) hlist_push(&(self)->data[hmap_index(self, k)], n);
+#define hmap_index(self, k) (hmap_hash(self, k) & (hmap_capacity(self) - 1))
 #define hmap_empty(self) _hmap_empty((self)->data, hmap_capacity(self))
 #define hmap_length(self) _hmap_length((self)->data, hmap_capacity(self))
-// NOLINTBEGIN
-#define _hmap_hash(self, key) ((self)->hash((const void*)((uptr)key)) * 11)
-// NOLINTEND
+
+#define hmap_set(self, n, k)                                                   \
+    hlist_insert(&(self)->data[hmap_index(self, k)], n);
 
 #define hmap_init(self, hashfn)                                                \
     do {                                                                       \
@@ -497,15 +508,15 @@ typedef uptr (*HMapHash)(const void*);
 #define hmap_foreach_key(it, self, T, m, k)                                    \
     hlist_foreach(it, &(self)->data[hmap_index(self, k)], T, m)
 
-#define hmap_foreach(it, self, t, m)                                           \
+#define hmap_foreach(it, self, T, m)                                           \
     for(usize __hmap_##it##_i = 0; __hmap_##it##_i < hmap_capacity(self);      \
         ++__hmap_##it##_i)                                                     \
-    hlist_foreach(it, &(self)->data[__hmap_##it##_i], t, m)
+    hlist_foreach(it, &(self)->data[__hmap_##it##_i], T, m)
 
-#define hmap_foreach_safe(it, tmp, self, t, m)                                 \
+#define hmap_foreach_safe(it, itnext, self, T, m)                              \
     for(usize __hmap_##it##_i = 0; __hmap_##it##_i < hmap_capacity(self);      \
         ++__hmap_##it##_i)                                                     \
-    hlist_foreach_safe(it, tmp, &(self)->data[__hmap_##it##_i], t, m)
+    hlist_foreach_safe(it, itnext, &(self)->data[__hmap_##it##_i], T, m)
 
 #define hmap_get(it, self, T, m, k, matchexpr)                                 \
     hmap_foreach_key(it, self, T, m, k) {                                      \
@@ -521,8 +532,8 @@ typedef uptr (*HMapHash)(const void*);
     }
 
 CT_API void _hmap_init(HList* self, usize n);
-CT_API uptr _hmap_directhash(const void* p);
 CT_API unsigned long _hmap_bits(unsigned long cap);
+uptr _hmap_directhash(const void* p);
 
 static inline bool _hmap_empty(const HList* self, isize n) {
     for(isize i = 0; i < n; ++i)
@@ -538,6 +549,121 @@ static inline isize _hmap_length(const HList* self, usize cap) {
 }
 
 // *** Map *** //
+
+// *** Red/Black Tree *** //
+typedef struct RBTreeNode {
+    usize black;
+    struct RBTreeNode* parent;
+    struct RBTreeNode* left;
+    struct RBTreeNode* right;
+} RBTreeNode;
+
+typedef int (*RBTreeNodeCompare)(const RBTreeNode*, const RBTreeNode*);
+typedef int (*RBTreeKeyCompare)(const void*, const RBTreeNode*);
+
+typedef struct RBTree {
+    RBTreeNode* root;
+    RBTreeNodeCompare nodecmp;
+    RBTreeKeyCompare keycmp;
+    isize length;
+} RBTree;
+
+CT_API void rbtree_init(RBTree* self, RBTreeNodeCompare nodecmp,
+                        RBTreeKeyCompare nodekey);
+CT_API bool rbtree_insert(RBTree* self, RBTreeNode* n);
+CT_API void rbtree_erase(RBTree* self, RBTreeNode* n);
+CT_API RBTreeNode* rbtree_left_deepest(const RBTreeNode* n);
+CT_API RBTreeNode* rbtree_right_deepest(const RBTreeNode* n);
+CT_API RBTreeNode* rbtree_first(const RBTree* self);
+CT_API RBTreeNode* rbtree_last(const RBTree* self);
+CT_API RBTreeNode* rbtree_prev(const RBTreeNode* n);
+CT_API RBTreeNode* rbtree_next(const RBTreeNode* n);
+CT_API RBTreeNode* rbtree_prev_postorder(const RBTreeNode* n);
+CT_API RBTreeNode* rbtree_next_postorder(const RBTreeNode* n);
+CT_API RBTreeNode* _rbtree_find(const RBTree* self, const void* k);
+
+/*
+================================================================================
+ rbtree_replace - Replace a node in-place with another node (same sort key)
+================================================================================
+
+This replaces the node `old` with `new` without modifying the structure of
+the red-black tree. All parent/child relationships are updated accordingly.
+
+IMPORTANT:
+- The new node **must represent the same sort key** as the old one.
+- Replacing a node with one that violates ordering (e.g. larger or smaller key)
+  will corrupt the tree and cause undefined behavior.
+- This is useful for memory migration or in-place upgrades where the tree
+  structure remains valid.
+
+This operation does NOT rebalance the tree. It assumes the structure and color
+invariants are preserved.
+ */
+CT_API void rbtree_replace(RBTreeNode** self, RBTreeNode* oldn,
+                           RBTreeNode* newn);
+
+static inline RBTreeNode* rbtree_first_postorder(const RBTree* self) {
+    ct_assume(self);
+    return rbtree_left_deepest(self->root);
+}
+
+static inline RBTreeNode* rbtree_last_postorder(const RBTree* self) {
+    ct_assume(self);
+    return rbtree_right_deepest(self->root);
+}
+
+#define rbtree_item(self, T, m) ct_containerof(self, T, m)
+#define rbtree_item_safe(self, T, m) (self ? rbtree_item(self, T, m) : NULL)
+#define rbtree_find(self, k) _rbtree_find(self, (const void*)((uptr)(k)))
+#define rbtree_contains(self, k) (rbtree_find(self, k) != NULL)
+#define rbtree_first_item(self, T, m) rbtree_item_safe(rbtree_first(self), T, m)
+#define rbtree_last_item(self, T, m) rbtree_item_safe(rbtree_last(self), T, m)
+#define rbtree_prev_item(self, T, m) rbtree_item_safe(rbtree_prev(self), T, m)
+#define rbtree_next_item(self, T, m) rbtree_item_safe(rbtree_next(self), T, m)
+
+// NOLINTBEGIN
+#define rbtree_find_item(self, k, T, m)                                        \
+    rbtree_item_safe(rbtree_find(self, k), T, m)
+// NOLINTEND
+
+#define rbtree_left_deepest_item(self, T, m)                                   \
+    rbtree_item_safe(rbtree_left_deepest(self), T, m)
+
+#define rbtree_right_deepest_item(self, T, m)                                  \
+    rbtree_item_safe(rbtree_right_deepest(self), T, m)
+
+#define rbtree_first_postorder_item(self, T, m)                                \
+    rbtree_item_safe(rbtree_first_postorder(self), T, m)
+
+#define rbtree_last_postorder_item(self, T, m)                                 \
+    rbtree_item_safe(rbtree_last_postorder(self), T, m)
+
+#define rbtree_prev_postorder_item(self, T, m)                                 \
+    rbtree_item_safe(rbtree_prev_postorder(self), T, m)
+
+#define rbtree_next_postorder_item(self, T, m)                                 \
+    rbtree_item_safe(rbtree_next_postorder(self), T, m)
+
+#define rbtree_foreach(it, self, T, m)                                         \
+    for(it = rbtree_first_item((self), T, m); it;                              \
+        it = rbtree_next_item(&(it)->m, T, m))
+
+#define rbtree_foreach_reverse(it, self, T, m)                                 \
+    for(it = rbtree_last_item((self), T, m); it;                               \
+        it = rbtree_prev_item(&(it)->m, T, m))
+
+#define rbtree_foreach_safe(it, itnext, self, T, m)                            \
+    for(it = rbtree_first_postorder_item((self), T, m), itnext = NULL;         \
+        it && (itnext = rbtree_next_postorder_item(&it->m, T, m), 1);          \
+        it = itnext)
+
+#define rbtree_foreach_reverse_safe(it, itprev, self, T, m)                    \
+    for(it = rbtree_last_postorder_item((self), T, m), itprev = NULL;          \
+        it && (itprev = rbtree_prev_postorder_item(&it->m, T, m), 1);          \
+        it = itprev)
+
+// *** Red/Black Tree *** //
 
 #if defined(__cplusplus)
 }
