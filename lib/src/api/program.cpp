@@ -24,7 +24,7 @@ const RDSegmentSlice* rd_getsegments() {
     return &redasm::state::context->program.segments;
 }
 
-const RDSRegRangeHMap* rd_getsegmentregisters() {
+const RDSRangeMap* rd_getsegmentregisters() {
     spdlog::trace("rd_getsegmentregisters()");
     if(!redasm::state::context) return nullptr;
     return &redasm::state::context->program.segmentregs;

@@ -11,7 +11,7 @@ template<typename T, typename Slice>
 T* find_range(const Slice& s, RDAddress address) {
     auto res = slice_bsearch(
         &s, address, +[](const RDAddress* key, const T* item) {
-            RDAddress addr = reinterpret_cast<RDAddress>(key);
+            auto addr = reinterpret_cast<RDAddress>(key);
             if(addr < item->start) return -1;
             if(addr >= item->end) return 1;
             return 0;
@@ -19,6 +19,20 @@ T* find_range(const Slice& s, RDAddress address) {
 
     if(res.found) return &s.data[res.index];
     return nullptr;
+}
+
+int sregtree_ncompare(const RBTreeNode* a, const RBTreeNode* b) {
+    const auto* n1 = rbtree_item(a, RDSRange, rbnode);
+    const auto* n2 = rbtree_item(b, RDSRange, rbnode);
+    return n1->start - n2->start;
+}
+
+int sregtree_kcompare(const void* k, const RBTreeNode* n) {
+    RDAddress addr = ct_ptrtoint(RDAddress, k);
+    const auto* r = rbtree_item(n, RDSRange, rbnode);
+    if(addr < r->start) return -1;
+    if(addr >= r->end) return 1;
+    return 0;
 }
 
 } // namespace
@@ -29,16 +43,21 @@ Program::Program() {
 }
 
 Program::~Program() {
-    RDSegment* it;
-    slice_foreach(it, &this->segments) {
-        rdbuffer_destroy(it->mem);
-        delete[] it->name;
+    RDSegment* segit;
+    slice_foreach(segit, &this->segments) {
+        rdbuffer_destroy(segit->mem);
+        delete[] segit->name;
     }
-
     slice_destroy(&this->segments);
 
-    RDSRegRange* n;
-    hmap_foreach(n, &this->segmentregs, RDSRegRange, hnode) delete n;
+    RDSRegTree* regit;
+    hmap_foreach(regit, &this->segmentregs, RDSRegTree, hnode) {
+        RDSRange *rangeit, *tmp;
+        rbtree_foreach_safe(rangeit, tmp, &regit->root, RDSRange, rbnode) {
+            delete rangeit;
+        }
+        delete regit;
+    }
 }
 
 tl::optional<RDOffset> Program::to_offset(RDAddress address) const {
@@ -125,15 +144,24 @@ bool Program::add_sreg_range(RDAddress start, RDAddress end, int sreg,
                              u64 val) {
     if(start >= end) return false;
 
-    // Vect(RDSRegRange) ranges = nullptr;
-    // if(auto* r = map_get(Vect(RDSRegRange), this->segmentregs, sreg); r)
-    //     ranges = *r;
-    // else {
-    //     ranges = vect_create(RDSRegRange);
-    //     map_set(this->segmentregs, sreg, ranges);
-    // }
-    // ct_assume(ranges);
-    //
+    RDSRegTree* it;
+    hmap_get(it, &this->segmentregs, RDSRegTree, hnode, sreg, it->sreg == sreg);
+
+    if(!it) {
+        it = new RDSRegTree{.sreg = sreg};
+        rbtree_init(&it->root, sregtree_ncompare, sregtree_kcompare);
+
+        auto* r = new RDSRange{
+            .start = start,
+            .end = end,
+            .value = val,
+        };
+
+        rbtree_insert(&it->root, &r->rbnode);
+        hmap_set(&this->segmentregs, &it->hnode, sreg);
+        return true;
+    }
+
     // uintptr_t idx = vect_bsearch(
     //     ranges, &start, +[](const RDAddress* start, const RDSegment* seg) {
     //         return *start < seg->start;
@@ -240,13 +268,14 @@ bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
     return true;
 }
 
-RDSRegRange* Program::find_sreg_range(RDAddress address, int r) {
-    RDSRegRange* range;
-    hmap_foreach_key(range, &this->segmentregs, RDSRegRange, hnode, r) {
-        if(range->sreg == r && range->start >= address && address < range->end)
-            return range;
-    }
-
+RDSRange* Program::find_sreg_range(RDAddress address, int r) {
+    // RDSRegRange* range;
+    // hmap_foreach_key(range, &this->segmentregs, RDSRegRange, hnode, r) {
+    //     if(range->sreg == r && range->start >= address && address <
+    //     range->end)
+    //         return range;
+    // }
+    //
     return nullptr;
 }
 

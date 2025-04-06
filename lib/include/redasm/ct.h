@@ -114,6 +114,10 @@ CT_API CT_NORET void _except_impl(const char* file, int line, const char* fmt,
 
 // *** Misc utilities *** //
 #define ct_containerof(ptr, T, m) ((T*)((char*)(ptr) - offsetof(T, m)))
+// NOLINTBEGIN
+#define ct_ptrtoint(T, x) ((T)(uptr)(x))
+#define ct_inttoptr(x) ((void*)(uptr)(x))
+// NOLINTEND
 
 #define define_optional(name, T)                                               \
     typedef struct name {                                                      \
@@ -227,11 +231,9 @@ typedef struct BSearchResult {
     qsort((self)->data, (self)->length, sizeof(*(self)->data),                 \
           (SliceCompare)(cmp));
 
-// NOLINTBEGIN
 #define slice_bsearch(self, key, cmp)                                          \
-    _slice_bsearch(self, sizeof(*(self)->data), (const void*)((uptr)(key)),    \
+    _slice_bsearch(self, sizeof(*(self)->data), ct_inttoptr(key),              \
                    (SliceCompare)cmp)
-// NOLINTEND
 
 #define slice_stablepartition(self, pred)                                      \
     _slice_stablepartition(self, sizeof(*(self)->data), (SlicePredicate)pred)
@@ -487,9 +489,7 @@ typedef uptr (*HMapHash)(const void*);
         HMapHash hash;                                                         \
     } name
 
-// NOLINTBEGIN
-#define hmap_hash(self, key) ((self)->hash((const void*)((uptr)key)) * 11)
-// NOLINTEND
+#define hmap_hash(self, key) ((self)->hash(ct_inttoptr(key)) * 11)
 #define hmap_capacity(self) (sizeof((self)->data) / sizeof(*(self)->data))
 #define hmap_bits(self) _hmap_bits(hmap_capacity(self))
 #define hmap_index(self, k) (hmap_hash(self, k) & (hmap_capacity(self) - 1))
@@ -615,17 +615,15 @@ static inline RBTreeNode* rbtree_last_postorder(const RBTree* self) {
 
 #define rbtree_item(self, T, m) ct_containerof(self, T, m)
 #define rbtree_item_safe(self, T, m) (self ? rbtree_item(self, T, m) : NULL)
-#define rbtree_find(self, k) _rbtree_find(self, (const void*)((uptr)(k)))
+#define rbtree_find(self, k) _rbtree_find(self, ct_inttoptr(k))
 #define rbtree_contains(self, k) (rbtree_find(self, k) != NULL)
 #define rbtree_first_item(self, T, m) rbtree_item_safe(rbtree_first(self), T, m)
 #define rbtree_last_item(self, T, m) rbtree_item_safe(rbtree_last(self), T, m)
 #define rbtree_prev_item(self, T, m) rbtree_item_safe(rbtree_prev(self), T, m)
 #define rbtree_next_item(self, T, m) rbtree_item_safe(rbtree_next(self), T, m)
 
-// NOLINTBEGIN
 #define rbtree_find_item(self, k, T, m)                                        \
     rbtree_item_safe(rbtree_find(self, k), T, m)
-// NOLINTEND
 
 #define rbtree_left_deepest_item(self, T, m)                                   \
     rbtree_item_safe(rbtree_left_deepest(self), T, m)

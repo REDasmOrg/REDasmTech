@@ -20,6 +20,6 @@ public:
                                       int role) const override;
 
 private:
-    const RDSRegRangeHMap* m_segmentregs;
-    QList<const RDSRegRange*> m_ranges;
+    const RDSRangeMap* m_segmentregs;
+    QList<const RDSRange*> m_ranges;
 };

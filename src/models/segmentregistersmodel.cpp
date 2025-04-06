@@ -6,12 +6,15 @@ SegmentRegisterModel::SegmentRegisterModel(QObject* parent)
 
 void SegmentRegisterModel::set_register(int reg) {
     this->beginResetModel();
-
     m_ranges.clear();
 
-    const RDSRegRange* range;
-    hmap_foreach_key(range, m_segmentregs, RDSRegRange, hnode, reg) {
-        if(range->sreg == reg) m_ranges.push_back(range);
+    const RDSRegTree* tree;
+    hmap_get(tree, m_segmentregs, RDSRegTree, hnode, reg, tree->sreg == reg);
+
+    if(tree) {
+        const RDSRange* it;
+        rbtree_foreach(it, &tree->root, RDSRange, rbnode)
+            m_ranges.push_back(it);
     }
 
     this->endResetModel();

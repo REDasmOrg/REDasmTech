@@ -11,5 +11,5 @@ REDASM_EXPORT bool rd_addsegment_n(const char* name, RDAddress base, usize n, u3
 REDASM_EXPORT bool rd_mapfile(RDOffset off, RDAddress start, RDAddress end);
 REDASM_EXPORT bool rd_mapfile_n(RDOffset off, RDAddress base, usize n);
 REDASM_EXPORT const RDSegmentSlice* rd_getsegments(void);
-REDASM_EXPORT const RDSRegRangeHMap* rd_getsegmentregisters(void);
+REDASM_EXPORT const RDSRangeMap* rd_getsegmentregisters(void);
 // clang-format on

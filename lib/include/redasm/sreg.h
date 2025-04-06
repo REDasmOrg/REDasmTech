@@ -3,15 +3,20 @@
 #include <redasm/common.h>
 #include <redasm/types.h>
 
-typedef struct RDSRegRange {
-    int sreg;
+typedef struct RDSRange {
     RDAddress start;
     RDAddress end;
     u64 value;
-    HListNode hnode;
-} RDSRegRange;
+    RBTreeNode rbnode;
+} RDSRange;
 
-define_hmap(RDSRegRangeHMap, 1 << 4);
+typedef struct RDSRegTree {
+    int sreg;
+    RBTree root;
+    HListNode hnode;
+} RDSRegTree;
+
+define_hmap(RDSRangeMap, 1 << 4);
 
 REDASM_EXPORT u64 rd_getsreg_ex(RDAddress address, int sreg, u64 d);
 REDASM_EXPORT bool rd_getsreg(RDAddress address, int sreg, u64* val);
