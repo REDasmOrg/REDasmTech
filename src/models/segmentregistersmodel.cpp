@@ -9,7 +9,8 @@ void SegmentRegisterModel::set_register(int reg) {
     m_ranges.clear();
 
     const RDSRegTree* tree;
-    hmap_get(tree, m_segmentregs, RDSRegTree, hnode, reg, tree->sreg == reg);
+    hmap_get(tree, m_segmentregs, RDSRegTree, hnode, ct_inttoptr(reg),
+             tree->sreg == reg);
 
     if(tree) {
         const RDSRange* it;

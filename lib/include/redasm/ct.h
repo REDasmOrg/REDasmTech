@@ -14,17 +14,17 @@ extern "C" {
 #endif
 
 #if defined(_MSC_VER)
-    #if defined(CT_EXPORTS)
-        #define CT_API __declspec(dllexport)
-    #else
-        #define CT_API __declspec(dllimport)
-    #endif
+#if defined(CT_EXPORTS)
+#define CT_API __declspec(dllexport)
 #else
-    #if defined(CT_EXPORTS)
-        #define CT_API __attribute__((visibility("default")))
-    #else
-        #define CT_API
-    #endif
+#define CT_API __declspec(dllimport)
+#endif
+#else
+#if defined(CT_EXPORTS)
+#define CT_API __attribute__((visibility("default")))
+#else
+#define CT_API
+#endif
 #endif
 
 #include <stdbool.h>
@@ -53,23 +53,23 @@ typedef intptr_t iptr;
 // NOLINTEND
 
 #if defined(__GNUC__) // GCC, Clang, ICC
-    #define intrinsic_trap() __builtin_trap()
-    #define intrinsic_unreachable() __builtin_unreachable()
-    #define intrinsic_unlikely(x) __builtin_expect(!!(x), 0)
+#define intrinsic_trap() __builtin_trap()
+#define intrinsic_unreachable() __builtin_unreachable()
+#define intrinsic_unlikely(x) __builtin_expect(!!(x), 0)
 #elif defined(_MSC_VER) // MSVC
-    #define intrinsic_trap() __debugbreak()
-    #define intrinsic_unreachable() __assume(false)
-    #define intrinsic_unlikely(x) (!!(x))
+#define intrinsic_trap() __debugbreak()
+#define intrinsic_unreachable() __assume(false)
+#define intrinsic_unlikely(x) (!!(x))
 #else
-    #error "ct.h: unsupported compiler"
+#error "ct.h: unsupported compiler"
 #endif
 
 #if defined(_MSC_VER)
-    #define CT_NORET __declspec(noreturn)
+#define CT_NORET __declspec(noreturn)
 #elif defined(__GNUC__) || defined(__clang__)
-    #define CT_NORET __attribute__((noreturn))
+#define CT_NORET __attribute__((noreturn))
 #else
-    #define CT_NORET _Noreturn
+#define CT_NORET _Noreturn
 #endif
 
 // *** Error handling *** //
@@ -232,8 +232,7 @@ typedef struct BSearchResult {
           (SliceCompare)(cmp));
 
 #define slice_bsearch(self, key, cmp)                                          \
-    _slice_bsearch(self, sizeof(*(self)->data), ct_inttoptr(key),              \
-                   (SliceCompare)cmp)
+    _slice_bsearch(self, sizeof(*(self)->data), key, (SliceCompare)cmp)
 
 #define slice_stablepartition(self, pred)                                      \
     _slice_stablepartition(self, sizeof(*(self)->data), (SlicePredicate)pred)
@@ -489,7 +488,7 @@ typedef uptr (*HMapHash)(const void*);
         HMapHash hash;                                                         \
     } name
 
-#define hmap_hash(self, key) ((self)->hash(ct_inttoptr(key)) * 11)
+#define hmap_hash(self, key) ((self)->hash(key) * 11)
 #define hmap_capacity(self) (sizeof((self)->data) / sizeof(*(self)->data))
 #define hmap_bits(self) _hmap_bits(hmap_capacity(self))
 #define hmap_index(self, k) (hmap_hash(self, k) & (hmap_capacity(self) - 1))
@@ -615,7 +614,7 @@ static inline RBTreeNode* rbtree_last_postorder(const RBTree* self) {
 
 #define rbtree_item(self, T, m) ct_containerof(self, T, m)
 #define rbtree_item_safe(self, T, m) (self ? rbtree_item(self, T, m) : NULL)
-#define rbtree_find(self, k) _rbtree_find(self, ct_inttoptr(k))
+#define rbtree_find(self, k) _rbtree_find(self, k)
 #define rbtree_contains(self, k) (rbtree_find(self, k) != NULL)
 #define rbtree_first_item(self, T, m) rbtree_item_safe(rbtree_first(self), T, m)
 #define rbtree_last_item(self, T, m) rbtree_item_safe(rbtree_last(self), T, m)

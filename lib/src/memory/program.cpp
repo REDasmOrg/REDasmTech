@@ -10,7 +10,7 @@ namespace {
 template<typename T, typename Slice>
 T* find_range(const Slice& s, RDAddress address) {
     auto res = slice_bsearch(
-        &s, address, +[](const RDAddress* key, const T* item) {
+        &s, ct_inttoptr(address), +[](const RDAddress* key, const T* item) {
             auto addr = reinterpret_cast<RDAddress>(key);
             if(addr < item->start) return -1;
             if(addr >= item->end) return 1;
@@ -104,7 +104,7 @@ bool Program::add_segment(std::string_view name, RDAddress start, RDAddress end,
     if(start >= end) return false;
 
     auto r = slice_bsearch(
-        &this->segments, start,
+        &this->segments, ct_inttoptr(start),
         +[](const RDAddress* key, const RDSegment* val) -> int {
             return reinterpret_cast<RDAddress>(key) - val->end;
         });
@@ -145,7 +145,8 @@ bool Program::add_sreg_range(RDAddress start, RDAddress end, int sreg,
     if(start >= end) return false;
 
     RDSRegTree* it;
-    hmap_get(it, &this->segmentregs, RDSRegTree, hnode, sreg, it->sreg == sreg);
+    hmap_get(it, &this->segmentregs, RDSRegTree, hnode, ct_inttoptr(sreg),
+             it->sreg == sreg);
 
     if(!it) {
         it = new RDSRegTree{.sreg = sreg};
@@ -158,7 +159,7 @@ bool Program::add_sreg_range(RDAddress start, RDAddress end, int sreg,
         };
 
         rbtree_insert(&it->root, &r->rbnode);
-        hmap_set(&this->segmentregs, &it->hnode, sreg);
+        hmap_set(&this->segmentregs, &it->hnode, ct_inttoptr(sreg));
         return true;
     }
 
