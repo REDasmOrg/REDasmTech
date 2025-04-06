@@ -27,6 +27,7 @@ Q_SIGNALS:
 
 private:
     ui::SegmentRegistersDialog m_ui;
-    // const Map(RDSRegItem) m_segmentregisters;
+    const RDSRangeMap* m_segmentregisters;
     SegmentRegisterModel* m_segmentregistersmodel;
+    QList<int> m_sregs;
 };

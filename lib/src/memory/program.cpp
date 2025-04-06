@@ -50,8 +50,8 @@ Program::~Program() {
     }
     slice_destroy(&this->segments);
 
-    RDSRegTree* regit;
-    hmap_foreach(regit, &this->segmentregs, RDSRegTree, hnode) {
+    RDSRegTree *regit, *tmp;
+    hmap_foreach_safe(regit, tmp, &this->segmentregs, RDSRegTree, hnode) {
         RDSRange *rangeit, *tmp;
         rbtree_foreach_safe(rangeit, tmp, &regit->root, RDSRange, rbnode) {
             delete rangeit;
