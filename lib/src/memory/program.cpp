@@ -144,93 +144,104 @@ bool Program::add_sreg_range(RDAddress start, RDAddress end, int sreg,
                              u64 val) {
     if(start >= end) return false;
 
-    RDSRegTree* it;
-    hmap_get(it, &this->segmentregs, RDSRegTree, hnode, ct_inttoptr(sreg),
-             it->sreg == sreg);
+    RDSRegTree* tree;
+    hmap_get(tree, &this->segmentregs, ct_inttoptr(sreg), RDSRegTree, hnode,
+             tree->sreg == sreg);
 
-    if(!it) {
-        it = new RDSRegTree{.sreg = sreg};
-        rbtree_init(&it->root, sregtree_ncompare, sregtree_kcompare);
+    if(tree) {
+        RDSRange* r =
+            rbtree_find_item(&tree->root, ct_inttoptr(start), RDSRange, rbnode);
 
-        auto* r = new RDSRange{
-            .start = start,
-            .end = end,
-            .value = val,
-        };
+        if(r) {
+            // Check if we can extend or merge with previous range
+            RDSRange* prevr = rbtree_prev_item(&r->rbnode, RDSRange, rbnode);
 
-        rbtree_insert(&it->root, &r->rbnode);
-        hmap_set(&this->segmentregs, &it->hnode, ct_inttoptr(sreg));
-        return true;
+            if(prevr) {
+                if(prevr->end >= start) { // Overlap or adjacency
+                    if(prevr->value == val) {
+                        prevr->end = std::max(prevr->end, end); // Extend
+                        return true;
+                    }
+
+                    // Split previous range
+                    prevr->end = std::min(prevr->end, start);
+                }
+            }
+
+            std::vector<RDSRange*> toerase, tosplit;
+
+            // Check if we can merge with next range
+            RDSRange* it = r;
+            rbtree_foreach_from(it, &tree->root, RDSRange, rbnode) {
+                if(it->value == val) // Remove and continue merging
+                    toerase.push_back(it);
+                else if(it->start < end) {
+                    tosplit.push_back(it);
+                }
+                else
+                    break;
+            }
+
+            for(RDSRange* it : toerase) {
+                end = std::max(end, it->end);
+                rbtree_erase(&tree->root, &it->rbnode);
+                delete it;
+            }
+
+            for(RDSRange* it : tosplit) {
+                auto* n = new RDSRange{
+                    .start = end,
+                    .end = it->end,
+                    .value = val,
+                };
+
+                it->end = end;
+                rbtree_insert(&tree->root, &n->rbnode);
+            }
+        }
+    }
+    else {
+        tree = new RDSRegTree{.sreg = sreg};
+        rbtree_init(&tree->root, sregtree_ncompare, sregtree_kcompare);
+        hmap_set(&this->segmentregs, &tree->hnode, ct_inttoptr(sreg));
     }
 
-    // uintptr_t idx = vect_bsearch(
-    //     ranges, &start, +[](const RDAddress* start, const RDSegment* seg) {
-    //         return *start < seg->start;
-    //     });
-    //
-    // // Check if we can extend or merge with previous range
-    // if(idx > 0) {
-    //     RDSRegRange* prev = vect_ref(RDSRegRange, ranges, idx - 1);
-    //
-    //     if(prev->end >= start) { // Overlap or adjacency
-    //         if(prev->value == val) {
-    //             prev->end = std::max(prev->end, end); // Extend
-    //             return true;
-    //         }
-    //         if(prev->end > start) { // Split the previous range
-    //             prev->end = start;
-    //
-    //             vect_ins(RDSRegRange, ranges, idx,
-    //                      {.start = start, .end = prev->end, .value = val});
-    //         }
-    //     }
-    // }
-    //
-    // // Merge with next range if possible
-    // while(idx < vect_length(ranges) &&
-    //       vect_at(RDSRegRange, ranges, idx)->start <= end) {
-    //     RDSRegRange* r = vect_ref(RDSRegRange, ranges, idx);
-    //
-    //     if(r->value == val) { // Remove and continue merging
-    //         end = std::max(end, r->end);
-    //         idx = vect_del(ranges, idx);
-    //     }
-    //     else if(r->start < end) { // Split the next range
-    //         r->end = end;
-    //         vect_ins(RDSRegRange, ranges, idx,
-    //                  {.start = end, .end = r->end, .value = r->value});
-    //     }
-    //     else
-    //         break;
-    // }
-    //
-    // // Insert the new range
-    // vect_ins(RDSRegRange, ranges, idx,
-    //          {.start = start, .end = end, .value = val});
+    ct_assume(start < end);
 
+    auto* r = new RDSRange{
+        .start = start,
+        .end = end,
+        .value = val,
+    };
+
+    rbtree_insert(&tree->root, &r->rbnode);
     return true;
 }
 
 void Program::set_sreg(RDAddress address, int sreg, u64 val) { // NOLINT
-    // Vect(RDSRegRange)* ranges = map_get(RDSRegItem, this->segmentregs, sreg);
-    // if(!ranges) return;
-    //
-    // RDSRegRange* it = std::ranges::lower_bound(
-    //     vect_begin(*ranges), vect_end(*ranges), address,
-    //     [](RDAddress end, RDAddress addr) { return end <= addr; },
-    //     [](const RDSRegRange& r) { return r.end; });
-    //
-    // if(it == vect_end(*ranges) || it->start > address) return;
-    //
-    // if(it->start != address) {
-    //     RDAddress oldend = it->end;
-    //     it->end = address;
-    //
-    //     vect_ins_iter(RDSRegRange, *ranges, it + 1,
-    //                   {.start = address, .end = oldend, .value = val});
-    // }
-    // else
-    //     it->value = val;
+    RDSRegTree* tree;
+    hmap_get(tree, &this->segmentregs, ct_inttoptr(sreg), RDSRegTree, hnode,
+             tree->sreg == sreg);
+    if(!tree) return;
+
+    RDSRange* r =
+        rbtree_find_item(&tree->root, ct_inttoptr(address), RDSRange, rbnode);
+    if(!r) return;
+
+    if(address != r->start) {
+        RDAddress oldend = r->end;
+        r->end = address;
+
+        auto* newr = new RDSRange{
+            .start = address,
+            .end = oldend,
+            .value = val,
+        };
+
+        rbtree_insert(&tree->root, &newr->rbnode);
+    }
+    else
+        r->value = val;
 }
 
 bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
@@ -269,14 +280,16 @@ bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
     return true;
 }
 
-RDSRange* Program::find_sreg_range(RDAddress address, int r) {
-    // RDSRegRange* range;
-    // hmap_foreach_key(range, &this->segmentregs, RDSRegRange, hnode, r) {
-    //     if(range->sreg == r && range->start >= address && address <
-    //     range->end)
-    //         return range;
-    // }
-    //
+RDSRange* Program::find_sreg_range(RDAddress address, int sreg) {
+    RDSRegTree* tree;
+    hmap_get(tree, &this->segmentregs, ct_inttoptr(sreg), RDSRegTree, hnode,
+             tree->sreg == sreg);
+
+    if(tree) {
+        return rbtree_find_item(&tree->root, ct_inttoptr(address), RDSRange,
+                                rbnode);
+    }
+
     return nullptr;
 }
 

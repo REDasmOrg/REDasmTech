@@ -854,7 +854,7 @@ static void _rbtree_push(RBTreeNode* n, RBTreeNode* parent, RBTreeNode** link) {
     *link = n;
 }
 
-RBTreeNode* _rbtree_find(const RBTree* self, const void* k) {
+RBTreeNode* rbtree_find(const RBTree* self, const void* k) {
     ct_assume(self);
     RBTreeNode* node = self->root;
 

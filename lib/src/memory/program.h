@@ -30,7 +30,7 @@ struct Program {
     void set_sreg(RDAddress address, int sreg, u64 val);
     tl::optional<RDOffset> to_offset(RDAddress address) const;
     tl::optional<RDAddress> to_address(RDOffset offset) const;
-    RDSRange* find_sreg_range(RDAddress address, int r);
+    RDSRange* find_sreg_range(RDAddress address, int sreg);
     RDSegment* find_segment(RDAddress address);
     Function* find_function(RDAddress address);
 

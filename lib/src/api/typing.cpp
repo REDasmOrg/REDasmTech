@@ -181,7 +181,7 @@ const RDValue* rdvalue_query_n(const RDValue* self, const char* q, usize n,
             return set_error("Attempted key lookup on non-struct value");
 
         RDValueHNode* it = nullptr;
-        hmap_get(it, &curr->dict, RDValueHNode, hnode, key.data(),
+        hmap_get(it, &curr->dict, key.data(), RDValueHNode, hnode,
                  it->key == key);
 
         if(it) {

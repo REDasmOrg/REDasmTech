@@ -504,7 +504,7 @@ typedef uptr (*HMapHash)(const void*);
         (self)->hash = hashfn ? (HMapHash)hashfn : _hmap_directhash;           \
     } while(0)
 
-#define hmap_foreach_key(it, self, T, m, k)                                    \
+#define hmap_foreach_key(it, self, k, T, m)                                    \
     hlist_foreach(it, &(self)->data[hmap_index(self, k)], T, m)
 
 #define hmap_foreach(it, self, T, m)                                           \
@@ -517,13 +517,13 @@ typedef uptr (*HMapHash)(const void*);
         ++__hmap_##it##_i)                                                     \
     hlist_foreach_safe(it, itnext, &(self)->data[__hmap_##it##_i], T, m)
 
-#define hmap_get(it, self, T, m, k, matchexpr)                                 \
-    hmap_foreach_key(it, self, T, m, k) {                                      \
+#define hmap_get(it, self, k, T, m, matchexpr)                                 \
+    hmap_foreach_key(it, self, k, T, m) {                                      \
         if(matchexpr) break;                                                   \
     }
 
-#define hmap_del(it, self, T, m, k, matchexpr)                                 \
-    hmap_foreach_key(it, self, T, m, k) {                                      \
+#define hmap_del(it, self, k, T, m, matchexpr)                                 \
+    hmap_foreach_key(it, self, k, T, m) {                                      \
         if(matchexpr) {                                                        \
             hlist_del(&it->m);                                                 \
             break;                                                             \
@@ -579,7 +579,7 @@ CT_API RBTreeNode* rbtree_prev(const RBTreeNode* n);
 CT_API RBTreeNode* rbtree_next(const RBTreeNode* n);
 CT_API RBTreeNode* rbtree_prev_postorder(const RBTreeNode* n);
 CT_API RBTreeNode* rbtree_next_postorder(const RBTreeNode* n);
-CT_API RBTreeNode* _rbtree_find(const RBTree* self, const void* k);
+CT_API RBTreeNode* rbtree_find(const RBTree* self, const void* k);
 
 /*
 ================================================================================
@@ -614,7 +614,6 @@ static inline RBTreeNode* rbtree_last_postorder(const RBTree* self) {
 
 #define rbtree_item(self, T, m) ct_containerof(self, T, m)
 #define rbtree_item_safe(self, T, m) (self ? rbtree_item(self, T, m) : NULL)
-#define rbtree_find(self, k) _rbtree_find(self, k)
 #define rbtree_contains(self, k) (rbtree_find(self, k) != NULL)
 #define rbtree_first_item(self, T, m) rbtree_item_safe(rbtree_first(self), T, m)
 #define rbtree_last_item(self, T, m) rbtree_item_safe(rbtree_last(self), T, m)
@@ -650,6 +649,12 @@ static inline RBTreeNode* rbtree_last_postorder(const RBTree* self) {
     for(it = rbtree_last_item((self), T, m); it;                               \
         it = rbtree_prev_item(&(it)->m, T, m))
 
+#define rbtree_foreach_from(it, self, T, m)                                    \
+    for(; it; it = rbtree_next_item(&(it)->m, T, m))
+
+#define rbtree_foreach_from_reverse(it, self, T, m)                            \
+    for(; it; it = rbtree_prev_item(&(it)->m, T, m))
+
 #define rbtree_foreach_safe(it, itnext, self, T, m)                            \
     for(it = rbtree_first_postorder_item((self), T, m), itnext = NULL;         \
         it && (itnext = rbtree_next_postorder_item(&it->m, T, m), 1);          \
@@ -657,6 +662,16 @@ static inline RBTreeNode* rbtree_last_postorder(const RBTree* self) {
 
 #define rbtree_foreach_reverse_safe(it, itprev, self, T, m)                    \
     for(it = rbtree_last_postorder_item((self), T, m), itprev = NULL;          \
+        it && (itprev = rbtree_prev_postorder_item(&it->m, T, m), 1);          \
+        it = itprev)
+
+#define rbtree_foreach_from_safe(it, itnext, self, T, m)                       \
+    for(itnext = NULL;                                                         \
+        it && (itnext = rbtree_next_postorder_item(&it->m, T, m), 1);          \
+        it = itnext)
+
+#define rbtree_foreach_from_reverse_safe(it, itprev, self, T, m)               \
+    for(itprev = NULL;                                                         \
         it && (itprev = rbtree_prev_postorder_item(&it->m, T, m), 1);          \
         it = itprev)
 
