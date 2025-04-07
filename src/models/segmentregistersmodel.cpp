@@ -32,14 +32,18 @@ int SegmentRegisterModel::rowCount(const QModelIndex&) const {
     return m_ranges.size();
 }
 
-int SegmentRegisterModel::columnCount(const QModelIndex&) const { return 3; }
+int SegmentRegisterModel::columnCount(const QModelIndex&) const { return 4; }
 
 QVariant SegmentRegisterModel::data(const QModelIndex& index, int role) const {
     if(!m_ranges.empty() && role == Qt::DisplayRole) {
+        RDAddress start = m_ranges[index.row()]->start;
+        RDAddress end = m_ranges[index.row()]->end;
+
         switch(index.column()) {
-            case 0: return utils::to_hex_addr(m_ranges[index.row()]->start);
-            case 1: return utils::to_hex_addr(m_ranges[index.row()]->end);
-            case 2: return rd_tohex(m_ranges[index.row()]->value);
+            case 0: return utils::to_hex_addr(start);
+            case 1: return utils::to_hex_addr(end);
+            case 2: return utils::to_hex_addr(end - start);
+            case 3: return rd_tohex(m_ranges[index.row()]->value);
             default: break;
         }
     }
@@ -55,7 +59,8 @@ QVariant SegmentRegisterModel::headerData(int section,
     switch(section) {
         case 0: return "Start";
         case 1: return "End";
-        case 2: return "Value";
+        case 2: return "Length";
+        case 3: return "Value";
         default: break;
     }
 

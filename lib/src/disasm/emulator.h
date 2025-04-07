@@ -36,7 +36,7 @@ public:
     u64 take_state(std::string_view s);
     u64 upd_state(std::string_view s, u64 val, u64 mask);
     void add_ref(RDAddress toaddr, usize type);
-    void add_regchange(RDAddress addr, int reg, u64 val);
+    void set_sreg(RDAddress addr, int reg, u64 val);
     void flow(RDAddress address);
     u32 tick();
 

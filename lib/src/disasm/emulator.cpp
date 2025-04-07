@@ -47,8 +47,8 @@ void Emulator::add_ref(RDAddress toaddr, usize type) { // NOLINT
     state::context->add_ref(this->pc, toaddr, type);
 }
 
-void Emulator::add_regchange(RDAddress addr, int reg, u64 val) {
-    // state::context->set_sreg(addr, reg, val, this->pc);
+void Emulator::set_sreg(RDAddress addr, int reg, u64 val) {
+    state::context->set_sreg(addr, reg, val, this->pc);
 }
 
 u64 Emulator::get_reg(int regid) const {

@@ -344,7 +344,7 @@ Database::SRegList Context::get_sregs() const {
 void Context::set_sreg(RDAddress address, int sreg, u64 val,
                        const tl::optional<RDAddress>& fromaddr) {
     RDSegment* seg = this->program.find_segment(address);
-    if(!seg) return;
+    if(!seg || !this->program.set_sreg(address, sreg, val)) return;
 
     memory::set_flag(seg, address, BF_SREG);
     m_database->set_sreg(address, sreg, val, fromaddr);

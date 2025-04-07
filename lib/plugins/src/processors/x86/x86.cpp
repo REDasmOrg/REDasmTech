@@ -106,56 +106,84 @@ bool maybe_addr(const RDInstruction* instr, usize opidx) {
     return false;
 }
 
+std::optional<int> get_sreg_from(const RDInstruction& instr) {
+    switch(instr.id) {
+        case ZYDIS_MNEMONIC_PUSH: {
+            if(is_segment_reg(instr.operands[0])) return instr.operands[0].reg;
+            break;
+        }
+
+        default: break;
+    }
+
+    return std::nullopt;
+}
+
+u64 get_sreg_val(RDEmulator* e, int sreg) {
+    if(sreg == ZYDIS_REGISTER_CS) {
+        const RDSegment* seg = rdemulator_getsegment(e);
+        if(seg) return seg->start;
+    }
+    else if(sreg == ZYDIS_REGISTER_DS) {
+        u64 val = rdemulator_getreg(e, sreg);
+
+        if(!val) {
+            const RDSegment* seg = rdemulator_getsegment(e);
+            if(seg) return seg->start;
+        }
+
+        return val;
+    }
+
+    return rdemulator_getreg(e, sreg);
+}
+
 bool track_pop_reg(RDEmulator* e, const RDInstruction* instr) {
     RDInstruction previnstr;
-    if(!rd_decode_prev(instr->address, &previnstr)) return false;
+    bool ok = rd_decode_prev(instr->address, &previnstr);
+    int sreg = instr->operands[0].reg;
+    u64 val;
 
-    if(previnstr.id != ZYDIS_MNEMONIC_PUSH ||
-       !is_segment_reg(previnstr.operands[0]))
-        return false;
-
-    int chgreg = instr->operands[0].reg;
-
-    if(previnstr.operands[0].reg == ZYDIS_REGISTER_CS) {
-        const RDSegment* seg = rdemulator_getsegment(e);
-        if(seg) {
-            rdemulator_addregchange(e, instr->address + instr->length, chgreg,
-                                    seg->start);
-        }
+    if(ok) {
+        auto psreg = get_sreg_from(previnstr);
+        val = get_sreg_val(e, psreg.value_or(sreg));
     }
-    else {
-        u64 val = rdemulator_getreg(e, previnstr.operands[0].reg);
-        rdemulator_addregchange(e, instr->address + instr->length, chgreg, val);
-    }
+    else
+        val = get_sreg_val(e, sreg);
 
+    rdemulator_setsreg(e, instr->address + instr->length, sreg, val);
     return true;
 }
 
 bool track_mov_reg(RDEmulator* e, const RDInstruction* instr) {
-    RDInstruction previnstr;
-    if(!rd_decode_prev(instr->address, &previnstr)) return false;
+    u64 val = rdemulator_getreg(e, instr->operands[0].reg);
+    rdemulator_setsreg(e, instr->address + instr->length,
+                       instr->operands[0].reg, val);
 
-    if(previnstr.id != ZYDIS_MNEMONIC_MOV ||
-       !is_segment_reg(previnstr.operands[1]))
-        return false;
-
-    if(previnstr.operands[0].type != OP_REG ||
-       instr->operands[1].reg != previnstr.operands[0].reg)
-        return false;
-
-    int chgreg = instr->operands[0].reg;
-
-    if(previnstr.operands[0].reg == ZYDIS_REGISTER_CS) {
-        const RDSegment* seg = rdemulator_getsegment(e);
-        if(seg) {
-            rdemulator_addregchange(e, instr->address + instr->length, chgreg,
-                                    seg->start);
-        }
-    }
-    else {
-        u64 val = rdemulator_getreg(e, previnstr.operands[1].reg);
-        rdemulator_addregchange(e, instr->address + instr->length, chgreg, val);
-    }
+    // RDInstruction previnstr;
+    // if(!rd_decode_prev(instr->address, &previnstr)) return false;
+    //
+    // if(previnstr.id != ZYDIS_MNEMONIC_MOV ||
+    //    !is_segment_reg(previnstr.operands[1]))
+    //     return false;
+    //
+    // if(previnstr.operands[0].type != OP_REG ||
+    //    instr->operands[1].reg != previnstr.operands[0].reg)
+    //     return false;
+    //
+    // int chgreg = instr->operands[0].reg;
+    //
+    // if(previnstr.operands[0].reg == ZYDIS_REGISTER_CS) {
+    //     const RDSegment* seg = rdemulator_getsegment(e);
+    //     if(seg) {
+    //         rdemulator_setsreg(e, instr->address + instr->length, chgreg,
+    //                            seg->start);
+    //     }
+    // }
+    // else {
+    //     u64 val = rdemulator_getreg(e, previnstr.operands[1].reg);
+    //     rdemulator_setsreg(e, instr->address + instr->length, chgreg, val);
+    // }
 
     return true;
 }

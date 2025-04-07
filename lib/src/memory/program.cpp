@@ -218,15 +218,15 @@ bool Program::add_sreg_range(RDAddress start, RDAddress end, int sreg,
     return true;
 }
 
-void Program::set_sreg(RDAddress address, int sreg, u64 val) { // NOLINT
+bool Program::set_sreg(RDAddress address, int sreg, u64 val) { // NOLINT
     RDSRegTree* tree;
     hmap_get(tree, &this->segmentregs, ct_inttoptr(sreg), RDSRegTree, hnode,
              tree->sreg == sreg);
-    if(!tree) return;
+    if(!tree) return false;
 
     RDSRange* r =
         rbtree_find_item(&tree->root, ct_inttoptr(address), RDSRange, rbnode);
-    if(!r) return;
+    if(!r) return false;
 
     if(address != r->start) {
         RDAddress oldend = r->end;
@@ -242,6 +242,8 @@ void Program::set_sreg(RDAddress address, int sreg, u64 val) { // NOLINT
     }
     else
         r->value = val;
+
+    return true;
 }
 
 bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
