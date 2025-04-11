@@ -131,7 +131,7 @@ constexpr std::string_view DB_SCHEMA = R"(
     CREATE TABLE SegmentRegisters(
         address INTEGER NOT NULL,
         reg INTEGER NOT NULL,
-        value INTEGER NOT NULL,
+        value INTEGER,
         fromaddr INTEGER,
         UNIQUE(address, reg, fromaddr)
     )
@@ -325,7 +325,7 @@ Database::SRegList Database::get_sregs() const {
     return sregs;
 }
 
-void Database::set_sreg(RDAddress addr, int reg, u64 val,
+void Database::set_sreg(RDAddress addr, int reg, const RDRegValue& val,
                         const tl::optional<RDAddress>& fromaddr) {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::SET_SREG, R"(
         INSERT INTO SegmentRegisters (address, reg, value, fromaddr) 
@@ -336,7 +336,11 @@ void Database::set_sreg(RDAddress addr, int reg, u64 val,
 
     sql_bindparam(m_db, stmt, ":address", addr);
     sql_bindparam(m_db, stmt, ":reg", reg);
-    sql_bindparam(m_db, stmt, ":val", val);
+
+    if(val.ok)
+        sql_bindparam(m_db, stmt, ":val", val.value);
+    else
+        sql_bindparam(m_db, stmt, ":val", nullptr);
 
     if(fromaddr.has_value())
         sql_bindparam(m_db, stmt, ":fromaddr", *fromaddr);

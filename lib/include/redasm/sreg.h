@@ -3,10 +3,12 @@
 #include <redasm/common.h>
 #include <redasm/types.h>
 
+define_optional_full(RDRegValue, u64);
+
 typedef struct RDSRange {
     RDAddress start;
     RDAddress end;
-    u64 value;
+    RDRegValue val;
     RBTreeNode rbnode;
 } RDSRange;
 

@@ -58,7 +58,7 @@ public: // Database Interface
     tl::optional<RDAddress> get_address(std::string_view name,
                                         bool onlydb = false) const;
 
-    void set_sreg(RDAddress address, int reg, u64 val,
+    void set_sreg(RDAddress address, int reg, const RDRegValue& val,
                   const tl::optional<RDAddress>& fromaddr = tl::nullopt);
 
 public: // Plugins

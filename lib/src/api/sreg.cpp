@@ -36,12 +36,14 @@ void rd_addsreg_range(RDAddress start, RDAddress end, int sreg, u64 val) {
 void rd_setsreg(RDAddress address, int sreg, u64 val) {
     spdlog::trace("rd_setsreg({:x}, {}, {:x})", address, sreg, val);
     if(redasm::state::context)
-        redasm::state::context->set_sreg(address, sreg, val);
+        redasm::state::context->set_sreg(address, sreg, RDRegValue_some(val));
 }
 
 void rd_setsreg_from(RDAddress address, int sreg, u64 val, RDAddress fromaddr) {
     spdlog::trace("rd_setsreg_from({:x}, {}, {:x})", address, sreg, val,
                   fromaddr);
-    if(redasm::state::context)
-        redasm::state::context->set_sreg(address, sreg, val, fromaddr);
+    if(redasm::state::context) {
+        redasm::state::context->set_sreg(address, sreg, RDRegValue_some(val),
+                                         fromaddr);
+    }
 }

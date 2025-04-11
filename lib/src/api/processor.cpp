@@ -19,6 +19,12 @@ u32 rdemulator_getdslotinfo(const RDEmulator* self,
     return e->ndslot;
 }
 
+void rdemulator_unsetsreg(RDEmulator* self, RDAddress addr, int reg) {
+    spdlog::trace("rdemulator_unsetsreg({}, {}, {})", fmt::ptr(self), addr,
+                  reg);
+    redasm::api::from_c(self)->unset_sreg(addr, reg);
+}
+
 void rdemulator_setsreg(RDEmulator* self, RDAddress addr, int reg, u64 val) {
     spdlog::trace("rdemulator_setsreg({}, {}, {}, {})", fmt::ptr(self), addr,
                   reg, val);
@@ -37,9 +43,14 @@ void rdemulator_addref(RDEmulator* self, RDAddress toaddr, usize type) {
     if(redasm::state::context) redasm::api::from_c(self)->add_ref(toaddr, type);
 }
 
-u64 rdemulator_getreg(const RDEmulator* self, int regid) {
+RDRegValue rdemulator_getreg(const RDEmulator* self, int regid) {
     spdlog::trace("rdemulator_getreg({}, {})", fmt::ptr(self), regid);
-    return redasm::api::from_c(self)->get_reg(regid);
+    return redasm::api::to_c(redasm::api::from_c(self)->get_reg(regid));
+}
+
+void rdemulator_unsetreg(RDEmulator* self, int regid) {
+    spdlog::trace("rdemulator_unsetreg({}, {})", fmt::ptr(self), regid);
+    redasm::api::from_c(self)->unset_reg(regid);
 }
 
 void rdemulator_setreg(RDEmulator* self, int regid, u64 val) {
@@ -48,10 +59,11 @@ void rdemulator_setreg(RDEmulator* self, int regid, u64 val) {
     redasm::api::from_c(self)->set_reg(regid, val);
 }
 
-u64 rdemulator_updreg(RDEmulator* self, int regid, u64 val, u64 mask) {
+RDRegValue rdemulator_updreg(RDEmulator* self, int regid, u64 val, u64 mask) {
     spdlog::trace("rd_emulator_updreg({}, {}, {:x}, {:x})", fmt::ptr(self),
                   regid, val, mask);
-    return redasm::api::from_c(self)->upd_reg(regid, val, mask);
+    return redasm::api::to_c(
+        redasm::api::from_c(self)->upd_reg(regid, val, mask));
 }
 
 u64 rdemulator_getstate(const RDEmulator* self, const char* state) {

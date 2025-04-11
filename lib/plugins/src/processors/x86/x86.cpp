@@ -106,84 +106,49 @@ bool maybe_addr(const RDInstruction* instr, usize opidx) {
     return false;
 }
 
-std::optional<int> get_sreg_from(const RDInstruction& instr) {
-    switch(instr.id) {
-        case ZYDIS_MNEMONIC_PUSH: {
-            if(is_segment_reg(instr.operands[0])) return instr.operands[0].reg;
-            break;
-        }
-
-        default: break;
-    }
-
-    return std::nullopt;
-}
-
-u64 get_sreg_val(RDEmulator* e, int sreg) {
-    if(sreg == ZYDIS_REGISTER_CS) {
+RDRegValue get_reg_val(RDEmulator* e, int reg) {
+    if(reg == ZYDIS_REGISTER_CS) {
         const RDSegment* seg = rdemulator_getsegment(e);
-        if(seg) return seg->start;
-    }
-    else if(sreg == ZYDIS_REGISTER_DS) {
-        u64 val = rdemulator_getreg(e, sreg);
-
-        if(!val) {
-            const RDSegment* seg = rdemulator_getsegment(e);
-            if(seg) return seg->start;
-        }
-
-        return val;
+        if(seg) return RDRegValue_some(seg->start);
     }
 
-    return rdemulator_getreg(e, sreg);
+    auto val = rdemulator_getreg(e, reg);
+
+    if(!val.ok && reg == ZYDIS_REGISTER_DS) {
+        const RDSegment* seg = rdemulator_getsegment(e);
+        if(seg) return RDRegValue_some(seg->start);
+    }
+
+    return val;
 }
 
 bool track_pop_reg(RDEmulator* e, const RDInstruction* instr) {
     RDInstruction previnstr;
     bool ok = rd_decode_prev(instr->address, &previnstr);
-    int sreg = instr->operands[0].reg;
-    u64 val;
+    RDRegValue val = RDRegValue_none();
 
-    if(ok) {
-        auto psreg = get_sreg_from(previnstr);
-        val = get_sreg_val(e, psreg.value_or(sreg));
+    if(ok && previnstr.id == ZYDIS_MNEMONIC_PUSH &&
+       previnstr.operands[0].type == OP_REG) {
+        val = get_reg_val(e, previnstr.operands[0].reg);
     }
     else
-        val = get_sreg_val(e, sreg);
+        val = get_reg_val(e, instr->operands[0].reg);
 
-    rdemulator_setsreg(e, instr->address + instr->length, sreg, val);
-    return true;
+    if(val.ok) {
+        rdemulator_setsreg(e, instr->address + instr->length,
+                           instr->operands[0].reg, val.value);
+    }
+
+    return val.ok;
 }
 
 bool track_mov_reg(RDEmulator* e, const RDInstruction* instr) {
-    u64 val = rdemulator_getreg(e, instr->operands[0].reg);
-    rdemulator_setsreg(e, instr->address + instr->length,
-                       instr->operands[0].reg, val);
+    auto val = rdemulator_getreg(e, instr->operands[0].reg);
 
-    // RDInstruction previnstr;
-    // if(!rd_decode_prev(instr->address, &previnstr)) return false;
-    //
-    // if(previnstr.id != ZYDIS_MNEMONIC_MOV ||
-    //    !is_segment_reg(previnstr.operands[1]))
-    //     return false;
-    //
-    // if(previnstr.operands[0].type != OP_REG ||
-    //    instr->operands[1].reg != previnstr.operands[0].reg)
-    //     return false;
-    //
-    // int chgreg = instr->operands[0].reg;
-    //
-    // if(previnstr.operands[0].reg == ZYDIS_REGISTER_CS) {
-    //     const RDSegment* seg = rdemulator_getsegment(e);
-    //     if(seg) {
-    //         rdemulator_setsreg(e, instr->address + instr->length, chgreg,
-    //                            seg->start);
-    //     }
-    // }
-    // else {
-    //     u64 val = rdemulator_getreg(e, previnstr.operands[1].reg);
-    //     rdemulator_setsreg(e, instr->address + instr->length, chgreg, val);
-    // }
+    if(val.ok) {
+        rdemulator_setsreg(e, instr->address + instr->length,
+                           instr->operands[0].reg, val.value);
+    }
 
     return true;
 }
@@ -416,13 +381,15 @@ void emulate(RDProcessor* /*self*/, RDEmulator* e, const RDInstruction* instr) {
                 }
 
                 case OP_REG: {
-                    if(!i && op->reg == ZYDIS_REGISTER_DS) {
-                        std::cout << "DS CHANGE IN " << std::hex
-                                  << instr->address << '\n';
-                    }
-                    else if(!i && op->reg == ZYDIS_REGISTER_CS) {
-                        std::cout << "CS CHANGE IN " << std::hex
-                                  << instr->address << '\n';
+                    if(instr->id != ZYDIS_MNEMONIC_PUSH) {
+                        if(!i && op->reg == ZYDIS_REGISTER_DS) {
+                            std::cout << "DS CHANGE IN " << std::hex
+                                      << instr->address << '\n';
+                        }
+                        else if(!i && op->reg == ZYDIS_REGISTER_CS) {
+                            std::cout << "CS CHANGE IN " << std::hex
+                                      << instr->address << '\n';
+                        }
                     }
                     break;
                 }

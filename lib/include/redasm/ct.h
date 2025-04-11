@@ -124,6 +124,9 @@ CT_API CT_NORET void _except_impl(const char* file, int line, const char* fmt,
         bool ok;                                                               \
         T value;                                                               \
     } name;                                                                    \
+    static inline T name##_value_or(const name& self, T v) {                   \
+        return self.ok ? self.value : v;                                       \
+    }                                                                          \
     static inline name name##_some(T v) {                                      \
         name opt;                                                              \
         opt.ok = true;                                                         \
@@ -134,7 +137,55 @@ CT_API CT_NORET void _except_impl(const char* file, int line, const char* fmt,
         name opt;                                                              \
         opt.ok = false;                                                        \
         return opt;                                                            \
+    }
+
+#define define_optional_eq(name, T)                                            \
+    static inline bool name##_eq_val(const name& self, T t) {                  \
+        return self.ok && (self.value == t);                                   \
     }                                                                          \
+    static inline bool name##_eq(const name& self, const name& opt) {          \
+        return (self.ok == opt.ok) && (!self.ok || (self.value == opt.value)); \
+    }
+
+#define define_optional_cmp(name, T)                                           \
+    static inline int name##_cmp(const name* a, const name* b) {               \
+        if(a->ok && b->ok) {                                                   \
+            if(a->value < b->value) return -1;                                 \
+            if(a->value > b->value) return 1;                                  \
+            return 0;                                                          \
+        }                                                                      \
+        if(!a->ok && !b->ok) return 0;                                         \
+        return a->ok ? 1 : -1; /* none < some */                               \
+    }                                                                          \
+    static inline bool name##_lt(const name* self, const name* other) {        \
+        return self->ok && other->ok && (self->value < other->value);          \
+    }                                                                          \
+    static inline bool name##_le(const name* self, const name* other) {        \
+        return self->ok && other->ok && (self->value <= other->value);         \
+    }                                                                          \
+    static inline bool name##_gt(const name* self, const name* other) {        \
+        return self->ok && other->ok && (self->value > other->value);          \
+    }                                                                          \
+    static inline bool name##_ge(const name* self, const name* other) {        \
+        return self->ok && other->ok && (self->value >= other->value);         \
+    }                                                                          \
+    static inline bool name##_lt_val(const name* self, T val) {                \
+        return self->ok && (self->value < val);                                \
+    }                                                                          \
+    static inline bool name##_le_val(const name* self, T val) {                \
+        return self->ok && (self->value <= val);                               \
+    }                                                                          \
+    static inline bool name##_gt_val(const name* self, T val) {                \
+        return self->ok && (self->value > val);                                \
+    }                                                                          \
+    static inline bool name##_ge_val(const name* self, T val) {                \
+        return self->ok && (self->value >= val);                               \
+    }
+
+#define define_optional_full(name, T)                                          \
+    define_optional(name, T);                                                  \
+    define_optional_eq(name, T);                                               \
+    define_optional_cmp(name, T);
 // *** Misc utilities *** //
 
 // *** Allocators *** //

@@ -54,8 +54,8 @@ struct THUMBBEImpl: public ARMCommon {
 template<typename ARM, typename THUMB>
 struct ARMImpl {
     bool decode(RDInstruction* instr) {
-        if(rdemulator_getreg(rd_getemulator(), ARM_REG_T) == 0)
-            return m_arm.decode(instr);
+        auto reg = rdemulator_getreg(rd_getemulator(), ARM_REG_T);
+        if(RDRegValue_value_or(reg, 0) == 0) return m_arm.decode(instr);
         return m_thumb.decode(instr);
     }
 
@@ -68,8 +68,8 @@ struct ARMImpl {
     }
 
     void emulate(RDEmulator* e, const RDInstruction* instr) const {
-        if(rdemulator_getreg(rd_getemulator(), ARM_REG_T) == 0)
-            return m_arm.emulate(e, instr);
+        auto reg = rdemulator_getreg(rd_getemulator(), ARM_REG_T);
+        if(RDRegValue_value_or(reg, 0) == 0) return m_arm.emulate(e, instr);
         return m_thumb.emulate(e, instr);
     }
 

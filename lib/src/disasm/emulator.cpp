@@ -47,19 +47,24 @@ void Emulator::add_ref(RDAddress toaddr, usize type) { // NOLINT
     state::context->add_ref(this->pc, toaddr, type);
 }
 
-void Emulator::set_sreg(RDAddress addr, int reg, u64 val) {
-    state::context->set_sreg(addr, reg, val, this->pc);
+void Emulator::unset_sreg(RDAddress addr, int reg) {
+    state::context->set_sreg(addr, reg, RDRegValue_none(), this->pc);
 }
 
-u64 Emulator::get_reg(int regid) const {
+void Emulator::set_sreg(RDAddress addr, int reg, u64 val) {
+    state::context->set_sreg(addr, reg, RDRegValue_some(val), this->pc);
+}
+
+tl::optional<u64> Emulator::get_reg(int regid) const {
     auto it = m_state.regs.find(regid);
     if(it != m_state.regs.end()) return it->second;
-    return {};
+    return tl::nullopt;
 }
 
+void Emulator::unset_reg(int regid) { m_state.regs.erase(regid); }
 void Emulator::set_reg(int regid, u64 val) { m_state.regs[regid] = val; }
 
-u64 Emulator::upd_reg(int regid, u64 val, u64 mask) {
+tl::optional<u64> Emulator::upd_reg(int regid, u64 val, u64 mask) {
     auto it = m_state.regs.find(regid);
 
     if(it != m_state.regs.end()) {
@@ -67,9 +72,8 @@ u64 Emulator::upd_reg(int regid, u64 val, u64 mask) {
         return it->second;
     }
 
-    val &= mask;
-    this->set_reg(regid, val);
-    return val;
+    this->set_reg(regid, val & mask);
+    return tl::nullopt;
 }
 
 u64 Emulator::get_state(std::string_view s) const {

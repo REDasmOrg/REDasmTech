@@ -43,7 +43,13 @@ QVariant SegmentRegisterModel::data(const QModelIndex& index, int role) const {
             case 0: return utils::to_hex_addr(start);
             case 1: return utils::to_hex_addr(end);
             case 2: return utils::to_hex_addr(end - start);
-            case 3: return rd_tohex(m_ranges[index.row()]->value);
+
+            case 3: {
+                if(m_ranges[index.row()]->val.ok)
+                    return rd_tohex(m_ranges[index.row()]->val.value);
+                return "N/A";
+            }
+
             default: break;
         }
     }

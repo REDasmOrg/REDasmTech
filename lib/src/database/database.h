@@ -45,7 +45,7 @@ public:
     SRegChanges get_sreg_changes(int sreg) const;
     SRegList get_sregs() const;
 
-    void set_sreg(RDAddress fromaddr, int reg, u64 val,
+    void set_sreg(RDAddress fromaddr, int reg, const RDRegValue& val,
                   const tl::optional<RDAddress>& addr = tl::nullopt);
 
     void add_segment(std::string_view name, RDAddress startaddr,

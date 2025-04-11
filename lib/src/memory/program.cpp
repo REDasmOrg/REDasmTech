@@ -158,7 +158,7 @@ bool Program::add_sreg_range(RDAddress start, RDAddress end, int sreg,
 
             if(prevr) {
                 if(prevr->end >= start) { // Overlap or adjacency
-                    if(prevr->value == val) {
+                    if(RDRegValue_eq_val(prevr->val, val)) {
                         prevr->end = std::max(prevr->end, end); // Extend
                         return true;
                     }
@@ -173,7 +173,7 @@ bool Program::add_sreg_range(RDAddress start, RDAddress end, int sreg,
             // Check if we can merge with next range
             RDSRange* it = r;
             rbtree_foreach_from(it, &tree->root, RDSRange, rbnode) {
-                if(it->value == val) // Remove and continue merging
+                if(RDRegValue_eq_val(it->val, val)) // Remove & continue merge
                     toerase.push_back(it);
                 else if(it->start < end) {
                     tosplit.push_back(it);
@@ -192,7 +192,7 @@ bool Program::add_sreg_range(RDAddress start, RDAddress end, int sreg,
                 auto* n = new RDSRange{
                     .start = end,
                     .end = it->end,
-                    .value = val,
+                    .val = RDRegValue_some(val),
                 };
 
                 it->end = end;
@@ -211,14 +211,15 @@ bool Program::add_sreg_range(RDAddress start, RDAddress end, int sreg,
     auto* r = new RDSRange{
         .start = start,
         .end = end,
-        .value = val,
+        .val = RDRegValue_some(val),
     };
 
     rbtree_insert(&tree->root, &r->rbnode);
     return true;
 }
 
-bool Program::set_sreg(RDAddress address, int sreg, u64 val) { // NOLINT
+bool Program::set_sreg(RDAddress address, int sreg,
+                       const RDRegValue& val) { // NOLINT
     RDSRegTree* tree;
     hmap_get(tree, &this->segmentregs, ct_inttoptr(sreg), RDSRegTree, hnode,
              tree->sreg == sreg);
@@ -235,13 +236,13 @@ bool Program::set_sreg(RDAddress address, int sreg, u64 val) { // NOLINT
         auto* newr = new RDSRange{
             .start = address,
             .end = oldend,
-            .value = val,
+            .val = val,
         };
 
         rbtree_insert(&tree->root, &newr->rbnode);
     }
     else
-        r->value = val;
+        r->val = val;
 
     return true;
 }

@@ -27,7 +27,7 @@ struct Program {
                      u32 perm, u32 bits);
 
     bool add_sreg_range(RDAddress start, RDAddress end, int sreg, u64 v);
-    bool set_sreg(RDAddress address, int sreg, u64 val);
+    bool set_sreg(RDAddress address, int sreg, const RDRegValue& val);
     tl::optional<RDOffset> to_offset(RDAddress address) const;
     tl::optional<RDAddress> to_address(RDOffset offset) const;
     RDSRange* find_sreg_range(RDAddress address, int sreg);

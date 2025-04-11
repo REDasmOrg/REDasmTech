@@ -67,13 +67,16 @@ define_slice(RDProcessorPluginSlice, const RDProcessorPlugin*);
 REDASM_EXPORT const RDSegment* rdemulator_getsegment(const RDEmulator* self);
 REDASM_EXPORT u32 rdemulator_getdslotinfo(const RDEmulator* self,
                                           const RDInstruction** dslot);
+REDASM_EXPORT void rdemulator_unsetsreg(RDEmulator* self, RDAddress addr,
+                                        int reg);
 REDASM_EXPORT void rdemulator_setsreg(RDEmulator* self, RDAddress addr, int reg,
                                       u64 val);
 REDASM_EXPORT void rdemulator_flow(RDEmulator* self, RDAddress flowaddr);
-REDASM_EXPORT u64 rdemulator_getreg(const RDEmulator* self, int regid);
+REDASM_EXPORT RDRegValue rdemulator_getreg(const RDEmulator* self, int regid);
+REDASM_EXPORT void rdemulator_unsetreg(RDEmulator* self, int regid);
 REDASM_EXPORT void rdemulator_setreg(RDEmulator* self, int regid, u64 val);
-REDASM_EXPORT u64 rdemulator_updreg(RDEmulator* self, int regid, u64 val,
-                                    u64 mask);
+REDASM_EXPORT RDRegValue rdemulator_updreg(RDEmulator* self, int regid, u64 val,
+                                         u64 mask);
 REDASM_EXPORT u64 rdemulator_getstate(const RDEmulator* self,
                                       const char* state);
 REDASM_EXPORT u64 rdemulator_takestate(RDEmulator* self, const char* state);
