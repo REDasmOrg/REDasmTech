@@ -2,7 +2,6 @@
 #include "x86_lifter.h"
 #include <Zydis/Zydis.h>
 #include <array>
-#include <iostream>
 #include <redasm/redasm.h>
 
 namespace {
@@ -143,7 +142,7 @@ bool track_pop_reg(RDEmulator* e, const RDInstruction* instr) {
 }
 
 bool track_mov_reg(RDEmulator* e, const RDInstruction* instr) {
-    auto val = rdemulator_getreg(e, instr->operands[0].reg);
+    auto val = get_reg_val(e, instr->operands[0].reg);
 
     if(val.ok) {
         rdemulator_setsreg(e, instr->address + instr->length,
@@ -377,20 +376,6 @@ void emulate(RDProcessor* /*self*/, RDEmulator* e, const RDInstruction* instr) {
                     }
 
                     rdemulator_addref(e, op->mem, DR_READ);
-                    break;
-                }
-
-                case OP_REG: {
-                    if(instr->id != ZYDIS_MNEMONIC_PUSH) {
-                        if(!i && op->reg == ZYDIS_REGISTER_DS) {
-                            std::cout << "DS CHANGE IN " << std::hex
-                                      << instr->address << '\n';
-                        }
-                        else if(!i && op->reg == ZYDIS_REGISTER_CS) {
-                            std::cout << "CS CHANGE IN " << std::hex
-                                      << instr->address << '\n';
-                        }
-                    }
                     break;
                 }
 
