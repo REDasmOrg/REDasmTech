@@ -20,6 +20,6 @@ public:
                                       int role) const override;
 
 private:
-    const RDSRangeMap* m_segmentregs;
+    const RDSRangeMap* m_segmentregs{nullptr};
     QList<const RDSRange*> m_ranges;
 };

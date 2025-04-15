@@ -3,16 +3,6 @@
 
 SegmentRegistersDialog::SegmentRegistersDialog(QWidget* parent)
     : QDialog{parent}, m_ui{this} {
-    m_segmentregisters = rd_getsegmentregisters();
-
-    QSet<int> sregs;
-    const RDSRegTree* tree;
-    hmap_foreach(tree, m_segmentregisters, RDSRegTree, hnode)
-        sregs.insert(tree->sreg);
-
-    m_sregs.assign(sregs.begin(), sregs.end());
-    this->populate_registers();
-
     m_segmentregistersmodel = new SegmentRegisterModel(this);
     m_ui.tvsregs->setModel(m_segmentregistersmodel);
     m_ui.tvsregs->header()->setStretchLastSection(true);
@@ -23,7 +13,19 @@ SegmentRegistersDialog::SegmentRegistersDialog(QWidget* parent)
 
     connect(m_ui.cbregisters, &QComboBox::currentIndexChanged, this,
             &SegmentRegistersDialog::update_register);
+}
 
+void SegmentRegistersDialog::showEvent(QShowEvent* e) {
+    QDialog::showEvent(e);
+    m_segmentregisters = rd_getsegmentregisters();
+
+    QSet<int> sregs;
+    const RDSRegTree* tree;
+    hmap_foreach(tree, m_segmentregisters, RDSRegTree, hnode)
+        sregs.insert(tree->sreg);
+
+    m_sregs.assign(sregs.begin(), sregs.end());
+    this->populate_registers();
     this->update_register();
 }
 

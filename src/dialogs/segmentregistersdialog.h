@@ -16,6 +16,9 @@ public:
         return m_segmentregistersmodel;
     }
 
+protected:
+    void showEvent(QShowEvent* e) override;
+
 private:
     void populate_registers();
 
@@ -27,7 +30,7 @@ Q_SIGNALS:
 
 private:
     ui::SegmentRegistersDialog m_ui;
-    const RDSRangeMap* m_segmentregisters;
-    SegmentRegisterModel* m_segmentregistersmodel;
+    const RDSRangeMap* m_segmentregisters{nullptr};
+    SegmentRegisterModel* m_segmentregistersmodel{nullptr};
     QList<int> m_sregs;
 };

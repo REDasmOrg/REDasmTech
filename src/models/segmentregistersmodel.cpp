@@ -2,10 +2,11 @@
 #include "../utils.h"
 
 SegmentRegisterModel::SegmentRegisterModel(QObject* parent)
-    : QAbstractListModel{parent}, m_segmentregs{rd_getsegmentregisters()} {}
+    : QAbstractListModel{parent} {}
 
 void SegmentRegisterModel::set_register(int reg) {
     this->beginResetModel();
+    m_segmentregs = rd_getsegmentregisters();
     m_ranges.clear();
 
     const RDSRegTree* tree;

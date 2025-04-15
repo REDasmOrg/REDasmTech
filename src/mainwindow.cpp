@@ -420,16 +420,19 @@ void MainWindow::show_segments() {
 }
 
 void MainWindow::show_segment_registers() {
-    auto* dlg = new SegmentRegistersDialog(this);
+    static SegmentRegistersDialog* dlg = nullptr;
 
-    connect(dlg, &SegmentRegistersDialog::double_clicked, this,
-            [&, dlg](const QModelIndex& index) {
-                ContextView* ctxview = this->context_view();
-                if(!ctxview) return;
+    if(!dlg) {
+        dlg = new SegmentRegistersDialog(this);
 
-                ctxview->jump_to(dlg->model()->address(index));
-                dlg->accept();
-            });
+        connect(dlg, &SegmentRegistersDialog::double_clicked, this,
+                [&](const QModelIndex& index) {
+                    ContextView* ctxview = this->context_view();
+                    if(!ctxview) return;
+
+                    ctxview->jump_to(dlg->model()->address(index));
+                });
+    }
 
     dlg->show();
 }

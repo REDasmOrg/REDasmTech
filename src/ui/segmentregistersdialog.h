@@ -12,9 +12,9 @@ struct SegmentRegistersDialog {
     QTreeView* tvsregs;
 
     explicit SegmentRegistersDialog(QDialog* self) {
-        self->setAttribute(Qt::WA_DeleteOnClose);
-        self->setWindowTitle("Regions");
-        self->setModal(true);
+        // self->setAttribute(Qt::WA_DeleteOnClose);
+        self->setWindowTitle("Segment Registers");
+        // self->setModal(true);
         self->resize(800, 600);
 
         this->cbregisters = new QComboBox();

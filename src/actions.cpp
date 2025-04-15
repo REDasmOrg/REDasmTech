@@ -68,17 +68,11 @@ QString optype_tostring(const RDOperand* op) {
 
 QString instrfeatures_tostring(const RDInstruction* instr) {
     QString f;
-
     if(instr->features & IF_JUMP) append_separated(f, "IF_JUMP");
-
     if(instr->features & IF_CALL) append_separated(f, "IF_CALL");
-
     if(instr->features & IF_STOP) append_separated(f, "IF_STOP");
-
     if(instr->features & IF_DSLOT) append_separated(f, "IF_DSLOT");
-
     if(f.isEmpty()) f = "IF_NONE";
-
     return f;
 }
 
