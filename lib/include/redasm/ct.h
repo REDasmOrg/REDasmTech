@@ -256,8 +256,9 @@ typedef struct BSearchResult {
 #define slice_erase(self) _slice_erase(self, sizeof(*(self)->data))
 #define slice_pop(self) ((self)->data[--(self)->length])
 #define slice_isnull(self) (!!(self)->data)
-#define slice_first(self) ((self)->data[0])
-#define slice_last(self) ((self)->data[(self)->length - 1])
+#define slice_at(self, idx) ((self)->data[idx])
+#define slice_first(self) slice_at(self, 0)
+#define slice_last(self) slice_at(self, (self)->length - 1)
 
 #define slice_insert(self, idx, ...)                                           \
     do {                                                                       \
@@ -314,7 +315,10 @@ typedef struct StrSplit {
 #define str_init slice_init
 #define str_isview(self) ((self)->alloc == NULL)
 #define str_ismutable(self) ((self)->alloc != NULL)
-#define str_isnull(self) slice_isnull
+#define str_isnull slice_isnull
+#define str_at slice_at
+#define str_first slice_first
+#define str_last slice_last
 #define str_empty slice_empty
 #define str_erase slice_erase
 #define str_foreach slice_foreach
