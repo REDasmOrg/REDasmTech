@@ -71,10 +71,10 @@ PyObject* to_object(const RDValue* v) {
             res = PyUnicode_New(v->type.n, 127);
 
             for(usize i = 0; i < len; i++) {
-                const RDValue* item = v->list[i];
+                const RDValue& item = slice_at(&v->list, i);
 
-                if(item->ch_v) // Check for '\0'
-                    PyUnicode_WriteChar(res, i, item->ch_v);
+                if(item.ch_v) // Check for '\0'
+                    PyUnicode_WriteChar(res, i, item.ch_v);
                 else {
                     PyUnicode_Resize(&res, i); // Resize to null-terminator
                     break;
@@ -85,17 +85,18 @@ PyObject* to_object(const RDValue* v) {
             res = PyList_New(len);
 
             for(usize i = 0; i < len; i++) {
-                const RDValue* item = v->list[i];
-                PyList_SetItem(res, i, python::to_object(item));
+                const RDValue& item = slice_at(&v->list, i);
+                PyList_SetItem(res, i, python::to_object(&item));
             }
         }
     }
     else if(rdvalue_isstruct(v)) {
         res = python::new_simplenamespace();
 
-        map_foreach(RDValueField, item, v->dict) {
-            PyObject* f = python::to_object(item->value);
-            PyObject_SetAttrString(res, item->key, f);
+        RDValueHNode* it;
+        hmap_foreach(it, &v->dict, RDValueHNode, hnode) {
+            PyObject* f = python::to_object(&it->value);
+            PyObject_SetAttrString(res, it->key, f);
             Py_DECREF(f);
         }
     }
@@ -120,7 +121,7 @@ PyObject* to_object(const RDValue* v) {
     else if(v->type.id == TID_I64)
         res = PyLong_FromUnsignedLong(v->i64_v);
     else if(v->type.id == TID_STR || v->type.id == TID_WSTR)
-        res = PyUnicode_FromString(v->str);
+        res = PyUnicode_FromString(v->str.data);
 
     return res;
 }

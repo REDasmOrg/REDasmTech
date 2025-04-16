@@ -1,8 +1,7 @@
 #pragma once
 
 #include <Python.h>
-#include <redasm/loader.h>
-#include <redasm/typing.h>
+#include <redasm/redasm.h>
 #include <string_view>
 #include <vector>
 

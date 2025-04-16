@@ -19,4 +19,4 @@ add_subdirectory(src/processors/x86)
 add_subdirectory(src/processors/mips)
 
 # Plugins
-# add_subdirectory(src/python)
+add_subdirectory(src/python)

@@ -30,12 +30,12 @@ PyObject* buffer_readstruct_n(PyBuffer* self, PyObject* args) {
     std::vector<RDStructField> s;
     if(!python::tuple_to_struct(obj, s)) return nullptr;
 
-    RDValue* v = rdbuffer_readstruct_n(self->buffer, idx, n, s.data());
+    RDValueOpt v = rdbuffer_readstruct_n(self->buffer, idx, n, s.data());
     PyObject* res = Py_None;
 
-    if(v) {
-        res = python::to_object(v);
-        rdvalue_destroy(v);
+    if(v.ok) {
+        res = python::to_object(&v.value);
+        rdvalue_destroy(&v.value);
     }
 
     return res;
@@ -49,12 +49,12 @@ PyObject* buffer_readstruct(PyBuffer* self, PyObject* args) {
     std::vector<RDStructField> s;
     if(!python::tuple_to_struct(obj, s)) return nullptr;
 
-    RDValue* v = rdbuffer_readstruct(self->buffer, idx, s.data());
+    RDValueOpt v = rdbuffer_readstruct(self->buffer, idx, s.data());
     PyObject* res = Py_None;
 
-    if(v) {
-        res = python::to_object(v);
-        rdvalue_destroy(v);
+    if(v.ok) {
+        res = python::to_object(&v.value);
+        rdvalue_destroy(&v.value);
     }
 
     return res;
@@ -263,12 +263,12 @@ PyObject* buffer_gettype(PyBuffer* self, PyObject* args) {
     const char* tname = nullptr;
     if(!PyArg_ParseTuple(args, "ns", &idx, &tname)) return nullptr;
 
-    RDValue* v = rdbuffer_gettypename(self->buffer, idx, tname);
+    RDValueOpt v = rdbuffer_gettypename(self->buffer, idx, tname);
     PyObject* res = Py_None;
 
-    if(v) {
-        res = python::to_object(v);
-        rdvalue_destroy(v);
+    if(v.ok) {
+        res = python::to_object(&v.value);
+        rdvalue_destroy(&v.value);
     }
 
     return res;

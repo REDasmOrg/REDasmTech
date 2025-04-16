@@ -41,12 +41,12 @@ PyObject* stream_peek_struct_n(PyStream* self, PyObject* args) {
     std::vector<RDStructField> s;
     if(!python::tuple_to_struct(fields, s)) return nullptr;
 
-    RDValue* v = rdstream_peek_struct_n(self->stream, n, s.data());
+    RDValueOpt v = rdstream_peek_struct_n(self->stream, n, s.data());
     PyObject* obj = Py_None;
 
-    if(v) {
-        obj = python::to_object(v);
-        rdvalue_destroy(v);
+    if(v.ok) {
+        obj = python::to_object(&v.value);
+        rdvalue_destroy(&v.value);
     }
 
     return obj;
@@ -56,12 +56,12 @@ PyObject* stream_peek_struct(PyStream* self, PyObject* args) {
     std::vector<RDStructField> s;
     if(!python::tuple_to_struct(args, s)) return nullptr;
 
-    RDValue* v = rdstream_peek_struct(self->stream, s.data());
+    RDValueOpt v = rdstream_peek_struct(self->stream, s.data());
     PyObject* obj = Py_None;
 
-    if(v) {
-        obj = python::to_object(v);
-        rdvalue_destroy(v);
+    if(v.ok) {
+        obj = python::to_object(&v.value);
+        rdvalue_destroy(&v.value);
     }
 
     return obj;
@@ -70,12 +70,12 @@ PyObject* stream_peek_struct(PyStream* self, PyObject* args) {
 PyObject* stream_peek_type(PyStream* self, PyObject* args) {
     const char* tname = PyUnicode_AsUTF8(args);
 
-    RDValue* v = rdstream_peek_type(self->stream, tname);
+    RDValueOpt v = rdstream_peek_type(self->stream, tname);
     PyObject* obj = Py_None;
 
-    if(v) {
-        obj = python::to_object(v);
-        rdvalue_destroy(v);
+    if(v.ok) {
+        obj = python::to_object(&v.value);
+        rdvalue_destroy(&v.value);
     }
 
     return obj;
@@ -203,12 +203,12 @@ PyObject* stream_read_struct_n(PyStream* self, PyObject* args) {
     std::vector<RDStructField> s;
     if(!python::tuple_to_struct(fields, s)) return nullptr;
 
-    RDValue* v = rdstream_read_struct_n(self->stream, n, s.data());
+    RDValueOpt v = rdstream_read_struct_n(self->stream, n, s.data());
     PyObject* obj = Py_None;
 
-    if(v) {
-        obj = python::to_object(v);
-        rdvalue_destroy(v);
+    if(v.ok) {
+        obj = python::to_object(&v.value);
+        rdvalue_destroy(&v.value);
     }
 
     return obj;
@@ -218,12 +218,12 @@ PyObject* stream_read_struct(PyStream* self, PyObject* args) {
     std::vector<RDStructField> s;
     if(!python::tuple_to_struct(args, s)) return nullptr;
 
-    RDValue* v = rdstream_read_struct(self->stream, s.data());
+    RDValueOpt v = rdstream_read_struct(self->stream, s.data());
     PyObject* obj = Py_None;
 
-    if(v) {
-        obj = python::to_object(v);
-        rdvalue_destroy(v);
+    if(v.ok) {
+        obj = python::to_object(&v.value);
+        rdvalue_destroy(&v.value);
     }
 
     return obj;
@@ -232,12 +232,12 @@ PyObject* stream_read_struct(PyStream* self, PyObject* args) {
 PyObject* stream_read_type(PyStream* self, PyObject* args) {
     const char* tname = PyUnicode_AsUTF8(args);
 
-    RDValue* v = rdstream_read_type(self->stream, tname);
+    RDValueOpt v = rdstream_read_type(self->stream, tname);
     PyObject* res = Py_None;
 
-    if(v) {
-        res = python::to_object(v);
-        rdvalue_destroy(v);
+    if(v.ok) {
+        res = python::to_object(&v.value);
+        rdvalue_destroy(&v.value);
     }
 
     return res;

@@ -136,13 +136,15 @@ PyObject* get_searchpaths(PyObject* /*self*/, PyObject* /*args*/) {
 }
 
 PyObject* get_problems(PyObject* /*self*/, PyObject* /*args*/) {
-    Vect(RDProblem) problems = rd_getproblems();
-    PyObject* res = PyTuple_New(vect_length(problems));
+    const RDProblemSlice* problems = rd_getproblems();
+    PyObject* res = PyTuple_New(problems->length);
 
-    for(usize i = 0; i < vect_length(problems); i++) {
+    for(isize i = 0; i < problems->length; i++) {
         PyObject* item = python::new_simplenamespace();
-        PyObject* itemaddr = PyLong_FromUnsignedLongLong(problems[i].address);
-        PyObject* itemprob = PyUnicode_FromString(problems[i].problem);
+        PyObject* itemaddr =
+            PyLong_FromUnsignedLongLong(slice_at(problems, i).address);
+        PyObject* itemprob =
+            PyUnicode_FromString(slice_at(problems, i).problem);
         PyObject_SetAttrString(item, "address", itemaddr);
         PyObject_SetAttrString(item, "problem", itemprob);
         PyTuple_SET_ITEM(res, i, item);
@@ -294,12 +296,12 @@ PyObject* set_type(PyObject* /*self*/, PyObject* args) {
     const char* name = nullptr;
     if(!PyArg_ParseTuple(args, "Ks", &address, &name)) return nullptr;
 
-    RDValue* v = nullptr;
+    RDValue v;
     PyObject* obj = Py_None;
 
     if(rd_settypename(address, name, &v)) {
-        obj = python::to_object(v);
-        rdvalue_destroy(v);
+        obj = python::to_object(&v);
+        rdvalue_destroy(&v);
     }
 
     return obj;
@@ -311,12 +313,12 @@ PyObject* set_type_ex(PyObject* /*self*/, PyObject* args) {
     size_t flags{};
     if(!PyArg_ParseTuple(args, "Ksn", &address, &name, &flags)) return nullptr;
 
-    RDValue* v = nullptr;
+    RDValue v;
     PyObject* obj = Py_None;
 
     if(rd_settypename_ex(address, name, flags, &v)) {
-        obj = python::to_object(v);
-        rdvalue_destroy(v);
+        obj = python::to_object(&v);
+        rdvalue_destroy(&v);
     }
 
     return obj;
@@ -542,12 +544,12 @@ PyObject* get_type(PyObject* /*self*/, PyObject* args) {
     const char* tname = nullptr;
     if(!PyArg_ParseTuple(args, "Ks", &address, &tname)) return nullptr;
 
-    RDValue* v = rd_gettypename(address, tname);
+    RDValueOpt v = rd_gettypename(address, tname);
     PyObject* obj = Py_None;
 
-    if(v) {
-        obj = python::to_object(v);
-        rdvalue_destroy(v);
+    if(v.ok) {
+        obj = python::to_object(&v.value);
+        rdvalue_destroy(&v.value);
     }
 
     return obj;
