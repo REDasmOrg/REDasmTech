@@ -244,7 +244,7 @@ tl::optional<RDValue> get_type_impl(const RDBuffer* self, usize& idx,
 
         for(usize i = 0; i < t.n; i++) {
             if(auto item = buffer::get_type_impl(self, idx, td); item)
-                v.list.data[i] = *item;
+                slice_push(&v.list, *item);
             else
                 goto fail;
         }
@@ -276,7 +276,7 @@ tl::optional<RDValue> read_struct_impl(const RDBuffer* self, usize& idx,
 
             for(usize i = 0; i < pt.n; i++) {
                 if(auto val = buffer::get_type_impl(self, idx, pt.tdef); val)
-                    l.list.data[i] = *val;
+                    slice_push(&l.list, *val);
                 else
                     goto fail;
             }

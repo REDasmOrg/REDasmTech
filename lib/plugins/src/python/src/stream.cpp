@@ -231,7 +231,6 @@ PyObject* stream_read_struct(PyStream* self, PyObject* args) {
 
 PyObject* stream_read_type(PyStream* self, PyObject* args) {
     const char* tname = PyUnicode_AsUTF8(args);
-
     RDValueOpt v = rdstream_read_type(self->stream, tname);
     PyObject* res = Py_None;
 
