@@ -8,16 +8,17 @@ namespace redasm {
 namespace {
 
 template<typename T, typename Slice>
-T* find_range(const Slice& s, RDAddress address) {
+T* find_range(const Slice& s, RDAddress address, isize* index = nullptr) {
     auto res = slice_bsearch(
         &s, ct_inttoptr(address), +[](const RDAddress* key, const T* item) {
-            auto addr = reinterpret_cast<RDAddress>(key);
+            auto addr = ct_ptrtoint(RDAddress, key);
             if(addr < item->start) return -1;
             if(addr >= item->end) return 1;
             return 0;
         });
 
-    if(res.found) return &s.data[res.index];
+    if(index) *index = res.index;
+    if(res.found) return &slice_at(&s, res.index);
     return nullptr;
 }
 
@@ -103,13 +104,9 @@ bool Program::add_segment(std::string_view name, RDAddress start, RDAddress end,
                           u32 perm, u32 bits) {
     if(start >= end) return false;
 
-    auto r = slice_bsearch(
-        &this->segments, ct_inttoptr(start),
-        +[](const RDAddress* key, const RDSegment* val) -> int {
-            return reinterpret_cast<RDAddress>(key) - val->end;
-        });
-
-    if(r.found) return false; // Overlap detected
+    isize index = -1;
+    auto* fs = redasm::find_range<RDSegment>(this->segments, start, &index);
+    if(fs) return false; // Overlap detected
 
     RDSegment s = {
         .name = utils::copy_str(name),
@@ -120,7 +117,7 @@ bool Program::add_segment(std::string_view name, RDAddress start, RDAddress end,
         .mem = rdbuffer_creatememory(end - start),
     };
 
-    slice_insert(&this->segments, r.index, s);
+    slice_insert(&this->segments, index, s);
 
     for(const FileMapping& m : this->mappings) {
         usize mapend = m.base + m.length;
