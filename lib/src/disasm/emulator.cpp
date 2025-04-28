@@ -47,16 +47,8 @@ void Emulator::add_ref(RDAddress toaddr, usize type) { // NOLINT
     state::context->add_ref(this->pc, toaddr, type);
 }
 
-void Emulator::unset_sreg(RDAddress addr, int reg) {
-    state::context->set_sreg(addr, reg, RDRegValue_none(), this->pc);
-}
-
-void Emulator::set_sreg(RDAddress addr, int reg, u64 val) {
-    state::context->set_sreg(addr, reg, RDRegValue_some(val), this->pc);
-}
-
-tl::optional<u64> Emulator::get_reg(int regid) const {
-    auto it = m_state.regs.find(regid);
+tl::optional<u64> Emulator::get_reg(int reg) const {
+    auto it = m_state.regs.find(reg);
     if(it != m_state.regs.end()) return it->second;
     return tl::nullopt;
 }
@@ -205,7 +197,6 @@ bool Emulator::decode(RDAddress address, RDInstruction& instr) {
     const RDProcessorPlugin* plugin = state::context->processorplugin;
     ct_assume(plugin);
 
-    // this->check_sregs();
     instr.address = address;
 
     if(plugin->decode)
@@ -218,13 +209,6 @@ bool Emulator::decode(RDAddress address, RDInstruction& instr) {
     }
 
     return instr.length > 0;
-}
-
-void Emulator::check_sregs() {
-    Database::SRegChanges rc = state::context->get_sregs_from_addr(this->pc);
-
-    for(const Database::SegmentReg& sreg : rc)
-        m_state.sregs[sreg.reg] = sreg.value;
 }
 
 bool Emulator::has_pending_code() const {

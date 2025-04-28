@@ -144,6 +144,7 @@ void slice_init(void* self, Allocator a, void* ctx) {
 void _slice_insert(void* self, isize idx, isize dsize) {
     ct_assume(self);
     SliceInternalReplica* slice = (SliceInternalReplica*)self;
+    ct_except_if(slice_isview(slice), "_slice_insert: cannot mutate a view");
 
     // Normalize index: -1 or length means "append"
     if(idx == -1) idx = slice->length;
@@ -164,6 +165,7 @@ void _slice_insert(void* self, isize idx, isize dsize) {
 void _slice_grow(void* self, isize dsize) {
     ct_assume(self);
     SliceInternalReplica* slice = (SliceInternalReplica*)self;
+    ct_except_if(slice_isview(slice), "_slice_grow: cannot mutate a view");
 
     if(slice->length >= slice->capacity) {
         _slice_reserve(self,
@@ -176,6 +178,7 @@ void _slice_grow(void* self, isize dsize) {
 void _slice_reserve(void* self, isize n, isize dsize) {
     ct_assume(self);
     SliceInternalReplica* slice = (SliceInternalReplica*)self;
+    ct_except_if(slice_isview(slice), "_slice_reserve: cannot mutate a view");
     if(slice->capacity >= n) return;
 
     slice->data = mem_realloc0(slice->data, slice->capacity * dsize, n * dsize,
@@ -186,6 +189,7 @@ void _slice_reserve(void* self, isize n, isize dsize) {
 void _slice_erase(void* self, isize idx, usize dsize) {
     ct_assume(self);
     SliceInternalReplica* slice = (SliceInternalReplica*)self;
+    ct_except_if(slice_isview(slice), "_slice_erase: cannot mutate a view");
 
     if(idx == -1) idx = slice->length = -1;
 
@@ -205,6 +209,8 @@ void _slice_erase(void* self, isize idx, usize dsize) {
 void _slice_eraserange(void* self, isize start, isize end, usize dsize) {
     ct_assume(self);
     SliceInternalReplica* slice = (SliceInternalReplica*)self;
+    ct_except_if(slice_isview(slice),
+                 "_slice_eraserange: cannot mutate a view");
 
     isize n = slice->length;
     if(start < 0) start += n;
@@ -229,7 +235,11 @@ void _slice_destroy(void* self, isize dsize) {
     SliceInternalReplica* slice = (SliceInternalReplica*)self;
     if(!slice->data) return;
 
-    mem_free(slice->data, slice->capacity * dsize, slice->alloc, slice->ctx);
+    // Check if 'Slice' is owned
+    if(slice->alloc && slice->capacity)
+        mem_free(slice->data, slice->capacity * dsize, slice->alloc,
+                 slice->ctx);
+
     slice->length = slice->capacity = 0;
     slice->alloc = NULL;
     slice->data = NULL;
@@ -351,7 +361,7 @@ bool str_equals(const Str* self, const Str* rhs) {
 void str_eraserange(Str* self, isize start, isize end) {
     ct_assume(self);
     ct_except_if(str_isview(self), "str_eraserange: cannot mutate a view");
-    _slice_eraserange(self, start, end, sizeof(*self->data));
+    _slice_eraserange(self, start, end, slice_itemsize(self));
     self->data[self->length] = 0;
 }
 
@@ -407,21 +417,6 @@ void _str_replace_n(Str* self, const char* from, isize nfrom, const char* to,
         str_eraserange(self, i, i + nfrom);
         _str_insert_n(self, i, to, nto);
     }
-}
-
-void str_destroy(Str* self) {
-    ct_assume(self);
-
-    // Check if 'Str' is owned
-    if(self->alloc && self->capacity) {
-        _slice_destroy(self, sizeof(*self->data));
-        return;
-    }
-
-    self->length = self->capacity = 0;
-    self->alloc = NULL;
-    self->data = NULL;
-    self->ctx = NULL;
 }
 
 bool _str_startswith_n(const Str* self, const char* s, isize n) {

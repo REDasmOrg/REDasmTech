@@ -18,9 +18,11 @@ Capstone::~Capstone() {
     cs_close(&this->handle);
 }
 
-const char* Capstone::get_mnemonic(u32 id) const {
-    return cs_insn_name(this->handle, id);
+const char* Capstone::get_mnemonic(const RDInstruction* instr) const {
+    return instr->mnemonic;
 }
+
+const int* Capstone::get_segmentregisters() const { return nullptr; }
 
 const char* Capstone::get_registername(int regid) const {
     return cs_reg_name(this->handle, regid);
@@ -38,6 +40,11 @@ bool Capstone::disasm(RDInstruction* instr, u8* data, usize size) const {
     u64 outaddress = instr->address;
     size_t outsize = size;
 
-    return cs_disasm_iter(this->handle, &pdata, &outsize, &outaddress,
-                          this->insn);
+    if(cs_disasm_iter(this->handle, &pdata, &outsize, &outaddress,
+                      this->insn)) {
+        rdinstruction_setmnemonic(instr, this->insn->mnemonic);
+        return true;
+    }
+
+    return false;
 }

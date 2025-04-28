@@ -17,6 +17,7 @@ int main(int argc, char** argv) {
     app.setApplicationName("redasm");
     app.setApplicationDisplayName("REDasm " + REDASM_VERSION);
 
+    // rd_setloglevel(LOGLEVEL_INFO);
     rd_setloglevel(LOGLEVEL_TRACE);
     themeprovider::apply_theme();
 
@@ -26,10 +27,7 @@ int main(int argc, char** argv) {
 
     while(running) {
         QEventLoop::ProcessEventsFlags f = QEventLoop::WaitForMoreEvents;
-
-        if(mw.loop())
-            f = QEventLoop::AllEvents;
-
+        if(mw.loop()) f = QEventLoop::AllEvents;
         app.processEvents(f);
     }
 

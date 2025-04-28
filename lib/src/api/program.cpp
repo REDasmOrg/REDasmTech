@@ -9,8 +9,7 @@ bool rd_addsegment(const char* name, RDAddress start, RDAddress end, u32 perm,
                   perm, bits);
 
     return name && redasm::state::context &&
-           redasm::state::context->program.add_segment(name, start, end, perm,
-                                                       bits);
+           redasm::state::context->add_segment(name, start, end, perm, bits);
 }
 
 bool rd_addsegment_n(const char* name, RDAddress base, usize n, u32 perm,

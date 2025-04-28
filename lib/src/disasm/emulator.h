@@ -27,7 +27,7 @@ public:
     bool decode_prev(RDAddress address, RDInstruction& instr);
     bool decode(RDAddress address, RDInstruction& instr);
     bool has_pending_code() const;
-    tl::optional<u64> get_reg(int regid) const;
+    tl::optional<u64> get_reg(int reg) const;
     void unset_reg(int regid);
     void set_reg(int regid, u64 val);
     tl::optional<u64> upd_reg(int regid, u64 val, u64 mask);
@@ -37,8 +37,6 @@ public:
     u64 take_state(std::string_view s);
     u64 upd_state(std::string_view s, u64 val, u64 mask);
     void add_ref(RDAddress toaddr, usize type);
-    void unset_sreg(RDAddress addr, int reg);
-    void set_sreg(RDAddress addr, int reg, u64 val);
     void flow(RDAddress address);
     u32 tick();
 
@@ -54,7 +52,6 @@ public:
     };
 
 private:
-    void check_sregs();
     void execute_delayslots(const RDInstruction& instr);
 
 public:

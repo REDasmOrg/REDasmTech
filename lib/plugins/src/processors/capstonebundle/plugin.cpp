@@ -30,9 +30,17 @@ void compile_fields(RDProcessorPlugin* plugin, const char* id, const char* name,
         return reinterpret_cast<const Processor*>(self)->get_mnemonic(instr);
     };
 
+    plugin->get_segmentregisters = [](const RDProcessor* self) {
+        return reinterpret_cast<const Processor*>(self)->get_segmentregisters();
+    };
+
     plugin->get_registername = [](const RDProcessor* self, int regid) {
         return reinterpret_cast<const Processor*>(self)->get_registername(
             regid);
+    };
+
+    plugin->setup = [](RDProcessor* self, RDEmulator* e) {
+        reinterpret_cast<Processor*>(self)->setup(e);
     };
 
     plugin->decode = [](RDProcessor* self, RDInstruction* instr) {
@@ -67,4 +75,6 @@ void rdplugin_create() {
 
     rd_registerprocessor(&arm32le);
     rd_registerprocessor(&arm32be);
+    rd_registerprocessor(&thumble);
+    rd_registerprocessor(&thumbbe);
 }

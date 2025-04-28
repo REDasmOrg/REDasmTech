@@ -14,23 +14,22 @@ u64 rd_getsreg_ex(RDAddress address, int sreg, u64 d) {
     return d;
 }
 
-bool rd_getsreg(RDAddress address, int sreg, u64* val) {
-    spdlog::trace("rd_getsreg({:x}, {})", address, sreg, fmt::ptr(val));
+RDRegValue rd_getsreg(RDAddress address, int sreg) {
+    spdlog::trace("rd_getsreg({:x}, {})", address, sreg);
 
     if(redasm::state::context) {
-        auto v = redasm::state::context->get_sreg(address, sreg);
-        if(v && val) *val = *v;
-        return v.has_value();
+        if(auto v = redasm::state::context->get_sreg(address, sreg); v)
+            return RDRegValue_some(*v);
     }
 
-    return false;
+    return RDRegValue_none();
 }
 
 void rd_addsreg_range(RDAddress start, RDAddress end, int sreg, u64 val) {
     spdlog::trace("rd_addsreg_range({:x}, {:x}, {}, {:x})", start, end, sreg,
                   val);
     if(redasm::state::context)
-        redasm::state::context->add_sreg_range(start, end, sreg, val);
+        redasm::state::context->program.add_sreg_range(start, end, sreg, val);
 }
 
 void rd_setsreg(RDAddress address, int sreg, u64 val) {

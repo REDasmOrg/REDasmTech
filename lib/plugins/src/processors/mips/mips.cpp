@@ -209,7 +209,7 @@ void decode(RDProcessor*, RDInstruction* instr) {
 
     instr->id = dec.opcode->id;
     instr->length = dec.length;
-    instr->uservalue = dec.opcode->format;
+    instr->uservalue1 = dec.opcode->format;
 
     if(mips_decoder::has_delayslot(instr->id)) instr->delayslots = 1;
 

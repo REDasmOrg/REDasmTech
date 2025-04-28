@@ -107,7 +107,6 @@ bool Context::load(const RDProcessorPlugin* plugin) {
 
     if(this->loaderplugin->load &&
        this->loaderplugin->load(this->loader, this->program.file)) {
-
         const RDAnalyzerPlugin** p;
         slice_foreach(p, &pm::analyzers) {
             // Assume true if 'isenabled' is not implemented
@@ -316,11 +315,6 @@ tl::optional<RDAddress> Context::get_address(std::string_view name,
     return tl::nullopt;
 }
 
-bool Context::add_sreg_range(RDAddress start, RDAddress end, int sreg,
-                             u64 val) {
-    return this->program.add_sreg_range(start, end, sreg, val);
-}
-
 Database::SRegChanges Context::get_sregs_from_addr(RDAddress address) const {
     const RDSegment* seg = this->program.find_segment(address);
     if(!seg || memory::has_flag(seg, address, BF_SREG)) return {};
@@ -332,9 +326,9 @@ Database::SRegChanges Context::get_sreg_changes(int sreg) const {
 }
 
 tl::optional<u64> Context::get_sreg(RDAddress address, int sreg) const {
-    const RDSegment* seg = this->program.find_segment(address);
-    if(!seg || memory::has_flag(seg, address, BF_SREG)) return tl::nullopt;
-    return m_database->get_sreg(address, sreg);
+    const RDSRange* r = this->program.find_sreg_range(address, sreg);
+    if(r && r->val.ok) return r->val.value;
+    return tl::nullopt;
 }
 
 Database::SRegList Context::get_sregs() const {
@@ -343,11 +337,8 @@ Database::SRegList Context::get_sregs() const {
 
 void Context::set_sreg(RDAddress address, int sreg, const RDRegValue& val,
                        const tl::optional<RDAddress>& fromaddr) {
-    RDSegment* seg = this->program.find_segment(address);
-    if(!seg || !this->program.set_sreg(address, sreg, val)) return;
-
-    memory::set_flag(seg, address, BF_SREG);
-    m_database->set_sreg(address, sreg, val, fromaddr);
+    if(this->program.set_sreg(address, sreg, val))
+        m_database->set_sreg(address, sreg, val, fromaddr);
 }
 
 tl::optional<RDType> Context::get_type(RDAddress address) const {
@@ -482,6 +473,23 @@ Database::RefList Context::get_refs_to(RDAddress toaddr) const {
 void Context::add_problem(RDAddress address, std::string_view s) {
     spdlog::warn("add_problem(): {:x} = {}", address, s);
     slice_push(&this->problems, {address, utils::copy_str(s)});
+}
+
+bool Context::add_segment(std::string_view name, RDAddress start, RDAddress end,
+                          u32 perm, u32 bits) {
+    if(!this->program.add_segment(name, start, end, perm, bits)) return false;
+
+    // Try to initialize segment registers for this segment
+    const RDProcessorPlugin* pp = this->processorplugin;
+
+    if((perm & SP_X) && pp && pp->get_segmentregisters) {
+        const int* sregs = pp->get_segmentregisters(this->processor);
+
+        while(sregs && *sregs != -1)
+            this->program.add_sreg_range(start, end, *sregs++, 0);
+    }
+
+    return true;
 }
 
 } // namespace redasm

@@ -35,7 +35,6 @@ const QString INSTR_TEMPLATE = QString{R"(
         <b>Features:</b> %3<br>
         <b>Length:</b> %4<br>
         <b>Delayslots:</b> %5<br>
-        <b>Uservalue:</b> %6<br>
         <br>
         )"};
 
@@ -128,8 +127,7 @@ void show_details() {
                                .arg(rd_tohex(instr.id))
                                .arg(instrfeatures_tostring(&instr))
                                .arg(rd_tohex(instr.length))
-                               .arg(instr.delayslots)
-                               .arg(rd_tohex(instr.uservalue));
+                               .arg(instr.delayslots);
 
         foreach_operand(i, op, &instr) {
             QString strop = OP_TEMPLATE.arg(i)

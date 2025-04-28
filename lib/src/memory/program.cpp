@@ -280,7 +280,7 @@ bool Program::map_file(RDOffset off, RDAddress start, RDAddress end) {
     return true;
 }
 
-RDSRange* Program::find_sreg_range(RDAddress address, int sreg) {
+const RDSRange* Program::find_sreg_range(RDAddress address, int sreg) const {
     RDSRegTree* tree;
     hmap_get(tree, &this->segmentregs, ct_inttoptr(sreg), RDSRegTree, hnode,
              tree->sreg == sreg);

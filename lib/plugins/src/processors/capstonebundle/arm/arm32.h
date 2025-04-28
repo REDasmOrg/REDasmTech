@@ -9,8 +9,7 @@ constexpr int ARM_REG_T = ARM_REG_ENDING + 1;
 
 struct ARMCommon: public Capstone {
     explicit ARMCommon(cs_mode mode);
-
-    [[nodiscard]] virtual u64 t_reg() const = 0;
+    [[nodiscard]] const int* get_segmentregisters() const override;
     [[nodiscard]] const char* get_registername(int reg) const override;
     [[nodiscard]] RDAddress normalize_address(RDAddress address) const override;
     bool decode(RDInstruction* instr) override;
@@ -30,33 +29,35 @@ namespace impl {
 
 struct ARMLEImpl: public ARMCommon {
     explicit ARMLEImpl(): ARMCommon{CS_MODE_LITTLE_ENDIAN} {}
-    [[nodiscard]] u64 t_reg() const override { return 0; }
 };
 
 struct ARMBEImpl: public ARMCommon {
     explicit ARMBEImpl(): ARMCommon{CS_MODE_BIG_ENDIAN} {}
-    [[nodiscard]] u64 t_reg() const override { return 0; }
 };
 
 struct THUMBLEImpl: public ARMCommon {
     explicit THUMBLEImpl()
         : ARMCommon{
               static_cast<cs_mode>(CS_MODE_THUMB | CS_MODE_LITTLE_ENDIAN)} {}
-    [[nodiscard]] u64 t_reg() const override { return 1; }
 };
 
 struct THUMBBEImpl: public ARMCommon {
     explicit THUMBBEImpl()
         : ARMCommon{static_cast<cs_mode>(CS_MODE_THUMB | CS_MODE_BIG_ENDIAN)} {}
-    [[nodiscard]] u64 t_reg() const override { return 1; }
 };
 
 template<typename ARM, typename THUMB>
 struct ARMImpl {
     bool decode(RDInstruction* instr) {
-        auto reg = rdemulator_getreg(rd_getemulator(), ARM_REG_T);
+        auto reg = rd_getsreg(instr->address, ARM_REG_T);
         if(RDRegValue_value_or(reg, 0) == 0) return m_arm.decode(instr);
         return m_thumb.decode(instr);
+    }
+
+    void setup(RDEmulator* e) const { m_arm.setup(e); }
+
+    [[nodiscard]] const int* get_segmentregisters() const {
+        return m_arm.get_segmentregisters();
     }
 
     [[nodiscard]] const char* get_registername(int reg) const {
@@ -68,25 +69,23 @@ struct ARMImpl {
     }
 
     void emulate(RDEmulator* e, const RDInstruction* instr) const {
-        auto reg = rdemulator_getreg(rd_getemulator(), ARM_REG_T);
+        auto reg = rd_getsreg(instr->address, ARM_REG_T);
         if(RDRegValue_value_or(reg, 0) == 0) return m_arm.emulate(e, instr);
         return m_thumb.emulate(e, instr);
     }
 
-    bool render_instruction(RDRenderer* r, const RDInstruction* instr) const {
-        // if(rd_getsreg_ex(instr->address, ARM_REG_T, 0) == 0)
-        //     return m_arm.render_instruction(r, instr);
-        // return m_thumb.render_instruction(r, instr);
-
-        return false;
+    void render_instruction(RDRenderer* r, const RDInstruction* instr) const {
+        auto reg = rd_getsreg(instr->address, ARM_REG_T);
+        if(RDRegValue_value_or(reg, 0) == 0)
+            m_arm.render_instruction(r, instr);
+        else
+            m_thumb.render_instruction(r, instr);
     }
 
     [[nodiscard]] const char* get_mnemonic(const RDInstruction* instr) const {
-        // if(rd_getsreg_ex(instr->address, ARM_REG_T, 0) == 0)
-        // return m_arm.get_mnemonic(instr);
-        // return m_thumb.get_mnemonic(instr);
-
-        return nullptr;
+        auto reg = rd_getsreg(instr->address, ARM_REG_T);
+        if(RDRegValue_value_or(reg, 0) == 0) return m_arm.get_mnemonic(instr);
+        return m_thumb.get_mnemonic(instr);
     }
 
 private:

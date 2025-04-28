@@ -134,7 +134,7 @@ CT_API CT_NORET void _except_impl(const char* file, int line, const char* fmt,
         return opt;                                                            \
     }                                                                          \
     static inline name name##_none(void) {                                     \
-        name opt;                                                              \
+        name opt = {0};                                                        \
         opt.ok = false;                                                        \
         return opt;                                                            \
     }
@@ -241,6 +241,7 @@ typedef struct BSearchResult {
 } BSearchResult;
 
 #define define_slice(name, T)                                                  \
+    typedef T name##_ItemType;                                                 \
     typedef struct name {                                                      \
         T* data;                                                               \
         isize length;                                                          \
@@ -249,11 +250,14 @@ typedef struct BSearchResult {
         void* ctx;                                                             \
     } name
 
+#define slice_isview(self) ((self)->alloc == NULL)
+#define slice_ismutable(self) ((self)->alloc != NULL)
 #define slice_clear(self) ((self)->length = 0)
 #define slice_empty(self) ((self)->length == 0)
-#define slice_reserve(self, n) _slice_reserve(self, n, sizeof(*(self)->data))
-#define slice_destroy(self) _slice_destroy(self, sizeof(*(self)->data))
-#define slice_erase(self) _slice_erase(self, sizeof(*(self)->data))
+#define slice_itemsize(self) (sizeof(*(self)->data))
+#define slice_reserve(self, n) _slice_reserve(self, n, slice_itemsize(self))
+#define slice_destroy(self) _slice_destroy(self, slice_itemsize(self))
+#define slice_erase(self) _slice_erase(self, slice_itemsize(self))
 #define slice_pop(self) ((self)->data[--(self)->length])
 #define slice_isnull(self) (!!(self)->data)
 #define slice_at(self, idx) ((self)->data[idx])
@@ -262,14 +266,14 @@ typedef struct BSearchResult {
 
 #define slice_insert(self, idx, ...)                                           \
     do {                                                                       \
-        _slice_insert(self, idx, sizeof(*(self)->data));                       \
+        _slice_insert(self, idx, slice_itemsize(self));                        \
         (self)->data[idx == -1 ? (self)->length++ : (++(self)->length, idx)] = \
             __VA_ARGS__;                                                       \
     } while(0)
 
 #define slice_push(self, ...)                                                  \
     do {                                                                       \
-        _slice_grow(self, sizeof(*(self)->data));                              \
+        _slice_grow(self, slice_itemsize(self));                               \
         (self)->data[(self)->length++] = __VA_ARGS__;                          \
     } while(0)
 
@@ -280,14 +284,17 @@ typedef struct BSearchResult {
         ++__slice_##it##_i, (++it))
 
 #define slice_sort(self, cmp)                                                  \
-    qsort((self)->data, (self)->length, sizeof(*(self)->data),                 \
+    qsort((self)->data, (self)->length, slice_itemsize(self),                  \
           (SliceCompare)(cmp));
 
 #define slice_bsearch(self, key, cmp)                                          \
-    _slice_bsearch(self, sizeof(*(self)->data), key, (SliceCompare)cmp)
+    _slice_bsearch(self, slice_itemsize(self), key, (SliceCompare)cmp)
 
 #define slice_stablepartition(self, pred)                                      \
-    _slice_stablepartition(self, sizeof(*(self)->data), (SlicePredicate)pred)
+    _slice_stablepartition(self, slice_itemsize(self), (SlicePredicate)pred)
+
+#define slice_view_n(T, p, n) {(T##_ItemType*)(p), n, 0, NULL, NULL}
+#define slice_view(T, p) slice_view_n(T, p, (sizeof(p) / sizeof(*(p))))
 
 CT_API void slice_init(void* self, Allocator a, void* ctx);
 CT_API void _slice_reserve(void* self, isize n, isize dsize);
@@ -313,8 +320,8 @@ typedef struct StrSplit {
 } StrSplit;
 
 #define str_init slice_init
-#define str_isview(self) ((self)->alloc == NULL)
-#define str_ismutable(self) ((self)->alloc != NULL)
+#define str_isview slice_isview
+#define str_ismutable slice_ismutable
 #define str_isnull slice_isnull
 #define str_at slice_at
 #define str_first slice_first
@@ -322,6 +329,7 @@ typedef struct StrSplit {
 #define str_empty slice_empty
 #define str_erase slice_erase
 #define str_foreach slice_foreach
+#define str_destroy slice_destroy
 
 CT_API Str str_create_n(const char* s, isize n, Allocator a, void* ctx);
 CT_API Str str_view_n(const char* s, isize n);
@@ -332,7 +340,6 @@ CT_API void str_clear(Str* self);
 CT_API void str_ncat(Str* self, const char* s, isize n);
 CT_API void str_resize(Str* self, isize n);
 CT_API void str_reserve(Str* self, isize n);
-CT_API void str_destroy(Str* self);
 CT_API void str_eraserange(Str* self, isize start, isize end);
 CT_API void str_tolower(Str* self);
 CT_API void str_toupper(Str* self);

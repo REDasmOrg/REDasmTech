@@ -134,8 +134,8 @@ bool track_pop_reg(RDEmulator* e, const RDInstruction* instr) {
         val = get_reg_val(e, instr->operands[0].reg);
 
     if(val.ok) {
-        rdemulator_setsreg(e, instr->address + instr->length,
-                           instr->operands[0].reg, val.value);
+        rd_setsreg(instr->address + instr->length, instr->operands[0].reg,
+                   val.value);
     }
 
     return val.ok;
@@ -145,8 +145,8 @@ bool track_mov_reg(RDEmulator* e, const RDInstruction* instr) {
     auto val = get_reg_val(e, instr->operands[0].reg);
 
     if(val.ok) {
-        rdemulator_setsreg(e, instr->address + instr->length,
-                           instr->operands[0].reg, val.value);
+        rd_setsreg(instr->address + instr->length, instr->operands[0].reg,
+                   val.value);
     }
 
     return true;
@@ -388,21 +388,6 @@ void emulate(RDProcessor* /*self*/, RDEmulator* e, const RDInstruction* instr) {
         rdemulator_flow(e, instr->address + instr->length);
 }
 
-void setup(RDProcessor*, RDEmulator*) { // Setup segment registers
-    const RDSegmentSlice* segments = rd_getsegments();
-
-    const RDSegment* seg;
-    slice_foreach(seg, segments) {
-        for(int sreg : SEGMENT_REGISTERS) {
-            if(seg->perm & SP_X &&
-               (sreg == ZYDIS_REGISTER_CS || sreg == ZYDIS_REGISTER_DS))
-                rd_addsreg_range(seg->start, seg->end, sreg, seg->start);
-            else
-                rd_addsreg_range(seg->start, seg->end, sreg, 0);
-        }
-    }
-}
-
 template<ZydisMachineMode Mode, ZydisStackWidth Width>
 void register_processor(RDProcessorPlugin* plugin, const char* id,
                         const char* name, int addrsize, int intsize) {
@@ -415,7 +400,6 @@ void register_processor(RDProcessorPlugin* plugin, const char* id,
     plugin->emulate = emulate;
     plugin->lift = x86_lifter::lift;
     plugin->render_instruction = render_instruction;
-    plugin->setup = setup;
 
     plugin->create = [](const RDProcessorPlugin*) {
         auto* self = new X86Processor();

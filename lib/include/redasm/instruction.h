@@ -4,6 +4,7 @@
 #include <redasm/typing.h>
 
 #define RD_NOPERANDS 8
+#define RD_NMNEMONIC 32
 
 // Syntatic Sugar
 #define foreach_operand(i, op, instr)                                          \
@@ -98,14 +99,17 @@ typedef struct RDInstruction {
     RDOperand operands[RD_NOPERANDS];
 
     union {
-        void* userdata;
-        uptr uservalue;
+        void* userdata1;
+        uptr uservalue1;
+    };
+
+    union {
+        void* userdata2;
+        uptr uservalue2;
+        char mnemonic[RD_NMNEMONIC];
     };
 } RDInstruction;
 
-inline usize rdinstruction_operandscount(const RDInstruction* instr) {
-    int c = 0;
-    while(instr->operands[c].type != OP_NULL)
-        c++;
-    return c;
-}
+REDASM_EXPORT void rdinstruction_setmnemonic(RDInstruction* instr,
+                                             const char* mnemonic);
+REDASM_EXPORT usize rdinstruction_operandscount(const RDInstruction* instr);

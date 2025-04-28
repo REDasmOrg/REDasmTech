@@ -35,6 +35,8 @@ public:
     bool set_function(RDAddress address, usize flags);
     bool set_entry(RDAddress address, const std::string& name = {});
     void add_problem(RDAddress address, std::string_view s);
+    bool add_segment(std::string_view name, RDAddress start, RDAddress end,
+                     u32 perm, u32 bits);
 
 public: // Database Interface
     void add_ref(RDAddress fromaddr, RDAddress toaddr, usize type);
@@ -49,7 +51,6 @@ public: // Database Interface
     Database::RefList get_refs_from(RDAddress fromaddr) const;
     Database::RefList get_refs_to_type(RDAddress fromaddr, usize type) const;
     Database::RefList get_refs_to(RDAddress toaddr) const;
-    bool add_sreg_range(RDAddress start, RDAddress end, int sreg, u64 val);
     Database::SRegChanges get_sregs_from_addr(RDAddress address) const;
     Database::SRegChanges get_sreg_changes(int reg) const;
     tl::optional<u64> get_sreg(RDAddress address, int reg) const;

@@ -24,6 +24,7 @@ function(setup_compiler project_name)
         "-Wno-error=unused-local-typedefs"
         "-Wno-error=unused-but-set-parameter"
         "-Wno-error=unused-but-set-variable"
+        "-Wno-missing-field-initializers"
         "-fno-rtti"
     )
 
