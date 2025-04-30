@@ -1,7 +1,7 @@
 #include "capstone.h"
 
-Capstone::Capstone(cs_arch arch, cs_mode mode) {
-    cs_err err = cs_open(arch, mode, &this->handle);
+Capstone::Capstone(cs_arch a, cs_mode m): arch{a}, mode{m} {
+    cs_err err = cs_open(a, m, &this->handle);
 
     if(err) {
         rd_log(cs_strerror(err));

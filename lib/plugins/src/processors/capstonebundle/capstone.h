@@ -4,7 +4,7 @@
 #include <redasm/redasm.h>
 
 struct Capstone {
-    Capstone(cs_arch arch, cs_mode mode);
+    Capstone(cs_arch a, cs_mode m);
     virtual ~Capstone();
 
     [[nodiscard]] const char* get_mnemonic(const RDInstruction* instr) const;
@@ -23,4 +23,6 @@ protected:
 public:
     csh handle{};
     cs_insn* insn{nullptr};
+    cs_arch arch;
+    cs_mode mode;
 };

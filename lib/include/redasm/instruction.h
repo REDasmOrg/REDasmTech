@@ -93,9 +93,9 @@ typedef struct RDOperand {
 typedef struct RDInstruction {
     RDAddress address;
     u32 id;
-    u32 features;
-    u32 length;
-    u32 delayslots;
+    u16 length;
+    u8 features;
+    u8 delayslots;
     RDOperand operands[RD_NOPERANDS];
 
     union {

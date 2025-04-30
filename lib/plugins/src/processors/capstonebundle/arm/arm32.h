@@ -12,6 +12,7 @@ struct ARMCommon: public Capstone {
     [[nodiscard]] const int* get_segmentregisters() const override;
     [[nodiscard]] const char* get_registername(int reg) const override;
     [[nodiscard]] RDAddress normalize_address(RDAddress address) const override;
+    [[nodiscard]] RDAddress pc(const RDInstruction* instr) const;
     bool decode(RDInstruction* instr) override;
     void emulate(RDEmulator* e, const RDInstruction* instr) const override;
     void render_instruction(RDRenderer* r,

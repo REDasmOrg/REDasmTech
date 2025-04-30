@@ -47,7 +47,6 @@ const QString OP_TEMPLATE = QString{R"(
 
 void append_separated(QString& s, const QString& arg) {
     if(!s.isEmpty()) s.append(" | ");
-
     s.append(arg);
 }
 

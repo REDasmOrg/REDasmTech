@@ -22,6 +22,28 @@ RDAddress ARMCommon::normalize_address(RDAddress address) const {
     return naddr;
 }
 
+RDAddress ARMCommon::pc(const RDInstruction* instr) const {
+    /*
+     * https://community.arm.com/support-forums/f/architectures-and-processors-forum/4030/i-need-an-explication-to-the-armv6-manual
+     * https://stackoverflow.com/questions/24091566/why-does-the-arm-pc-register-point-to-the-instruction-after-the-next-one-to-be-e
+     * https://stackoverflow.com/questions/2102921/strange-behaviour-of-ldr-pc-value
+     *
+     * ARM state:
+     *  - The value of the PC is the address of the current instruction plus 8
+     * bytes.
+     *  - Bits [1:0] of this value are always zero, because ARM instructions are
+     * always word-aligned.
+     *
+     * THUMB state:
+     *  - The value read is the address of the instruction plus 4 bytes.
+     *  - Bit [0] of this value is always zero, because Thumb instructions are
+     * always halfword-aligned.
+     */
+
+    if(this->mode & CS_MODE_THUMB) return instr->address + (sizeof(u16) * 2);
+    return instr->address + (sizeof(u32) * 2);
+}
+
 bool ARMCommon::decode(RDInstruction* instr) {
     if(!this->disasm(instr, m_buffer.data(), m_buffer.size())) return false;
 
@@ -47,6 +69,14 @@ bool ARMCommon::decode(RDInstruction* instr) {
             instr->features |= IF_CALL;
             instr->operands[0].type = OP_ADDR;
             instr->operands[0].addr = arm.operands[0].imm;
+            return true;
+        }
+
+        case ARM_INS_ADR: {
+            instr->operands[0].type = OP_REG;
+            instr->operands[0].reg = arm.operands[0].reg;
+            instr->operands[1].type = OP_ADDR;
+            instr->operands[1].addr = this->pc(instr) + arm.operands[1].imm;
             return true;
         }
 
@@ -76,6 +106,11 @@ void ARMCommon::emulate(RDEmulator* e, const RDInstruction* instr) const {
         else
             rdemulator_addref(e, instr->operands[0].addr, CR_CALL);
     }
+    else {
+        foreach_operand(i, op, instr) {
+            if(op->type == OP_MEM) rdemulator_addref(e, op->mem, DR_READ);
+        }
+    }
 
     if(!(instr->features & IF_STOP))
         rdemulator_flow(e, instr->address + instr->length);
@@ -84,6 +119,9 @@ void ARMCommon::emulate(RDEmulator* e, const RDInstruction* instr) const {
 void ARMCommon::render_instruction(RDRenderer* r,
                                    const RDInstruction* instr) const {
     rdrenderer_mnem(r, instr, THEME_DEFAULT);
+
+    if(instr->id == ARM_INS_PUSH || instr->id == ARM_INS_POP)
+        rdrenderer_text(r, "{");
 
     foreach_operand(i, op, instr) {
         if(i > 0) rdrenderer_text(r, ",");
@@ -104,7 +142,7 @@ void ARMCommon::render_instruction(RDRenderer* r,
             case OP_PHRASE: {
                 rdrenderer_text(r, "[");
                 rdrenderer_reg(r, op->phrase.base);
-                rdrenderer_text(r, "+");
+                rdrenderer_text(r, ",");
                 rdrenderer_reg(r, op->phrase.index);
                 rdrenderer_text(r, "]");
                 if(instr->uservalue1) rdrenderer_text(r, "!");
@@ -114,9 +152,14 @@ void ARMCommon::render_instruction(RDRenderer* r,
             case OP_DISPL: {
                 rdrenderer_text(r, "[");
                 rdrenderer_reg(r, op->displ.base);
-                rdrenderer_text(r, "+");
+                rdrenderer_text(r, ",");
+
+                if(op->displ.displ) {
+                    rdrenderer_cnst_ex(r, op->displ.s_displ, 0, RC_NEEDSIGN);
+                    rdrenderer_text(r, "+");
+                }
+
                 rdrenderer_reg(r, op->displ.index);
-                rdrenderer_cnst_ex(r, op->displ.s_displ, 0, RC_NEEDSIGN);
                 rdrenderer_text(r, "]");
                 if(instr->uservalue1) rdrenderer_text(r, "!");
                 break;
@@ -125,6 +168,9 @@ void ARMCommon::render_instruction(RDRenderer* r,
             default: rdrenderer_unkn(r); break;
         }
     }
+
+    if(instr->id == ARM_INS_PUSH || instr->id == ARM_INS_POP)
+        rdrenderer_text(r, "}");
 }
 
 void ARMCommon::process_operands(RDInstruction* instr) const {
@@ -135,8 +181,14 @@ void ARMCommon::process_operands(RDInstruction* instr) const {
 
         switch(op.type) {
             case ARM_OP_REG: {
-                instr->operands[i].type = OP_REG;
-                instr->operands[i].reg = op.reg;
+                if(op.reg == ARM_REG_PC) {
+                    instr->operands[i].type = OP_IMM;
+                    instr->operands[i].imm = this->pc(instr);
+                }
+                else {
+                    instr->operands[i].type = OP_REG;
+                    instr->operands[i].reg = op.reg;
+                }
                 break;
             }
 
@@ -152,10 +204,9 @@ void ARMCommon::process_operands(RDInstruction* instr) const {
                     instr->operands[i].type = OP_MEM;
                     instr->operands[i].mem = op.mem.disp;
                 }
-                else if(!op.mem.disp) {
-                    instr->operands[i].type = OP_PHRASE;
-                    instr->operands[i].displ.base = op.mem.base;
-                    instr->operands[i].displ.index = op.mem.index;
+                else if(op.mem.base == ARM_REG_PC) {
+                    instr->operands[i].type = OP_MEM;
+                    instr->operands[i].mem = this->pc(instr) + op.mem.disp;
                 }
                 else {
                     instr->operands[i].type = OP_DISPL;
