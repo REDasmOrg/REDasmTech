@@ -21,6 +21,7 @@ target_sources(${PROJECT_NAME}
         plugin.cpp
         capstone.cpp
         arm/arm32.cpp
+        arm/arm32_macros.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

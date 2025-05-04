@@ -19,6 +19,9 @@ struct ARMCommon: public Capstone {
                             const RDInstruction* instr) const override;
 
 private:
+    bool check_fixups(RDInstruction* instr, const cs_arm& arm) const;
+    void process_operand(RDInstruction* instr, usize idx,
+                         const cs_arm_op& op) const;
     void process_operands(RDInstruction* instr) const;
     [[nodiscard]] bool is_pc(int opidx) const;
 
