@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../styledgraph.h"
+#include <algorithm>
 #include <deque>
 #include <redasm/redasm.h>
 #include <unordered_map>
