@@ -1,5 +1,6 @@
 #include "../context.h"
 #include "../state.h"
+#include <cstring>
 #include <redasm/environment.h>
 #include <spdlog/spdlog.h>
 
@@ -14,6 +15,29 @@ bool rdenvironment_init(RDEnvironment* self, const char* name) {
     };
 
     return true;
+}
+
+const RDCallingConvention* rd_getcallingconvention() {
+    spdlog::trace("rd_getcallingconvention()");
+    redasm::Context* ctx = redasm::state::context;
+
+    if(!ctx || !ctx->loaderplugin || !ctx->processorplugin ||
+       !ctx->loaderplugin->get_callingconvention ||
+       !ctx->processorplugin->get_callingconventions)
+        return nullptr;
+
+    const char* ldrcc = ctx->loaderplugin->get_callingconvention(ctx->loader);
+    const RDCallingConvention** cc =
+        ctx->processorplugin->get_callingconventions(ctx->processor);
+
+    if(ldrcc && cc) {
+        while(*cc) {
+            if(!std::strcmp(ldrcc, (*cc)->name)) return *cc;
+            cc++;
+        }
+    }
+
+    return nullptr;
 }
 
 const RDEnvironment* rd_getenvironment() {

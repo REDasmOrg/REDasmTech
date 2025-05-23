@@ -1,6 +1,7 @@
 #pragma once
 
 #include <redasm/common.h>
+#include <redasm/environment.h>
 #include <redasm/function.h>
 #include <redasm/instruction.h>
 #include <redasm/plugin.h>
@@ -40,6 +41,7 @@ typedef const char* (*RDProcessorPluginGetMnemonic)(const RDProcessor*, const RD
 typedef const char* (*RDProcessorPluginGetRegisterName)(const RDProcessor*, int);
 typedef const char** (*RDProcessorPluginGetPrologues)(const RDProcessor*);
 typedef const int* (*RDProcessorPluginGetSegmentRegisters)(const RDProcessor*);
+typedef const RDCallingConvention** (*RDProcessorPluginGetCallingConventions)(const RDProcessor*);
 typedef RDAddress (*RDProcessorPluginNormalizeAddress)(const RDProcessor*, RDAddress);
 typedef void (*RDProcessorPluginRenderSegment)(const RDProcessor*, RDRenderer*, const RDSegment*);
 typedef void (*RDProcessorPluginRenderFunction)(const RDProcessor*, RDRenderer*, const RDFunction*);
@@ -55,6 +57,7 @@ typedef struct RDProcessorPlugin {
     RDProcessorPluginGetRegisterName get_registername;
     RDProcessorPluginGetSegmentRegisters get_segmentregisters;
     RDProcessorPluginGetPrologues get_prologues;
+    RDProcessorPluginGetCallingConventions get_callingconventions;
     RDProcessorPluginNormalizeAddress normalize_address;
     RDProcessorPluginDecode decode;
     RDProcessorPluginEmulate emulate;

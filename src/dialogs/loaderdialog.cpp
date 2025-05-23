@@ -53,6 +53,9 @@ void LoaderDialog::accept() {
         utils::log(QString{"Loader: %1"}.arg(tr.loaderplugin->name));
         utils::log(QString{"Processor: %1"}.arg(tr.processorplugin->name));
 
+        const RDCallingConvention* cc = rd_getcallingconvention();
+        if(cc) utils::log(QString{"Calling Convention: %1"}.arg(cc->name));
+
         const RDEnvironment* e = rd_getenvironment();
         if(e->name) utils::log(QString{"Environment: %1"}.arg(e->name));
 

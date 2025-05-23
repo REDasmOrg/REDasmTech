@@ -25,6 +25,7 @@ typedef struct RDLoaderRequest {
 typedef bool (*RDLoaderPluginParse)(struct RDLoader*, const RDLoaderRequest*);
 typedef bool (*RDLoaderPluginLoad)(struct RDLoader*, RDBuffer*);
 typedef const char* (*RDLoaderPluginGetProcessor)(struct RDLoader*);
+typedef const char* (*RDLoaderPluginGetCallingConvention)(struct RDLoader*);
 typedef const RDEnvironment* (*RDLoaderPluginGetEnvironment)(struct RDLoader*);
 // clang-format on
 
@@ -33,6 +34,7 @@ typedef struct RDLoaderPlugin {
     RDLoaderPluginParse parse;
     RDLoaderPluginLoad load;
     RDLoaderPluginGetProcessor get_processor;
+    RDLoaderPluginGetCallingConvention get_callingconvention;
     RDLoaderPluginGetEnvironment get_environment;
 } RDLoaderPlugin;
 

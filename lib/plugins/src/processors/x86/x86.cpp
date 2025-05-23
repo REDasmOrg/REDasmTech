@@ -1,3 +1,4 @@
+#include "x86_cc.h"
 #include "x86_common.h"
 #include "x86_lifter.h"
 #include <Zydis/Zydis.h>
@@ -27,10 +28,16 @@ const char* x86_32_prologues[] = {
     nullptr,
 };
 
+const RDCallingConvention* x86_32_calling_conventions[] = {
+    &x86_cc::cdecl_cc,
+    nullptr,
+};
+
 struct X86Processor {
     ZydisDecoder decoder;
     std::array<char, ZYDIS_MAX_INSTRUCTION_LENGTH> buffer;
     const char** prologues{nullptr};
+    const RDCallingConvention** calling_conventions{nullptr};
 };
 
 void apply_optype(const ZydisDecodedOperand& zop, RDOperand& op) {
@@ -407,10 +414,14 @@ void register_processor(RDProcessorPlugin* plugin, const char* id,
 
         if constexpr(Mode == ZYDIS_MACHINE_MODE_REAL_16)
             self->prologues = x86_16_prologues;
-        else if constexpr(Mode == ZYDIS_MACHINE_MODE_LEGACY_32)
+        else if constexpr(Mode == ZYDIS_MACHINE_MODE_LEGACY_32) {
             self->prologues = x86_32_prologues;
-        else
+            self->calling_conventions = x86_32_calling_conventions;
+        }
+        else {
             self->prologues = nullptr;
+            self->calling_conventions = nullptr;
+        }
 
         return reinterpret_cast<RDProcessor*>(self);
     };
@@ -431,6 +442,10 @@ void register_processor(RDProcessorPlugin* plugin, const char* id,
         return reinterpret_cast<const X86Processor*>(self)->prologues;
     };
 
+    plugin->get_callingconventions = [](const RDProcessor* self) {
+        return reinterpret_cast<const X86Processor*>(self)->calling_conventions;
+    };
+
     rd_registerprocessor(plugin);
 }
 
@@ -447,5 +462,6 @@ void rdplugin_create() {
     register_processor<ZYDIS_MACHINE_MODE_LEGACY_16, ZYDIS_STACK_WIDTH_16>(&x86_16, "x86_16", "X86_16", 2, 2);
     register_processor<ZYDIS_MACHINE_MODE_LEGACY_32, ZYDIS_STACK_WIDTH_32>(&x86_32, "x86_32", "X86_32", 4, 4);
     register_processor<ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64>(&x86_64, "x86_64", "X86_64", 8, 4);
+
     // clang-format on
 }

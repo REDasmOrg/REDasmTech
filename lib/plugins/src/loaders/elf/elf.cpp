@@ -135,6 +135,19 @@ bool load(RDLoader* self, RDBuffer* file) {
 }
 
 template<int Bits>
+const char* get_callingconvention(RDLoader* self) {
+    using ELF = ElfFormat<Bits>;
+    const auto* elf = reinterpret_cast<const ELF*>(self);
+
+    switch(elf->ehdr.e_machine) {
+        case EM_386: return "x86_32/cdecl";
+        default: break;
+    }
+
+    return nullptr;
+}
+
+template<int Bits>
 const char* get_processor(RDLoader* self) {
     using ELF = ElfFormat<Bits>;
     const auto* elf = reinterpret_cast<const ELF*>(self);
@@ -176,6 +189,7 @@ RDLoaderPlugin define_loader(const char* id, const char* name) {
         .parse = parse<Bits>,
         .load = load<Bits>,
         .get_processor = get_processor<Bits>,
+        .get_callingconvention = get_callingconvention<Bits>,
     };
 }
 
