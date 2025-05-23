@@ -125,8 +125,10 @@ void ARMCommon::render_instruction(RDRenderer* r,
                                    const RDInstruction* instr) const {
     if(instr->features & IF_CALL)
         rdrenderer_mnem(r, instr, THEME_CALL);
-    else if(instr->features & IF_JUMP)
-        rdrenderer_mnem(r, instr, THEME_JUMP);
+    else if(instr->features & IF_JUMP) {
+        bool uncond = instr->features & IF_STOP;
+        rdrenderer_mnem(r, instr, uncond ? THEME_JUMP : THEME_JUMPCOND);
+    }
     else if(instr->features & IF_STOP)
         rdrenderer_mnem(r, instr, THEME_RET);
     else
