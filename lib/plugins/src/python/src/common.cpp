@@ -113,13 +113,13 @@ PyObject* to_object(const RDValue* v) {
     else if(v->type.id == TID_U64)
         res = PyLong_FromUnsignedLong(v->u64_v);
     else if(v->type.id == TID_I8)
-        res = PyLong_FromUnsignedLong(v->i8_v);
+        res = PyLong_FromLong(v->i8_v);
     else if(v->type.id == TID_I16)
-        res = PyLong_FromUnsignedLong(v->i16_v);
+        res = PyLong_FromLong(v->i16_v);
     else if(v->type.id == TID_I32)
-        res = PyLong_FromUnsignedLong(v->i32_v);
+        res = PyLong_FromLong(v->i32_v);
     else if(v->type.id == TID_I64)
-        res = PyLong_FromUnsignedLong(v->i64_v);
+        res = PyLong_FromLong(v->i64_v);
     else if(v->type.id == TID_STR || v->type.id == TID_WSTR)
         res = PyUnicode_FromString(v->str.data);
 
