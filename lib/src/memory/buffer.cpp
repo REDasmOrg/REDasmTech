@@ -76,7 +76,8 @@ tl::optional<RDValue> get_type_impl_2(const RDBuffer* self, usize& idx,
     if(t.def->kind == TK_STRUCT) {
         const RDStructField* field;
         slice_foreach(field, &t.def->t_struct) {
-            if(auto item = buffer::get_type_impl(self, idx, t); item) {
+            if(auto item = buffer::get_type_impl(self, idx, field->type);
+               item) {
                 char* k = utils::copy_str(field->name);
                 auto* v = new RDValueHNode{k, *item};
                 hmap_set(&res.dict, &v->hnode, k);
@@ -141,15 +142,15 @@ tl::optional<RDValue> get_type_impl_2(const RDBuffer* self, usize& idx,
                 break;
             }
 
-            case T_U32: {
-                case T_U32BE:
-                    if(auto b = buffer::get_u32(self, idx, isbig); b) {
-                        res.u32_v = *b;
-                        idx += sz;
-                    }
-                    else
-                        goto fail;
-                    break;
+            case T_U32:
+            case T_U32BE: {
+                if(auto b = buffer::get_u32(self, idx, isbig); b) {
+                    res.u32_v = *b;
+                    idx += sz;
+                }
+                else
+                    goto fail;
+                break;
             }
 
             case T_U64:
@@ -248,8 +249,11 @@ tl::optional<RDValue> get_type_impl(const RDBuffer* self, usize& idx,
         v.type = t;
         slice_reserve(&v.list, t.n);
 
+        auto itemtype = state::get_types().create_type(t.def);
+        ct_assume(itemtype);
+
         for(usize i = 0; i < t.n; i++) {
-            if(auto item = buffer::get_type_impl_2(self, idx, t); item)
+            if(auto item = buffer::get_type_impl_2(self, idx, *itemtype); item)
                 slice_push(&v.list, *item);
             else
                 goto fail;
@@ -281,8 +285,11 @@ tl::optional<RDValue> read_struct_impl(const RDBuffer* self, usize& idx,
             l.type = *ft;
             slice_reserve(&l.list, ft->n);
 
+            auto itemft = state::get_types().create_type(ft->def);
+            ct_assume(itemft);
+
             for(usize i = 0; i < ft->n; i++) {
-                if(auto val = buffer::get_type_impl(self, idx, *ft); val)
+                if(auto val = buffer::get_type_impl(self, idx, *itemft); val)
                     slice_push(&l.list, *val);
                 else
                     goto fail;

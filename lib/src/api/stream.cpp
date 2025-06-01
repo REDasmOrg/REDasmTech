@@ -239,8 +239,7 @@ RDValueOpt rdstream_read_struct(RDStream* self,
 }
 
 RDValueOpt rdstream_read_type(RDStream* self, const char* tname) {
-    spdlog::trace("rdstream_read_type({}, '{}')", fmt::ptr(self),
-                  fmt::ptr(tname));
+    spdlog::trace("rdstream_read_type({}, '{}')", fmt::ptr(self), tname);
     if(!tname) return RDValueOpt_none();
 
     usize pos = self->position;
