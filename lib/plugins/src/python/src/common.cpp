@@ -115,7 +115,7 @@ PyObject* to_object(const RDValue* v) {
         else if(v->type.def->t_primitive == T_U32)
             res = PyLong_FromUnsignedLong(v->u32_v);
         else if(v->type.def->t_primitive == T_U64)
-            res = PyLong_FromUnsignedLong(v->u64_v);
+            res = PyLong_FromUnsignedLongLong(v->u64_v);
         else if(v->type.def->t_primitive == T_I8)
             res = PyLong_FromLong(v->i8_v);
         else if(v->type.def->t_primitive == T_I16)
@@ -123,7 +123,7 @@ PyObject* to_object(const RDValue* v) {
         else if(v->type.def->t_primitive == T_I32)
             res = PyLong_FromLong(v->i32_v);
         else if(v->type.def->t_primitive == T_I64)
-            res = PyLong_FromLong(v->i64_v);
+            res = PyLong_FromLongLong(v->i64_v);
         else if(v->type.def->t_primitive == T_STR ||
                 v->type.def->t_primitive == T_WSTR)
             res = PyUnicode_FromString(v->str.data);
