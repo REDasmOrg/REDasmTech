@@ -652,7 +652,7 @@ PyObject* check_string(PyObject* /*self*/, PyObject* args) {
     if(!rd_checkstring(address, &r)) return Py_None;
 
     PyObject* res = python::new_simplenamespace();
-    PyObject* type = PyUnicode_FromString(r.type);
+    PyObject* type = PyUnicode_FromString(r.type.def->name);
     PyObject* value = PyUnicode_FromString(r.value);
     PyObject* totalsize = PyLong_FromUnsignedLongLong(r.totalsize);
 

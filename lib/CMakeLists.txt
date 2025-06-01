@@ -43,8 +43,8 @@ target_sources(${PROJECT_NAME_LIB}
         src/surface/renderer.cpp
         src/plugins/pluginmanager.cpp
         src/plugins/modulemanager.cpp
-        src/typing/basetypes.cpp
         src/typing/typing.cpp
+        src/typing/parser.cpp
         src/disasm/worker.cpp
         src/disasm/emulator.cpp
         src/disasm/function.cpp

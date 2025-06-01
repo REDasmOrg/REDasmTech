@@ -27,7 +27,7 @@ void ElfFormat<Bits>::apply_type(const char* tname, const SHDR& shdr) const {
     const usize N = shdr.sh_size / S;
 
     RDType t;
-    if(rdtype_create_n(tname, N, &t)) rd_settype(shdr.sh_addr, &t, nullptr);
+    if(rd_createtype_n(tname, N, &t)) rd_settype(shdr.sh_addr, &t, nullptr);
 }
 
 template<int Bits>

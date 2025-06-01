@@ -348,42 +348,13 @@ bool rd_settype_ex(RDAddress address, const RDType* type, usize flags,
     spdlog::trace("rd_settype_ex({:x}, {}, {})", address, fmt::ptr(type), flags,
                   fmt::ptr(v));
 
-    if(!redasm::state::context || !type) return false;
-
-    const RDSegment* seg =
-        redasm::state::context->program.find_segment(address);
-    if(!seg) return false;
-
     if(redasm::state::context->set_type(address, *type, flags)) {
+        const RDSegment* seg =
+            redasm::state::context->program.find_segment(address);
+        ct_assume(seg);
+
         if(v) {
             auto t = redasm::memory::get_type(seg, address, *type);
-            ct_assume(t);
-            *v = *t;
-        }
-
-        return true;
-    }
-
-    return false;
-}
-
-bool rd_settypename(RDAddress address, const char* tname, RDValue* v) {
-    return rd_settypename_ex(address, tname, 0, v);
-}
-
-bool rd_settypename_ex(RDAddress address, const char* tname, usize flags,
-                       RDValue* v) {
-    spdlog::trace("rd_settypename_ex({:x}, '{}', {}, {})", address, tname,
-                  flags, fmt::ptr(v));
-    if(!redasm::state::context || !tname) return false;
-
-    const RDSegment* seg =
-        redasm::state::context->program.find_segment(address);
-    if(!seg) return false;
-
-    if(redasm::state::context->set_type(address, tname, flags)) {
-        if(v) {
-            auto t = redasm::memory::get_type(seg, address, tname);
             ct_assume(t);
             *v = *t;
         }

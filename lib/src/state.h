@@ -1,7 +1,7 @@
 #pragma once
 
 #include "theme.h"
-#include "typing/basetypes.h"
+#include "typing/typing.h"
 #include <redasm/redasm.h>
 #include <string_view>
 

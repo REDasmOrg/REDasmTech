@@ -1,10 +1,11 @@
 #pragma once
 
-#include "../typing/base.h"
 #include "byteorder.h"
 #include <climits>
 #include <redasm/buffer.h>
+#include <redasm/typing.h>
 #include <string>
+#include <string_view>
 #include <tl/optional.hpp>
 
 namespace redasm::buffer {
@@ -38,23 +39,24 @@ tl::optional<T> get_number(const RDBuffer* self, usize idx, bool big) {
 
 usize read(const RDBuffer* self, usize idx, void* dst, usize n);
 tl::optional<RDValue> read_struct_n(const RDBuffer* self, usize idx, usize n,
-                                    const RDStructField* fields);
+                                    const RDStructFieldDecl* fields);
 tl::optional<RDValue> read_struct_n(const RDBuffer* self, usize idx, usize n,
-                                    const RDStructField* fields,
+                                    const RDStructFieldDecl* fields,
                                     usize& curridx);
 tl::optional<RDValue> read_struct(const RDBuffer* self, usize idx,
-                                  const RDStructField* fields);
+                                  const RDStructFieldDecl* fields);
 tl::optional<RDValue> read_struct(const RDBuffer* self, usize idx,
-                                  const RDStructField* fields, usize& curridx);
+                                  const RDStructFieldDecl* fields,
+                                  usize& curridx);
 tl::optional<std::string> get_str(const RDBuffer* self, usize idx);
 tl::optional<std::string> get_str(const RDBuffer* self, usize idx, usize n);
 tl::optional<std::string> get_wstr(const RDBuffer* self, usize idx);
 tl::optional<std::string> get_wstr(const RDBuffer* self, usize idx, usize n);
 tl::optional<RDValue> get_type(const RDBuffer* self, usize idx,
-                               typing::FullTypeName tn);
-tl::optional<RDValue> get_type(const RDBuffer* self, usize idx, RDType t);
+                               std::string_view tn);
 tl::optional<RDValue> get_type(const RDBuffer* self, usize idx,
-                               typing::FullTypeName tn, usize& curridx);
+                               std::string_view tn, usize& curridx);
+tl::optional<RDValue> get_type(const RDBuffer* self, usize idx, RDType t);
 tl::optional<RDValue> get_type(const RDBuffer* self, usize idx, RDType t,
                                usize& curridx);
 tl::optional<bool> get_bool(const RDBuffer* self, usize idx);

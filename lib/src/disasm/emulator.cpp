@@ -135,7 +135,7 @@ u32 Emulator::tick() {
         return memory::get_length(this->segment, this->pc);
 
     RDInstruction instr = {
-        .features = this->ndslot ? IF_DSLOT : IF_NONE,
+        .features = static_cast<u8>(this->ndslot ? IF_DSLOT : IF_NONE),
     };
 
     if(!this->decode(this->pc, instr)) return 0;

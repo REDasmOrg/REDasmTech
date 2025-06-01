@@ -14,9 +14,11 @@ PyObject* create_struct(PyObject* /*self*/, PyObject* args) {
     PyObject* obj = nullptr;
     if(!PyArg_ParseTuple(args, "sO", &name, &obj)) return nullptr;
 
-    std::vector<RDStructField> s;
+    std::vector<RDStructFieldDecl> s;
     if(!python::tuple_to_struct(obj, s)) return nullptr;
-    return PyUnicode_FromString(rd_createstruct(name, s.data()));
+
+    const RDTypeDef* td = rd_createstruct(name, s.data());
+    return td ? PyUnicode_FromString(td->name) : Py_None;
 }
 
 } // namespace python

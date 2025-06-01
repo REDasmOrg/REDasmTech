@@ -4,7 +4,6 @@
 #include <redasm/instruction.h>
 #include <redasm/theme.h>
 #include <redasm/types.h>
-#include <redasm/typing.h>
 
 RD_HANDLE(RDRenderer);
 
@@ -12,10 +11,7 @@ typedef struct RDRendererParams {
     RDRenderer* renderer;
     RDAddress address;
     RDMByte byte;
-
-    union {
-        usize segment_index;
-    };
+    usize segment_index;
 } RDRendererParams;
 
 typedef enum RDRendererFlags {

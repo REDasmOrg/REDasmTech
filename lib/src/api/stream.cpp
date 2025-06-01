@@ -1,7 +1,7 @@
 #include "../internal/stream_internal.h"
 #include "../memory/buffer.h"
-#include "../typing/base.h"
 #include <redasm/stream.h>
+#include <redasm/typing.h>
 #include <spdlog/spdlog.h>
 
 RDStream* rdstream_create(RDBuffer* buffer) {
@@ -36,7 +36,7 @@ void rdstream_rewind(RDStream* self) {
 }
 
 RDValueOpt rdstream_peek_struct_n(RDStream* self, usize n,
-                                  const RDStructField* fields) {
+                                  const RDStructFieldDecl* fields) {
     spdlog::trace("rdstream_peek_struct_n({}, {}, {})", fmt::ptr(self), n,
                   fmt::ptr(fields));
     auto res =
@@ -46,7 +46,8 @@ RDValueOpt rdstream_peek_struct_n(RDStream* self, usize n,
     return RDValueOpt_none();
 }
 
-RDValueOpt rdstream_peek_struct(RDStream* self, const RDStructField* fields) {
+RDValueOpt rdstream_peek_struct(RDStream* self,
+                                const RDStructFieldDecl* fields) {
     spdlog::trace("rdstream_peek_struct({}, {})", fmt::ptr(self),
                   fmt::ptr(fields));
     auto res =
@@ -212,7 +213,7 @@ bool rdstream_peek_i64be(const RDStream* self, i64* v) {
 }
 
 RDValueOpt rdstream_read_struct_n(RDStream* self, usize n,
-                                  const RDStructField* fields) {
+                                  const RDStructFieldDecl* fields) {
     spdlog::trace("rdstream_read_struct_n({}, {}, {})", fmt::ptr(self), n,
                   fmt::ptr(fields));
     usize pos = self->position;
@@ -224,7 +225,8 @@ RDValueOpt rdstream_read_struct_n(RDStream* self, usize n,
     return RDValueOpt_none();
 }
 
-RDValueOpt rdstream_read_struct(RDStream* self, const RDStructField* fields) {
+RDValueOpt rdstream_read_struct(RDStream* self,
+                                const RDStructFieldDecl* fields) {
     spdlog::trace("rdstream_read_struct({}, {})", fmt::ptr(self),
                   fmt::ptr(fields));
     usize pos = self->position;

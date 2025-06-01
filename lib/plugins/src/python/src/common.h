@@ -14,7 +14,7 @@ inline PyCFunction to_cfunction(PyCFunctionWithKeywords f) {
 }
 
 bool validate_class(PyObject* obj, std::initializer_list<const char*> reqattrs);
-bool tuple_to_struct(PyObject* obj, std::vector<RDStructField>& s);
+bool tuple_to_struct(PyObject* obj, std::vector<RDStructFieldDecl>& s);
 PyObject* new_simplenamespace();
 PyObject* to_object(const RDValue* v);
 void attach_methods(PyObject* obj, PyMethodDef* methods);

@@ -23,11 +23,14 @@ enum DalvikOperands {
 };
 
 void render_integer(RDRenderer* r, const RDOperand* op) {
-    if(op->dtype.id == TID_I8)
+    if(op->dtype.def->kind == TK_PRIMITIVE &&
+       op->dtype.def->t_primitive == T_I8)
         rdrenderer_i8(r, op->s_imm, 16);
-    else if(op->dtype.id == TID_I16)
+    else if(op->dtype.def->kind == TK_PRIMITIVE &&
+            op->dtype.def->t_primitive == T_I16)
         rdrenderer_i16(r, op->s_imm, 16);
-    else if(op->dtype.id == TID_U32)
+    else if(op->dtype.def->kind == TK_PRIMITIVE &&
+            op->dtype.def->t_primitive == T_U32)
         rdrenderer_u32(r, op->imm, 16);
     else
         rdrenderer_cnst(r, op->imm);
@@ -208,8 +211,10 @@ struct DalvikProcessor {
                 instr->operands[0].type = OP_REG;
                 instr->operands[0].reg = di.vB;
                 instr->operands[1].type = OP_IMM;
-                instr->operands[1].dtype.id = TID_I8; // FIXME: signed 4-bits
                 instr->operands[1].s_imm = di.vB;
+
+                // FIXME: signed 4-bits
+                rd_createprimitive(T_I8, &instr->operands[1].dtype);
                 break;
 
             case kFmt11x:
@@ -229,8 +234,10 @@ struct DalvikProcessor {
                 instr->operands[0].type = OP_REG;
                 instr->operands[0].reg = di.vA;
                 instr->operands[1].type = OP_IMM;
-                instr->operands[1].dtype.id = TID_I16; // FIXME: OP_CONST_HIGH16
                 instr->operands[1].imm = di.vB;
+
+                // FIXME: OP_CONST_HIGH16
+                rd_createprimitive(T_I16, &instr->operands[1].dtype);
                 break;
 
             case kFmt21c:
@@ -244,8 +251,9 @@ struct DalvikProcessor {
                 instr->operands[0].type = OP_REG;
                 instr->operands[0].reg = di.vA;
                 instr->operands[1].type = OP_IMM;
-                instr->operands[1].dtype.id = TID_I16;
                 instr->operands[1].s_imm = di.vB;
+
+                rd_createprimitive(T_I16, &instr->operands[1].dtype);
                 break;
 
             case kFmt22c:
@@ -270,8 +278,8 @@ struct DalvikProcessor {
                 instr->operands[0].type = OP_REG;
                 instr->operands[0].reg = di.vA;
                 instr->operands[1].type = OP_IMM;
-                instr->operands[1].dtype.id = TID_U32;
                 instr->operands[1].imm = di.vB;
+                rd_createprimitive(T_U32, &instr->operands[1].dtype);
                 break;
 
             case kFmt31t:

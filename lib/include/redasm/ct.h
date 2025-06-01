@@ -261,6 +261,7 @@ typedef struct BSearchResult {
 #define slice_pop(self) ((self)->data[--(self)->length])
 #define slice_isnull(self) (!!(self)->data)
 #define slice_at(self, idx) ((self)->data[idx])
+#define slice_length(self) ((usize)((self)->length))
 #define slice_first(self) slice_at(self, 0)
 #define slice_last(self) slice_at(self, (self)->length - 1)
 

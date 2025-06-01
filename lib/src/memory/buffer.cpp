@@ -1,4 +1,5 @@
 #include "buffer.h"
+#include "../context.h"
 #include "../state.h"
 #include "../utils/utils.h"
 #include <redasm/types.h>
@@ -7,21 +8,21 @@ namespace redasm::buffer {
 
 namespace {
 
-template<TypeId TID>
+template<RDPrimitiveType TID>
 tl::optional<std::string> get_str_impl(const RDBuffer* self, usize idx) {
     if(idx >= self->length) return tl::nullopt;
 
-    const typing::TypeDef* t = state::get_types().get_typedef(TID);
-    ct_assume(t);
+    const RDTypeDef* def = state::get_types().get_primitive(TID);
+    ct_assume(def);
 
     std::string s;
 
-    for(usize curr = idx; curr < self->length; curr += t->size) {
+    for(usize curr = idx; curr < self->length; curr += def->size) {
         tl::optional<char> ch;
 
-        if constexpr(TID == typing::ids::CHAR)
+        if constexpr(TID == T_CHAR)
             ch = buffer::get_char(self, curr);
-        else if constexpr(TID == typing::ids::WCHAR)
+        else if constexpr(TID == T_WCHAR)
             ch = buffer::get_wchar(self, curr);
         else
             ct_exceptf("Unsupported char type #%08x", TID);
@@ -35,14 +36,12 @@ tl::optional<std::string> get_str_impl(const RDBuffer* self, usize idx) {
     return s;
 }
 
-template<TypeId TID>
+template<RDPrimitiveType TID>
 tl::optional<std::string> get_str_impl(const RDBuffer* self, usize idx,
                                        usize n) {
     if(idx >= self->length) return tl::nullopt;
 
-    const typing::TypeDef* t = state::get_types().get_typedef(TID);
-    ct_assume(t);
-
+    const RDTypeDef* t = state::get_types().get_primitive(TID);
     const usize ENDIDX = std::min(idx + n, self->length);
     std::string s;
     s.reserve(ENDIDX - idx);
@@ -50,9 +49,9 @@ tl::optional<std::string> get_str_impl(const RDBuffer* self, usize idx,
     for(usize curr = idx; curr < ENDIDX; curr += t->size) {
         tl::optional<char> ch;
 
-        if constexpr(TID == typing::ids::CHAR)
+        if constexpr(TID == T_CHAR)
             ch = buffer::get_char(self, curr);
-        else if constexpr(TID == typing::ids::WCHAR)
+        else if constexpr(TID == T_WCHAR)
             ch = buffer::get_wchar(self, curr);
         else
             ct_exceptf("Unsupported char type #%08x", TID);
@@ -68,16 +67,17 @@ tl::optional<std::string> get_str_impl(const RDBuffer* self, usize idx,
 
 tl::optional<RDValue> get_type_impl(const RDBuffer* self, usize& idx, RDType t);
 
-tl::optional<RDValue> get_type_impl(const RDBuffer* self, usize& idx,
-                                    const typing::TypeDef* tdef) {
+tl::optional<RDValue> get_type_impl_2(const RDBuffer* self, usize& idx,
+                                      RDType t) {
     RDValue res;
     rdvalue_init(&res);
-    res.type = tdef->to_type();
+    res.type = t;
 
-    if(tdef->is_struct()) {
-        for(const auto& [t, n] : tdef->dict) {
+    if(t.def->kind == TK_STRUCT) {
+        const RDStructField* field;
+        slice_foreach(field, &t.def->t_struct) {
             if(auto item = buffer::get_type_impl(self, idx, t); item) {
-                char* k = utils::copy_str(n);
+                char* k = utils::copy_str(field->name);
                 auto* v = new RDValueHNode{k, *item};
                 hmap_set(&res.dict, &v->hnode, k);
             }
@@ -85,119 +85,128 @@ tl::optional<RDValue> get_type_impl(const RDBuffer* self, usize& idx,
                 goto fail;
         }
     }
-    else {
-        switch(tdef->get_id()) {
-            case typing::ids::BOOL: {
+    else if(t.def->kind == TK_PRIMITIVE) {
+        usize sz = state::get_types().size_of(t);
+        bool isbig = t.def->flags & TF_BIG;
+
+        switch(t.def->t_primitive) {
+            case T_BOOL: {
                 if(auto b = buffer::get_bool(self, idx); b) {
                     res.b_v = *b;
-                    idx += tdef->size;
+                    idx += sz;
                 }
                 else
                     goto fail;
                 break;
             }
 
-            case typing::ids::CHAR: {
+            case T_CHAR: {
                 if(auto b = buffer::get_char(self, idx); b) {
                     res.ch_v = *b;
-                    idx += tdef->size;
+                    idx += sz;
                 }
                 else
                     goto fail;
                 break;
             }
 
-            case typing::ids::WCHAR: {
+            case T_WCHAR: {
                 if(auto b = buffer::get_wchar(self, idx); b) {
                     res.ch_v = *b;
-                    idx += tdef->size;
+                    idx += sz;
                 }
                 else
                     goto fail;
                 break;
             }
 
-            case typing::ids::U8: {
+            case T_U8: {
                 if(auto b = buffer::get_u8(self, idx); b) {
                     res.u8_v = *b;
-                    idx += tdef->size;
+                    idx += sz;
                 }
                 else
                     goto fail;
                 break;
             }
 
-            case typing::ids::U16: {
-                if(auto b = buffer::get_u16(self, idx, tdef->is_big()); b) {
+            case T_U16:
+            case T_U16BE: {
+                if(auto b = buffer::get_u16(self, idx, isbig); b) {
                     res.u16_v = *b;
-                    idx += tdef->size;
+                    idx += sz;
                 }
                 else
                     goto fail;
                 break;
             }
 
-            case typing::ids::U32: {
-                if(auto b = buffer::get_u32(self, idx, tdef->is_big()); b) {
-                    res.u32_v = *b;
-                    idx += tdef->size;
-                }
-                else
-                    goto fail;
-                break;
+            case T_U32: {
+                case T_U32BE:
+                    if(auto b = buffer::get_u32(self, idx, isbig); b) {
+                        res.u32_v = *b;
+                        idx += sz;
+                    }
+                    else
+                        goto fail;
+                    break;
             }
 
-            case typing::ids::U64: {
-                if(auto b = buffer::get_u64(self, idx, tdef->is_big()); b) {
+            case T_U64:
+            case T_U64BE: {
+                if(auto b = buffer::get_u64(self, idx, isbig); b) {
                     res.u64_v = *b;
-                    idx += tdef->size;
+                    idx += sz;
                 }
                 else
                     goto fail;
                 break;
             }
 
-            case typing::ids::I8: {
+            case T_I8: {
                 if(auto b = buffer::get_i8(self, idx); b) {
                     res.i8_v = *b;
-                    idx += tdef->size;
+                    idx += sz;
                 }
                 else
                     goto fail;
                 break;
             }
 
-            case typing::ids::I16: {
-                if(auto b = buffer::get_i16(self, idx, tdef->is_big()); b) {
+            case T_I16:
+            case T_I16BE: {
+                if(auto b = buffer::get_i16(self, idx, isbig); b) {
                     res.i16_v = *b;
-                    idx += tdef->size;
+                    idx += sz;
                 }
                 else
                     goto fail;
                 break;
             }
 
-            case typing::ids::I32: {
-                if(auto b = buffer::get_i32(self, idx, tdef->is_big()); b) {
+            case T_I32:
+            case T_I32BE: {
+                if(auto b = buffer::get_i32(self, idx, isbig); b) {
                     res.i32_v = *b;
-                    idx += tdef->size;
+                    idx += sz;
                 }
                 else
                     goto fail;
                 break;
             }
 
-            case typing::ids::I64: {
-                if(auto b = buffer::get_i64(self, idx, tdef->is_big()); b) {
+            case T_I64:
+            case T_I64BE: {
+                if(auto b = buffer::get_i64(self, idx, isbig); b) {
                     res.i64_v = *b;
-                    idx += tdef->size;
+                    idx += sz;
                 }
                 else
                     goto fail;
                 break;
             }
 
-            case typing::ids::STR: {
+            case T_STR: {
                 if(auto s = buffer::get_str(self, idx); s) {
                     res.str =
                         str_create_n(s->c_str(), s->size(), nullptr, nullptr);
@@ -208,7 +217,7 @@ tl::optional<RDValue> get_type_impl(const RDBuffer* self, usize& idx,
                 break;
             }
 
-            case typing::ids::WSTR: {
+            case T_WSTR: {
                 if(auto s = buffer::get_wstr(self, idx); s) {
                     res.str =
                         str_create_n(s->c_str(), s->size(), nullptr, nullptr);
@@ -232,9 +241,6 @@ fail:
 
 tl::optional<RDValue> get_type_impl(const RDBuffer* self, usize& idx,
                                     RDType t) {
-    const typing::TypeDef* td = state::get_types().get_typedef(t);
-    ct_assume(td);
-
     RDValue v;
     rdvalue_init(&v);
 
@@ -243,7 +249,7 @@ tl::optional<RDValue> get_type_impl(const RDBuffer* self, usize& idx,
         slice_reserve(&v.list, t.n);
 
         for(usize i = 0; i < t.n; i++) {
-            if(auto item = buffer::get_type_impl(self, idx, td); item)
+            if(auto item = buffer::get_type_impl_2(self, idx, t); item)
                 slice_push(&v.list, *item);
             else
                 goto fail;
@@ -252,7 +258,7 @@ tl::optional<RDValue> get_type_impl(const RDBuffer* self, usize& idx,
         return v;
     }
 
-    return buffer::get_type_impl(self, idx, td);
+    return buffer::get_type_impl_2(self, idx, t);
 
 fail:
     rdvalue_destroy(&v);
@@ -260,22 +266,23 @@ fail:
 }
 
 tl::optional<RDValue> read_struct_impl(const RDBuffer* self, usize& idx,
-                                       const RDStructField* fields) {
+                                       const RDStructFieldDecl* fields) {
     if(!fields) return tl::nullopt;
     RDValue res;
     rdvalue_init(&res);
 
     while(fields->type && fields->name) {
-        typing::ParsedType pt = state::get_types().parse(fields->type);
+        auto ft = state::get_types().create_type(fields->type);
+        if(!ft) goto fail;
 
-        if(pt.n) {
+        if(ft->n) {
             RDValue l;
             rdvalue_init(&l);
-            l.type = pt.to_type();
-            slice_reserve(&l.list, pt.n);
+            l.type = *ft;
+            slice_reserve(&l.list, ft->n);
 
-            for(usize i = 0; i < pt.n; i++) {
-                if(auto val = buffer::get_type_impl(self, idx, pt.tdef); val)
+            for(usize i = 0; i < ft->n; i++) {
+                if(auto val = buffer::get_type_impl(self, idx, *ft); val)
                     slice_push(&l.list, *val);
                 else
                     goto fail;
@@ -284,7 +291,7 @@ tl::optional<RDValue> read_struct_impl(const RDBuffer* self, usize& idx,
             auto* n = new RDValueHNode{utils::copy_str(fields->name), l};
             hmap_set(&res.dict, &n->hnode, n->key);
         }
-        else if(auto v = buffer::get_type_impl(self, idx, pt.tdef); v) {
+        else if(auto v = buffer::get_type_impl(self, idx, *ft); v) {
             auto* n = new RDValueHNode{utils::copy_str(fields->name), *v};
             hmap_set(&res.dict, &n->hnode, n->key);
         }
@@ -320,7 +327,7 @@ usize read(const RDBuffer* self, usize idx, void* dst, usize n) {
 }
 
 tl::optional<RDValue> read_struct_n(const RDBuffer* self, usize idx, usize n,
-                                    const RDStructField* fields,
+                                    const RDStructFieldDecl* fields,
                                     usize& curridx) {
     if(!n) return buffer::read_struct_impl(self, idx, fields);
 
@@ -342,54 +349,57 @@ fail:
 }
 
 tl::optional<RDValue> read_struct_n(const RDBuffer* self, usize idx, usize n,
-                                    const RDStructField* fields) {
+                                    const RDStructFieldDecl* fields) {
     usize cidx;
     return buffer::read_struct_n(self, idx, n, fields, cidx);
 }
 
 tl::optional<RDValue> read_struct(const RDBuffer* self, usize idx,
-                                  const RDStructField* fields, usize& curridx) {
+                                  const RDStructFieldDecl* fields,
+                                  usize& curridx) {
     auto v = buffer::read_struct_impl(self, idx, fields);
     if(v) curridx = idx;
     return v;
 }
 
 tl::optional<RDValue> read_struct(const RDBuffer* self, usize idx,
-                                  const RDStructField* fields) {
+                                  const RDStructFieldDecl* fields) {
     usize cidx;
     return buffer::read_struct(self, idx, fields, cidx);
 }
 
 tl::optional<std::string> get_str(const RDBuffer* self, usize idx) {
-    return buffer::get_str_impl<typing::ids::CHAR>(self, idx);
+    return buffer::get_str_impl<T_CHAR>(self, idx);
 }
 
 tl::optional<std::string> get_str(const RDBuffer* self, usize idx, usize n) {
-    return buffer::get_str_impl<typing::ids::CHAR>(self, idx, n);
+    return buffer::get_str_impl<T_CHAR>(self, idx, n);
 }
 
 tl::optional<std::string> get_wstr(const RDBuffer* self, usize idx) {
-    return buffer::get_str_impl<typing ::ids::WCHAR>(self, idx);
+    return buffer::get_str_impl<T_WCHAR>(self, idx);
 }
 
 tl::optional<std::string> get_wstr(const RDBuffer* self, usize idx, usize n) {
-    return buffer::get_str_impl<typing ::ids::WCHAR>(self, idx, n);
+    return buffer::get_str_impl<T_WCHAR>(self, idx, n);
 }
 
 tl::optional<RDValue> get_type(const RDBuffer* self, usize idx,
-                               typing::FullTypeName tn) {
-    typing::ParsedType pt = state::get_types().parse(tn);
-    return buffer::get_type(self, idx, pt.to_type());
+                               std::string_view tn) {
+    auto t = state::get_types().create_type(tn);
+    if(t) return buffer::get_type(self, idx, *t);
+    return tl::nullopt;
+}
+
+tl::optional<RDValue> get_type(const RDBuffer* self, usize idx,
+                               std::string_view tn, usize& curridx) {
+    auto t = state::get_types().create_type(tn);
+    if(t) return buffer::get_type(self, idx, *t, curridx);
+    return tl::nullopt;
 }
 
 tl::optional<RDValue> get_type(const RDBuffer* self, usize idx, RDType t) {
     return buffer::get_type_impl(self, idx, t);
-}
-
-tl::optional<RDValue> get_type(const RDBuffer* self, usize idx,
-                               typing::FullTypeName tn, usize& curridx) {
-    typing::ParsedType pt = state::get_types().parse(tn);
-    return buffer::get_type(self, idx, pt.to_type(), curridx);
 }
 
 tl::optional<RDValue> get_type(const RDBuffer* self, usize idx, RDType t,

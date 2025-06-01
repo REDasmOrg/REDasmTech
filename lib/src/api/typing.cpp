@@ -1,84 +1,9 @@
 #include "../context.h"
+#include "../memory/memory.h"
 #include "../state.h"
-#include "../typing/base.h"
 #include "../utils/utils.h"
 #include <redasm/typing.h>
 #include <spdlog/spdlog.h>
-
-const u32 TID_BOOL = redasm::typing::ids::BOOL;
-const u32 TID_CHAR = redasm::typing::ids::CHAR;
-const u32 TID_WCHAR = redasm::typing::ids::WCHAR;
-const u32 TID_U8 = redasm::typing::ids::U8;
-const u32 TID_U16 = redasm::typing::ids::U16;
-const u32 TID_U32 = redasm::typing::ids::U32;
-const u32 TID_U64 = redasm::typing::ids::U64;
-const u32 TID_I8 = redasm::typing::ids::I8;
-const u32 TID_I16 = redasm::typing::ids::I16;
-const u32 TID_I32 = redasm::typing::ids::I32;
-const u32 TID_I64 = redasm::typing::ids::I64;
-const u32 TID_U16BE = redasm::typing::ids::U16BE;
-const u32 TID_U32BE = redasm::typing::ids::U32BE;
-const u32 TID_U64BE = redasm::typing::ids::U64BE;
-const u32 TID_I16BE = redasm::typing::ids::I16BE;
-const u32 TID_I32BE = redasm::typing::ids::I32BE;
-const u32 TID_I64BE = redasm::typing::ids::I64BE;
-const u32 TID_STR = redasm::typing::ids::STR;
-const u32 TID_WSTR = redasm::typing::ids::WSTR;
-
-usize rd_nsizeof(const char* tname) {
-    spdlog::trace("rd_nsizeof('{}')", tname);
-    return redasm::state::get_types().size_of(tname);
-}
-
-usize rd_tsizeof(const RDType* t) {
-    spdlog::trace("rd_tsizeof('{}')", fmt::ptr(t));
-    if(t) return redasm::state::get_types().size_of(*t);
-    return 0;
-}
-
-bool rdtype_create_n(const char* tname, usize n, RDType* t) {
-    spdlog::trace("rdtype_create_n('{}', {}, {})", tname, n, fmt::ptr(t));
-    if(!tname || !t) return false;
-    *t = redasm::state::get_types().parse(tname).to_type();
-    t->n = n;
-    return true;
-}
-
-bool rdtype_create(const char* tname, RDType* t) {
-    return rdtype_create_n(tname, 0, t);
-}
-
-bool rd_intfrombytes(usize b, bool sign, RDType* t) {
-    spdlog::trace("rd_intfrombytes({}, {}, {})", b, sign, fmt::ptr(t));
-    if(!t) return false;
-    auto inttype = redasm::state::get_types().int_from_bytes(b, sign);
-    if(inttype) *t = *inttype;
-    return inttype.has_value();
-}
-
-const char* rd_typename(const RDType* t) {
-    static std::string s;
-
-    if(t)
-        s = redasm::state::get_types().to_string(*t);
-    else
-        s.clear();
-
-    if(!s.empty()) return s.c_str();
-    return nullptr;
-}
-
-const char* rd_createstruct(const char* name, const RDStructField* fields) {
-    spdlog::trace("rd_createstruct('{}', {})", name, fmt::ptr(fields));
-
-    if(redasm::state::context) {
-        const redasm::typing::TypeDef* td =
-            redasm::state::context->types.declare(name, fields);
-        if(td) return td->name.c_str();
-    }
-
-    return nullptr;
-}
 
 void rdvalue_init(RDValue* self) {
     spdlog::trace("rdvalue_create({})", fmt::ptr(self));
@@ -110,21 +35,6 @@ void rdvalue_destroy(RDValue* self) {
     str_destroy(&self->_scratchpad);
 }
 
-const char* rdvalue_tostring(RDValue* self) {
-    spdlog::trace("rdvalue_tostring({})", fmt::ptr(self));
-
-    if(rdvalue_islist(self)) {
-        str_resize(&self->_scratchpad, self->list.length);
-
-        for(isize i = 0; i < self->list.length; i++)
-            self->_scratchpad.data[i] = self->list.data[i].ch_v;
-
-        return self->_scratchpad.data;
-    }
-
-    return self->str.data;
-}
-
 bool rdvalue_islist(const RDValue* self) {
     spdlog::trace("rdvalue_islist({})", fmt::ptr(self));
     return self && self->type.n && !slice_empty(&self->list);
@@ -139,11 +49,12 @@ usize rdvalue_getlength(const RDValue* self) {
     spdlog::trace("rdvalue_getlength({})", fmt::ptr(self));
     if(!self) return 0;
 
-    if(rdvalue_islist(self)) return self->list.length;
+    if(rdvalue_islist(self)) return slice_length(&self->list);
     if(rdvalue_isstruct(self)) return hmap_length(&self->dict);
 
-    if(self->type.id == redasm::typing::ids::STR ||
-       self->type.id == redasm::typing::ids::WSTR)
+    if(self->type.def && self->type.def->kind == TK_PRIMITIVE &&
+       (self->type.def->t_primitive == T_STR ||
+        self->type.def->t_primitive == T_WSTR))
         return self->str.length;
 
     ct_exceptf("Cannot get value-length of type '%s'",
@@ -245,4 +156,117 @@ const RDValue* rdvalue_query_n(const RDValue* self, const char* q, usize n,
     }
 
     return curr;
+}
+
+usize rd_nsizeof(const char* tname) {
+    spdlog::trace("rd_nsizeof('{}')", tname);
+    if(tname) return redasm::state::get_types().size_of(tname);
+    return 0;
+}
+
+usize rd_tsizeof(const RDType* t) {
+    spdlog::trace("rd_tsizeof('{}')", fmt::ptr(t));
+    if(t) return redasm::state::get_types().size_of(*t);
+    return 0;
+}
+
+bool rd_createprimitive(RDPrimitiveType pt, RDType* t) {
+    return rd_createprimitive_n(pt, 0, t);
+}
+
+bool rd_createprimitive_n(RDPrimitiveType pt, usize n, RDType* t) {
+    spdlog::trace("rd_createprimitive_n('{}', {}, {})", static_cast<int>(pt), n,
+                  fmt::ptr(t));
+
+    if(t) {
+        *t = redasm::state::get_types().create_primitive(pt, n);
+        return true;
+    }
+
+    return false;
+}
+
+bool rd_createtype(const char* tname, RDType* t) {
+    spdlog::trace("rd_createtype('{}', {})", tname, fmt::ptr(t));
+
+    if(t && tname) {
+        auto res = redasm::state::get_types().create_type(tname);
+        res.map([&](RDType& arg) { *t = arg; });
+        return res.has_value();
+    }
+
+    return false;
+}
+
+bool rd_createtype_n(const char* tname, usize n, RDType* t) {
+    spdlog::trace("rd_createtype_n('{}')", tname);
+    if(t && tname) {
+        auto res = redasm::state::get_types().create_type(tname, n);
+        res.map([&](RDType& arg) { *t = arg; });
+        return res.has_value();
+    }
+
+    return false;
+}
+
+const RDTypeDef* rd_createstruct(const char* name,
+                                 const RDStructFieldDecl* fields) {
+    spdlog::trace("rd_createstruct('{}', {})", name, fmt::ptr(fields));
+
+    if(redasm::state::context)
+        return redasm::state::context->types.create_struct(name, fields);
+
+    return nullptr;
+}
+
+const char* rd_typename(const RDType* t) {
+    spdlog::trace("rd_typename({})", fmt::ptr(t));
+    static std::string s;
+
+    if(t)
+        s = redasm::state::get_types().to_string(*t);
+    else
+        s.clear();
+
+    if(!s.empty()) return s.c_str();
+    return nullptr;
+}
+
+bool rd_settypename(RDAddress address, const char* tname, RDValue* v) {
+    return rd_settypename_ex(address, tname, 0, v);
+}
+
+bool rd_settypename_ex(RDAddress address, const char* tname, usize flags,
+                       RDValue* v) {
+    spdlog::trace("rd_settypename_ex({:x}, '{}', {}, {})", address, tname,
+                  flags, fmt::ptr(v));
+    if(!redasm::state::context || !tname) return false;
+
+    const RDSegment* seg =
+        redasm::state::context->program.find_segment(address);
+    if(!seg) return false;
+
+    if(redasm::state::context->set_type(address, tname, flags)) {
+        if(v) {
+            auto t = redasm::memory::get_type(seg, address, tname);
+            ct_assume(t);
+            *v = *t;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+bool rd_intfrombytes(usize bytes, bool sign, RDType* t) {
+    spdlog::trace("rd_intfrombytes({}, {}, {})", bytes, sign, fmt::ptr(t));
+    if(!t) return false;
+    auto inttype = redasm::state::get_types().int_from_bytes(bytes, sign);
+    if(inttype) *t = *inttype;
+    return inttype.has_value();
+}
+
+bool rd_typeequals(const RDType* t1, const RDType* t2) {
+    return t1 && t2 && (t1->n == t2->n) && (t1->def == t2->def);
 }

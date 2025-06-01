@@ -14,7 +14,7 @@ inline usize read(const RDSegment* self, RDAddress address, void* dst,
 
 inline tl::optional<RDValue> read_struct(const RDSegment* self,
                                          RDAddress address,
-                                         const RDStructField* fields) {
+                                         const RDStructFieldDecl* fields) {
     return buffer::read_struct(self->mem, address - self->start, fields);
 }
 
@@ -98,7 +98,7 @@ inline tl::optional<std::string> get_wstr(const RDSegment* self,
 }
 
 inline tl::optional<RDValue> get_type(const RDSegment* self, RDAddress address,
-                                      typing::FullTypeName tn) {
+                                      std::string_view tn) {
     return buffer::get_type(self->mem, address - self->start, tn);
 }
 

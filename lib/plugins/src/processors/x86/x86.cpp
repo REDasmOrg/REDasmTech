@@ -49,36 +49,36 @@ void apply_optype(const ZydisDecodedOperand& zop, RDOperand& op) {
     switch(zop.element_type) {
         case ZYDIS_ELEMENT_TYPE_INT: {
             if(zop.element_size == 8)
-                op.dtype.id = TID_I8;
+                rd_createprimitive(T_I8, &op.dtype);
             else if(zop.element_size == 16)
-                op.dtype.id = TID_I16;
+                rd_createprimitive(T_I16, &op.dtype);
             else if(zop.element_size == 32)
-                op.dtype.id = TID_I32;
+                rd_createprimitive(T_I32, &op.dtype);
             else if(zop.element_size == 64)
-                op.dtype.id = TID_I64;
+                rd_createprimitive(T_I64, &op.dtype);
             else
-                op.dtype.id = 0;
+                op.dtype = {};
             break;
         }
 
         case ZYDIS_ELEMENT_TYPE_UINT: {
             if(zop.element_size == 8)
-                op.dtype.id = TID_U8;
+                rd_createprimitive(T_U8, &op.dtype);
             else if(zop.element_size == 16)
-                op.dtype.id = TID_U16;
+                rd_createprimitive(T_U16, &op.dtype);
             else if(zop.element_size == 32)
-                op.dtype.id = TID_U32;
+                rd_createprimitive(T_U32, &op.dtype);
             else if(zop.element_size == 64)
-                op.dtype.id = TID_U64;
+                rd_createprimitive(T_U64, &op.dtype);
             else
-                op.dtype.id = 0;
+                op.dtype = {};
             break;
         }
 
         default: op.dtype = {}; return;
     }
 
-    if(op.dtype.id && zop.element_count > 1) op.dtype.n = zop.element_count;
+    if(op.dtype.def && zop.element_count > 1) op.dtype.n = zop.element_count;
 }
 
 bool is_segment_reg(const RDOperand& op) {

@@ -17,7 +17,7 @@ bool validate_class(PyObject* obj,
     return true;
 }
 
-bool tuple_to_struct(PyObject* obj, std::vector<RDStructField>& s) {
+bool tuple_to_struct(PyObject* obj, std::vector<RDStructFieldDecl>& s) {
     if(!PyTuple_Check(obj)) {
         PyErr_SetString(PyExc_TypeError, "Expected a tuple");
         return false;
@@ -42,10 +42,10 @@ bool tuple_to_struct(PyObject* obj, std::vector<RDStructField>& s) {
 
         const char* ftype = PyUnicode_AsUTF8(PyTuple_GetItem(field, 0));
         const char* fname = PyUnicode_AsUTF8(PyTuple_GetItem(field, 1));
-        s.emplace_back(RDStructField{ftype, fname});
+        s.emplace_back(ftype, fname);
     }
 
-    s.emplace_back(RDStructField{nullptr, nullptr});
+    s.emplace_back(nullptr, nullptr);
     return true;
 }
 
@@ -66,8 +66,10 @@ PyObject* to_object(const RDValue* v) {
         usize len = rdvalue_getlength(v);
         if(v->type.n != len) return nullptr;
 
-        if(v->type.id == TID_CHAR ||
-           v->type.id == TID_WCHAR) { // (w)char[N]: convert to string
+        // (w)char[N]: convert to string
+        if(v->type.def->kind == TK_PRIMITIVE &&
+           (v->type.def->t_primitive == T_CHAR ||
+            v->type.def->t_primitive == T_WCHAR)) {
             res = PyUnicode_New(v->type.n, 127);
 
             for(usize i = 0; i < len; i++) {
@@ -100,28 +102,34 @@ PyObject* to_object(const RDValue* v) {
             Py_DECREF(f);
         }
     }
-    else if(v->type.id == TID_BOOL)
-        res = PyBool_FromLong(v->b_v);
-    else if(v->type.id == TID_CHAR || v->type.id == TID_WCHAR)
-        res = PyUnicode_FromStringAndSize(&v->ch_v, 1);
-    else if(v->type.id == TID_U8)
-        res = PyLong_FromUnsignedLong(v->u8_v);
-    else if(v->type.id == TID_U16)
-        res = PyLong_FromUnsignedLong(v->u16_v);
-    else if(v->type.id == TID_U32)
-        res = PyLong_FromUnsignedLong(v->u32_v);
-    else if(v->type.id == TID_U64)
-        res = PyLong_FromUnsignedLong(v->u64_v);
-    else if(v->type.id == TID_I8)
-        res = PyLong_FromLong(v->i8_v);
-    else if(v->type.id == TID_I16)
-        res = PyLong_FromLong(v->i16_v);
-    else if(v->type.id == TID_I32)
-        res = PyLong_FromLong(v->i32_v);
-    else if(v->type.id == TID_I64)
-        res = PyLong_FromLong(v->i64_v);
-    else if(v->type.id == TID_STR || v->type.id == TID_WSTR)
-        res = PyUnicode_FromString(v->str.data);
+    else if(v->type.def && v->type.def->kind == TK_PRIMITIVE) {
+        if(v->type.def->t_primitive == T_BOOL)
+            res = PyBool_FromLong(v->b_v);
+        else if(v->type.def->t_primitive == T_CHAR ||
+                v->type.def->t_primitive == T_WCHAR)
+            res = PyUnicode_FromStringAndSize(&v->ch_v, 1);
+        else if(v->type.def->t_primitive == T_U8)
+            res = PyLong_FromUnsignedLong(v->u8_v);
+        else if(v->type.def->t_primitive == T_U16)
+            res = PyLong_FromUnsignedLong(v->u16_v);
+        else if(v->type.def->t_primitive == T_U32)
+            res = PyLong_FromUnsignedLong(v->u32_v);
+        else if(v->type.def->t_primitive == T_U64)
+            res = PyLong_FromUnsignedLong(v->u64_v);
+        else if(v->type.def->t_primitive == T_I8)
+            res = PyLong_FromLong(v->i8_v);
+        else if(v->type.def->t_primitive == T_I16)
+            res = PyLong_FromLong(v->i16_v);
+        else if(v->type.def->t_primitive == T_I32)
+            res = PyLong_FromLong(v->i32_v);
+        else if(v->type.def->t_primitive == T_I64)
+            res = PyLong_FromLong(v->i64_v);
+        else if(v->type.def->t_primitive == T_STR ||
+                v->type.def->t_primitive == T_WSTR)
+            res = PyUnicode_FromString(v->str.data);
+    }
+    else
+        ct_except("python::to_object(): invalid kind");
 
     return res;
 }

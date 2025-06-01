@@ -4,20 +4,20 @@
 
 namespace dalvik {
 
-const RDStructField PACKEDSWITCHPAYLOAD_TYPE[] = {
+const RDStructFieldDecl PACKEDSWITCHPAYLOAD_TYPE[] = {
     {"u16", "ident"},
     {"u16", "size"},
     {"i32", "first_key"},
     {nullptr, nullptr},
 };
 
-const RDStructField SPARSESWITCHPAYLOAD_TYPE[] = {
+const RDStructFieldDecl SPARSESWITCHPAYLOAD_TYPE[] = {
     {"u16", "ident"},
     {"u16", "size"},
     {nullptr, nullptr},
 };
 
-const RDStructField FILLARRAYDATA_TYPE[] = {
+const RDStructFieldDecl FILLARRAYDATA_TYPE[] = {
     {"u16", "ident"},
     {"u16", "element_size"},
     {"u32", "size"},

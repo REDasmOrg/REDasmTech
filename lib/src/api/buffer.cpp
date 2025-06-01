@@ -83,7 +83,7 @@ usize rdbuffer_read(const RDBuffer* self, usize idx, void* dst, usize n) {
 }
 
 RDValueOpt rdbuffer_readstruct_n(const RDBuffer* self, usize idx, usize n,
-                                 const RDStructField* fields) {
+                                 const RDStructFieldDecl* fields) {
     spdlog::trace("rdbuffer_readstruct_n({}, {:x}, {}, {})", fmt::ptr(self),
                   idx, n, fmt::ptr(fields));
     auto v = redasm::buffer::read_struct_n(self, idx, n, fields);
@@ -92,7 +92,7 @@ RDValueOpt rdbuffer_readstruct_n(const RDBuffer* self, usize idx, usize n,
 }
 
 RDValueOpt rdbuffer_readstruct(const RDBuffer* self, usize idx,
-                               const RDStructField* fields) {
+                               const RDStructFieldDecl* fields) {
     spdlog::trace("rdbuffer_readstruct({}, {:x}, {})", fmt::ptr(self), idx,
                   fmt::ptr(fields));
     auto v = redasm::buffer::read_struct(self, idx, fields);

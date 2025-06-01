@@ -1,6 +1,7 @@
 #include "worker.h"
 #include "../context.h"
 #include "../plugins/pluginmanager.h"
+#include "../signature/signature.h"
 #include "../state.h"
 #include "memprocess.h"
 #include <ctime>
@@ -14,10 +15,12 @@ enum WorkerSteps {
     WS_INIT = 0,
     // 1st pass
     WS_EMULATE1, WS_ANALYZE1, 
+    WS_SIGNATURE1,
     WS_MERGEDATA1,
     // 2nd pass
     WS_MERGECODE,
     WS_EMULATE2, WS_ANALYZE2, 
+    WS_SIGNATURE2,
     WS_MERGEDATA2,
     // Finalize pass
     WS_FINALIZE,
@@ -28,9 +31,11 @@ enum WorkerSteps {
 constexpr std::array<const char*, WS_COUNT> WS_NAMES = {
     "Init",
     "Emulate #1", "Analyze #1", 
+    "Signature #1",
     "Merge Data #1",
     "Merge Code",
     "Emulate #2", "Analyze #2", 
+    "Signature #2",
     "Merge Data #2",
     "Finalize", 
     "Done",
@@ -65,6 +70,9 @@ bool Worker::execute(const RDWorkerStatus** s) {
 
             case WS_MERGEDATA1:
             case WS_MERGEDATA2: this->mergedata_step(); break;
+
+            case WS_SIGNATURE1:
+            case WS_SIGNATURE2: this->signature_step(); break;
 
             case WS_FINALIZE: this->finalize_step(); break;
             default: ct_unreachable;
@@ -157,6 +165,20 @@ void Worker::mergecode_step() {
 
 void Worker::mergedata_step() {
     memprocess::process_memory();
+    m_currentstep++;
+}
+
+void Worker::signature_step() {
+    const Context* ctx = state::context;
+
+    // for(const Function& f : ctx->program.functions) {
+    // std::string n = ctx->get_name(f.address);
+    // const signature::Signature* s = signature::find(n);
+    // if(!s) continue;
+
+    // TODO(davide): Analyze function signature
+    // }
+
     m_currentstep++;
 }
 

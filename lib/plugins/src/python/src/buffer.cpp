@@ -27,7 +27,7 @@ PyObject* buffer_readstruct_n(PyBuffer* self, PyObject* args) {
     PyObject* obj = nullptr;
     if(!PyArg_ParseTuple(args, "nnO", &idx, &n, &obj)) return nullptr;
 
-    std::vector<RDStructField> s;
+    std::vector<RDStructFieldDecl> s;
     if(!python::tuple_to_struct(obj, s)) return nullptr;
 
     RDValueOpt v = rdbuffer_readstruct_n(self->buffer, idx, n, s.data());
@@ -46,7 +46,7 @@ PyObject* buffer_readstruct(PyBuffer* self, PyObject* args) {
     PyObject* obj = nullptr;
     if(!PyArg_ParseTuple(args, "nO", &idx, &obj)) return nullptr;
 
-    std::vector<RDStructField> s;
+    std::vector<RDStructFieldDecl> s;
     if(!python::tuple_to_struct(obj, s)) return nullptr;
 
     RDValueOpt v = rdbuffer_readstruct(self->buffer, idx, s.data());

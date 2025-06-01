@@ -17,7 +17,7 @@ const i32* create_packedswitchpayload(RDAddress address,
         return nullptr;
 
     RDType t;
-    if(!rdtype_create_n("i32", payload->size, &t)) return nullptr;
+    if(!rd_createtype_n("i32", payload->size, &t)) return nullptr;
 
     RDAddress tgtaddress = address + rd_nsizeof("PACKED_SWITCH_PAYLOAD");
     if(rd_settype(tgtaddress, &t, nullptr))
@@ -32,7 +32,7 @@ const i32* create_sparseswitchpayload(RDAddress address,
         return nullptr;
 
     RDType t;
-    if(!rdtype_create_n("i32", payload->size, &t)) return nullptr;
+    if(!rd_createtype_n("i32", payload->size, &t)) return nullptr;
 
     usize nsize = rd_tsizeof(&t);
     RDAddress keysaddress = address + rd_nsizeof("SPARSE_SWITCH_PAYLOAD");
@@ -52,7 +52,7 @@ void create_fillarraydata(RDAddress address, const FillArrayData* fillarray) {
     rd_settypename(address, "FILL_ARRAY_DATA", nullptr);
 
     RDType t;
-    if(!rdtype_create_n(
+    if(!rd_createtype_n(
            "u8", static_cast<usize>(fillarray->size) * fillarray->element_width,
            &t))
         return;

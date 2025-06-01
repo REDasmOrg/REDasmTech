@@ -19,6 +19,7 @@ private:
     void analyze_step();
     void mergecode_step();
     void mergedata_step();
+    void signature_step();
     void finalize_step();
 
 public:

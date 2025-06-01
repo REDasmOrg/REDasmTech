@@ -20,7 +20,7 @@ struct RDMemoryInfo {
 };
 
 typedef struct RDStringResult {
-    const char* type;
+    RDType type;
     const char* value;
     usize totalsize;
     bool terminated;

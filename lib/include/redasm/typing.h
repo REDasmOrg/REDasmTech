@@ -1,38 +1,42 @@
 #pragma once
 
 #include <redasm/common.h>
+#include <redasm/ct.h>
 #include <redasm/types.h>
 
-extern const u32 TID_BOOL;
-extern const u32 TID_CHAR;
-extern const u32 TID_WCHAR;
-extern const u32 TID_U8;
-extern const u32 TID_U16;
-extern const u32 TID_U32;
-extern const u32 TID_U64;
-extern const u32 TID_I8;
-extern const u32 TID_I16;
-extern const u32 TID_I32;
-extern const u32 TID_I64;
-extern const u32 TID_U16BE;
-extern const u32 TID_U32BE;
-extern const u32 TID_U64BE;
-extern const u32 TID_I16BE;
-extern const u32 TID_I32BE;
-extern const u32 TID_I64BE;
-extern const u32 TID_STR;
-extern const u32 TID_WSTR;
+typedef enum RDTypeKind {
+    TK_PRIMITIVE = 0,
+    TK_STRUCT,
+    TK_FUNCTION,
+} RDTypeKind;
 
-typedef struct RDStructField {
-    const char* type;
-    const char* name;
-} RDStructField;
+typedef enum RDTypeFlags {
+    TF_BIG = (1 << 0),
+    TF_VAR = (1 << 1),
+    TF_INT = (1 << 2),
+    TF_SIGN = (1 << 3),
+} RDTypeFlags;
 
-typedef u32 TypeId;
+// clang-format off
+typedef enum RDPrimitiveTypes {
+    T_BOOL = 0,
+    T_CHAR, T_WCHAR,
+    T_U8, T_U16, T_U32, T_U64,
+    T_I8, T_I16, T_I32, T_I64,
+    T_U16BE, T_U32BE, T_U64BE,
+    T_I16BE, T_I32BE, T_I64BE,
+    T_STR, T_WSTR,
+
+    T_NPRIMITIVES,
+} RDPrimitiveType;
+// clang-format on
+
+typedef struct RDType RDType;
+typedef struct RDTypeDef RDTypeDef;
 
 typedef struct RDType {
-    TypeId id;
-    usize n; // > 0 = array
+    usize n;
+    const RDTypeDef* def;
 } RDType;
 
 struct RDValue;
@@ -41,7 +45,6 @@ define_hmap(RDValueDict, 1 << 4);
 
 typedef struct RDValue {
     RDType type;
-
     RDValueSlice list;
     RDValueDict dict;
     Str str;
@@ -65,25 +68,58 @@ typedef struct RDValueHNode {
     HListNode hnode;
 } RDValueHNode;
 
+typedef struct RDStructFieldDecl {
+    const char* type;
+    const char* name;
+} RDStructFieldDecl;
+
+typedef struct RDStructField {
+    RDType type;
+    const char* name;
+} RDStructField;
+
+define_slice(RDStructType, RDStructField);
+
+typedef struct RDFunctionType {
+    RDType ret;
+    const RDType* args;
+} RDFunctionType;
+
+typedef struct RDTypeDef {
+    RDTypeKind kind;
+    const char* name;
+    u32 size;
+    u32 flags;
+
+    union {
+        RDPrimitiveType t_primitive;
+        RDStructType t_struct;
+        RDFunctionType t_function;
+    };
+} RDTypeDef;
+
+// clang-format off
+REDASM_EXPORT const RDTypeDef* rd_createstruct(const char* name, const RDStructFieldDecl* fields);
+REDASM_EXPORT const char* rd_typename(const RDType* t);
 REDASM_EXPORT usize rd_nsizeof(const char* tname);
 REDASM_EXPORT usize rd_tsizeof(const RDType* t);
-REDASM_EXPORT bool rdtype_create(const char* tname, RDType* t);
-REDASM_EXPORT bool rdtype_create_n(const char* tname, usize n, RDType* t);
+REDASM_EXPORT bool rd_createprimitive(RDPrimitiveType pt, RDType* t);
+REDASM_EXPORT bool rd_createprimitive_n(RDPrimitiveType pt, usize n, RDType* t);
+REDASM_EXPORT bool rd_createtype(const char* tname, RDType* t);
+REDASM_EXPORT bool rd_createtype_n(const char* tname, usize n, RDType* t);
+REDASM_EXPORT bool rd_settypename(RDAddress address, const char* tname, RDValue* v);
+REDASM_EXPORT bool rd_settypename_ex(RDAddress address, const char* tname, usize flags, RDValue* v);
 REDASM_EXPORT bool rd_intfrombytes(usize bytes, bool sign, RDType* t);
-REDASM_EXPORT const char* rd_typename(const RDType* t);
-REDASM_EXPORT const char* rd_createstruct(const char* name,
-                                          const RDStructField* fields);
+REDASM_EXPORT bool rd_typeequals(const RDType* t1, const RDType* t2);
+
 REDASM_EXPORT void rdvalue_init(RDValue* v);
 REDASM_EXPORT void rdvalue_destroy(RDValue* self);
 REDASM_EXPORT const char* rdvalue_tostring(RDValue* self);
 REDASM_EXPORT bool rdvalue_islist(const RDValue* self);
 REDASM_EXPORT bool rdvalue_isstruct(const RDValue* self);
 REDASM_EXPORT usize rdvalue_getlength(const RDValue* self);
+REDASM_EXPORT const RDValue* rdvalue_query(const RDValue* self, const char* q, const char** error);
+REDASM_EXPORT const RDValue* rdvalue_query_n(const RDValue* self, const char* q, usize n, const char** error);
+// clang-format on
 
-REDASM_EXPORT const RDValue* rdvalue_query(const RDValue* self, const char* q,
-                                           const char** error);
-
-REDASM_EXPORT const RDValue* rdvalue_query_n(const RDValue* self, const char* q,
-                                             usize n, const char** error);
-
-inline bool rd_istypenull(const RDType* t) { return t && !t->id; }
+static inline bool rd_typeisnull(const RDType* t) { return !t || !t->def; }

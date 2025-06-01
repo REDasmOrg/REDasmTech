@@ -2,7 +2,6 @@
 #include "../context.h"
 #include "../memory/memory.h"
 #include "../state.h"
-#include "../typing/base.h"
 #include <redasm/listing.h>
 
 namespace {
@@ -40,29 +39,34 @@ void listingindex_tosymbol(LIndex lidx, RDSymbol* symbol, std::string& value) {
             tl::optional<std::string> s;
             ct_assume(item.dtype);
 
-            switch(item.dtype->id) {
-                case redasm::typing::ids::STR:
-                    s = redasm::memory::get_str(seg, item.address);
-                    break;
-                case redasm::typing::ids::WSTR:
-                    s = redasm::memory::get_wstr(seg, item.address);
-                    break;
+            if(item.dtype->def->kind == TK_PRIMITIVE) {
+                switch(item.dtype->def->t_primitive) {
+                    case T_STR:
+                        s = redasm::memory::get_str(seg, item.address);
+                        break;
 
-                case redasm::typing::ids::CHAR: {
-                    usize len = redasm::memory::get_length(seg, item.address);
-                    ct_assume(len > 0);
-                    s = redasm::memory::get_str(seg, item.address, len);
-                    break;
+                    case T_WSTR:
+                        s = redasm::memory::get_wstr(seg, item.address);
+                        break;
+
+                    case T_CHAR: {
+                        usize len =
+                            redasm::memory::get_length(seg, item.address);
+                        ct_assume(len > 0);
+                        s = redasm::memory::get_str(seg, item.address, len);
+                        break;
+                    }
+
+                    case T_WCHAR: {
+                        usize len =
+                            redasm::memory::get_length(seg, item.address);
+                        ct_assume(len > 0);
+                        s = redasm::memory::get_wstr(seg, item.address, len);
+                        break;
+                    }
+
+                    default: break;
                 }
-
-                case redasm::typing::ids::WCHAR: {
-                    usize len = redasm::memory::get_length(seg, item.address);
-                    ct_assume(len > 0);
-                    s = redasm::memory::get_wstr(seg, item.address, len);
-                    break;
-                }
-
-                default: break;
             }
 
             if(!s) {

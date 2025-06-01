@@ -105,14 +105,12 @@ REDASM_EXPORT const RDTestResultSlice* rd_test(RDBuffer* file);
 REDASM_EXPORT void rd_disassemble(void);
 
 REDASM_EXPORT bool rd_setcomment(RDAddress address, const char* comment);
+
 REDASM_EXPORT bool rd_settype(RDAddress address, const RDType* type,
                               RDValue* v);
+
 REDASM_EXPORT bool rd_settype_ex(RDAddress address, const RDType* type,
                                  usize flags, RDValue* v);
-REDASM_EXPORT bool rd_settypename(RDAddress address, const char* tname,
-                                  RDValue* v);
-REDASM_EXPORT bool rd_settypename_ex(RDAddress address, const char* tname,
-                                     usize flags, RDValue* v);
 REDASM_EXPORT bool rd_setfunction(RDAddress address);
 REDASM_EXPORT bool rd_setfunction_ex(RDAddress address, usize flags);
 REDASM_EXPORT bool rd_setentry(RDAddress address, const char* name);

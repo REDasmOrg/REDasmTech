@@ -5,7 +5,6 @@
 #include "../memory/memory.h"
 #include "../memory/stringfinder.h"
 #include "../state.h"
-#include "../typing/base.h"
 #include "../utils/pattern.h"
 #include "../utils/utils.h"
 #include "function.h"
@@ -48,50 +47,29 @@ LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
     LIndex lidx = l.size();
     l.type(address, t);
 
-    const typing::TypeDef* td = ctx->types.get_typedef(t);
-    ct_assume(td);
+    ct_assume(t.def);
 
-    if(td->is_struct()) { // Struct creates a new scope
-        l.push_type(t);
-        l.push_indent();
+    if(t.def->kind == TK_PRIMITIVE) {
+        switch(t.def->t_primitive) {
+            case T_CHAR:
+            case T_WCHAR:
+            case T_I8:
+            case T_U8:
+            case T_I16:
+            case T_U16:
+            case T_I32:
+            case T_U32:
+            case T_I64:
+            case T_U64:
+            case T_I16BE:
+            case T_U16BE:
+            case T_I32BE:
+            case T_U32BE:
+            case T_I64BE:
+            case T_U64BE: address += t.def->size; break;
 
-        for(usize j = 0; j < td->dict.size(); j++) {
-            const auto& [fieldtype, _] = td->dict[j];
-
-            const typing::TypeDef* ftd = ctx->types.get_typedef(fieldtype);
-            ct_assume(ftd);
-
-            l.push_fieldindex(j);
-
-            if(fieldtype.n > 0) {
-                memprocess::process_listing_array(ctx, l, address,
-                                                  ftd->to_type(fieldtype.n));
-            }
-            else
-                memprocess::process_listing_type(ctx, l, address,
-                                                 ftd->to_type());
-
-            l.pop_fieldindex();
-        }
-
-        l.pop_indent();
-        l.pop_type();
-    }
-    else {
-        switch(td->get_id()) {
-            case typing::ids::CHAR:
-            case typing::ids::WCHAR:
-            case typing::ids::I8:
-            case typing::ids::U8:
-            case typing::ids::I16:
-            case typing::ids::U16:
-            case typing::ids::I32:
-            case typing::ids::U32:
-            case typing::ids::I64:
-            case typing::ids::U64: address += td->size; break;
-
-            case typing::ids::WSTR:
-            case typing::ids::STR: {
+            case T_WSTR:
+            case T_STR: {
                 const RDSegment* seg = l.current_segment();
                 ct_assume(seg);
                 address += memory::get_length(seg, address);
@@ -101,6 +79,27 @@ LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
             default: ct_unreachable;
         }
     }
+    else if(t.def->kind == TK_STRUCT) { // Struct creates a new scope
+        l.push_type(t);
+        l.push_indent();
+
+        int i = 0;
+        const RDStructField* it;
+        slice_foreach(it, &t.def->t_struct) {
+            l.push_fieldindex(i);
+
+            if(it->type.n > 0)
+                memprocess::process_listing_array(ctx, l, address, it->type);
+            else
+                memprocess::process_listing_type(ctx, l, address, it->type);
+
+            l.pop_fieldindex();
+            i++;
+        }
+
+        l.pop_indent();
+        l.pop_type();
+    }
 
     return lidx;
 }
@@ -108,25 +107,22 @@ LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
 void process_listing_array(const Context* ctx, Listing& l, RDAddress& address,
                            RDType t) {
     ct_assume(t.n > 0);
-
+    ct_assume(t.def);
     l.type(address, t);
-    l.push_indent();
 
-    const typing::TypeDef* td = ctx->types.get_typedef(t);
-    ct_assume(td);
+    // Array of chars are handled differently
+    if(t.def->kind == TK_PRIMITIVE &&
+       (t.def->t_primitive == T_CHAR || t.def->t_primitive == T_WCHAR)) {
+        address += t.def->size * t.n;
+    }
+    else {
+        auto itemtype = ctx->types.create_type(t.def);
+        ct_assume(itemtype);
 
-    switch(td->get_id()) {
-        // Array of chars are handled differently
-        case typing::ids::CHAR:
-        case typing::ids::WCHAR: address += td->size * t.n; break;
-
-        default: {
-            for(usize i = 0; i < std::max<usize>(t.n, 1); i++) {
-                LIndex lidx = memprocess::process_listing_type(ctx, l, address,
-                                                               td->to_type());
-                l[lidx].array_index = i;
-            }
-            break;
+        for(usize i = 0; i < std::max<usize>(t.n, 1); i++) {
+            LIndex lidx =
+                memprocess::process_listing_type(ctx, l, address, *itemtype);
+            l[lidx].array_index = i;
         }
     }
 
@@ -139,6 +135,11 @@ void process_listing_data(const Context* ctx, Listing& l, RDAddress& address) {
 
     if(memory::has_flag(seg, address, BF_TYPE)) {
         auto type = ctx->get_type(address);
+
+        if(!type) {
+            spdlog::critical("{:x}", address);
+        }
+
         ct_assume(type);
 
         if(type->n > 0)

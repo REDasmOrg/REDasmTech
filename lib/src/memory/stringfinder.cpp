@@ -3,7 +3,6 @@
 #include "../memory/mbyte.h"
 #include "../memory/memory.h"
 #include "../state.h"
-#include "../typing/base.h"
 #include <cmath>
 #include <string_view>
 #include <unordered_map>
@@ -18,7 +17,6 @@ constexpr float ENTROPY_TRESHOLD = 3.5;
 constexpr usize STR_MINUNIQUE = 2;
 constexpr usize STR_MINLENGTH = 4;
 
-std::string g_temptype;
 std::string g_tempstr;
 
 template<typename T>
@@ -101,7 +99,7 @@ categorize_as(const RDSegment* seg, RDAddress address, std::string_view tname,
     }
 
     RDStringResult r = {
-        nullptr,
+        {},
         g_tempstr.c_str(),
         totalsize,
         terminated,
@@ -136,16 +134,15 @@ tl::optional<RDStringResult> classify(RDAddress address) {
 
         if(ok) {
             if(c.terminated)
-                g_temptype = typing::names::WSTR;
+                c.type = state::context->types.create_primitive(T_WSTR);
             else {
-                g_temptype = state::context->types.as_array(
-                    typing::names::WCHAR, g_tempstr.size());
+                c.type = state::context->types.create_primitive(
+                    T_WCHAR, g_tempstr.size());
             }
         }
         else
             return tl::nullopt;
 
-        c.type = g_temptype.c_str();
         return c;
     }
 
@@ -157,16 +154,15 @@ tl::optional<RDStringResult> classify(RDAddress address) {
 
     if(ok) {
         if(c.terminated)
-            g_temptype = typing::names::STR;
+            c.type = state::context->types.create_primitive(T_STR);
         else {
-            g_temptype = state::context->types.as_array(typing::names::CHAR,
-                                                        g_tempstr.size());
+            c.type = state::context->types.create_primitive(T_CHAR,
+                                                            g_tempstr.size());
         }
     }
     else
         return tl::nullopt;
 
-    c.type = g_temptype.c_str();
     return c;
 }
 

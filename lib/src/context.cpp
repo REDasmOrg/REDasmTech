@@ -3,7 +3,6 @@
 #include "memory/memory.h"
 #include "plugins/pluginmanager.h"
 #include "state.h"
-#include "typing/base.h"
 #include "utils/utils.h"
 #include <redasm/redasm.h>
 
@@ -241,16 +240,9 @@ bool Context::set_comment(RDAddress address, std::string_view comment) {
     return true;
 }
 
-bool Context::set_type(RDAddress address, typing::FullTypeName tname,
-                       usize flags) {
-    const RDSegment* seg = this->program.find_segment(address);
-    if(!seg) {
-        spdlog::warn("set_type: Invalid address");
-        return false;
-    }
-
-    typing::ParsedType pt = this->types.parse(tname);
-    return this->set_type(address, pt.to_type(), flags);
+bool Context::set_type(RDAddress address, std::string_view tname, usize flags) {
+    auto t = this->types.create_type(tname);
+    return t && this->set_type(address, *t, flags);
 }
 
 bool Context::set_type(RDAddress address, RDType t, usize flags) {
@@ -260,29 +252,25 @@ bool Context::set_type(RDAddress address, RDType t, usize flags) {
         return false;
     }
 
-    const typing::TypeDef* td = this->types.get_typedef(t);
+    if(!t.def) {
+        spdlog::warn("set_type: Invalid type definition");
+        return false;
+    }
+
+    tl::optional<std::string> s;
     usize len;
 
-    switch(t.id) {
-        case typing::ids::STR:
-        case typing::ids::WSTR: {
-            tl::optional<std::string> s;
-            if(t.id == typing::ids::WSTR)
-                s = memory::get_wstr(seg, address);
-            else
-                s = memory::get_str(seg, address);
-
-            if(!s) {
-                this->add_problem(address, "string not found");
-                return false;
-            }
-
-            len = (s->size() * td->size) + td->size; // Null terminator included
-            break;
-        }
-
-        default: len = std::max<usize>(t.n, 1) * td->size; break;
+    if(t.def->kind == TK_PRIMITIVE) {
+        if(t.def->t_primitive == T_STR)
+            s = memory::get_str(seg, address);
+        else if(t.def->t_primitive == T_WSTR)
+            s = memory::get_wstr(seg, address);
     }
+
+    if(s)
+        len = (s->size() * t.def->size);
+    else
+        len = this->types.size_of(t);
 
     m_database->set_type(address, t);
     memory::unset_n(seg, address, len);
@@ -349,8 +337,10 @@ tl::optional<RDType> Context::get_type(RDAddress address) const {
         return {};
     }
 
-    if(memory::has_flag(seg, address, BF_TYPE))
-        return m_database->get_type(address);
+    if(memory::has_flag(seg, address, BF_TYPE)) {
+        auto dbtype = m_database->get_type(address);
+        if(dbtype) return this->types.create_type(dbtype->name, dbtype->n);
+    }
 
     return tl::nullopt;
 }
@@ -374,10 +364,8 @@ std::string Context::get_name(RDAddress address) const {
         if(memory::has_flag(seg, address, BF_TYPE)) {
             auto type = this->get_type(address);
             ct_assume(type);
-
-            const typing::TypeDef* td = this->types.get_typedef(*type);
-            ct_assume(td);
-            prefix = utils::to_lower(td->name);
+            ct_assume(type->def);
+            prefix = utils::to_lower(type->def->name);
         }
         else if(memory::has_flag(seg, address, BF_FUNCTION))
             prefix = "sub";

@@ -18,6 +18,11 @@ public:
         tl::optional<RDAddress> fromaddr;
     };
 
+    struct Type {
+        std::string name;
+        usize n;
+    };
+
     using RefList = std::vector<RDRef>;
     using SRegChanges = std::vector<SegmentReg>;
     using SRegList = std::vector<int>;
@@ -33,7 +38,6 @@ public:
     RefList get_refs_to(RDAddress toaddr) const;
     std::string get_name(RDAddress address) const;
     std::string get_comment(RDAddress address) const;
-    tl::optional<RDType> get_type(RDAddress address) const;
     void add_ref(RDAddress fromaddr, RDAddress toaddr, usize type);
     void set_comment(RDAddress address, std::string_view comment);
     void set_name(RDAddress address, std::string_view name);
@@ -44,6 +48,8 @@ public:
     SRegChanges get_sregs_from_addr(RDAddress addr) const;
     SRegChanges get_sreg_changes(int sreg) const;
     SRegList get_sregs() const;
+
+    tl::optional<Database::Type> get_type(RDAddress address) const;
 
     void set_sreg(RDAddress fromaddr, int reg, const RDRegValue& val,
                   const tl::optional<RDAddress>& addr = tl::nullopt);

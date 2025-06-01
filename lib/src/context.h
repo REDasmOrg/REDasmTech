@@ -41,7 +41,7 @@ public:
 public: // Database Interface
     void add_ref(RDAddress fromaddr, RDAddress toaddr, usize type);
     bool set_comment(RDAddress address, std::string_view comment = {});
-    bool set_type(RDAddress address, typing::FullTypeName tname, usize flags);
+    bool set_type(RDAddress address, std::string_view tname, usize flags);
     bool set_type(RDAddress address, RDType t, usize flags);
     bool set_name(RDAddress address, const std::string& name, usize flags);
     tl::optional<RDType> get_type(RDAddress address) const;

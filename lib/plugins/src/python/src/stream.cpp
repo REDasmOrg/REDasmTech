@@ -38,7 +38,7 @@ PyObject* stream_peek_struct_n(PyStream* self, PyObject* args) {
     PyObject* fields = nullptr;
     if(!PyArg_ParseTuple(args, "nnO", &idx, &n, &fields)) return nullptr;
 
-    std::vector<RDStructField> s;
+    std::vector<RDStructFieldDecl> s;
     if(!python::tuple_to_struct(fields, s)) return nullptr;
 
     RDValueOpt v = rdstream_peek_struct_n(self->stream, n, s.data());
@@ -53,7 +53,7 @@ PyObject* stream_peek_struct_n(PyStream* self, PyObject* args) {
 }
 
 PyObject* stream_peek_struct(PyStream* self, PyObject* args) {
-    std::vector<RDStructField> s;
+    std::vector<RDStructFieldDecl> s;
     if(!python::tuple_to_struct(args, s)) return nullptr;
 
     RDValueOpt v = rdstream_peek_struct(self->stream, s.data());
@@ -200,7 +200,7 @@ PyObject* stream_read_struct_n(PyStream* self, PyObject* args) {
     PyObject* fields = nullptr;
     if(!PyArg_ParseTuple(args, "nnO", &idx, &n, &fields)) return nullptr;
 
-    std::vector<RDStructField> s;
+    std::vector<RDStructFieldDecl> s;
     if(!python::tuple_to_struct(fields, s)) return nullptr;
 
     RDValueOpt v = rdstream_read_struct_n(self->stream, n, s.data());
@@ -215,7 +215,7 @@ PyObject* stream_read_struct_n(PyStream* self, PyObject* args) {
 }
 
 PyObject* stream_read_struct(PyStream* self, PyObject* args) {
-    std::vector<RDStructField> s;
+    std::vector<RDStructFieldDecl> s;
     if(!python::tuple_to_struct(args, s)) return nullptr;
 
     RDValueOpt v = rdstream_read_struct(self->stream, s.data());

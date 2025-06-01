@@ -44,6 +44,7 @@ concept SQLBindable =
     std::same_as<T, std::string_view> ||
     std::same_as<T, RDAddress> || 
     std::same_as<T, isize> ||
+    std::same_as<T, const char*> ||
     std::same_as<T, int> ||
     std::same_as<T, u64> ||
     std::same_as<T, u32> ||
@@ -73,6 +74,10 @@ void sql_bindparam(sqlite3* db, sqlite3_stmt* stmt, std::string_view n,
         res = sqlite3_bind_int(stmt, idx, static_cast<int>(v));
     else if constexpr(std::is_same_v<U, std::nullptr_t>)
         res = sqlite3_bind_null(stmt, idx);
+    else if constexpr(std::is_same_v<U, const char*>) {
+        std::string_view sv = v;
+        res = sqlite3_bind_text(stmt, idx, sv.data(), sv.size(), SQLITE_STATIC);
+    }
 
     if(res != SQLITE_OK) ct_exceptf("SQL: %s", sqlite3_errmsg(db));
 }
@@ -119,7 +124,7 @@ constexpr std::string_view DB_SCHEMA = R"(
 
     CREATE TABLE Types(
         address INTEGER PRIMARY KEY,
-        id INTEGER NOT NULL,
+        name TEXT NOT NULL,
         n INTEGER NOT NULL
     );
 
@@ -459,13 +464,15 @@ void Database::set_name(RDAddress address, std::string_view name) {
 void Database::set_type(RDAddress address, RDType t) {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::SET_TYPE, R"(
         INSERT INTO Types
-            VALUES (:address, :id, :n)
+            VALUES (:address, :name, :n)
         ON CONFLICT DO 
-            UPDATE SET id = EXCLUDED.id, n = EXCLUDED.n
+            UPDATE SET name = EXCLUDED.name, n = EXCLUDED.n
     )");
 
+    ct_assume(t.def);
+
     sql_bindparam(m_db, stmt, ":address", address);
-    sql_bindparam(m_db, stmt, ":id", t.id);
+    sql_bindparam(m_db, stmt, ":name", t.def->name);
     sql_bindparam(m_db, stmt, ":n", t.n);
     sql_step(m_db, stmt);
 }
@@ -532,9 +539,9 @@ std::string Database::get_comment(RDAddress address) const {
     return {};
 }
 
-tl::optional<RDType> Database::get_type(RDAddress address) const {
+tl::optional<Database::Type> Database::get_type(RDAddress address) const {
     sqlite3_stmt* stmt = this->prepare_query(SQLQueries::GET_COMMENT, R"(
-        SELECT id,n
+        SELECT name,n
         FROM Types
         WHERE address = :address
     )");
@@ -542,8 +549,8 @@ tl::optional<RDType> Database::get_type(RDAddress address) const {
     sql_bindparam(m_db, stmt, ":address", address);
 
     if(sql_step(m_db, stmt) == SQLITE_ROW) {
-        return RDType{
-            .id = static_cast<u32>(sqlite3_column_int(stmt, 0)),
+        return Database::Type{
+            .name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)),
             .n = static_cast<u64>(sqlite3_column_int64(stmt, 1)),
         };
     }
