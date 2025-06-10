@@ -321,6 +321,7 @@ typedef struct StrSplit {
 } StrSplit;
 
 #define str_init slice_init
+#define str_length slice_length
 #define str_isview slice_isview
 #define str_ismutable slice_ismutable
 #define str_isnull slice_isnull
