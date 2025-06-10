@@ -26,29 +26,31 @@ char* copy_str(std::string_view v);
 std::string_view trim(std::string_view v);
 
 template<typename Ret = std::string_view, typename T>
-Ret to_string(T value, int base = 10, bool sign = false, int bits = 0) {
+Ret to_string(T val, int base = 10, bool sign = false, int bits = 0) {
+    using UT = std::make_unsigned_t<T>;
     constexpr std::string_view DIGITS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    static std::array<char, 66> out;
+    static std::array<char, 67> out; // 66+1 for negative sign
 
     if(base < 2 || base > 36) ct_exceptf("tostring: invalid base %d", base);
 
     bool isneg = false;
+    UT uval;
 
-    if(sign && value < 0) {
+    if(sign && val < 0) {
         isneg = true;
-        value = -value;
+        uval = -val;
     }
+    else
+        uval = val;
 
     int c = out.size() - 1;
     out[c] = 0;
 
     do {
-        T rem = value % base;
-        value /= base;
+        T rem = uval % base;
+        uval /= base;
         out[--c] = DIGITS.at(rem);
-    } while(value > 0);
-
-    if(isneg) out[--c] = '-';
+    } while(uval > 0);
 
     if(bits > 0) { // Zero pad
         int w = bits / 4;
@@ -61,13 +63,15 @@ Ret to_string(T value, int base = 10, bool sign = false, int bits = 0) {
         }
     }
 
+    if(isneg) out[--c] = '-';
+
     return Ret{&out[c], out.size() - c - 1};
 }
 
 template<typename Ret = std::string_view, typename T>
-static Ret to_hex(T value, int bits = 0) {
+static Ret to_hex(T value, int bits = 0, bool sign = false) {
     if(!bits) bits = sizeof(T) * CHAR_BIT;
-    return utils::to_string<Ret, T>(value, 16, false, bits);
+    return utils::to_string<Ret, T>(value, 16, sign, bits);
 }
 
 template<typename T = usize>
