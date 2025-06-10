@@ -1,6 +1,7 @@
 #pragma once
 
 #include "elf_common.h"
+#include "elf_dwarf.h"
 #include "elf_header.h"
 #include <string>
 #include <string_view>
@@ -27,6 +28,10 @@ struct ElfFormat {
     [[nodiscard]] std::string_view get_strv(int idx, usize shidx = 0) const;
     void parse_section_address(usize i) const;
     void parse_section_offset(usize i) const;
+    void parse_dwarf_fde(RDAddress& addr, RDAddress prevaddr, u32 len,
+                         const elf_dwarf::CIEInfo& cie) const;
+    elf_dwarf::CIEInfo parse_dwarf_cie(RDAddress& addr, RDAddress prevaddr,
+                                       u32 len) const;
 
 private:
     void apply_type(const char* tname, const SHDR& shdr) const;
@@ -36,6 +41,8 @@ private:
     void process_symtab_address(const SHDR& shdr) const;
     void process_rela(const SHDR& shdr) const;
     void process_rel(const SHDR& shdr) const;
+    void process_eh_frame_hdr(const SHDR& shdr) const;
+    void process_eh_frame(const SHDR& shdr) const;
 };
 
 namespace elf_format {

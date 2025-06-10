@@ -47,7 +47,7 @@ bool parse(RDLoader* self, const RDLoaderRequest* req) {
 }
 
 template<int Bits>
-void load_section_header(const ElfFormat<Bits>* elf) {
+void load_section_header(const ElfFormat<Bits>* elf, RDBuffer* file) {
     for(usize i = 0; i < elf->shdr.size(); i++) {
         const auto& seg = elf->shdr[i];
         if(!seg.sh_addr || !seg.sh_size) continue;
@@ -124,7 +124,7 @@ bool load(RDLoader* self, RDBuffer* file) {
                   sizeof(typename ELF::PHDR) * elf->phdr.size());
 
     if(!elf->shdr.empty())
-        load_section_header(elf);
+        load_section_header(elf, file);
     else if(!elf->phdr.empty())
         load_program_header(elf);
     else
@@ -174,6 +174,14 @@ const char* get_processor(RDLoader* self) {
 }
 
 template<int Bits>
+void load_signatures(RDLoader* self, RDSignature* sig) {
+    using ELF = ElfFormat<Bits>;
+    const auto* elf = reinterpret_cast<const ELF*>(self);
+
+    rdsignature_add(sig, "linux/glibc");
+}
+
+template<int Bits>
 RDLoaderPlugin define_loader(const char* id, const char* name) {
     return {
         .level = REDASM_API_LEVEL,
@@ -188,6 +196,7 @@ RDLoaderPlugin define_loader(const char* id, const char* name) {
             },
         .parse = parse<Bits>,
         .load = load<Bits>,
+        // .load_signatures = load_signatures<Bits>,
         .get_processor = get_processor<Bits>,
         .get_callingconvention = get_callingconvention<Bits>,
     };

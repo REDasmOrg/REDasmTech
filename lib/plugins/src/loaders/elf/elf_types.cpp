@@ -131,11 +131,19 @@ const RDStructFieldDecl ELF_VERNEED_BE[] = {
     {"u16be", "vn_version"}, {"u16be", "vn_cnt"},  {"u32be", "vn_file"},
     {"u32be", "vn_aux"},     {"u32be", "vn_next"}, {nullptr, nullptr}};
 
+const RDStructFieldDecl ELF_EH_FRAME_HDR[] = {
+    {"u8", "version"},   {"u8", "eh_frame_ptr_enc"}, {"u8", "fde_count_enc"},
+    {"u8", "table_enc"}, {nullptr, nullptr},
+
+};
+
 } // namespace
 
 void register_all(const ElfIdent& ident) {
     bool isbe = elf_format::is_be(ident);
     int b = elf_format::get_bits(ident);
+
+    rd_createstruct("ELF_EH_FRAME_HDR", ELF_EH_FRAME_HDR);
 
     if(isbe) {
         rd_createstruct("ELF_VERNEED", ELF_VERNEED_BE);

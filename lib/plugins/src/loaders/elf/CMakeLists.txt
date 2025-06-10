@@ -8,6 +8,7 @@ target_sources(${PROJECT_NAME}
     PRIVATE
         elf.cpp
         elf_types.cpp
+        elf_dwarf.cpp
         elf_format.cpp
 )
 
