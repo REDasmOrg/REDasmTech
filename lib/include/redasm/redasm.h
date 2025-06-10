@@ -18,6 +18,7 @@
 #include <redasm/rdil.h>
 #include <redasm/renderer.h>
 #include <redasm/segment.h>
+#include <redasm/signature.h>
 #include <redasm/sreg.h>
 #include <redasm/stream.h>
 #include <redasm/surface.h>
@@ -42,9 +43,10 @@ typedef enum RDLogLevel {
 } RDLogLevel;
 
 typedef enum RDSetName {
-    SN_NOWARN = (1 << 0),
-    SN_IMPORT = (1 << 1),
-    SN_FORCE = (1 << 2),
+    SN_NOWARN = 1 << 0,
+    SN_IMPORT = 1 << 1,
+    SN_FORCE = 1 << 2,
+    SN_ADDRESS = 1 << 3,
 } RDSetName;
 
 typedef enum RDSetType {
