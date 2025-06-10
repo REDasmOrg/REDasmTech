@@ -3,14 +3,15 @@
 #include <fmt/core.h>
 #include <redasm/function.h>
 #include <redasm/processor.h>
+#include <string>
 
 namespace redasm::builtins {
 
 namespace processor {
 
 void render_segment(const RDProcessor*, RDRenderer* r, const RDSegment* seg) {
-    const char* start = rd_tohex_n(seg->start, seg->bits);
-    const char* end = rd_tohex_n(seg->end, seg->bits);
+    std::string start = rd_tohex_n(seg->start, seg->bits);
+    std::string end = rd_tohex_n(seg->end, seg->bits);
 
     std::string s =
         fmt::format("segment {} (start: {}, end: {})", seg->name, start, end);
