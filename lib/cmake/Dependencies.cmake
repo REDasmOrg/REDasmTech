@@ -17,7 +17,7 @@ function(setup_dependencies)
 
     CPMAddPackage("gh:TartanLlama/optional@1.1.0")
     CPMAddPackage("gh:fmtlib/fmt#10.2.1")
-    CPMAddPackage("gh:richgel999/miniz#3.0.2")
+    CPMAddPackage("gh:richgel999/miniz#c883286f1a6443720e7705450f59e579a4bbb8e2")
 
     CPMAddPackage(
         NAME spdlog
