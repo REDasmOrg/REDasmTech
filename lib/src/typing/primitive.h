@@ -5,13 +5,18 @@
 
 namespace redasm::typing::primitive {
 
+// clang-format off
 inline constexpr std::array<const char*, T_NPRIMITIVES> NAMES = {
-    "bool",  "char",  "wchar", "u8",  "u16",   "u32",   "u64",
-    "i8",    "i16",   "i32",   "i64", "u16be", "u32be", "u64be",
-    "i16be", "i32be", "i64be", "str", "wstr",
+    "bool",  
+    "char", "wchar", 
+    "u8", "u16", "u32", "u64",   
+    "i8", "i16", "i32", "i64", 
+    "u16be", "u32be", "u64be", 
+    "i16be", "i32be", "i64be", 
+    "str", "wstr",
+    "uleb128", "leb128",
 };
 
-// clang-format off
 inline std::array<RDTypeDef, T_NPRIMITIVES> types = {{
     {.kind = TK_PRIMITIVE, .name = NAMES[0],  .size = sizeof(bool),     .flags = 0,                           .t_primitive = T_BOOL},
     {.kind = TK_PRIMITIVE, .name = NAMES[1],  .size = sizeof(char),     .flags = 0,                           .t_primitive = T_CHAR},
@@ -32,6 +37,8 @@ inline std::array<RDTypeDef, T_NPRIMITIVES> types = {{
     {.kind = TK_PRIMITIVE, .name = NAMES[16], .size = sizeof(i64),      .flags = TF_INT | TF_SIGN | TF_BIG,   .t_primitive = T_I64BE},
     {.kind = TK_PRIMITIVE, .name = NAMES[17], .size = sizeof(char),     .flags = TF_VAR,                      .t_primitive = T_STR},
     {.kind = TK_PRIMITIVE, .name = NAMES[18], .size = sizeof(char16_t), .flags = TF_VAR,                      .t_primitive = T_WSTR},
+    {.kind = TK_PRIMITIVE, .name = NAMES[19], .size = 0,                .flags = TF_INT | TF_SIGN | TF_VAR,   .t_primitive = T_ULEB128},
+    {.kind = TK_PRIMITIVE, .name = NAMES[20], .size = 0,                .flags = TF_INT | TF_SIGN | TF_VAR,   .t_primitive = T_LEB128},
 }};
 // clang-format on
 

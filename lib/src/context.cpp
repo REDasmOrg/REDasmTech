@@ -122,6 +122,9 @@ bool Context::load(const RDProcessorPlugin* plugin) {
                               return lhs->order < rhs->order;
                           });
 
+        if(this->loaderplugin->load_signatures)
+            this->loaderplugin->load_signatures(this->loader, nullptr);
+
         this->worker->emulator.setup();
         return true;
     }
@@ -258,17 +261,39 @@ bool Context::set_type(RDAddress address, RDType t, usize flags) {
     }
 
     tl::optional<std::string> s;
+    tl::optional<RDLEB128> leb;
     usize len;
 
     if(t.def->kind == TK_PRIMITIVE) {
-        if(t.def->t_primitive == T_STR)
-            s = memory::get_str(seg, address);
-        else if(t.def->t_primitive == T_WSTR)
-            s = memory::get_wstr(seg, address);
+        switch(t.def->t_primitive) {
+            case T_STR:
+                s = memory::get_str(seg, address);
+                ct_assume(s);
+                break;
+
+            case T_WSTR:
+                s = memory::get_wstr(seg, address);
+                ct_assume(s);
+                break;
+
+            case T_LEB128:
+                leb = memory::get_leb128(seg, address);
+                ct_assume(leb);
+                break;
+
+            case T_ULEB128:
+                leb = memory::get_uleb128(seg, address);
+                ct_assume(leb);
+                break;
+
+            default: break;
+        }
     }
 
     if(s)
         len = (s->size() * t.def->size);
+    else if(leb)
+        len = leb->size;
     else
         len = this->types.size_of(t);
 
@@ -389,6 +414,11 @@ bool Context::set_name(RDAddress address, const std::string& name,
     }
 
     std::string dbname = name;
+
+    if(flags & SN_ADDRESS) {
+        dbname.append("_");
+        dbname.append(utils::to_hex(address, seg->bits));
+    }
 
     if(!name.empty()) {
         if(memory::has_flag(seg, address, BF_NAME)) {

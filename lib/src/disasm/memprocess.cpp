@@ -68,8 +68,16 @@ LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
             case T_I64BE:
             case T_U64BE: address += t.def->size; break;
 
-            case T_WSTR:
-            case T_STR: {
+            case T_STR:
+            case T_WSTR: {
+                const RDSegment* seg = l.current_segment();
+                ct_assume(seg);
+                address += memory::get_length(seg, address) + t.def->size;
+                break;
+            }
+
+            case T_LEB128:
+            case T_ULEB128: {
                 const RDSegment* seg = l.current_segment();
                 ct_assume(seg);
                 address += memory::get_length(seg, address);

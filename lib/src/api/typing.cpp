@@ -61,6 +61,65 @@ usize rdvalue_getlength(const RDValue* self) {
                rd_typename(&self->type));
 }
 
+bool rdvalue_getunsigned(const RDValue* self, u64* v) {
+    spdlog::trace("rdvalue_getunsigned({}, {})", fmt::ptr(self), fmt::ptr(v));
+
+    if(!self || !v || self->type.n > 0 || self->type.def->kind != TK_PRIMITIVE)
+        return false;
+
+    switch(self->type.def->t_primitive) {
+        case T_U8: *v = self->u8_v; break;
+        case T_U16:
+        case T_U16BE: *v = self->u16_v; break;
+        case T_U32:
+        case T_U32BE: *v = self->u32_v; break;
+        case T_U64:
+        case T_U64BE: *v = self->u64_v; break;
+        default: return false;
+    }
+
+    return true;
+}
+
+bool rdvalue_getsigned(const RDValue* self, i64* v) {
+    spdlog::trace("rdvalue_getsigned({}, {})", fmt::ptr(self), fmt::ptr(v));
+
+    if(!self || !v || self->type.n > 0 || self->type.def->kind != TK_PRIMITIVE)
+        return false;
+
+    switch(self->type.def->t_primitive) {
+        case T_I8: *v = self->i8_v; break;
+        case T_I16:
+        case T_I16BE: *v = self->i16_v; break;
+        case T_I32:
+        case T_I32BE: *v = self->i32_v; break;
+        case T_I64:
+        case T_I64BE: *v = self->i64_v; break;
+        default: return false;
+    }
+
+    return true;
+}
+
+bool rdvalue_getinteger(const RDValue* self, u64* v) {
+    if(!self || !v) return false;
+
+    u64 res1;
+    i64 res2;
+
+    if(rdvalue_getunsigned(self, &res1)) {
+        *v = res1;
+        return true;
+    }
+
+    if(rdvalue_getsigned(self, &res2)) {
+        *v = static_cast<u64>(res2);
+        return true;
+    }
+
+    return false;
+}
+
 const RDValue* rdvalue_query(const RDValue* self, const char* q,
                              const char** error) {
     return rdvalue_query_n(self, q, q ? std::strlen(q) : 0, error);

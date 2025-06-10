@@ -43,6 +43,8 @@ REDASM_EXPORT bool rdbuffer_getu64be(const RDBuffer* self, usize idx, u64* v);
 REDASM_EXPORT bool rdbuffer_geti16be(const RDBuffer* self, usize idx, i16* v);
 REDASM_EXPORT bool rdbuffer_geti32be(const RDBuffer* self, usize idx, i32* v);
 REDASM_EXPORT bool rdbuffer_geti64be(const RDBuffer* self, usize idx, i64* v);
+REDASM_EXPORT bool rdbuffer_getuleb128(const RDBuffer* self, usize idx, RDLEB128* v);
+REDASM_EXPORT bool rdbuffer_getleb128(const RDBuffer* self, usize idx, RDLEB128* v);
 REDASM_EXPORT bool rdbuffer_getstrz(const RDBuffer* self, usize idx, const char** v);
 REDASM_EXPORT bool rdbuffer_getstr(const RDBuffer* self, usize idx, usize n, const char** v);
 REDASM_EXPORT bool rdbuffer_getwstrz(const RDBuffer* self, usize idx, const char** v);

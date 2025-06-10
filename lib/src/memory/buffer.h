@@ -63,6 +63,12 @@ tl::optional<bool> get_bool(const RDBuffer* self, usize idx);
 tl::optional<char> get_char(const RDBuffer* self, usize idx);
 tl::optional<char> get_wchar(const RDBuffer* self, usize idx);
 
+tl::optional<RDLEB128> get_uleb128(const RDBuffer* self, usize idx);
+tl::optional<RDLEB128> get_leb128(const RDBuffer* self, usize idx);
+
+usize sizeof_uleb128(const RDBuffer* self, usize idx, usize* sz = nullptr);
+usize sizeof_leb128(const RDBuffer* self, usize idx, usize* sz = nullptr);
+
 inline tl::optional<u8> get_u8(const RDBuffer* self, usize idx) {
     return buffer::get_byte(self, idx);
 }

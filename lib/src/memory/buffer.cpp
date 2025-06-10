@@ -1,6 +1,6 @@
 #include "buffer.h"
-#include "../context.h"
 #include "../state.h"
+#include "../utils/leb128.h"
 #include "../utils/utils.h"
 #include <redasm/types.h>
 
@@ -229,6 +229,28 @@ tl::optional<RDValue> get_type_impl_2(const RDBuffer* self, usize& idx,
                 break;
             }
 
+            case T_LEB128: {
+                if(auto leb = buffer::get_leb128(self, idx); leb) {
+                    res.leb = *leb;
+                    idx += leb->size;
+                }
+                else
+                    goto fail;
+
+                break;
+            }
+
+            case T_ULEB128: {
+                if(auto leb = buffer::get_uleb128(self, idx); leb) {
+                    res.leb = *leb;
+                    idx += leb->size;
+                }
+                else
+                    goto fail;
+
+                break;
+            }
+
             default: ct_unreachable;
         }
     }
@@ -442,6 +464,16 @@ tl::optional<char> get_wchar(const RDBuffer* self, usize idx) {
     auto b = buffer::get_u16(self, idx, false);
     if(b) return static_cast<char>(*b & 0xFF);
     return tl::nullopt;
+}
+
+tl::optional<RDLEB128> get_uleb128(const RDBuffer* self, usize idx) {
+    if(idx >= self->length) return tl::nullopt;
+    return utils::decode_uleb128(self, idx);
+}
+
+tl::optional<RDLEB128> get_leb128(const RDBuffer* self, usize idx) {
+    if(idx >= self->length) return tl::nullopt;
+    return utils::decode_leb128(self, idx);
 }
 
 } // namespace redasm::buffer

@@ -219,6 +219,24 @@ bool rdbuffer_geti64be(const RDBuffer* self, usize idx, i64* v) {
     return res.has_value();
 }
 
+bool rdbuffer_getuleb128(const RDBuffer* self, usize idx, RDLEB128* v) {
+    spdlog::trace("rdbuffer_getuleb128({}, {}, {})", fmt::ptr(self), idx,
+                  fmt::ptr(v));
+
+    auto res = redasm::buffer::get_uleb128(self, idx);
+    if(res && v) *v = *res;
+    return res.has_value();
+}
+
+bool rdbuffer_getleb128(const RDBuffer* self, usize idx, RDLEB128* v) {
+    spdlog::trace("rdbuffer_getleb128({}, {}, {})", fmt::ptr(self), idx,
+                  fmt::ptr(v));
+
+    auto res = redasm::buffer::get_leb128(self, idx);
+    if(res && v) *v = *res;
+    return res.has_value();
+}
+
 bool rdbuffer_getstrz(const RDBuffer* self, usize idx, const char** v) {
     spdlog::trace("rdbuffer_getstrz({}, {:x})", fmt::ptr(self), idx,
                   fmt::ptr(v));

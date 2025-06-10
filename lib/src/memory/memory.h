@@ -107,6 +107,16 @@ inline tl::optional<RDValue> get_type(const RDSegment* self, RDAddress address,
     return buffer::get_type(self->mem, address - self->start, t);
 }
 
+inline tl::optional<RDLEB128> get_uleb128(const RDSegment* self,
+                                          RDAddress address) {
+    return buffer::get_uleb128(self->mem, address - self->start);
+}
+
+inline tl::optional<RDLEB128> get_leb128(const RDSegment* self,
+                                         RDAddress address) {
+    return buffer::get_leb128(self->mem, address - self->start);
+}
+
 // Memory interface
 template<typename Function>
 bool range_is(const RDSegment* self, RDAddress address, usize n, Function f) {

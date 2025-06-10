@@ -29,28 +29,28 @@ std::string surface_valuestr(const RDValue& v, bool& isaddr) {
 
     switch(v.type.def->t_primitive) {
         case T_I8: {
-            if(v.i8_v < 0) return utils::to_string<std::string>(v.i8_v);
+            if(v.i8_v < 0) return utils::to_hex<std::string>(v.i8_v, 0, true);
             return surface_checkaddr(v.i8_v, isaddr)
                 .value_or(utils::to_hex<std::string>(v.i8_v));
         }
 
         case T_I16:
         case T_I16BE: {
-            if(v.i16_v < 0) return utils::to_string<std::string>(v.i16_v);
+            if(v.i16_v < 0) return utils::to_hex<std::string>(v.i16_v, 0, true);
             return surface_checkaddr(v.i16_v, isaddr)
                 .value_or(utils::to_hex<std::string>(v.i16_v));
         }
 
         case T_I32:
         case T_I32BE: {
-            if(v.i32_v < 0) return utils::to_string<std::string>(v.i32_v);
+            if(v.i32_v < 0) return utils::to_hex<std::string>(v.i32_v, 0, true);
             return surface_checkaddr(v.i32_v, isaddr)
                 .value_or(utils::to_hex<std::string>(v.i32_v));
         }
 
         case T_I64:
         case T_I64BE: {
-            if(v.i64_v < 0) return utils::to_string<std::string>(v.i64_v);
+            if(v.i64_v < 0) return utils::to_hex<std::string>(v.i64_v, 0, true);
             return surface_checkaddr(v.i64_v, isaddr)
                 .value_or(utils::to_hex<std::string>(v.i64_v));
         }
@@ -76,6 +76,18 @@ std::string surface_valuestr(const RDValue& v, bool& isaddr) {
         case T_U64BE: {
             return surface_checkaddr(v.u64_v, isaddr)
                 .value_or(utils::to_hex<std::string>(v.u64_v));
+        }
+
+        case T_LEB128: {
+            if(v.leb.i_val < 0)
+                return utils::to_hex<std::string>(v.leb.i_val, -1, true);
+            return surface_checkaddr(v.leb.i_val, isaddr)
+                .value_or(utils::to_hex<std::string>(v.leb.i_val, -1));
+        }
+
+        case T_ULEB128: {
+            return surface_checkaddr(v.leb.u_val, isaddr)
+                .value_or(utils::to_hex<std::string>(v.leb.u_val, -1));
         }
 
         default: break;
@@ -735,13 +747,15 @@ void Surface::render_type(const ListingItem& item) {
             case T_I32:
             case T_U32:
             case T_I64:
+            case T_LEB128:
             case T_U64:
             case T_I16BE:
             case T_U16BE:
             case T_I32BE:
             case T_U32BE:
             case T_I64BE:
-            case T_U64BE: {
+            case T_U64BE:
+            case T_ULEB128: {
                 if(auto v = memory::get_type(seg, item.address, *type); v) {
                     bool isaddr = false;
                     std::string vs = surface_valuestr(*v, isaddr);

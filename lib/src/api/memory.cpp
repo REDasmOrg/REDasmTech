@@ -76,6 +76,35 @@ bool rd_getu64be(RDAddress address, u64* v) { return_getvalue_b(u64, v, address,
 bool rd_geti16be(RDAddress address, i16* v) { return_getvalue_b(i16, v, address, true); }
 bool rd_geti32be(RDAddress address, i32* v) { return_getvalue_b(i32, v, address, true); }
 bool rd_geti64be(RDAddress address, i64* v) { return_getvalue_b(i64, v, address, true); }
+
+bool rd_getuleb128(RDAddress address, RDLEB128* v) {
+    spdlog::trace("rd_getuleb128({:x}, {})", address, fmt::ptr(v));
+    const redasm::Context* ctx = redasm::state::context;
+    if(!ctx) return false;
+
+    if(const RDSegment* seg = ctx->program.find_segment(address); seg) {
+        auto val = redasm::memory::get_uleb128(seg, address);
+        if(val && v) *v = *val;
+        return val.has_value();
+    }
+
+    return false;
+}
+
+bool rd_getleb128(RDAddress address, RDLEB128* v) {
+    spdlog::trace("rd_getleb128({:x}, {})", address, fmt::ptr(v));
+    const redasm::Context* ctx = redasm::state::context;
+    if(!ctx) return false;
+
+    if(const RDSegment* seg = ctx->program.find_segment(address); seg) {
+        auto val = redasm::memory::get_leb128(seg, address);
+        if(val && v) *v = *val;
+        return val.has_value();
+    }
+
+    return false;
+}
+
 // clang-format on
 
 const char* rd_getstr(RDAddress address, usize n) {

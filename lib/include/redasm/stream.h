@@ -10,6 +10,7 @@ typedef struct RDStream RDStream;
 // clang-format off
 REDASM_EXPORT RDStream* rdstream_create(RDBuffer* buffer);
 REDASM_EXPORT void rdstream_destroy(RDStream* s);
+REDASM_EXPORT bool rdstream_atend(const RDStream* self);
 REDASM_EXPORT usize rdstream_getpos(const RDStream* self);
 REDASM_EXPORT usize rdstream_seek(RDStream* self, usize off);
 REDASM_EXPORT usize rdstream_move(RDStream* self, isize off);

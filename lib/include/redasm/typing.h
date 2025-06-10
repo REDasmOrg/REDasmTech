@@ -4,6 +4,15 @@
 #include <redasm/ct.h>
 #include <redasm/types.h>
 
+struct RDLEB128 {
+    usize size;
+
+    union {
+        u64 u_val;
+        i64 i_val;
+    };
+};
+
 typedef enum RDTypeKind {
     TK_PRIMITIVE = 0,
     TK_STRUCT,
@@ -26,6 +35,7 @@ typedef enum RDPrimitiveTypes {
     T_U16BE, T_U32BE, T_U64BE,
     T_I16BE, T_I32BE, T_I64BE,
     T_STR, T_WSTR,
+    T_ULEB128, T_LEB128,
 
     T_NPRIMITIVES,
 } RDPrimitiveType;
@@ -48,6 +58,7 @@ typedef struct RDValue {
     RDValueSlice list;
     RDValueDict dict;
     Str str;
+    RDLEB128 leb;
 
     // clang-format off
     union {
@@ -118,6 +129,9 @@ REDASM_EXPORT const char* rdvalue_tostring(RDValue* self);
 REDASM_EXPORT bool rdvalue_islist(const RDValue* self);
 REDASM_EXPORT bool rdvalue_isstruct(const RDValue* self);
 REDASM_EXPORT usize rdvalue_getlength(const RDValue* self);
+REDASM_EXPORT bool rdvalue_getunsigned(const RDValue* self, u64* v);
+REDASM_EXPORT bool rdvalue_getsigned(const RDValue* self, i64* v);
+REDASM_EXPORT bool rdvalue_getinteger(const RDValue* self, u64* v);
 REDASM_EXPORT const RDValue* rdvalue_query(const RDValue* self, const char* q, const char** error);
 REDASM_EXPORT const RDValue* rdvalue_query_n(const RDValue* self, const char* q, usize n, const char** error);
 // clang-format on

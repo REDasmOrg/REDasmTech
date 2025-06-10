@@ -15,6 +15,11 @@ RDStream* rdstream_create(RDBuffer* buffer) {
 }
 
 void rdstream_destroy(RDStream* s) { delete s; }
+
+bool rdstream_atend(const RDStream* self) {
+    return !self || self->position >= self->buffer->length;
+}
+
 usize rdstream_getpos(const RDStream* self) { return self->position; }
 
 usize rdstream_seek(RDStream* self, usize off) {
