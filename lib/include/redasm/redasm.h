@@ -96,6 +96,7 @@ REDASM_EXPORT RDBuffer* rd_getfile(void);
 REDASM_EXPORT const char* rd_rendertext(RDAddress address);
 REDASM_EXPORT bool rd_tooffset(RDAddress address, RDOffset* offset);
 REDASM_EXPORT bool rd_toaddress(RDOffset offset, RDAddress* address);
+REDASM_EXPORT const RDSegment* rd_findsegmentname(const char* name);
 REDASM_EXPORT const RDSegment* rd_findsegment(RDAddress address);
 
 REDASM_EXPORT usize rd_getentries(RDAddress** entries);

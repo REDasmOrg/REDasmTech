@@ -456,6 +456,12 @@ bool rd_toaddress(RDOffset offset, RDAddress* address) {
     return addr.has_value();
 }
 
+const RDSegment* rd_findsegmentname(const char* name) {
+    spdlog::trace("rd_findsegmentname('{}')", name);
+    if(!name || !redasm::state::context) return nullptr;
+    return redasm::state::context->program.find_segment(name);
+}
+
 const RDSegment* rd_findsegment(RDAddress address) {
     spdlog::trace("rd_findsegment({:x})", address);
     if(!redasm::state::context) return nullptr;

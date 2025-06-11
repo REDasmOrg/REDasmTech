@@ -293,6 +293,17 @@ const RDSRange* Program::find_sreg_range(RDAddress address, int sreg) const {
     return nullptr;
 }
 
+RDSegment* Program::find_segment(std::string_view name) {
+    auto res = slice_bsearch(
+        &this->segments, &name,
+        +[](const std::string_view* key, const RDSegment* item) {
+            return key->compare(item->name);
+        });
+
+    if(res.found) return &slice_at(&this->segments, res.index);
+    return nullptr;
+}
+
 RDSegment* Program::find_segment(RDAddress address) { // NOLINT
     return redasm::find_range<RDSegment>(this->segments, address);
 }

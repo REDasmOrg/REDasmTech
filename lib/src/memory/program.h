@@ -30,7 +30,12 @@ struct Program {
     tl::optional<RDAddress> to_address(RDOffset offset) const;
     const RDSRange* find_sreg_range(RDAddress address, int sreg) const;
     RDSegment* find_segment(RDAddress address);
+    RDSegment* find_segment(std::string_view name);
     Function* find_function(RDAddress address);
+
+    const RDSegment* find_segment(std::string_view name) const {
+        return const_cast<Program*>(this)->find_segment(name);
+    }
 
     const RDSegment* find_segment(RDAddress address) const {
         return const_cast<Program*>(this)->find_segment(address);
