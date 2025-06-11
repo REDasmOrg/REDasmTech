@@ -340,7 +340,10 @@ fail:
 } // namespace
 
 usize read(const RDBuffer* self, usize idx, void* dst, usize n) {
-    if(!dst || (idx + n > self->length)) return 0;
+    if(!dst) return 0;
+
+    // Clamp to maximum length
+    if(idx + n > self->length) n = self->length - idx;
 
     usize i = 0;
     auto* p = reinterpret_cast<u8*>(dst);
