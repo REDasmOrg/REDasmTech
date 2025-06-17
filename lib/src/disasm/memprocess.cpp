@@ -167,7 +167,6 @@ void process_listing_data(const Context* ctx, Listing& l, RDAddress& address) {
 
 void process_unknown_data(Context* ctx, RDSegment* seg, RDAddress& address) {
     RDAddress startaddr = address++;
-    spdlog::critical("UNK_DATA >> {:x}", startaddr);
 
     while(address < seg->end) {
         if(!memory::is_unknown(seg, address) ||
