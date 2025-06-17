@@ -25,6 +25,7 @@ void listingindex_tosymbol(LIndex lidx, RDSymbol* symbol, std::string& value) {
             break;
         }
 
+        case LISTINGITEM_LABEL:
         case LISTINGITEM_FUNCTION: {
             value = ctx->get_name(item.address);
             symbol->type = SYMBOL_FUNCTION;

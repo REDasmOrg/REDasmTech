@@ -88,7 +88,9 @@ LIndex Listing::instruction(RDAddress address) {
 }
 
 LIndex Listing::label(RDAddress address) {
-    return this->push_item(LISTINGITEM_LABEL, address);
+    LIndex lidx = this->push_item(LISTINGITEM_LABEL, address);
+    this->check_flags(lidx, address);
+    return lidx;
 }
 
 LIndex Listing::function(RDAddress address) {
