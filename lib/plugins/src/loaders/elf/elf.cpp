@@ -47,32 +47,27 @@ bool parse(RDLoader* self, const RDLoaderRequest* req) {
 }
 
 template<int Bits>
-void load_section_header(const ElfFormat<Bits>* elf, RDBuffer* file) {
+void load_section_header(const ElfFormat<Bits>* elf) {
     for(usize i = 0; i < elf->shdr.size(); i++) {
         const auto& seg = elf->shdr[i];
         if(!seg.sh_addr || !seg.sh_size) continue;
 
         RDOffset offset = seg.sh_offset, offsize = seg.sh_size;
-        usize perm = 0;
+        usize perm = SP_R;
 
         std::string name = elf->get_str(seg.sh_name, elf->ehdr.e_shstrndx,
                                         "seg_" + std::to_string(i));
 
-        switch(seg.sh_type) {
-            case SHT_PROGBITS:
-                perm = seg.sh_flags & SHF_EXECINSTR ? SP_RWX : SP_RW;
-                break;
-
-            case SHT_NOBITS: offset = offsize = 0; [[fallthrough]];
-            default: perm = SP_RW; break;
-        }
+        if(seg.sh_flags & SHF_EXECINSTR) perm |= SP_X;
+        if(seg.sh_flags & SHF_WRITE) perm |= SP_W;
+        if(seg.sh_type == SHT_NOBITS) offset = offsize = 0;
 
         rd_addsegment_n(name.c_str(), seg.sh_addr, seg.sh_size, perm, Bits);
 
         if(offset && offsize) rd_mapfile_n(offset, seg.sh_addr, seg.sh_size);
     }
 
-    // Process sections (separate steps in order to fix out of order links)
+    // Process sections (separate steps in order to fix out-of-order links)
     for(usize i = 0; i < elf->shdr.size(); i++) {
         const auto& seg = elf->shdr[i];
 
@@ -124,7 +119,7 @@ bool load(RDLoader* self, RDBuffer* file) {
                   sizeof(typename ELF::PHDR) * elf->phdr.size());
 
     if(!elf->shdr.empty())
-        load_section_header(elf, file);
+        load_section_header(elf);
     else if(!elf->phdr.empty())
         load_program_header(elf);
     else

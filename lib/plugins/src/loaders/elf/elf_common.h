@@ -379,10 +379,23 @@ constexpr int R_386_GOT32 = 3;
 constexpr int R_386_PLT32 = 4;
 constexpr int R_386_COPY = 5;
 constexpr int R_386_GLOB_DAT = 6;
-constexpr int R_386_JMP_SLOT = 7;
+constexpr int R_386_JUMP_SLOT = 7;
 constexpr int R_386_RELATIVE = 8;
 constexpr int R_386_GOTOFF = 9;
 constexpr int R_386_GOTPC = 10;
+
+constexpr int R_X86_64_NONE = 0;
+constexpr int R_X86_64_PC32 = 2;
+constexpr int R_X86_64_COPY = 5;
+constexpr int R_X86_64_GLOB_DAT = 6;
+constexpr int R_X86_64_JUMP_SLOT = 7;
+constexpr int R_X86_64_RELATIVE = 8;
+constexpr int R_X86_64_DTPMOD64 = 16;
+constexpr int R_X86_64_DTPOFF64 = 17;
+constexpr int R_X86_64_TPOFF64 = 18;
+constexpr int R_X86_64_TLSDESC = 36;
+constexpr int R_X86_64_IRELATIVE = 37;
+constexpr int R_X86_64_RELATIVE64 = 38;
 
 constexpr int R_ARM_NONE = 0;
 constexpr int R_ARM_PC24 = 1;

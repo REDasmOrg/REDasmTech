@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <redasm/redasm.h>
 #include <string>
 
@@ -15,6 +16,7 @@ constexpr u8 DW_EH_PE_SDATA8 = 0x0C;
 
 constexpr u8 DW_EH_PE_ABSPTR = 0x00;
 constexpr u8 DW_EH_PE_PCREL = 0x10;
+constexpr u8 DW_EH_PE_TEXTREL = 0x20;
 constexpr u8 DW_EH_PE_DATAREL = 0x30;
 constexpr u8 DW_EH_PE_INDIRECT = 0x80;
 
@@ -42,8 +44,9 @@ struct CIEInfo {
 const char* get_type(u8 dwarftype);
 usize apply_type(RDAddress addr, u8 dwarftype, RDValue* v = nullptr);
 
-RDAddress calc_address(RDAddress pcrel, RDAddress datarel, const RDValue& val,
-                       u8 tableenc);
+std::optional<RDAddress> calc_address(RDAddress pcrel, RDAddress datarel,
+                                      RDAddress textrel, const RDValue& val,
+                                      u8 enc);
 
 } // namespace elf_dwarf
 

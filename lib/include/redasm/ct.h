@@ -82,6 +82,8 @@ CT_NORET static inline void _unreachable_impl(void) { intrinsic_trap(); }
 CT_API CT_NORET void _except_impl(const char* file, int line, const char* fmt,
                                   ...);
 
+#define ct_unused(x) (void)(x)
+
 #define ct_assume(...)                                                         \
     do {                                                                       \
         if(intrinsic_unlikely(!(__VA_ARGS__))) {                               \

@@ -5,8 +5,9 @@
 /*
  * FROM: https://man7.org/linux/man-pages/man5/elf.5.html
  *
- * The following types are used for N-bit architectures (N=32,64, ElfN
- * stands for Elf32 or Elf64, uintN_t stands for uint32_t or uint64_t):
+ * The following types are used for N-bit architectures
+ * (N=32,64, ElfN stands for Elf32 or Elf64,
+ * uintN_t stands for uint32_t or uint64_t):
 
  * ElfN_Addr       Unsigned program address, uintN_t
  * ElfN_Off        Unsigned file offset, uintN_t

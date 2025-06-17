@@ -34,6 +34,11 @@ struct ElfFormat {
                                        u32 len) const;
 
 private:
+    void apply_relocation(const std::vector<SYM>& symbols, const SHDR& symsect,
+                          ElfUnsignedT<Bits>::type offset,
+                          ElfUnsignedT<Bits>::type info,
+                          ElfSignedT<Bits>::type addend) const;
+    void apply_symbols(const std::vector<SYM>& symbols, const SHDR& shdr) const;
     void apply_type(const char* tname, const SHDR& shdr) const;
     void process_init_fini(const SHDR& shdr, const std::string& prefix) const;
     void process_strings(const SHDR& shdr) const;
@@ -41,6 +46,7 @@ private:
     void process_symtab_address(const SHDR& shdr) const;
     void process_rela(const SHDR& shdr) const;
     void process_rel(const SHDR& shdr) const;
+    void process_got(const SHDR& shdr) const;
     void process_eh_frame_hdr(const SHDR& shdr) const;
     void process_eh_frame(const SHDR& shdr) const;
 };

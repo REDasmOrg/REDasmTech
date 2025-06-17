@@ -22,20 +22,21 @@ std::optional<RDAddress> read_address(RDAddress address) {
     return std::nullopt;
 }
 
-void apply_field(RDAddress& a, const char* t, const char* n,
-                 RDValue* v = nullptr) {
+void elf_apply_field(RDAddress& a, const char* t, const char* n,
+                     RDValue* v = nullptr) {
     rd_settypename(a, t, v);
     rd_setname_ex(a, n, SN_ADDRESS);
     a += rd_nsizeof(t);
 };
 
-void apply_str_field(RDAddress& a, const char* t, const char* n, RDValue* v) {
+void elf_apply_str_field(RDAddress& a, const char* t, const char* n,
+                         RDValue* v) {
     rd_settypename(a, t, v);
     rd_setname_ex(a, n, SN_ADDRESS);
     a += str_length(&v->str) + 1;
 };
 
-void apply_leb_field(RDAddress& a, const char* t, const char* n) {
+void elf_apply_leb_field(RDAddress& a, const char* t, const char* n) {
     RDValue v;
     rd_settypename(a, t, &v);
     rd_setname_ex(a, n, SN_ADDRESS);
@@ -44,6 +45,106 @@ void apply_leb_field(RDAddress& a, const char* t, const char* n) {
 };
 
 } // namespace
+
+template<int Bits>
+void ElfFormat<Bits>::apply_relocation(const std::vector<SYM>& symbols,
+                                       const SHDR& symsect,
+                                       ElfUnsignedT<Bits>::type offset,
+                                       ElfUnsignedT<Bits>::type info,
+                                       ElfSignedT<Bits>::type addend) const {
+    using namespace std::string_view_literals;
+
+    ct_unused(addend);
+    if(!offset) return;
+
+    auto sym = elf_r_sym<Bits>(info);
+    if(!sym) return;
+
+    switch(elf_r_type<Bits>(info)) {
+        // case R_X86_64_JUMP_SLOT: // Same value as R_386_JUMP_SLOT
+        case R_386_JUMP_SLOT: {
+            auto reladdr = read_address<Bits>(offset);
+
+            if(reladdr && sym < symbols.size() && symbols[sym].st_name) {
+                std::string nam =
+                    this->get_str(symbols[sym].st_name, symsect.sh_link);
+                if(!nam.empty()) {
+                    const RDSegment* seg =
+                        rd_findsegment(symbols[sym].st_value);
+                    if(seg && seg->name == ".got"sv) nam += "@got";
+                    rd_setname_ex(*reladdr, nam.data(), SN_IMPORT);
+                }
+            }
+
+            break;
+        }
+
+        // case R_X86_64_GLOB_DAT:  // Same value as R_386_GLOB_DAT
+        case R_386_GLOB_DAT: {
+            if(sym < symbols.size() && symbols[sym].st_name) {
+                std::string nam =
+                    this->get_str(symbols[sym].st_name, symsect.sh_link);
+                if(!nam.empty()) {
+                    const RDSegment* seg =
+                        rd_findsegment(symbols[sym].st_value);
+                    if(seg && seg->name == ".got"sv) nam += "@got";
+                    rd_setname(offset, nam.data());
+                }
+            }
+
+            break;
+        }
+    }
+}
+
+template<int Bits>
+void ElfFormat<Bits>::apply_symbols(const std::vector<SYM>& symbols,
+                                    const SHDR& shdr) const {
+    using namespace std::string_view_literals;
+
+    for(const SYM& sym : symbols) {
+        if(!sym.st_name || !sym.st_value) continue;
+
+        std::string nam = this->get_str(sym.st_name, shdr.sh_link);
+        if(nam.empty()) continue;
+
+        u8 type = elf_st_type(sym.st_info);
+        u8 bind = elf_st_bind(sym.st_info);
+
+        switch(type) {
+            case STT_FUNC: {
+                const RDSegment* seg = rd_findsegment(sym.st_value);
+                if(seg && seg->name == ".got"sv) nam += "@got";
+
+                if(bind != STB_GLOBAL) {
+                    rd_setfunction(sym.st_value);
+                    rd_setname(sym.st_value, nam.data());
+                }
+                else
+                    rd_setentry(sym.st_value, nam.data());
+
+                break;
+            }
+
+            case STT_OBJECT: {
+                RDType t;
+
+                if(sym.st_size && rd_intfrombytes(sym.st_size, false, &t) &&
+                   rd_settype(sym.st_value, &t, nullptr)) {
+
+                    const RDSegment* seg = rd_findsegment(sym.st_value);
+                    if(seg && seg->name == ".got"sv) nam += "@got";
+
+                    rd_setname(sym.st_value, nam.data());
+                }
+
+                break;
+            }
+
+            default: break;
+        }
+    }
+}
 
 template<int Bits>
 void ElfFormat<Bits>::apply_type(const char* tname, const SHDR& shdr) const {
@@ -97,6 +198,16 @@ void ElfFormat<Bits>::parse_section_address(usize i) const {
 
     if(n == ".interp")
         rd_settypename(shdr.sh_addr, "str", nullptr);
+    else if(n == ".got" || n == ".got.plt")
+        this->process_got(shdr);
+    else if(n == ".init") {
+        rd_setfunction(shdr.sh_addr);
+        rd_setname_ex(shdr.sh_addr, "init", SN_ADDRESS);
+    }
+    else if(n == ".fini") {
+        rd_setfunction(shdr.sh_addr);
+        rd_setname_ex(shdr.sh_addr, "fini", SN_ADDRESS);
+    }
     else if(n == ".eh_frame_hdr")
         this->process_eh_frame_hdr(shdr);
     else if(n == ".eh_frame")
@@ -123,18 +234,18 @@ elf_dwarf::CIEInfo ElfFormat<Bits>::parse_dwarf_cie(RDAddress& addr,
                                                     RDAddress prevaddr,
                                                     u32 len) const {
     RDValue version;
-    apply_field(addr, "u8", "version", &version);
+    elf_apply_field(addr, "u8", "version", &version);
 
     RDValue augstr;
-    apply_str_field(addr, "str", "aug_string", &augstr);
+    elf_apply_str_field(addr, "str", "aug_string", &augstr);
 
-    apply_leb_field(addr, "uleb128", "code_align");
-    apply_leb_field(addr, "leb128", "data_align");
+    elf_apply_leb_field(addr, "uleb128", "code_align");
+    elf_apply_leb_field(addr, "leb128", "data_align");
 
     if(version.u8_v == 1)
-        apply_field(addr, "u8", "return_address_ordinal");
+        elf_apply_field(addr, "u8", "return_address_ordinal");
     else
-        apply_leb_field(addr, "uleb128", "return_address_ordinal");
+        elf_apply_leb_field(addr, "uleb128", "return_address_ordinal");
 
     // aug_operands part
     bool has_eh = str_startswith(&augstr.str, "eh");
@@ -142,14 +253,14 @@ elf_dwarf::CIEInfo ElfFormat<Bits>::parse_dwarf_cie(RDAddress& addr,
     bool has_z =
         str_length(&augstr.str) > idx && str_at(&augstr.str, idx) == 'z';
 
-    if(has_eh) apply_field(addr, "u32", "eh_ptr"); // NOTE: Pointer
-    if(has_z) apply_leb_field(addr, "uleb128", "length");
+    if(has_eh) elf_apply_field(addr, "u32", "eh_ptr"); // NOTE: Pointer
+    if(has_z) elf_apply_leb_field(addr, "uleb128", "length");
 
     RDValue fde_ptr_encoding;
     rdvalue_init(&fde_ptr_encoding);
 
     if(str_contains(&augstr.str, "R"))
-        apply_field(addr, "u8", "fde_ptr_encoding", &fde_ptr_encoding);
+        elf_apply_field(addr, "u8", "fde_ptr_encoding", &fde_ptr_encoding);
 
     usize cfa_bytecode_len = (len + sizeof(u32)) - (addr - prevaddr);
 
@@ -177,6 +288,15 @@ void ElfFormat<Bits>::parse_dwarf_fde(RDAddress& addr, RDAddress prevaddr,
     RDValue funcstart;
     usize sz = elf_dwarf::apply_type(addr, cie.fde_ptr_encoding, &funcstart);
     rd_setname_ex(addr, "func_start", SN_ADDRESS);
+
+    const RDSegment* text = rd_findsegmentname(".text");
+    const RDSegment* got = rd_findsegmentname(".got");
+
+    auto funcaddr = elf_dwarf::calc_address(addr, got ? got->start : 0,
+                                            text ? text->start : 0, funcstart,
+                                            cie.fde_ptr_encoding);
+
+    if(funcaddr) rd_setfunction(*funcaddr);
     addr += sz;
 
     sz = elf_dwarf::apply_type(addr, cie.fde_ptr_encoding, nullptr);
@@ -184,7 +304,7 @@ void ElfFormat<Bits>::parse_dwarf_fde(RDAddress& addr, RDAddress prevaddr,
     addr += sz;
 
     if(cie.aug_string.find('z') != std::string::npos)
-        apply_leb_field(addr, "uleb128", "length");
+        elf_apply_leb_field(addr, "uleb128", "length");
 
     usize cfa_bytecode_len = (len + sizeof(u32)) - (addr - prevaddr);
 
@@ -242,11 +362,30 @@ void ElfFormat<Bits>::process_strings(const SHDR& shdr) const {
 template<int Bits>
 void ElfFormat<Bits>::process_symtab_address(const SHDR& shdr) const {
     this->apply_type("ELF_SYM", shdr);
+
+    std::vector<SYM> symtab(shdr.sh_size / sizeof(SYM));
+    if(rd_read(shdr.sh_addr, symtab.data(), shdr.sh_size))
+        this->apply_symbols(symtab, shdr);
 }
 
 template<int Bits>
 void ElfFormat<Bits>::process_rela(const SHDR& shdr) const {
     this->apply_type("ELF_RELA", shdr);
+
+    if(shdr.sh_link >= this->shdr.size()) return;
+    const SHDR& symsect = this->shdr[shdr.sh_link];
+    if(symsect.sh_type != SHT_DYNSYM) return;
+
+    std::vector<SYM> symbols(symsect.sh_size / sizeof(SYM));
+    if(!rd_read(symsect.sh_addr, symbols.data(), symsect.sh_size)) return;
+
+    std::vector<RELA> rels(shdr.sh_size / sizeof(RELA));
+    if(!rd_read(shdr.sh_addr, rels.data(), shdr.sh_size)) return;
+
+    for(const RELA& rel : rels) {
+        this->apply_relocation(symbols, symsect, rel.r_offset, rel.r_info,
+                               rel.r_addend);
+    }
 }
 
 template<int Bits>
@@ -263,26 +402,30 @@ void ElfFormat<Bits>::process_rel(const SHDR& shdr) const {
     std::vector<REL> rels(shdr.sh_size / sizeof(REL));
     if(!rd_read(shdr.sh_addr, rels.data(), shdr.sh_size)) return;
 
-    for(const REL& rel : rels) {
-        if(!rel.r_offset) continue;
+    for(const REL& rel : rels)
+        this->apply_relocation(symbols, symsect, rel.r_offset, rel.r_info, 0);
+}
 
-        auto sym = elf_r_sym<Bits>(rel.r_info);
-        if(!sym) continue;
+template<int Bits>
+void ElfFormat<Bits>::process_got(const SHDR& shdr) const {
+    usize n = 0;
+    RDType t;
 
-        switch(elf_r_type<Bits>(rel.r_info)) {
-            case R_386_JMP_SLOT: {
-                auto reladdr = read_address<Bits>(rel.r_offset);
+    if constexpr(Bits == 32) {
+        n = shdr.sh_size / sizeof(u32);
+        rd_createprimitive(T_U32, &t);
+    }
+    else if constexpr(Bits == 64) {
+        n = shdr.sh_size / sizeof(u64);
+        rd_createprimitive(T_U64, &t);
+    }
 
-                if(reladdr && sym < symbols.size() && symbols[sym].st_name) {
-                    std::string_view sv =
-                        this->get_strv(symbols[sym].st_name, symsect.sh_link);
-                    if(!sv.empty()) rd_setname(*reladdr, sv.data());
-                }
+    if(shdr.sh_addr && n) {
+        RDAddress addr = shdr.sh_addr;
 
-                break;
-            }
-
-            default: break;
+        for(usize i = 0; i < n; i++) {
+            rd_settype(addr, &t, nullptr);
+            addr += rd_tsizeof(&t);
         }
     }
 }
@@ -312,45 +455,46 @@ void ElfFormat<Bits>::process_eh_frame_hdr(const SHDR& shdr) const {
     addr += n;
 
     u64 c = 0;
-    const char* tabletype = nullptr;
-    RDType tableentry_type;
     RDValue tableentry;
-    const RDValue* e;
-    const RDValueHNode* it;
-    RDAddress ep;
 
-    if(!rdvalue_getinteger(&valc, &c)) goto cleanup;
+    if(rdvalue_getinteger(&valc, &c)) {
+        const char* tabletype = elf_dwarf::get_type(framehdr.table_enc & 0xF);
 
-    tabletype = elf_dwarf::get_type(framehdr.table_enc & 0xF);
+        if(tabletype && c) {
+            std::vector<RDStructFieldDecl> tableentry_decl = {
+                {.type = tabletype, .name = "start_pc"},
+                {.type = tabletype, .name = "fde_ptr"},
+                {.type = nullptr, .name = nullptr},
+            };
 
-    if(tabletype && c) {
-        std::vector<RDStructFieldDecl> tableentry_decl = {
-            {.type = tabletype, .name = "start_pc"},
-            {.type = tabletype, .name = "fde_ptr"},
-            {.type = nullptr, .name = nullptr},
-        };
+            rd_createstruct("EH_FRAME_HDR_TABLE_ENTRY", tableentry_decl.data());
 
-        rd_createstruct("EH_FRAME_HDR_TABLE_ENTRY", tableentry_decl.data());
+            RDType tableentry_type;
+            if(rd_createtype_n("EH_FRAME_HDR_TABLE_ENTRY", c,
+                               &tableentry_type)) {
+                rd_settype(addr, &tableentry_type, &tableentry);
+                rd_setname(addr, "eh_frame_hdr_sorted_table");
 
-        if(rd_createtype_n("EH_FRAME_HDR_TABLE_ENTRY", c, &tableentry_type)) {
-            rd_settype(addr, &tableentry_type, &tableentry);
-            rd_setname(addr, "eh_frame_hdr_sorted_table");
+                const RDValue* e;
+                slice_foreach(e, &tableentry.list) {
+                    const RDValueHNode* it;
+                    hmap_get(it, &e->dict, "start_pc", RDValueHNode, hnode,
+                             !std::strcmp(it->key, "start_pc"));
 
-            slice_foreach(e, &tableentry.list) {
-                hmap_get(it, &e->dict, "start_pc", RDValueHNode, hnode,
-                         !std::strcmp(it->key, "start_pc"));
+                    if(!it) continue;
 
-                if(!it) continue;
+                    const RDSegment* text = rd_findsegmentname(".text");
 
-                ep = elf_dwarf::calc_address(addr, shdr.sh_addr, it->value,
-                                             framehdr.table_enc);
+                    auto ep = elf_dwarf::calc_address(
+                        addr, shdr.sh_addr, text ? text->start : 0, it->value,
+                        framehdr.table_enc);
 
-                if(ep) rd_setfunction(ep);
+                    if(ep) rd_setfunction(*ep);
+                }
             }
         }
     }
 
-cleanup:
     rdvalue_destroy(&valc);
     rdvalue_destroy(&tableentry);
 }
@@ -359,12 +503,11 @@ template<int Bits>
 void ElfFormat<Bits>::process_eh_frame(const SHDR& shdr) const {
     RDAddress addr = shdr.sh_addr, prevaddr = shdr.sh_addr;
     RDAddress endaddr = shdr.sh_addr + shdr.sh_size;
-
     std::optional<elf_dwarf::CIEInfo> cie;
 
     while(addr < endaddr) {
         RDValue len, id;
-        apply_field(addr, "u32", "length", &len);
+        elf_apply_field(addr, "u32", "length", &len);
         if(!len.u32_v) break;
 
         rd_settypename(addr, "u32", &id);
@@ -390,44 +533,8 @@ void ElfFormat<Bits>::process_symtab_offset(const SHDR& shdr) const {
     std::vector<SYM> symtab(shdr.sh_size / sizeof(SYM));
 
     RDBuffer* file = rd_getfile();
-    if(!rdbuffer_read(file, shdr.sh_offset, symtab.data(), shdr.sh_size))
-        return;
-
-    for(const auto& sym : symtab) {
-        if(!sym.st_name || !sym.st_value) continue;
-
-        std::string_view nam = this->get_strv(sym.st_name, shdr.sh_link);
-        if(nam.empty()) continue;
-
-        u8 type = elf_st_type(sym.st_info);
-        u8 bind = elf_st_bind(sym.st_info);
-
-        switch(type) {
-            case STT_FUNC: {
-                if(bind != STB_GLOBAL) {
-                    rd_setfunction(sym.st_value);
-                    rd_setname(sym.st_value, nam.data());
-                }
-                else
-                    rd_setentry(sym.st_value, nam.data());
-
-                break;
-            }
-
-            case STT_OBJECT: {
-                RDType t;
-
-                if(sym.st_size && rd_intfrombytes(sym.st_size, false, &t) &&
-                   rd_settype(sym.st_value, &t, nullptr)) {
-                    rd_setname(sym.st_value, nam.data());
-                }
-
-                break;
-            }
-
-            default: break;
-        }
-    }
+    if(rdbuffer_read(file, shdr.sh_offset, symtab.data(), shdr.sh_size))
+        this->apply_symbols(symtab, shdr);
 }
 
 // Explicit instantation
