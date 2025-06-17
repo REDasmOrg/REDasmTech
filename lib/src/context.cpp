@@ -290,8 +290,9 @@ bool Context::set_type(RDAddress address, RDType t, usize flags) {
         }
     }
 
-    if(s)
-        len = (s->size() * t.def->size);
+    if(s) { // Set null terminator as part of the string
+        len = (s->size() * t.def->size) + t.def->size;
+    }
     else if(leb)
         len = leb->size;
     else

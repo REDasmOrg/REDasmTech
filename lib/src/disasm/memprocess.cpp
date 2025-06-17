@@ -72,7 +72,7 @@ LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
             case T_WSTR: {
                 const RDSegment* seg = l.current_segment();
                 ct_assume(seg);
-                address += memory::get_length(seg, address) + t.def->size;
+                address += memory::get_length(seg, address);
                 break;
             }
 
@@ -143,11 +143,6 @@ void process_listing_data(const Context* ctx, Listing& l, RDAddress& address) {
 
     if(memory::has_flag(seg, address, BF_TYPE)) {
         auto type = ctx->get_type(address);
-
-        if(!type) {
-            spdlog::critical("{:x}", address);
-        }
-
         ct_assume(type);
 
         if(type->n > 0)
@@ -162,15 +157,17 @@ void process_listing_data(const Context* ctx, Listing& l, RDAddress& address) {
         address += len;
     }
     else {
+        // address++;
         auto mb = memory::get_mbyte(seg, address);
         ct_assume(mb);
-        ct_exceptf("Unhandled data byte @ %x}, value %s", address,
-                   utils::to_hex(*mb, 32));
+        ct_exceptf("Unhandled data byte @ %x, value %s", address,
+                   utils::to_hex(*mb, 32).data());
     }
 }
 
 void process_unknown_data(Context* ctx, RDSegment* seg, RDAddress& address) {
     RDAddress startaddr = address++;
+    spdlog::critical("UNK_DATA >> {:x}", startaddr);
 
     while(address < seg->end) {
         if(!memory::is_unknown(seg, address) ||
