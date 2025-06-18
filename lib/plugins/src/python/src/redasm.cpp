@@ -555,16 +555,6 @@ PyObject* get_type(PyObject* /*self*/, PyObject* args) {
     return obj;
 }
 
-PyObject* get_entries(PyObject* /*self*/, PyObject* /*args*/) {
-    RDAddress* entries;
-    usize n = rd_getentries(&entries);
-
-    PyObject* tuple = PyTuple_New(n);
-    for(usize i = 0; i < n; i++)
-        PyTuple_SET_ITEM(tuple, i, PyLong_FromUnsignedLongLong(entries[i]));
-    return tuple;
-}
-
 PyObject* map_file(PyObject* /*self*/, PyObject* args) {
     unsigned long long offset{}, start{}, end{};
     if(!PyArg_ParseTuple(args, "KKK", &offset, &start, &end)) return nullptr;

@@ -33,7 +33,6 @@ PyObject* to_offset(PyObject* self, PyObject* args);
 PyObject* to_address(PyObject* self, PyObject* args);
 PyObject* check_string(PyObject* self, PyObject* args);
 
-PyObject* get_entries(PyObject* self, PyObject* args);
 PyObject* map_file(PyObject* self, PyObject* args);
 PyObject* map_file_n(PyObject* self, PyObject* args);
 PyObject* add_segment(PyObject* self, PyObject* args);

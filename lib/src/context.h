@@ -75,7 +75,6 @@ public:
     Program program;
     RDProblemSlice problems;
     tl::optional<RDAddress> entrypoint;
-    std::vector<RDAddress> entrypoints;
     Worker* worker{nullptr};
     Listing listing;
     typing::Types types;

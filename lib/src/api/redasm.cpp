@@ -260,22 +260,6 @@ bool rd_getuserdata(const char* k, uptr* v) {
     return ud.has_value();
 }
 
-usize rd_getentries(RDAddress** entries) {
-    spdlog::trace("rd_getentries({})", fmt::ptr(entries));
-    if(!redasm::state::context) return {};
-
-    static std::vector<RDAddress> res;
-
-    res.clear();
-    res.reserve(redasm::state::context->entrypoints.size());
-
-    for(RDAddress ep : redasm::state::context->entrypoints)
-        res.push_back(ep);
-
-    if(entries) *entries = res.data();
-    return res.size();
-}
-
 bool rd_getaddress(const char* name, RDAddress* address) {
     spdlog::trace("rd_getaddress('{}', {})", name, fmt::ptr(address));
     if(!name || !redasm::state::context) return false;

@@ -40,7 +40,6 @@ inline PyMethodDef methods[] = {
     {"is_blank", python::is_blank, METH_O, nullptr},
     {"is_print", python::is_print, METH_O, nullptr},
     {"is_punct", python::is_punct, METH_O, nullptr},
-    {"get_entries", python::get_entries, METH_NOARGS, nullptr},
     {"map_file", python::map_file, METH_VARARGS, nullptr},
     {"map_file_n", python::map_file_n, METH_VARARGS, nullptr},
     {"add_segment_n", python::add_segment_n, METH_VARARGS, nullptr},

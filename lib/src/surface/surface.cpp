@@ -249,9 +249,7 @@ bool Surface::jump_to_ep() {
     bool res = false;
     this->lock_history([&]() {
         Context* ctx = state::context;
-
-        if(!ctx->entrypoints.empty())
-            res = this->jump_to(ctx->entrypoints.front());
+        if(ctx->entrypoint) res = this->jump_to(*ctx->entrypoint);
     });
     return res;
 }
