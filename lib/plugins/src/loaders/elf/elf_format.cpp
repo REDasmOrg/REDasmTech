@@ -22,6 +22,17 @@ std::optional<RDAddress> read_address(RDAddress address) {
     return std::nullopt;
 }
 
+void elf_check_symbol_suffix(RDAddress address, std::string& name) {
+    using namespace std::string_view_literals;
+    const RDSegment* seg = rd_findsegment(address);
+    if(!seg) return;
+
+    if(seg->name == ".got"sv)
+        name += "@got";
+    else if(seg->name == ".got.plt"sv)
+        name += "@plt";
+}
+
 void elf_apply_field(RDAddress& a, const char* t, const char* n,
                      RDValue* v = nullptr) {
     rd_settypename(a, t, v);
@@ -52,7 +63,6 @@ void ElfFormat<Bits>::apply_relocation(const std::vector<SYM>& symbols,
                                        ElfUnsignedT<Bits>::type offset,
                                        ElfUnsignedT<Bits>::type info,
                                        ElfSignedT<Bits>::type addend) const {
-    using namespace std::string_view_literals;
 
     ct_unused(addend);
     if(!offset) return;
@@ -68,10 +78,9 @@ void ElfFormat<Bits>::apply_relocation(const std::vector<SYM>& symbols,
             if(reladdr && sym < symbols.size() && symbols[sym].st_name) {
                 std::string nam =
                     this->get_str(symbols[sym].st_name, symsect.sh_link);
+
                 if(!nam.empty()) {
-                    const RDSegment* seg =
-                        rd_findsegment(symbols[sym].st_value);
-                    if(seg && seg->name == ".got"sv) nam += "@got";
+                    elf_check_symbol_suffix(offset, nam);
                     rd_setname_ex(*reladdr, nam.data(), SN_IMPORT);
                 }
             }
@@ -85,9 +94,7 @@ void ElfFormat<Bits>::apply_relocation(const std::vector<SYM>& symbols,
                 std::string nam =
                     this->get_str(symbols[sym].st_name, symsect.sh_link);
                 if(!nam.empty()) {
-                    const RDSegment* seg =
-                        rd_findsegment(symbols[sym].st_value);
-                    if(seg && seg->name == ".got"sv) nam += "@got";
+                    elf_check_symbol_suffix(offset, nam);
                     rd_setname(offset, nam.data());
                 }
             }
@@ -100,8 +107,6 @@ void ElfFormat<Bits>::apply_relocation(const std::vector<SYM>& symbols,
 template<int Bits>
 void ElfFormat<Bits>::apply_symbols(const std::vector<SYM>& symbols,
                                     const SHDR& shdr) const {
-    using namespace std::string_view_literals;
-
     for(const SYM& sym : symbols) {
         if(!sym.st_name || !sym.st_value) continue;
 
@@ -113,8 +118,7 @@ void ElfFormat<Bits>::apply_symbols(const std::vector<SYM>& symbols,
 
         switch(type) {
             case STT_FUNC: {
-                const RDSegment* seg = rd_findsegment(sym.st_value);
-                if(seg && seg->name == ".got"sv) nam += "@got";
+                elf_check_symbol_suffix(sym.st_value, nam);
 
                 if(bind != STB_GLOBAL) {
                     rd_setfunction(sym.st_value);
@@ -131,11 +135,9 @@ void ElfFormat<Bits>::apply_symbols(const std::vector<SYM>& symbols,
 
                 if(sym.st_size && rd_intfrombytes(sym.st_size, false, &t) &&
                    rd_settype(sym.st_value, &t, nullptr)) {
-
-                    const RDSegment* seg = rd_findsegment(sym.st_value);
-                    if(seg && seg->name == ".got"sv) nam += "@got";
-
-                    rd_setname(sym.st_value, nam.data());
+                    elf_check_symbol_suffix(sym.st_value, nam);
+                    rd_setname_ex(sym.st_value, nam.data(),
+                                  bind == STB_GLOBAL ? SN_EXPORT : 0);
                 }
 
                 break;
@@ -202,11 +204,11 @@ void ElfFormat<Bits>::parse_section_address(usize i) const {
         this->process_got(shdr);
     else if(n == ".init") {
         rd_setfunction(shdr.sh_addr);
-        rd_setname_ex(shdr.sh_addr, "init", SN_ADDRESS);
+        rd_setname(shdr.sh_addr, "_init");
     }
     else if(n == ".fini") {
         rd_setfunction(shdr.sh_addr);
-        rd_setname_ex(shdr.sh_addr, "fini", SN_ADDRESS);
+        rd_setname(shdr.sh_addr, "_fini");
     }
     else if(n == ".eh_frame_hdr")
         this->process_eh_frame_hdr(shdr);
@@ -339,9 +341,8 @@ void ElfFormat<Bits>::process_init_fini(const SHDR& shdr,
 
         if(!itemaddr || itemaddr == -1ULL) continue;
 
-        std::string fn = prefix + rd_tohex_n(addr, 0);
         rd_setfunction(addr);
-        rd_setname(addr, fn.c_str());
+        rd_setname_ex(addr, prefix.c_str(), SN_ADDRESS);
         rdvalue_destroy(&v);
     }
 }
