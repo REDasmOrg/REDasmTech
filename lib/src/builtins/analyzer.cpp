@@ -1,9 +1,8 @@
 #include "analyzer.h"
 #include "../context.h"
-#include "../memory/memory.h"
 #include "../plugins/pluginmanager.h"
+#include "../rdil/rdil.h"
 #include "../state.h"
-#include "../utils/utils.h"
 #include <limits>
 #include <redasm/analyzer.h>
 
@@ -15,26 +14,26 @@ void do_autorename(RDAnalyzer*) {
     Context* ctx = state::context;
 
     for(const Function& f : ctx->program.functions) {
-        const RDSegment* seg = ctx->program.find_segment(f.address);
+        rdil::ILExprList el;
+        rdil::decode(f.address, el);
+        if(el.empty()) return;
 
-        if(seg && !memory::has_flag(seg, f.address, BF_FLOW)) {
-            if(memory::has_flag(seg, f.address, BF_JUMP)) {
-                // Search for direct/indirect jumps
-                for(const RDRef& ref : ctx->get_refs_from(f.address)) {
-                    if(ref.type == CR_JUMP || ref.type == DR_READ) {
-                        ctx->set_name(f.address,
-                                      "_" + ctx->get_name(ref.address),
-                                      SN_NOWARN);
-                        break;
-                    }
-                }
-            }
-            else if(memory::has_flag(seg, f.address, BF_COMMENT)) {
-                ctx->set_name(
-                    f.address,
-                    "nullsub_" + utils::to_hex<std::string>(f.address), 0);
-            }
+        const RDILExpr* e = el.first();
+
+        if(e->op == RDIL_GOTO) {
+            if(e->u->op == RDIL_MEM) e = e->u;
+
+            std::string n;
+
+            if(e->u->op == RDIL_VAR)
+                n = ctx->get_name(e->u->addr, false);
+            else if(e->u->op == RDIL_CNST)
+                n = ctx->get_name(e->u->u_cnst, false);
+
+            if(!n.empty()) ctx->set_name(f.address, "_" + n, SN_NOWARN);
         }
+        else if(e->op == RDIL_NOP || e->op == RDIL_RET)
+            ctx->set_name(f.address, "nullsub", SN_ADDRESS);
     }
 }
 
