@@ -44,9 +44,10 @@ typedef enum RDLogLevel {
 
 typedef enum RDSetName {
     SN_NOWARN = 1 << 0,
-    SN_IMPORT = 1 << 1,
-    SN_FORCE = 1 << 2,
-    SN_ADDRESS = 1 << 3,
+    SN_EXPORT = 1 << 1,
+    SN_IMPORT = 1 << 2,
+    SN_FORCE = 1 << 3,
+    SN_ADDRESS = 1 << 4,
 } RDSetName;
 
 typedef enum RDSetType {
