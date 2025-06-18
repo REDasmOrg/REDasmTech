@@ -412,6 +412,20 @@ void generate(const Function& f, ILExprList& res, usize maxn) {
     }
 }
 
+void decode(RDAddress address, ILExprList& res) {
+    const Context* ctx = state::context;
+    const RDProcessorPlugin* p = ctx->processorplugin;
+    ct_assume(p);
+
+    ctx->worker->emulator.reset();
+
+    RDInstruction instr;
+    bool ok = ctx->worker->emulator.decode(address, instr);
+
+    if(!ok || !p->lift || !p->lift(ctx->processor, api::to_c(&res), &instr))
+        res.append(res.expr_unknown());
+}
+
 void render(const RDILExpr* e, Renderer& renderer) {
     rdil::to_string(e,
                     [&](const RDILExpr* expr, std::string_view s, WalkType wt) {

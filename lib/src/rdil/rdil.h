@@ -19,6 +19,7 @@ std::string get_format(const RDILExpr* e);
 
 void generate(const Function& f, ILExprList& res);
 void generate(const Function& f, ILExprList& res, usize maxn);
+void decode(RDAddress address, ILExprList& res);
 void render(const RDILExpr* e, Renderer& render);
 
 } // namespace rdil
