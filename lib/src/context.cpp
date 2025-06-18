@@ -163,9 +163,9 @@ bool Context::set_function(RDAddress address, usize flags) {
 
 bool Context::set_entry(RDAddress address, const std::string& name) {
     if(RDSegment* seg = this->program.find_segment(address); seg) {
-        memory::set_flag(seg, address, BF_EXPORT);
         if(seg->perm & SP_X) ct_assume(this->set_function(address, 0));
-        this->set_name(address, name, 0);
+        if(!this->set_name(address, name, SN_EXPORT))
+            memory::set_flag(seg, address, BF_EXPORT);
         this->entrypoints.push_back(address);
         return true;
     }
@@ -451,8 +451,9 @@ bool Context::set_name(RDAddress address, const std::string& name,
         }
     }
 
-    memory::set_flag(seg, address, BF_NAME, !dbname.empty());
+    memory::set_flag(seg, address, BF_EXPORT, flags & SN_EXPORT);
     memory::set_flag(seg, address, BF_IMPORT, flags & SN_IMPORT);
+    memory::set_flag(seg, address, BF_NAME, !dbname.empty());
     m_database->set_name(address, dbname);
     return true;
 }
