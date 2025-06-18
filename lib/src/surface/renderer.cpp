@@ -384,14 +384,12 @@ std::string Renderer::word_at(const SurfaceRows& rows, int row, int col) {
     for(int i = col; i-- > 0;) {
         RDSurfaceCell cell = sfrow.cells[i];
         if(Renderer::is_char_skippable(cell.ch)) break;
-
         word.insert(0, &cell.ch, 1);
     }
 
     for(int i = col; i < static_cast<int>(sfrow.cells.size()); i++) {
         RDSurfaceCell cell = sfrow.cells[i];
         if(Renderer::is_char_skippable(cell.ch)) break;
-
         word.append(&cell.ch, 1);
     }
 
@@ -399,8 +397,7 @@ std::string Renderer::word_at(const SurfaceRows& rows, int row, int col) {
 }
 
 bool Renderer::is_char_skippable(char ch) {
-    if(ch == '_' || ch == '.') return false;
-
+    if(ch == '_' || ch == '@' || ch == '.') return false;
     return std::isspace(ch) || std::ispunct(ch);
 }
 
