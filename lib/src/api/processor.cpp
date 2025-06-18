@@ -138,12 +138,13 @@ bool rd_decode(RDAddress address, RDInstruction* instr) {
 }
 
 RDAddress rd_normalizeaddress(RDAddress address) {
-    spdlog::trace("rd_normalizeaddress({:x})", address);
+    return rd_normalizeaddress_ex(address, true);
+}
+
+RDAddress rd_normalizeaddress_ex(RDAddress address, bool query) {
+    spdlog::trace("rd_normalizeaddress_ex({:x}, {})", address, query);
     const redasm::Context* ctx = redasm::state::context;
-
-    if(ctx && ctx->processorplugin->normalize_address)
-        return ctx->processorplugin->normalize_address(ctx->processor, address);
-
+    if(ctx) return ctx->normalize_address(address, query);
     return address;
 }
 

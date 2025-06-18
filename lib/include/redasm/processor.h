@@ -42,7 +42,7 @@ typedef const char* (*RDProcessorPluginGetRegisterName)(const RDProcessor*, int)
 typedef const char** (*RDProcessorPluginGetPrologues)(const RDProcessor*);
 typedef const int* (*RDProcessorPluginGetSegmentRegisters)(const RDProcessor*);
 typedef const RDCallingConvention** (*RDProcessorPluginGetCallingConventions)(const RDProcessor*);
-typedef RDAddress (*RDProcessorPluginNormalizeAddress)(const RDProcessor*, RDAddress);
+typedef RDAddress (*RDProcessorPluginNormalizeAddress)(const RDProcessor*, RDAddress, bool);
 typedef void (*RDProcessorPluginRenderSegment)(const RDProcessor*, RDRenderer*, const RDSegment*);
 typedef void (*RDProcessorPluginRenderFunction)(const RDProcessor*, RDRenderer*, const RDFunction*);
 typedef void (*RDProcessorPluginRenderInstruction)(const RDProcessor*, RDRenderer*, const RDInstruction*);
@@ -98,6 +98,7 @@ REDASM_EXPORT const RDProcessor* rd_getprocessor(void);
 REDASM_EXPORT bool rd_decode_prev(RDAddress address, RDInstruction* instr);
 REDASM_EXPORT bool rd_decode(RDAddress address, RDInstruction* instr);
 REDASM_EXPORT RDAddress rd_normalizeaddress(RDAddress address);
+REDASM_EXPORT RDAddress rd_normalizeaddress_ex(RDAddress address, bool query);
 REDASM_EXPORT const char* rd_getregistername(int regid);
 REDASM_EXPORT const char* rd_getmnemonic(const RDInstruction* instr);
 REDASM_EXPORT bool rd_matchmnemonic(const RDInstruction* instr,

@@ -146,6 +146,8 @@ tl::optional<uptr> Context::get_userdata(const std::string& k) const {
 }
 
 bool Context::set_function(RDAddress address, usize flags) {
+    address = this->normalize_address(address, false);
+
     if(RDSegment* seg = this->program.find_segment(address); seg) {
         if(seg->perm & SP_X) {
             memory::set_flag(seg, address, BF_FUNCTION);
@@ -153,6 +155,7 @@ bool Context::set_function(RDAddress address, usize flags) {
             if(!memory::has_flag(seg, address, BF_CODE))
                 this->worker->emulator.enqueue_call(address);
 
+            if(flags & SF_ENTRY) this->entrypoint = address;
             return true;
         }
     }
@@ -162,19 +165,16 @@ bool Context::set_function(RDAddress address, usize flags) {
 }
 
 bool Context::set_entry(RDAddress address, const std::string& name) {
-    if(RDSegment* seg = this->program.find_segment(address); seg) {
-        if(seg->perm & SP_X) ct_assume(this->set_function(address, 0));
-        if(!this->set_name(address, name, SN_EXPORT))
-            memory::set_flag(seg, address, BF_EXPORT);
-        this->entrypoints.push_back(address);
-        return true;
-    }
+    if(this->set_function(address, SF_ENTRY))
+        return this->set_name(address, name, SN_EXPORT);
 
     this->add_problem(address, "Invalid entry location");
     return false;
 }
 
 void Context::add_ref(RDAddress fromaddr, RDAddress toaddr, usize type) {
+    fromaddr = this->normalize_address(fromaddr);
+    toaddr = this->normalize_address(toaddr);
     RDSegment* fromseg = this->program.find_segment(fromaddr);
     RDSegment* toseg = this->program.find_segment(toaddr);
 
@@ -349,6 +349,16 @@ Database::SRegList Context::get_sregs() const {
     return m_database->get_sregs();
 }
 
+RDAddress Context::normalize_address(RDAddress address, bool query) const {
+    ct_assume(this->processorplugin);
+
+    if(this->processorplugin->normalize_address)
+        return this->processorplugin->normalize_address(this->processor,
+                                                        address, query);
+
+    return address;
+}
+
 void Context::set_sreg(RDAddress address, int sreg, const RDRegValue& val,
                        const tl::optional<RDAddress>& fromaddr) {
     if(this->program.set_sreg(address, sreg, val))
@@ -371,7 +381,7 @@ tl::optional<RDType> Context::get_type(RDAddress address) const {
     return tl::nullopt;
 }
 
-std::string Context::get_name(RDAddress address) const {
+std::string Context::get_name(RDAddress address, bool autoname) const {
     const RDSegment* seg = this->program.find_segment(address);
 
     if(!seg) {
@@ -384,7 +394,7 @@ std::string Context::get_name(RDAddress address) const {
     if(memory::has_flag(seg, address, BF_NAME))
         name = m_database->get_name(address);
 
-    if(name.empty()) {
+    if(autoname && name.empty()) {
         std::string prefix = "loc";
 
         if(memory::has_flag(seg, address, BF_TYPE)) {
@@ -404,6 +414,7 @@ std::string Context::get_name(RDAddress address) const {
 
 bool Context::set_name(RDAddress address, const std::string& name,
                        usize flags) {
+    address = this->normalize_address(address);
     RDSegment* seg = this->program.find_segment(address);
 
     if(!seg) {

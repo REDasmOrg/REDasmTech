@@ -50,6 +50,10 @@ typedef enum RDSetName {
     SN_ADDRESS = 1 << 4,
 } RDSetName;
 
+typedef enum RDSetFunction {
+    SF_ENTRY = 1 << 0,
+} RDSetFunction;
+
 typedef enum RDSetType {
     ST_WEAK = (1 << 0),
 } RDSetType;

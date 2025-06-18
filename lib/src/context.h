@@ -45,7 +45,7 @@ public: // Database Interface
     bool set_type(RDAddress address, RDType t, usize flags);
     bool set_name(RDAddress address, const std::string& name, usize flags);
     tl::optional<RDType> get_type(RDAddress address) const;
-    std::string get_name(RDAddress address) const;
+    std::string get_name(RDAddress address, bool autoname = true) const;
     std::string get_comment(RDAddress address) const;
     Database::RefList get_refs_from_type(RDAddress fromaddr, usize type) const;
     Database::RefList get_refs_from(RDAddress fromaddr) const;
@@ -55,6 +55,7 @@ public: // Database Interface
     Database::SRegChanges get_sreg_changes(int reg) const;
     tl::optional<u64> get_sreg(RDAddress address, int reg) const;
     Database::SRegList get_sregs() const;
+    RDAddress normalize_address(RDAddress address, bool query = true) const;
 
     tl::optional<RDAddress> get_address(std::string_view name,
                                         bool onlydb = false) const;
@@ -73,6 +74,7 @@ public: // Plugins
 public:
     Program program;
     RDProblemSlice problems;
+    tl::optional<RDAddress> entrypoint;
     std::vector<RDAddress> entrypoints;
     Worker* worker{nullptr};
     Listing listing;
