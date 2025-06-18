@@ -13,7 +13,7 @@ const RDILExpr* lift_op(const RDInstruction* instr, usize idx, RDILPool* pool) {
         case OP_REG: e = rdil_reg(pool, op.reg); break;
         case OP_ADDR: e = rdil_var(pool, op.addr); break;
         case OP_IMM: e = rdil_cnst(pool, op.imm); break;
-        case OP_MEM: e = rdil_var(pool, op.mem); break;
+        case OP_MEM: e = rdil_mem(pool, rdil_var(pool, op.mem)); break;
 
         case OP_PHRASE: {
             const RDILExpr* base = rdil_reg(pool, op.phrase.base);
