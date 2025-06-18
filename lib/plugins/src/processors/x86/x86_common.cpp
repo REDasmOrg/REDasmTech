@@ -21,6 +21,16 @@ std::optional<RDAddress> read_address(RDAddress address) {
     return ok ? std::make_optional(val) : std::nullopt;
 }
 
+ZydisRegister get_ip() {
+    switch(rd_getprocessorplugin()->address_size) {
+        case 4: return ZYDIS_REGISTER_EIP;
+        case 8: return ZYDIS_REGISTER_RIP;
+        default: break;
+    }
+
+    return ZYDIS_REGISTER_IP;
+}
+
 ZydisRegister get_sp() {
     switch(rd_getprocessorplugin()->address_size) {
         case 4: return ZYDIS_REGISTER_ESP;

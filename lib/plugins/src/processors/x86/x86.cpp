@@ -98,6 +98,10 @@ bool is_segment_reg(const RDOperand& op) {
     return false;
 }
 
+RDAddress get_ip_value(const RDInstruction* instr) {
+    return instr->address + instr->length;
+}
+
 bool is_branch_instruction(const RDInstruction* instr) {
     return (instr->features & (IF_JUMP | IF_CALL));
 }
@@ -252,6 +256,11 @@ void decode(RDProcessor* proc, RDInstruction* instr) {
                     }
                     op.mem = zop.mem.disp.value;
                     op.userdata1 = zop.mem.segment;
+                }
+                else if(zop.mem.base == x86_common::get_ip() &&
+                        zop.mem.index == ZYDIS_REGISTER_NONE) {
+                    op.type = OP_MEM;
+                    op.mem = get_ip_value(instr) + zop.mem.disp.value;
                 }
                 else {
                     op.type = OP_DISPL;
