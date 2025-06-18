@@ -27,10 +27,9 @@ void elf_check_symbol_suffix(RDAddress address, std::string& name) {
     const RDSegment* seg = rd_findsegment(address);
     if(!seg) return;
 
-    if(seg->name == ".got"sv)
-        name += "@got";
-    else if(seg->name == ".got.plt"sv)
-        name += "@plt";
+    if(seg->name == ".got"sv) name += "@got";
+    // else if(seg->name == ".got.plt"sv)
+    //     name += "@plt";
 }
 
 void elf_apply_field(RDAddress& a, const char* t, const char* n,
@@ -72,6 +71,7 @@ void ElfFormat<Bits>::apply_relocation(const std::vector<SYM>& symbols,
 
     switch(elf_r_type<Bits>(info)) {
         // case R_X86_64_JUMP_SLOT: // Same value as R_386_JUMP_SLOT
+        case R_ARM_JUMP_SLOT:
         case R_386_JUMP_SLOT: {
             auto reladdr = read_address<Bits>(offset);
 
@@ -81,7 +81,10 @@ void ElfFormat<Bits>::apply_relocation(const std::vector<SYM>& symbols,
 
                 if(!nam.empty()) {
                     elf_check_symbol_suffix(offset, nam);
-                    rd_setname_ex(*reladdr, nam.data(), SN_IMPORT);
+                    rd_setname_ex(offset, nam.data(), SN_IMPORT);
+                    rd_setfunction(*reladdr);
+                    rd_setname_ex(*reladdr, "plt_entry", SN_ADDRESS);
+                    rd_addref(offset, *reladdr, DR_READ);
                 }
             }
 
@@ -89,6 +92,7 @@ void ElfFormat<Bits>::apply_relocation(const std::vector<SYM>& symbols,
         }
 
         // case R_X86_64_GLOB_DAT:  // Same value as R_386_GLOB_DAT
+        case R_ARM_GLOB_DAT:
         case R_386_GLOB_DAT: {
             if(sym < symbols.size() && symbols[sym].st_name) {
                 std::string nam =
@@ -120,12 +124,9 @@ void ElfFormat<Bits>::apply_symbols(const std::vector<SYM>& symbols,
             case STT_FUNC: {
                 elf_check_symbol_suffix(sym.st_value, nam);
 
-                if(bind != STB_GLOBAL) {
-                    rd_setfunction(sym.st_value);
-                    rd_setname(sym.st_value, nam.data());
-                }
-                else
-                    rd_setentry(sym.st_value, nam.data());
+                rd_setfunction(sym.st_value);
+                rd_setname_ex(sym.st_value, nam.data(),
+                              bind == STB_GLOBAL ? SN_EXPORT : 0);
 
                 break;
             }
@@ -328,21 +329,15 @@ void ElfFormat<Bits>::process_init_fini(const SHDR& shdr,
 
     RDValue v;
     RDAddress addr = shdr.sh_addr;
+    u64 toaddr;
 
     for(usize i = 0; i < N; i++, addr += S) {
-        if(!rd_settypename(addr, TYPE, &v)) continue;
+        if(!rd_settypename(addr, TYPE, &v) || !rdvalue_getunsigned(&v, &toaddr))
+            continue;
 
-        RDAddress itemaddr;
-
-        if constexpr(Bits == 64)
-            itemaddr = v.u64_v;
-        else
-            itemaddr = v.u32_v;
-
-        if(!itemaddr || itemaddr == -1ULL) continue;
-
-        rd_setfunction(addr);
-        rd_setname_ex(addr, prefix.c_str(), SN_ADDRESS);
+        rd_setfunction(toaddr);
+        rd_setname_ex(toaddr, prefix.c_str(), SN_ADDRESS);
+        rd_addref(addr, toaddr, DR_ADDRESS);
         rdvalue_destroy(&v);
     }
 }
