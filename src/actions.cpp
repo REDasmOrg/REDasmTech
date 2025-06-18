@@ -74,6 +74,19 @@ QString instrfeatures_tostring(const RDInstruction* instr) {
     return f;
 }
 
+QString reftype_tostring(const RDRef* r) {
+    switch(r->type) {
+        case DR_READ: return "DR_READ";
+        case DR_WRITE: return "DR_WRITE";
+        case DR_ADDRESS: return "DR_ADDRESS";
+        case CR_JUMP: return "CR_JUMP";
+        case CR_CALL: return "CR_CALL";
+        default: break;
+    }
+
+    return {};
+}
+
 void show_goto() {
     ContextView* cv = g_mainwindow->context_view();
     if(!cv) return;
@@ -197,6 +210,35 @@ void show_details() {
         }
 
         s.append(strinstr);
+    }
+
+    const RDRef* refs = nullptr;
+    usize n = rd_getrefsfrom(address, &refs);
+
+    if(n) {
+        s.append(QString{"<br><b>==== REFS FROM %1 ====</b><br>"}.arg(
+            rd_tohex(address)));
+
+        for(usize i = 0; i < n; i++) {
+            s.append(QString{"[%1]: %2 (%3)<br>"}
+                         .arg(i)
+                         .arg(rd_tohex(refs[i].address))
+                         .arg(reftype_tostring(&refs[i])));
+        }
+    }
+
+    n = rd_getrefsto(address, &refs);
+
+    if(n) {
+        s.append(QString{"<br><b>==== REFS TO %1 ====</b><br>"}.arg(
+            rd_tohex(address)));
+
+        for(usize i = 0; i < n; i++) {
+            s.append(QString{"[%1]: %2 (%3)<br>"}
+                         .arg(i)
+                         .arg(rd_tohex(refs[i].address))
+                         .arg(reftype_tostring(&refs[i])));
+        }
     }
 
     auto* dlg = new DetailDialog(cv);
