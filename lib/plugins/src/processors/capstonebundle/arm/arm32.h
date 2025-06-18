@@ -11,7 +11,8 @@ struct ARMCommon: public Capstone {
     explicit ARMCommon(cs_mode mode);
     [[nodiscard]] const int* get_segmentregisters() const override;
     [[nodiscard]] const char* get_registername(int reg) const override;
-    [[nodiscard]] RDAddress normalize_address(RDAddress address) const override;
+    [[nodiscard]] RDAddress normalize_address(RDAddress address,
+                                              bool query) const override;
     [[nodiscard]] RDAddress pc(const RDInstruction* instr) const;
     bool decode(RDInstruction* instr) override;
     void emulate(RDEmulator* e, const RDInstruction* instr) const override;
@@ -68,8 +69,9 @@ struct ARMImpl {
         return m_arm.get_registername(reg);
     }
 
-    [[nodiscard]] RDAddress normalize_address(RDAddress address) const {
-        return m_arm.normalize_address(address);
+    [[nodiscard]] RDAddress normalize_address(RDAddress address,
+                                              bool query) const {
+        return m_arm.normalize_address(address, query);
     }
 
     void emulate(RDEmulator* e, const RDInstruction* instr) const {

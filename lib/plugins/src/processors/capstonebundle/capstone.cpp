@@ -28,7 +28,8 @@ const char* Capstone::get_registername(int regid) const {
     return cs_reg_name(this->handle, regid);
 }
 
-RDAddress Capstone::normalize_address(RDAddress address) const {
+RDAddress Capstone::normalize_address(RDAddress address, bool query) const {
+    ct_unused(query);
     return address;
 }
 

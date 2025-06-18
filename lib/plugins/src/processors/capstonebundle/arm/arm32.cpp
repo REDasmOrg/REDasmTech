@@ -17,9 +17,9 @@ const char* ARMCommon::get_registername(int reg) const {
     return Capstone::get_registername(reg);
 }
 
-RDAddress ARMCommon::normalize_address(RDAddress address) const {
+RDAddress ARMCommon::normalize_address(RDAddress address, bool query) const {
     RDAddress naddr = address & ~1;
-    rd_setsreg(naddr, ARM_REG_T, address & 1);
+    if(!query) rd_setsreg(naddr, ARM_REG_T, address & 1);
     return naddr;
 }
 
@@ -102,8 +102,7 @@ void ARMCommon::emulate(RDEmulator* e, const RDInstruction* instr) const {
     }
     else if(instr->features & IF_CALL) {
         if(instr->id == ARM_INS_BLX) {
-            rdemulator_addref(
-                e, this->normalize_address(instr->operands[0].addr), CR_CALL);
+            rdemulator_addref(e, instr->operands[0].addr, CR_CALL);
         }
         else
             rdemulator_addref(e, instr->operands[0].addr, CR_CALL);

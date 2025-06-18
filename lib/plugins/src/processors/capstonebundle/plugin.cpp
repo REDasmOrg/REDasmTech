@@ -20,9 +20,10 @@ void compile_fields(RDProcessorPlugin* plugin, const char* id, const char* name,
         delete reinterpret_cast<Processor*>(self);
     };
 
-    plugin->normalize_address = [](const RDProcessor* self, RDAddress addr) {
-        return reinterpret_cast<const Processor*>(self)->normalize_address(
-            addr);
+    plugin->normalize_address = [](const RDProcessor* self, RDAddress addr,
+                                   bool q) {
+        return reinterpret_cast<const Processor*>(self)->normalize_address(addr,
+                                                                           q);
     };
 
     plugin->get_mnemonic = [](const RDProcessor* self,

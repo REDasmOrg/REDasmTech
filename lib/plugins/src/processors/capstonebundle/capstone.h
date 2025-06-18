@@ -10,7 +10,8 @@ struct Capstone {
     [[nodiscard]] const char* get_mnemonic(const RDInstruction* instr) const;
     [[nodiscard]] virtual const int* get_segmentregisters() const;
     [[nodiscard]] virtual const char* get_registername(int regid) const;
-    [[nodiscard]] virtual RDAddress normalize_address(RDAddress address) const;
+    [[nodiscard]] virtual RDAddress normalize_address(RDAddress address,
+                                                      bool query) const;
     virtual void setup(RDEmulator* e) const { (void)e; }
     virtual bool decode(RDInstruction* instr) = 0;
     virtual void emulate(RDEmulator* e, const RDInstruction* instr) const = 0;
