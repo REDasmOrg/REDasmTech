@@ -1,0 +1,10 @@
+{
+    "puts": {
+        "cc": "cdecl",
+        "ret": "int",
+
+        "args": [
+            {"name": "str", "type": "char*"},
+        ]
+    }
+}
