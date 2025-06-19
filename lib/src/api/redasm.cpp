@@ -239,7 +239,6 @@ usize rd_getsearchpaths(const char*** spaths) {
                            [](const std::string& x) { return x.c_str(); });
 
     if(spaths) *spaths = res.data();
-
     return res.size();
 }
 
