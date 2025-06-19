@@ -25,4 +25,26 @@ function(setup_dependencies)
         GITHUB_REPOSITORY "gabime/spdlog"
         OPTIONS "SPDLOG_FMT_EXTERNAL ON"
     )
+
+    CPMAddPackage(
+        NAME RapidJSON
+        GIT_TAG "24b5e7a8b27f42fa16b96fc70aade9106cf7102f"
+        GITHUB_REPOSITORY "Tencent/rapidjson"
+        OPTIONS
+            "RAPIDJSON_BUILD_TESTS OFF"
+            "RAPIDJSON_BUILD_DOC OFF"
+            "RAPIDJSON_BUILD_EXAMPLES OFF"
+            "RAPIDJSON_BUILD_CXX11 OFF"
+            "RAPIDJSON_BUILD_CXX17 ON"
+    )
+
+    if(RapidJSON_ADDED)
+        add_library(rapidjson INTERFACE IMPORTED)
+        target_include_directories(rapidjson INTERFACE "${RapidJSON_SOURCE_DIR}/include")
+
+        target_compile_definitions(rapidjson
+            INTERFACE
+                "RAPIDJSON_HAS_STDSTRING"
+        )
+    endif()
 endfunction()
