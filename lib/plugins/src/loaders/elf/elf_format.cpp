@@ -2,8 +2,6 @@
 #include <cstring>
 #include <optional>
 
-// https://www.corsix.org/content/elf-eh-frame
-
 namespace {
 
 template<int Bits>

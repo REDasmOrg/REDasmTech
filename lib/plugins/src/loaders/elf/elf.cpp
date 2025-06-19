@@ -17,6 +17,9 @@
  *
  * Segment Header:
  *   - https://docs.oracle.com/cd/E19683-01/816-1386/chapter6-94076/index.html
+ *
+ * EH Frame: 
+ *   - https://www.corsix.org/content/elf-eh-frame
  */
 // clang-format on
 
@@ -170,8 +173,9 @@ const char* get_processor(RDLoader* self) {
 
 template<int Bits>
 void load_signatures(RDLoader* self, RDSignature* sig) {
-    using ELF = ElfFormat<Bits>;
-    const auto* elf = reinterpret_cast<const ELF*>(self);
+    ct_unused(self);
+    // using ELF = ElfFormat<Bits>;
+    // const auto* elf = reinterpret_cast<const ELF*>(self);
 
     rdsignature_add(sig, "linux/glibc");
 }
@@ -191,7 +195,7 @@ RDLoaderPlugin define_loader(const char* id, const char* name) {
             },
         .parse = parse<Bits>,
         .load = load<Bits>,
-        // .load_signatures = load_signatures<Bits>,
+        .load_signatures = load_signatures<Bits>,
         .get_processor = get_processor<Bits>,
         .get_callingconvention = get_callingconvention<Bits>,
     };
