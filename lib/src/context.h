@@ -4,6 +4,7 @@
 #include "disasm/worker.h"
 #include "listing.h"
 #include "memory/program.h"
+#include "signature/signature.h"
 #include "typing/typing.h"
 #include <redasm/analyzer.h>
 #include <redasm/loader.h>
@@ -82,6 +83,7 @@ public:
 
 private:
     Database* m_database{nullptr};
+    signature::SignatureManager m_signatures;
 };
 
 } // namespace redasm

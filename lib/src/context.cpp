@@ -122,8 +122,10 @@ bool Context::load(const RDProcessorPlugin* plugin) {
                               return lhs->order < rhs->order;
                           });
 
-        if(this->loaderplugin->load_signatures)
-            this->loaderplugin->load_signatures(this->loader, nullptr);
+        if(this->loaderplugin->load_signatures) {
+            this->loaderplugin->load_signatures(this->loader,
+                                                api::to_c(&m_signatures));
+        }
 
         this->worker->emulator.setup();
         return true;

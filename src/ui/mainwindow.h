@@ -32,7 +32,7 @@ struct MainWindow {
         self->resize(1300, 850);
 
 #if !defined(NDEBUG)
-        self->setFixedSize(1300, 850);
+        self->setFixedSize(1500, 850);
 #endif
 
         actions::init(self);

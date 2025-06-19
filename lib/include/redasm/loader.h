@@ -1,8 +1,10 @@
 #pragma once
 
 #include <redasm/common.h>
+#include <redasm/ct.h>
 #include <redasm/environment.h>
 #include <redasm/plugin.h>
+#include <redasm/signature.h>
 #include <redasm/types.h>
 
 typedef enum RDLoaderFlags {
@@ -27,12 +29,14 @@ typedef bool (*RDLoaderPluginLoad)(struct RDLoader*, RDBuffer*);
 typedef const char* (*RDLoaderPluginGetProcessor)(struct RDLoader*);
 typedef const char* (*RDLoaderPluginGetCallingConvention)(struct RDLoader*);
 typedef const RDEnvironment* (*RDLoaderPluginGetEnvironment)(struct RDLoader*);
+typedef void (*RDLoaderPluginLoadSignatures)(struct RDLoader*, struct RDSignature*);
 // clang-format on
 
 typedef struct RDLoaderPlugin {
     RDPLUGIN_HEADER(RDLoader)
     RDLoaderPluginParse parse;
     RDLoaderPluginLoad load;
+    RDLoaderPluginLoadSignatures load_signatures;
     RDLoaderPluginGetProcessor get_processor;
     RDLoaderPluginGetCallingConvention get_callingconvention;
     RDLoaderPluginGetEnvironment get_environment;

@@ -13,6 +13,12 @@ class ILExprList;
 
 } // namespace rdil
 
+namespace signature {
+
+struct SignatureManager;
+
+}
+
 class Renderer;
 class Emulator;
 class Surface;
@@ -24,6 +30,10 @@ namespace api {
 
 static inline Context* from_c(RDContext* arg) {
     return reinterpret_cast<Context*>(arg);
+}
+
+static inline signature::SignatureManager* from_c(RDSignature* arg) {
+    return reinterpret_cast<signature::SignatureManager*>(arg);
 }
 
 static inline const StyledGraph* from_c(const RDGraph* arg) {
@@ -76,6 +86,10 @@ static inline Surface* from_c(RDSurface* arg) {
 
 static inline RDContext* to_c(Context* arg) {
     return reinterpret_cast<RDContext*>(arg);
+}
+
+static inline RDSignature* to_c(signature::SignatureManager* arg) {
+    return reinterpret_cast<RDSignature*>(arg);
 }
 
 static inline const RDGraph* to_c(const StyledGraph* arg) {

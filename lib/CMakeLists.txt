@@ -31,9 +31,11 @@ target_sources(${PROJECT_NAME_LIB}
     PRIVATE
         src/utils/process/process_unix.cpp
         src/utils/process/process.cpp
+        src/utils/leb128.cpp
         src/utils/hash.cpp
         src/utils/utils.cpp
         src/utils/pattern.cpp
+        src/signature/signature.cpp
         src/memory/buffer.cpp
         src/memory/memory.cpp
         src/memory/stringfinder.cpp
@@ -71,6 +73,7 @@ target_sources(${PROJECT_NAME_LIB}
         src/api/redasm.cpp
         src/api/redasm.cpp
         src/api/program.cpp
+        src/api/signature.cpp
         src/api/marshal.cpp
         src/api/hash.cpp
         src/api/utils.cpp
@@ -106,6 +109,7 @@ target_link_libraries(${PROJECT_NAME_LIB}
         miniz
         sqlite3
         spdlog::spdlog_header_only
+        rapidjson
 )
 
 add_library(${PROJECT_NAME}::lib ALIAS ${PROJECT_NAME_LIB})
