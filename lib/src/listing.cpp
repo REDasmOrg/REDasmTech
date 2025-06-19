@@ -83,6 +83,15 @@ LIndex Listing::type(RDAddress address, RDType t) {
     return lidx;
 }
 
+LIndex Listing::string(RDAddress address, usize startidx, usize n, char term,
+                       RDType t) {
+    LIndex lidx = this->type(address, t);
+    m_items[lidx].length = n;
+    m_items[lidx].string_index = startidx;
+    m_items[lidx].string_terminator = term;
+    return lidx;
+}
+
 LIndex Listing::instruction(RDAddress address) {
     return this->push_item(LISTINGITEM_INSTRUCTION, address);
 }

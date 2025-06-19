@@ -55,7 +55,6 @@ void Renderer::highlight_words(int row, int col) {
                 if(endidx >= row.cells.size()) break;
 
                 RDSurfaceCell cell = row.cells[endidx++];
-
                 if(cell.ch == ch) continue;
 
                 found = false;

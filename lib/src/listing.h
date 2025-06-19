@@ -18,7 +18,11 @@ struct ListingItem {
         RDAddress address;
     };
 
-    RDAddress end_address;
+    union {
+        RDAddress end_address;
+        usize length;
+    };
+
     usize indent;
 
     tl::optional<RDType> dtype_context;
@@ -26,6 +30,9 @@ struct ListingItem {
 
     tl::optional<usize> array_index;
     tl::optional<usize> field_index;
+
+    usize string_index;
+    char string_terminator;
 };
 
 class Listing {
@@ -72,6 +79,8 @@ public:
     void hex_dump(RDAddress startaddr, RDAddress endaddr);
     void fill(RDAddress startaddr, RDAddress endaddr);
     LIndex type(RDAddress address, RDType t);
+    LIndex string(RDAddress address, usize startidx, usize n, char term,
+                  RDType t);
     LIndex instruction(RDAddress address);
     LIndex label(RDAddress address);
     LIndex function(RDAddress address);

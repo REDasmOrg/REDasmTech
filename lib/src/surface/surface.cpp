@@ -775,8 +775,13 @@ void Surface::render_type(const ListingItem& item) {
                 else
                     v = memory::get_str(seg, item.address);
 
-                if(v.has_value())
-                    m_renderer->ws().string(*v).chunk(",").constant(0);
+                if(v.has_value()) {
+                    m_renderer->word("=")
+                        .string(v->substr(item.string_index, item.length))
+                        .chunk(",")
+                        .chunk(utils::to_hex(item.string_terminator),
+                               THEME_CONSTANT);
+                }
                 else
                     m_renderer->ws().unknown();
                 break;

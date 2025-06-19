@@ -45,8 +45,6 @@ void process_listing_unknown(Listing& l, RDAddress& address) {
 LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
                             RDType t) {
     LIndex lidx = l.size();
-    l.type(address, t);
-
     ct_assume(t.def);
 
     if(t.def->kind == TK_PRIMITIVE) {
@@ -66,12 +64,36 @@ LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
             case T_I32BE:
             case T_U32BE:
             case T_I64BE:
-            case T_U64BE: address += t.def->size; break;
+            case T_U64BE:
+                l.type(address, t);
+                address += t.def->size;
+                break;
 
             case T_STR:
             case T_WSTR: {
                 const RDSegment* seg = l.current_segment();
                 ct_assume(seg);
+
+                tl::optional<std::string> s;
+                if(t.def->t_primitive == T_STR)
+                    s = memory::get_str(seg, address);
+                else if(t.def->t_primitive == T_WSTR)
+                    s = memory::get_wstr(seg, address);
+                else
+                    ct_unreachable;
+
+                ct_assume(s);
+
+                // Split string in multiple lines (if needed)
+                for(usize start = 0, i = 0; i < s->size(); ++i) {
+                    char ch = s->at(i);
+
+                    if(ch == '\n' || ch == '\0') {
+                        l.string(address, start, i - start, ch, t);
+                        start = i + 1;
+                    }
+                }
+
                 address += memory::get_length(seg, address);
                 break;
             }
@@ -80,6 +102,7 @@ LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
             case T_ULEB128: {
                 const RDSegment* seg = l.current_segment();
                 ct_assume(seg);
+                l.type(address, t);
                 address += memory::get_length(seg, address);
                 break;
             }
@@ -88,6 +111,7 @@ LIndex process_listing_type(const Context* ctx, Listing& l, RDAddress& address,
         }
     }
     else if(t.def->kind == TK_STRUCT) { // Struct creates a new scope
+        l.type(address, t);
         l.push_type(t);
         l.push_indent();
 

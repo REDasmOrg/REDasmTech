@@ -42,13 +42,19 @@ void listingindex_tosymbol(LIndex lidx, RDSymbol* symbol, std::string& value) {
 
             if(item.dtype->def->kind == TK_PRIMITIVE) {
                 switch(item.dtype->def->t_primitive) {
-                    case T_STR:
+                    case T_STR: {
                         s = redasm::memory::get_str(seg, item.address);
+                        ct_assume(s);
+                        s = s->substr(item.string_index, item.length);
                         break;
+                    }
 
-                    case T_WSTR:
+                    case T_WSTR: {
                         s = redasm::memory::get_wstr(seg, item.address);
+                        ct_assume(s);
+                        s = s->substr(item.string_index, item.length);
                         break;
+                    }
 
                     case T_CHAR: {
                         usize len =
