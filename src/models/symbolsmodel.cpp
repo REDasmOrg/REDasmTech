@@ -2,6 +2,27 @@
 #include "../themeprovider.h"
 #include "../utils.h"
 
+namespace {
+
+QString mangled_string(const char* s) {
+    QString res;
+
+    while(*s) {
+        switch(*s) {
+            case '\r': res += "\\r"; break;
+            case '\n': res += "\\n"; break;
+            case '\t': res += "\\t"; break;
+            default: res += *s; break;
+        }
+
+        s++;
+    }
+
+    return res;
+}
+
+} // namespace
+
 SymbolsModel::SymbolsModel(bool autoalign, QObject* parent)
     : QAbstractListModel{parent}, m_autoalign{autoalign} {
     m_nsymbols = rdlisting_getsymbolslength();
@@ -32,7 +53,7 @@ QVariant SymbolsModel::data(const QModelIndex& index, int role) const {
 
             case 2: {
                 if(symbol.type == SYMBOL_STRING)
-                    return QString::fromUtf8(symbol.value).simplified();
+                    return mangled_string(symbol.value);
                 return symbol.value;
             }
 
