@@ -2,34 +2,18 @@
 
 #include <redasm/signature.h>
 #include <redasm/typing.h>
-#include <string>
 #include <string_view>
-#include <unordered_map>
 
 namespace redasm::signature {
 
-struct FunctionSignature {
-    std::string calling_convention;
-    RDType ret;
-};
-
-struct PatternSignature {
-    int reserved;
-};
-
-struct Signature {
-    int type;
-
-    union {
-        FunctionSignature func;
-        PatternSignature pattern;
-    };
-};
-
 struct SignatureManager {
-    bool load(std::string_view name);
-};
+    SignatureManager();
+    ~SignatureManager();
+    bool add(std::string_view sigfile);
+    [[nodiscard]] bool empty() const;
+    [[nodiscard]] const RDSignature* find(std::string_view n) const;
 
-void compile();
+    RDSignatureMap signatures;
+};
 
 } // namespace redasm::signature

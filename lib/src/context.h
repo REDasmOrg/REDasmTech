@@ -74,6 +74,7 @@ public: // Plugins
 
 public:
     Program program;
+    signature::SignatureManager signatures;
     RDProblemSlice problems;
     tl::optional<RDAddress> entrypoint;
     Worker* worker{nullptr};
@@ -83,7 +84,6 @@ public:
 
 private:
     Database* m_database{nullptr};
-    signature::SignatureManager m_signatures;
 };
 
 } // namespace redasm

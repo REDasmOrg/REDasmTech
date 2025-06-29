@@ -124,7 +124,7 @@ bool Context::load(const RDProcessorPlugin* plugin) {
 
         if(this->loaderplugin->load_signatures) {
             this->loaderplugin->load_signatures(this->loader,
-                                                api::to_c(&m_signatures));
+                                                api::to_c(&this->signatures));
         }
 
         this->worker->emulator.setup();

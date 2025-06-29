@@ -171,13 +171,15 @@ void Worker::mergedata_step() {
 void Worker::signature_step() {
     const Context* ctx = state::context;
 
-    // for(const Function& f : ctx->program.functions) {
-    // std::string n = ctx->get_name(f.address);
-    // const signature::Signature* s = signature::find(n);
-    // if(!s) continue;
+    if(!ctx->signatures.empty()) {
+        for(const Function& f : ctx->program.functions) {
+            std::string n = ctx->get_name(f.address);
+            if(n.empty()) continue;
 
-    // TODO(davide): Analyze function signature
-    // }
+            const RDSignature* sig = ctx->signatures.find(n);
+            if(!sig) continue;
+        }
+    }
 
     m_currentstep++;
 }

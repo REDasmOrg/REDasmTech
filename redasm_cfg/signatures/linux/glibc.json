@@ -1,10 +1,10 @@
 {
     "puts": {
-        "cc": "cdecl",
+        "cc": "linux/cdecl",
         "ret": "int",
 
         "args": [
-            {"name": "str", "type": "char*"},
+            {"type": "char*", "name": "str"}
         ]
     }
 }

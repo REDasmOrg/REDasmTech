@@ -29,7 +29,7 @@ typedef bool (*RDLoaderPluginLoad)(struct RDLoader*, RDBuffer*);
 typedef const char* (*RDLoaderPluginGetProcessor)(struct RDLoader*);
 typedef const char* (*RDLoaderPluginGetCallingConvention)(struct RDLoader*);
 typedef const RDEnvironment* (*RDLoaderPluginGetEnvironment)(struct RDLoader*);
-typedef void (*RDLoaderPluginLoadSignatures)(struct RDLoader*, struct RDSignature*);
+typedef void (*RDLoaderPluginLoadSignatures)(struct RDLoader*, struct RDSignatureManager*);
 // clang-format on
 
 typedef struct RDLoaderPlugin {

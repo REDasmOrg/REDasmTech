@@ -172,12 +172,12 @@ const char* get_processor(RDLoader* self) {
 }
 
 template<int Bits>
-void load_signatures(RDLoader* self, RDSignature* sig) {
+void load_signatures(RDLoader* self, RDSignatureManager* sm) {
     ct_unused(self);
     // using ELF = ElfFormat<Bits>;
     // const auto* elf = reinterpret_cast<const ELF*>(self);
 
-    rdsignature_add(sig, "linux/glibc");
+    rdsignature_add(sm, "linux/glibc");
 }
 
 template<int Bits>
